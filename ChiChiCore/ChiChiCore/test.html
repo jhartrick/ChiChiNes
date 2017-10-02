@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>ChiChiCore</title>
+    
+    <script src="bridge.js"></script>
+    <script src="bridge.console.js"></script>
+    <script src="bridge.meta.js"></script>
+    <script src="ChiChiCore.js"></script>
+    <script src="ChiChiCore.meta.js"></script>
+</head>
+<body>
+    <canvas id="chichiPig" width="500" height="500"></canvas>
+    <script type="text/javascript">
+              var wavsharer = new NES.CPU.Machine.BeepsBoops.WavSharer();
+      var whizzler = new NES.CPU.PPUClasses.PixelWhizzler();
+      whizzler.FillRGB = false;
+
+
+      var soundbop = new NES.CPU.Machine.BeepsBoops.Bopper(wavsharer);
+      var cpu = new NES.CPU.Fastendo.CPU2A03(whizzler, soundbop);
+
+      this.machine = new NES.CPU.nitenedo.NESMachine(cpu, whizzler, new NES.CPU.PPUClasses.TileDoodler(whizzler), wavsharer, soundbop, new NES.Sound.SoundThreader(null));
+
+      this.machine.LoadCart("dk.nes");
+      this.machine.Reset();
+      this.machine.PowerOn();
+
+        var render = function() {
+            var elem = document.getElementById("chichiPig");
+            var ctx = elem.getContext('2d');
+            machine.RunFrame();
+            var imgd = this.machine.PPU.VideoBuffer;
+            var imgData = ctx.createImageData(256,240); // width x height
+            var data = imgData.data;
+
+            for (var i = 0, len = 256 * 240 * 4; i < len; i++) {
+                data[i] = imgd[i];
+            }
+            ctx.putImageData(imgData, 256, 240);
+            requestAnimationFrame(render);
+        }
+        render();
+    </script>
+
+</body>
+</html>
