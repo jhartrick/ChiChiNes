@@ -4,11 +4,13 @@ import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 import { ChiChiComponent } from './chichines.component';
+import { ControlPanelComponent } from './controlpanel.component';
 
 @NgModule({
   declarations: [
       AppComponent,
-      ChiChiComponent
+      ChiChiComponent,
+      ControlPanelComponent
   ],
   imports: [
       BrowserModule, HttpModule

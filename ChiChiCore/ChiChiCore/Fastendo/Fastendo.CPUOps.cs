@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bridge;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -96,7 +97,7 @@ namespace NES.CPU.Fastendo
 
         public void DEC()
         {
-            byte val = (byte)DecodeOperand();
+            int val = (int)DecodeOperand();
             val--;
             SetByte(DecodeAddress(), val);
             SetZNFlags( val);
@@ -104,18 +105,18 @@ namespace NES.CPU.Fastendo
 
         public void INC()
         {
-            byte val = (byte)DecodeOperand();
+            int val = (int)DecodeOperand();
             val++;
-            SetByte(DecodeAddress(), val);
+            SetByte(DecodeAddress(), val );
             SetZNFlags(val);
         }
 
         public void ADC()
         {
             // start the read process
-            uint data = (uint)DecodeOperand();
+            int data = DecodeOperand();
             int carryFlag = (_statusRegister & 0x01);
-            uint result = (uint)(_accumulator + data + carryFlag);
+            int result = (_accumulator + data + carryFlag);
 
             // carry flag
 
@@ -158,11 +159,11 @@ namespace NES.CPU.Fastendo
         {
             // start the read process
 
-            uint data = (uint)DecodeOperand() ;
+            int data = DecodeOperand() ;
 
             int carryFlag = ((_statusRegister ^ 0x01) & 0x1);
 
-            uint result = (uint)(_accumulator - data - carryFlag);
+            uint result = (uint)(_accumulator - data - carryFlag) ;
 
             // set overflow flag if sign bit of accumulator changed
             SetFlag(CPUStatusMasks.OverflowMask,
@@ -171,7 +172,7 @@ namespace NES.CPU.Fastendo
 
             SetFlag(CPUStatusMasks.CarryMask, (result  < 0x100));
 
-            _accumulator = (int)(result & 0xFF);
+            _accumulator = (int)(result );
             SetZNFlags(_accumulator);
 
 

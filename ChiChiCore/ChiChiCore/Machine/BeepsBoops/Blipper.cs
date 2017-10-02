@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bridge;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,7 @@ using System.Text;
 
 namespace NES.CPU.Machine.BeepsBoops
 {
+    [Rules(Integer = IntegerRule.Plain)]
     public class Blip
     {
         const int bass_shift = 8; /* affects high-pass filter breakpoint frequency */

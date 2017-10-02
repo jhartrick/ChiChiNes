@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using NES.CPU.nitenedo.Interaction;
 using NES.CPU.Machine;
+using Bridge;
 
 namespace NES.CPU.PPUClasses
 {
@@ -21,6 +22,7 @@ namespace NES.CPU.PPUClasses
         /// draws from the lastcpuClock to the current one
         /// </summary>
         /// <param name="cpuClockNum"></param>
+        [Rules(Integer = IntegerRule.Plain )]
         public virtual void DrawTo(int cpuClockNum)
         {
             int frClock = (cpuClockNum - lastcpuClock )* 3;
@@ -42,121 +44,157 @@ namespace NES.CPU.PPUClasses
             }
             for (int i = 0; i < frClock; ++i)
             {
-                BumpScanline();
+                switch (frameClock++)
+                {
+                    case 0:
+                        //frameFinished();
+                        break;
+                    case 6820:
+                        ClearVINT();
+
+                        frameOn = true;
+                        //
+                        ClearNESPalette();
+                        chrRomHandler.ResetBankStartCache();
+                        // setFrameOn();
+                        if (spriteChanges)
+                        {
+                            UnpackSprites();
+                            spriteChanges = false;
+                        }
+
+
+                        break;
+                    //304 pixels into pre-render scanline
+                    case 7125:
+                        break;
+
+                    case 7161:
+                        //lockedVScroll = _vScroll;
+                        vbufLocation = 0;
+                        //curBufPos = bufStart;
+
+                        xNTXor = 0x0;
+                        yNTXor = 0;
+                        currentXPosition = 0;
+                        currentYPosition = 0;
+
+                        break;
+
+                    case frameClockEnd:
+                        //if (fillRGB) FillBuffer();
+                        shouldRender = true;
+
+                        frameFinished();
+
+                        SetupVINT();
+                        frameOn = false;
+                        frameClock = 0;
+
+                        if (_isDebugging)
+                            events.Clear();
+
+                        break;
+                }
+
+                if (frameClock >= 7161 && frameClock <= 89342)
+                {
+
+
+                    if (currentXPosition < 256 && vbufLocation < 256 * 240)
+                    {
+                        /* update x position */
+                        xPosition = currentXPosition + lockedHScroll;
+
+
+                        if ((xPosition & 7) == 0)
+                        {
+                            xNTXor = ((xPosition & 0x100) == 0x100) ? 0x400 : 0x00;
+                            xPosition &= 0xFF;
+
+                            /* fetch next tile */
+                            int ppuNameTableMemoryStart = nameTableMemoryStart ^ xNTXor ^ yNTXor;
+
+                            int xTilePosition = xPosition >> 3;
+
+                            int tileRow = (yPosition >> 3) % 30 << 5;
+
+                            int tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+
+                            int TileIndex = chrRomHandler.GetPPUByte(0, tileNametablePosition);
+
+                            int patternTableYOffset = yPosition & 7;
+
+                            int patternID = _backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+
+                            patternEntry = chrRomHandler.GetPPUByte(0, patternID);
+                            patternEntryByte2 = chrRomHandler.GetPPUByte(0, patternID + 8);
+
+                            currentAttributeByte = GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, yPosition >> 3);
+                            /*end fetch next tile */
+
+                        }
+
+                        /* draw pixel */
+                        byte tilePixel = _tilesAreVisible ? GetNameTablePixel() : (byte)0;
+                        bool foregroundPixel = false;
+                        byte spritePixel = _spritesAreVisible ? GetSpritePixel(out foregroundPixel) : (byte)0;
+
+                        if (!hitSprite && spriteZeroHit && tilePixel != 0)
+                        {
+                            hitSprite = true;
+                            _PPUStatus = _PPUStatus | 0x40;
+                        }
+
+                        var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
+                        //rgb32OutBuffer[vbufLocation] = x;
+                        byteOutBuffer[vbufLocation * 4] = (byte)(x);
+                        byteOutBuffer[(vbufLocation * 4) + 1] = (byte)(x >> 8);
+                        byteOutBuffer[(vbufLocation * 4) + 2] = (byte)(x >> 16);
+                        byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
+
+                        vbufLocation++;
+                    }
+                    if (currentXPosition == 256)
+                    {
+                        chrRomHandler.UpdateScanlineCounter();
+                    }
+                    currentXPosition++;
+
+                    if (currentXPosition > 340)
+                    {
+
+                        currentXPosition = 0;
+                        currentYPosition++;
+
+                        PreloadSprites(currentYPosition);
+                        if (spritesOnThisScanline >= 7)
+                        {
+                            _PPUStatus = _PPUStatus | 0x20;
+                        }
+
+                        lockedHScroll = _hScroll;
+
+                        UpdatePixelInfo();
+                        RunNewScanlineEvents();
+
+                    }
+
+                }
+
             }
             lastcpuClock = cpuClockNum;
         }
 
         protected virtual void BumpScanline()
         {
-            switch (frameClock++)
-            {
-                case 0:
-                    //frameFinished();
-                    break;
-                case 6820:
-                    ClearVINT();
-
-                    frameOn = true;
-                    //
-                    ClearNESPalette();
-                    chrRomHandler.ResetBankStartCache();
-                    // setFrameOn();
-                    if (spriteChanges)
-                    {
-                        UnpackSprites();
-                        spriteChanges = false;
-                    }
-
-
-                    break;
-                //304 pixels into pre-render scanline
-                case 7125:
-                    break;
-
-                case 7161:
-                    //lockedVScroll = _vScroll;
-                    vbufLocation = 0;
-                    //curBufPos = bufStart;
-
-                    xNTXor = 0x0;
-                    yNTXor = 0;
-                    currentXPosition = 0;
-                    currentYPosition = 0;
-
-                    break;
-
-                case frameClockEnd:
-                    //if (fillRGB) FillBuffer();
-                    shouldRender = true;
-                    
-                    frameFinished();
-
-                    SetupVINT();
-                    frameOn = false;
-                    frameClock = 0;
-
-                    if (_isDebugging)
-                        events.Clear();
-
-                    break;
-            }
-
-            if (frameClock >= 7161 && frameClock <= 89342)
-            {
-
-
-                if (currentXPosition < 256 && vbufLocation < 256 * 240)
-                {
-                    UpdateXPosition();
-                    DrawPixel();
-
-                    vbufLocation++;
-                }
-                if (currentXPosition == 256)
-                {
-                    chrRomHandler.UpdateScanlineCounter();
-                }
-                currentXPosition++;
-
-                if (currentXPosition > 340)
-                {
-
-                    currentXPosition = 0;
-                    currentYPosition++;
-
-                    PreloadSprites(currentYPosition);
-                    if (spritesOnThisScanline >= 7)
-                    {
-                        _PPUStatus = _PPUStatus | 0x20;
-                    }
-
-                    lockedHScroll = _hScroll;
-
-                    UpdatePixelInfo();
-                    RunNewScanlineEvents();
-
-                }
-
-            }
 
 
         }
 
         protected virtual void UpdateXPosition()
         {
-            xPosition = currentXPosition + lockedHScroll;
 
-
-            if ((xPosition & 7) == 0)
-            {
-                xNTXor = ((xPosition & 0x100) == 0x100) ? 0x400 : 0x00;
-
-
-                xPosition &= 0xFF;
-
-                FetchNextTile();
-            }
         }
 
         protected int[] rgb32OutBuffer = new int[256*256];
@@ -243,23 +281,6 @@ namespace NES.CPU.PPUClasses
         protected void DrawPixel()
         {
 
-            byte tilePixel = _tilesAreVisible ? GetNameTablePixel() : (byte)0;
-            bool foregroundPixel = false;
-            byte spritePixel = _spritesAreVisible ? GetSpritePixel(out foregroundPixel) : (byte)0;
-
-            if (!hitSprite && spriteZeroHit && tilePixel != 0)
-            {
-                hitSprite = true;
-                _PPUStatus = _PPUStatus | 0x40;
-            }
-
-            int pixel = (foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel;
-            var x = pal[_palette[pixel]];
-            //rgb32OutBuffer[vbufLocation] = x;
-            byteOutBuffer[vbufLocation * 4] = (byte)(x );
-            byteOutBuffer[(vbufLocation * 4) + 1] = (byte)(x >> 8);
-            byteOutBuffer[(vbufLocation * 4) + 2] = (byte)(x >> 16);
-            byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
         }
 
         public virtual void UpdatePixelInfo()

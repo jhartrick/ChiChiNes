@@ -115,33 +115,7 @@ namespace NES.CPU.nitenedo
 
             Initialize();
         }
-
-        //public NESMachine()
-        //{
-        //    // create new memory map
-        //    // add cpu, ppu, input etc to it
-        //    DebugStream = null;
-
-        //    _cpu = new CPU2A03();
-        //    _ppu = new PixelWhizzler();
-        //    _ppu.FrameFinishHandler = StartDraw;
-
-        //    //TODO: only hook this up when debugging, it doesnt need to live in ram
-        //    tiler = new TileDoodler(_ppu);
-
-        //    _cpu.PixelWhizzler = _ppu;
-            
-        //    SetupSound();
-
-        //    _cpu.SoundBopper = soundBopper;
-        //    //Blip blipper = new Blip();
-        //    //debug = new StreamWriter(new FileStream("d:\\soundout.txt", FileMode.Create, FileAccess.Write));
-        //    //bloop = new Blooper(blipper, debug);
-
-        //    //_cpu.Blooper = bloop;
-            
-        //    Initialize();
-        //}
+        
 
         public int FrameCount
         {

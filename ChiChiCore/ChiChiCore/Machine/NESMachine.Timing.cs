@@ -44,12 +44,11 @@ namespace NES.CPU.nitenedo
             } while (frameOn);
 
             _totalCPUClocks = _cpu.Clock;
-            lock (_sharedWave)
-            {
-                //soundBopper.FlushFrame(_totalCPUClocks);
-                //soundBopper.EndFrame(_totalCPUClocks);
-
-            }
+            //lock (_sharedWave)
+            //{
+            //    //soundBopper.FlushFrame(_totalCPUClocks);
+            //    //soundBopper.EndFrame(_totalCPUClocks);
+            //}
 
             if (PadOne != null) PadOne.Refresh();
 

@@ -19,6 +19,9 @@ export class Emulator {
 
     }
 
+    IsRunning(): boolean {
+        return this.machine.IsRunning;
+    }
     // platform hooks
     SetCallbackFunction(callback: () => void ) {
         this.machine.addDrawscreen(callback);
@@ -33,7 +36,6 @@ export class Emulator {
         this.machine.LoadCart(rom);
         this.machine.Reset();
     }
-
     // control
     StartEmulator(): void {
         this.machine.PowerOn();

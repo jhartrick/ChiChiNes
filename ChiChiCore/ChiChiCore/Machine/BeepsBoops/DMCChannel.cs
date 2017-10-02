@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Bridge;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace NES.CPU.Machine.BeepsBoops
 {
+    [Rules(Integer = IntegerRule.Plain)]
     public class DMCChannel
     {
 

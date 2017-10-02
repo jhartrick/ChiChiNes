@@ -1838,22 +1838,22 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             DEC: function () {
-                var val = (this.DecodeOperand()) & 255;
-                val = (val - 1) & 255;
+                var val = this.DecodeOperand();
+                val = (val - 1) | 0;
                 this.SetByte$1(this.DecodeAddress(), val);
                 this.SetZNFlags(val);
             },
             INC: function () {
-                var val = (this.DecodeOperand()) & 255;
-                val = (val + 1) & 255;
+                var val = this.DecodeOperand();
+                val = (val + 1) | 0;
                 this.SetByte$1(this.DecodeAddress(), val);
                 this.SetZNFlags(val);
             },
             ADC: function () {
                 // start the read process
-                var data = (this.DecodeOperand()) >>> 0;
+                var data = this.DecodeOperand();
                 var carryFlag = (this._statusRegister & 1);
-                var result = System.Int64.clipu32(System.Int64(this._accumulator).add(System.Int64(data)).add(System.Int64(carryFlag)));
+                var result = (((((this._accumulator + data) | 0) + carryFlag) | 0));
 
                 // carry flag
 
@@ -1861,10 +1861,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 // overflow flag
                 // SetFlag(CPUStatusBits.Overflow, (result > 0x7f || ~result > 0x7f));
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, ((System.Int64(this._accumulator).xor(System.Int64(data))).and(System.Int64(128))).ne(System.Int64(128)) && ((System.Int64(this._accumulator).xor(System.Int64(result))).and(System.Int64(128))).equals(System.Int64(128)));
+                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, ((this._accumulator ^ data) & 128) !== 128 && ((this._accumulator ^ result) & 128) === 128);
 
                 // occurs when bit 7 is set
-                this._accumulator = (((result & 255) >>> 0)) | 0;
+                this._accumulator = result & 255;
                 this.SetZNFlags(this._accumulator);
 
             },
@@ -1887,18 +1887,19 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SBC: function () {
                 // start the read process
 
-                var data = (this.DecodeOperand()) >>> 0;
+                var data = this.DecodeOperand();
 
                 var carryFlag = ((this._statusRegister ^ 1) & 1);
 
-                var result = System.Int64.clipu32(System.Int64(this._accumulator).sub(System.Int64(data)).sub(System.Int64(carryFlag)));
+                //            uint result = (uint)(_accumulator - data - carryFlag) ;
+                var result = (((((((((this._accumulator - data) | 0)) | 0) - carryFlag) | 0)) | 0)) >> 0;
 
                 // set overflow flag if sign bit of accumulator changed
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, ((System.Int64(this._accumulator).xor(System.Int64(result))).and(System.Int64(128))).equals(System.Int64(128)) && ((System.Int64(this._accumulator).xor(System.Int64(data))).and(System.Int64(128))).equals(System.Int64(128)));
+                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, ((this._accumulator ^ result) & 128) === 128 && ((this._accumulator ^ data) & 128) === 128);
 
                 this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (result < 256));
 
-                this._accumulator = (((result & 255) >>> 0)) | 0;
+                this._accumulator = result;
                 this.SetZNFlags(this._accumulator);
 
 
@@ -2859,7 +2860,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.blip_clear();
             },
             blip_set_rates: function (clock_rate, sample_rate) {
-                this._blipBuffer.factor = Bridge.Int.clip32(NES.CPU.Machine.BeepsBoops.Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375));
+                this._blipBuffer.factor = NES.CPU.Machine.BeepsBoops.Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375);
 
                 /* Fails if clock_rate exceeds maximum, relative to sample_rate */
                 System.Diagnostics.Debug.assert(this._blipBuffer.factor > 0);
@@ -2868,11 +2869,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._blipBuffer.offset = 0;
                 this._blipBuffer.avail = 0;
                 this._blipBuffer.integrator = 0;
-                this._blipBuffer.samples = System.Array.init(((this._blipBuffer.size + NES.CPU.Machine.BeepsBoops.Blip.buf_extra) | 0), 0, System.Int32);
+                this._blipBuffer.samples = System.Array.init(this._blipBuffer.size + NES.CPU.Machine.BeepsBoops.Blip.buf_extra, 0, System.Int32);
                 //memset(BLIP_SAMPLES(s), 0, (s.size + buf_extra) * sizeof(buf_t));
             },
             blip_clocks_needed: function (samples) {
-                var needed = (((Bridge.Int.mul(samples, NES.CPU.Machine.BeepsBoops.Blip.time_unit) - this._blipBuffer.offset) | 0)) >>> 0;
+                var needed = samples * NES.CPU.Machine.BeepsBoops.Blip.time_unit - this._blipBuffer.offset;
 
                 /* Fails if buffer can't hold that many more samples */
                 //assert( s->avail + samples <= s->size );
@@ -2881,16 +2882,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
             },
             blip_end_frame: function (t) {
-                var off = (Bridge.Int.mul(t, this._blipBuffer.factor) + this._blipBuffer.offset) | 0;
-                this._blipBuffer.avail = (this._blipBuffer.avail + (off >> NES.CPU.Machine.BeepsBoops.Blip.time_bits)) | 0;
-                this._blipBuffer.offset = off & (((NES.CPU.Machine.BeepsBoops.Blip.time_unit - 1) | 0));
+                var off = t * this._blipBuffer.factor + this._blipBuffer.offset;
+                this._blipBuffer.avail += off >> NES.CPU.Machine.BeepsBoops.Blip.time_bits;
+                this._blipBuffer.offset = off & (NES.CPU.Machine.BeepsBoops.Blip.time_unit - 1);
 
                 /* Fails if buffer size was exceeded */
                 //assert(s->avail <= s->size);
             },
             remove_samples: function (count) {
-                var remain = (((this._blipBuffer.avail + NES.CPU.Machine.BeepsBoops.Blip.buf_extra) | 0) - count) | 0;
-                this._blipBuffer.avail = (this._blipBuffer.avail - count) | 0;
+                var remain = this._blipBuffer.avail + NES.CPU.Machine.BeepsBoops.Blip.buf_extra - count;
+                this._blipBuffer.avail -= count;
 
                 System.Array.copy(this._blipBuffer.samples, count, this._blipBuffer.samples, 0, remain);
                 System.Array.fill(this._blipBuffer.samples, 0, remain, count);
@@ -2908,20 +2909,20 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     //int inPtr  = BLIP_SAMPLES( s );
                     //buf_t const* end = in + count;
                     var inPtr = 0, outPtr = 0;
-                    var endPtr = (inPtr + count) | 0;
+                    var endPtr = inPtr + count;
                     var sum = this._blipBuffer.integrator;
 
                     do {
                         var st = sum >> NES.CPU.Machine.BeepsBoops.Blip.delta_bits; /* assumes right shift preserves sign */
-                        sum = (sum + ($t = this._blipBuffer.samples)[inPtr]) | 0;
-                        inPtr = (inPtr + 1) | 0;
-                        if (Bridge.Int.sxs(st & 65535) !== st) {
+                        sum = sum + ($t = this._blipBuffer.samples)[inPtr];
+                        inPtr++;
+                        if (st !== st) {
                             st = (st >> 31) ^ 32767;
                         }
-                        outbuf[outPtr] = st & 255;
-                        outbuf[((outPtr + 1) | 0)] = (st >> 8) & 255;
-                        outPtr = (outPtr + step) | 0;
-                        sum = (sum - (st << (7))) | 0;
+                        outbuf[outPtr] = st;
+                        outbuf[outPtr + 1] = st >> 8;
+                        outPtr += step;
+                        sum = sum - (st << (7));
                     } while (inPtr !== endPtr);
 
                     this._blipBuffer.integrator = sum;
@@ -2932,51 +2933,51 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 return count;
             },
             blip_add_delta: function (time, delta) {
-                var $t, $t1, $t2, $t3, $t4, $t5;
+                var $t, $t1;
                 if (delta === 0) {
                     return;
                 }
-                var fixedTime = System.Int64(((Bridge.Int.mul(time, this._blipBuffer.factor) + this._blipBuffer.offset) | 0));
+                var fixedTime = System.Int64(time * this._blipBuffer.factor + this._blipBuffer.offset);
 
                 var outPtr = System.Int64.clip32(System.Int64(this._blipBuffer.avail).add((fixedTime.shr(NES.CPU.Machine.BeepsBoops.Blip.time_bits))));
 
                 var phase_shift = 16;
-                var phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((((NES.CPU.Machine.BeepsBoops.Blip.phase_count - 1) | 0)))));
+                var phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((NES.CPU.Machine.BeepsBoops.Blip.phase_count - 1))));
 
                 var inStep = phase; // bl_step[phase];
-                var rev = (NES.CPU.Machine.BeepsBoops.Blip.phase_count - phase) | 0; // bl_step[phase_count - phase];
+                var rev = NES.CPU.Machine.BeepsBoops.Blip.phase_count - phase; // bl_step[phase_count - phase];
 
                 var interp_bits = 15;
-                var interp = System.Int64.clip32(fixedTime.shr((((phase_shift - interp_bits) | 0))).and(System.Int64(((((1 << interp_bits) - 1) | 0)))));
-                var delta2 = (Bridge.Int.mul(delta, interp)) >> interp_bits;
-                delta = (delta - delta2) | 0;
+                var interp = System.Int64.clip32(fixedTime.shr((phase_shift - interp_bits)).and(System.Int64(((1 << interp_bits) - 1))));
+                var delta2 = (delta * interp) >> interp_bits;
+                delta -= delta2;
 
                 /* Fails if buffer size was exceeded */
                 //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
 
-                for (var i = 0; i < 8; i = (i + 1) | 0) {
-                    ($t = this._blipBuffer.samples)[($t1 = ((outPtr + i) | 0))] = (($t2 = this._blipBuffer.samples)[$t1] + (((Bridge.Int.mul(NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([inStep, i]), delta) + Bridge.Int.mul(NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([((inStep + 1) | 0), i]), delta2)) | 0))) | 0;
-                    ($t3 = this._blipBuffer.samples)[($t4 = ((outPtr + (((15 - i) | 0))) | 0))] = (($t5 = this._blipBuffer.samples)[$t4] + (((Bridge.Int.mul(NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([rev, i]), delta) + Bridge.Int.mul(NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([((rev - 1) | 0), i]), delta2)) | 0))) | 0;
+                for (var i = 0; i < 8; ++i) {
+                    ($t = this._blipBuffer.samples)[outPtr + i] += NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([inStep, i]) * delta + NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([inStep + 1, i]) * delta2;
+                    ($t1 = this._blipBuffer.samples)[outPtr + (15 - i)] += NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([rev, i]) * delta + NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([rev - 1, i]) * delta2;
                 }
 
             },
             blip_add_delta_fast: function (time, delta) {
-                var $t, $t1, $t2, $t3, $t4, $t5;
-                var fixedTime = (Bridge.Int.mul(time, this._blipBuffer.factor) + this._blipBuffer.offset) | 0;
+                var $t, $t1;
+                var fixedTime = time * this._blipBuffer.factor + this._blipBuffer.offset;
 
-                var outPtr = ((this._blipBuffer.avail + (fixedTime >> NES.CPU.Machine.BeepsBoops.Blip.time_bits)) | 0);
+                var outPtr = this._blipBuffer.avail + (fixedTime >> NES.CPU.Machine.BeepsBoops.Blip.time_bits);
 
                 var delta_unit = 32768;
                 var phase_shift = 6;
-                var phase = fixedTime >> phase_shift & (((delta_unit - 1) | 0));
-                var delta2 = Bridge.Int.mul(delta, phase);
+                var phase = fixedTime >> phase_shift & (delta_unit - 1);
+                var delta2 = delta * phase;
 
                 /* Fails if buffer size was exceeded */
                 //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
 
 
-                ($t = this._blipBuffer.samples)[($t1 = ((outPtr + 8) | 0))] = (($t2 = this._blipBuffer.samples)[$t1] + (((Bridge.Int.mul(delta, delta_unit) - delta2) | 0))) | 0;
-                ($t3 = this._blipBuffer.samples)[($t4 = ((outPtr + 9) | 0))] = (($t5 = this._blipBuffer.samples)[$t4] + delta2) | 0;
+                ($t = this._blipBuffer.samples)[outPtr + 8] += delta * delta_unit - delta2;
+                ($t1 = this._blipBuffer.samples)[outPtr + 9] += delta2;
                 //out [8] += delta * delta_unit - delta2;
                 //out [9] += delta2;
             }
@@ -3211,22 +3212,22 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case 3: 
                         this._timer = data & 255;
-                        this._timer = this._timer << 4;
-                        this._timer = this._timer & 1;
+                        this._timer <<= 4;
+                        this._timer &= 1;
                         break;
                 }
             },
             Run: function (end_time) {
 
-                for (; this._time < end_time; this._time = (this._time + 1) | 0) {
+                for (; this._time < end_time; this._time++) {
                     this.UpdateAmplitude((this._dutyCycle >> (this._phase & 7) & 1));
                 }
-                this._phase = this._phase & 7;
+                this._phase &= 7;
             },
             UpdateAmplitude: function (new_amp) {
-                var delta = (Bridge.Int.mul(new_amp, this._gain) - this._amplitude) | 0;
+                var delta = new_amp * this._gain - this._amplitude;
 
-                this._amplitude = (this._amplitude + delta) | 0;
+                this._amplitude += delta;
                 this._bleeper.blip_add_delta(this._time, delta);
             },
             EndFrame: function (time) {
@@ -3238,33 +3239,33 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.Run(time);
 
                 if (!this._envStart) {
-                    this._envTimer = (this._envTimer - 1) | 0;
+                    this._envTimer--;
                     if (this._envTimer === 0) {
-                        this._envTimer = (this._volume + 1) | 0;
+                        this._envTimer = this._volume + 1;
                         if (this._envVolume > 0) {
-                            this._envVolume = (this._envVolume - 1) | 0;
+                            this._envVolume--;
                         } else {
                             this._envVolume = this._looping ? 15 : 0;
                         }
                     }
                 } else {
                     this._envStart = false;
-                    this._envTimer = (this._volume + 1) | 0;
+                    this._envTimer = this._volume + 1;
                     this._envVolume = 15;
                 }
 
                 switch (step) {
                     case 1: 
                     case 3: 
-                        this._sweepCounter = (this._sweepCounter - 1) | 0;
+                        --this._sweepCounter;
                         if (this._sweepCounter === 0) {
-                            this._sweepCounter = (this._sweepDivider + 1) | 0;
+                            this._sweepCounter = this._sweepDivider + 1;
                             if (this._sweepEnabled && this._sweepShift > 0) {
                                 var sweep = this._timer >> this._sweepShift;
                                 if (this._sweepComplement) {
-                                    this._timer = (this._timer + (this._sweepNegateFlag ? ~sweep : sweep)) | 0;
+                                    this._timer += this._sweepNegateFlag ? ~sweep : sweep;
                                 } else {
-                                    this._timer = (this._timer + (this._sweepNegateFlag ? ((~sweep + 1) | 0) : sweep)) | 0;
+                                    this._timer += this._sweepNegateFlag ? ~sweep + 1 : sweep;
                                 }
                                 this._sweepInvalid = (this._rawTimer < 8 || (this._timer & 2048) === 2048);
                                 //if (_sweepInvalid)
@@ -3275,11 +3276,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         }
                         if (this._startSweep) {
                             this._startSweep = false;
-                            this._sweepCounter = (this._sweepDivider + 1) | 0;
+                            this._sweepCounter = this._sweepDivider + 1;
 
                         }
                         if (!this._looping && this._length > 0) {
-                            this._length = (this._length - 1) | 0;
+                            this._length--;
                         }
                         break;
                 }
@@ -3461,14 +3462,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._phase = 1;
                 }
 
-                for (; this._time < end_time; this._time = (this._time + this._period) | 0) {
+                for (; this._time < end_time; this._time += this._period) {
                     var new15;
                     if (this._looping) {
                         new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
                     } else {
                         new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
                     }
-                    this.UpdateAmplitude(this._phase & Bridge.Int.mul(1, volume));
+                    this.UpdateAmplitude(this._phase & 1 * volume);
                     this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
 
 
@@ -3476,8 +3477,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             UpdateAmplitude: function (amp) {
-                var delta = (Bridge.Int.mul(amp, this.gain) - this.amplitude) | 0;
-                this.amplitude = (this.amplitude + delta) | 0;
+                var delta = amp * this.gain - this.amplitude;
+                this.amplitude += delta;
                 this._bleeper.blip_add_delta(this._time, delta);
             },
             EndFrame: function (time) {
@@ -3488,11 +3489,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.Run(time);
 
                 if (!this._envStart) {
-                    this._envTimer = (this._envTimer - 1) | 0;
+                    this._envTimer--;
                     if (this._envTimer === 0) {
-                        this._envTimer = (this._volume + 1) | 0;
+                        this._envTimer = this._volume + 1;
                         if (this._envVolume > 0) {
-                            this._envVolume = (this._envVolume - 1) | 0;
+                            this._envVolume--;
                         } else {
                             this._envVolume = this._looping ? 15 : 0;
                         }
@@ -3500,7 +3501,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     }
                 } else {
                     this._envStart = false;
-                    this._envTimer = (this._volume + 1) | 0;
+                    this._envTimer = this._volume + 1;
                     this._envVolume = 15;
                 }
 
@@ -3508,7 +3509,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 1: 
                     case 2: 
                         if (!!(!this._looping & this._length > 0)) {
-                            this._length = (this._length - 1) | 0;
+                            this._length--;
                         }
                         break;
                 }
@@ -3734,13 +3735,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this._sweepInvalid = false;
                         break;
                     case 2: 
-                        this._timer = this._timer & 1792;
-                        this._timer = this._timer | data;
+                        this._timer &= 1792;
+                        this._timer |= data;
                         this._rawTimer = this._timer;
                         break;
                     case 3: 
-                        this._timer = this._timer & 255;
-                        this._timer = this._timer | ((data & 7) << 8);
+                        this._timer &= 255;
+                        this._timer |= (data & 7) << 8;
                         this._rawTimer = this._timer;
                         this._phase = 0;
                         // setup length
@@ -3758,7 +3759,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             Run: function (end_time) {
-                var period = this._sweepEnabled ? ((((this._timer + 1) | 0)) & 2047) << 1 : ((((this._rawTimer + 1) | 0)) & 2047) << 1;
+                var period = this._sweepEnabled ? ((this._timer + 1) & 2047) << 1 : ((this._rawTimer + 1) & 2047) << 1;
 
                 if (period === 0) {
                     this._time = end_time;
@@ -3770,20 +3771,20 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
 
                 if (this._length === 0 || volume === 0 || this._sweepInvalid) {
-                    this._phase = (this._phase + ((((Bridge.Int.div((((end_time - this._time) | 0)), period)) | 0)) & 7)) | 0;
+                    this._phase += ((end_time - this._time) / period) & 7;
                     this._time = end_time;
                     this.UpdateAmplitude(0);
                     return;
                 }
-                for (; this._time < end_time; this._time = (this._time + period) | 0, this._phase = (this._phase + 1) | 0) {
-                    this.UpdateAmplitude(Bridge.Int.mul((this._dutyCycle >> (this._phase & 7) & 1), volume));
+                for (; this._time < end_time; this._time += period, this._phase++) {
+                    this.UpdateAmplitude((this._dutyCycle >> (this._phase & 7) & 1) * volume);
                 }
-                this._phase = this._phase & 7;
+                this._phase &= 7;
             },
             UpdateAmplitude: function (new_amp) {
-                var delta = (Bridge.Int.mul(new_amp, this._gain) - this._amplitude) | 0;
+                var delta = new_amp * this._gain - this._amplitude;
 
-                this._amplitude = (this._amplitude + delta) | 0;
+                this._amplitude += delta;
                 this._bleeper.blip_add_delta(this._time, delta);
             },
             EndFrame: function (time) {
@@ -3795,33 +3796,33 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.Run(time);
 
                 if (!this._envStart) {
-                    this._envTimer = (this._envTimer - 1) | 0;
+                    this._envTimer--;
                     if (this._envTimer === 0) {
-                        this._envTimer = (this._volume + 1) | 0;
+                        this._envTimer = this._volume + 1;
                         if (this._envVolume > 0) {
-                            this._envVolume = (this._envVolume - 1) | 0;
+                            this._envVolume--;
                         } else {
                             this._envVolume = this._looping ? 15 : 0;
                         }
                     }
                 } else {
                     this._envStart = false;
-                    this._envTimer = (this._volume + 1) | 0;
+                    this._envTimer = this._volume + 1;
                     this._envVolume = 15;
                 }
 
                 switch (step) {
                     case 1: 
                     case 3: 
-                        this._sweepCounter = (this._sweepCounter - 1) | 0;
+                        --this._sweepCounter;
                         if (this._sweepCounter === 0) {
-                            this._sweepCounter = (this._sweepDivider + 1) | 0;
+                            this._sweepCounter = this._sweepDivider + 1;
                             if (this._sweepEnabled && this._sweepShift > 0) {
                                 var sweep = this._timer >> this._sweepShift;
                                 if (this._sweepComplement) {
-                                    this._timer = (this._timer + (this._sweepNegateFlag ? ~sweep : sweep)) | 0;
+                                    this._timer += this._sweepNegateFlag ? ~sweep : sweep;
                                 } else {
-                                    this._timer = (this._timer + (this._sweepNegateFlag ? ((~sweep + 1) | 0) : sweep)) | 0;
+                                    this._timer += this._sweepNegateFlag ? ~sweep + 1 : sweep;
                                 }
                                 this._sweepInvalid = (this._rawTimer < 8 || (this._timer & 2048) === 2048);
                                 //if (_sweepInvalid)
@@ -3832,11 +3833,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         }
                         if (this._startSweep) {
                             this._startSweep = false;
-                            this._sweepCounter = (this._sweepDivider + 1) | 0;
+                            this._sweepCounter = this._sweepDivider + 1;
 
                         }
                         if (!this._looping && this._length > 0) {
-                            this._length = (this._length - 1) | 0;
+                            this._length--;
                         }
                         break;
                 }
@@ -3969,12 +3970,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 1: 
                         break;
                     case 2: 
-                        this._period = this._period & 1792;
-                        this._period = this._period | data;
+                        this._period &= 1792;
+                        this._period |= data;
                         break;
                     case 3: 
-                        this._period = this._period & 255;
-                        this._period = this._period | ((data & 7) << 8);
+                        this._period &= 255;
+                        this._period |= (data & 7) << 8;
                         // setup lengthhave
                         if (this._enabled) {
                             this._length = this.LengthCounts[(data >> 3) & 31];
@@ -3991,20 +3992,20 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             Run: function (end_time) {
 
-                var period = (this._period + 1) | 0;
+                var period = this._period + 1;
                 if (this._linCtr === 0 || this._length === 0 || this._period < 4) {
                     // leave it at it's current phase
                     this._time = end_time;
                     return;
                 }
 
-                for (; this._time < end_time; this._time = (this._time + period) | 0, this._phase = (((this._phase + 1) | 0)) % 32) {
-                    this.UpdateAmplitude(this._phase < 16 ? this._phase : ((31 - this._phase) | 0));
+                for (; this._time < end_time; this._time += period, this._phase = (this._phase + 1) % 32) {
+                    this.UpdateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
                 }
             },
             UpdateAmplitude: function (new_amp) {
-                var delta = (Bridge.Int.mul(new_amp, this._gain) - this._amplitude) | 0;
-                this._amplitude = (this._amplitude + delta) | 0;
+                var delta = new_amp * this._gain - this._amplitude;
+                this._amplitude += delta;
                 this._bleeper.blip_add_delta(this._time, delta);
             },
             EndFrame: function (time) {
@@ -4019,7 +4020,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 } else {
                     if (this._linCtr > 0) {
-                        this._linCtr = (this._linCtr - 1) | 0;
+                        this._linCtr--;
                     }
                 }
 
@@ -4031,7 +4032,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 1: 
                     case 3: 
                         if (this._length > 0 && !this._looping) {
-                            this._length = (this._length - 1) | 0;
+                            this._length--;
                         }
                         break;
                 }
@@ -4760,12 +4761,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 } while (this.frameOn);
 
                 this._totalCPUClocks = this._cpu.Clock;
-                this._sharedWave;
-                {
-                    //soundBopper.FlushFrame(_totalCPUClocks);
-                    //soundBopper.EndFrame(_totalCPUClocks);
-
-                }
+                //lock (_sharedWave)
+                //{
+                //    //soundBopper.FlushFrame(_totalCPUClocks);
+                //    //soundBopper.EndFrame(_totalCPUClocks);
+                //}
 
                 if (this.PadOne != null) {
                     this.PadOne.NES$CPU$Machine$IControlPad$refresh();
@@ -5668,7 +5668,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             NextEventAt: {
                 get: function () {
-                    return ((Bridge.Int.mul(7445, (((this.lastFrameHit + 1) | 0))) - this.lastClock) | 0);
+                    return 7445 * (this.lastFrameHit + 1) - this.lastClock;
                 }
             }
         },
@@ -5692,7 +5692,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         ctors: {
             init: function () {
                 this.registers = new NES.CPU.Machine.PortQueueing.QueuedPort();
-                this._sampleRate = 44100;
+                this._sampleRate = 11025;
                 this.square0Gain = 873;
                 this.square1Gain = 873;
                 this.triangleGain = 1004;
@@ -5705,14 +5705,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.$initialize();
 
                 this.writer = output;
-                this._sampleRate = Bridge.Int.clip32(output.Frequency);
+                this._sampleRate = output.Frequency;
                 this.RebuildSound();
             }
         },
         methods: {
             RebuildSound: function () {
                 var $t;
-                this.myBlipper = new NES.CPU.Machine.BeepsBoops.Blip(((Bridge.Int.div(this._sampleRate, 5)) | 0));
+                this.myBlipper = new NES.CPU.Machine.BeepsBoops.Blip(this._sampleRate / 5);
                 this.myBlipper.blip_set_rates(NES.CPU.Machine.BeepsBoops.Bopper.clock_rate, this._sampleRate);
 
 
@@ -5747,7 +5747,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._interruptRaised = false;
                 }
                 //DoSetByte( Clock,  address,  data);
-                this.registers.enqueue(new NES.CPU.Machine.PortQueueing.PortWriteEntry(Clock, (address & 65535), (data & 255)));
+                this.registers.enqueue(new NES.CPU.Machine.PortQueueing.PortWriteEntry(Clock, address, data));
 
 
             },
@@ -5757,25 +5757,25 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 16385: 
                     case 16386: 
                     case 16387: 
-                        this.square0.WriteRegister(((address - 16384) | 0), data, Clock);
+                        this.square0.WriteRegister(address - 16384, data, Clock);
                         break;
                     case 16388: 
                     case 16389: 
                     case 16390: 
                     case 16391: 
-                        this.square1.WriteRegister(((address - 16388) | 0), data, Clock);
+                        this.square1.WriteRegister(address - 16388, data, Clock);
                         break;
                     case 16392: 
                     case 16393: 
                     case 16394: 
                     case 16395: 
-                        this.triangle.WriteRegister(((address - 16392) | 0), data, Clock);
+                        this.triangle.WriteRegister(address - 16392, data, Clock);
                         break;
                     case 16396: 
                     case 16397: 
                     case 16398: 
                     case 16399: 
-                        this.noise.WriteRegister(((address - 16396) | 0), data, Clock);
+                        this.noise.WriteRegister(address - 16396, data, Clock);
                         break;
                     case 16400: 
                     case 16401: 
@@ -5810,7 +5810,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this.lastFrameHit = 0;
                     //EndFrame(time);
                 } else {
-                    this.lastFrameHit = (this.lastFrameHit + 1) | 0;
+                    this.lastFrameHit++;
                 }
 
 
@@ -5835,7 +5835,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 this.writer.Locker;
                 {
-                    var count = this.myBlipper.ReadBytes(this.writer.SharedBuffer, ((Bridge.Int.div(this.writer.SharedBuffer.length, 2)) | 0), 0);
+                    var count = this.myBlipper.ReadBytes(this.writer.SharedBuffer, this.writer.SharedBuffer.length / 2, 0);
                     this.writer.WavesWritten(count);
                 }
             },
@@ -5846,7 +5846,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 while (this.registers.Count > 0) {
                     currentEntry = this.registers.dequeue();
                     if (frameClocker > 7445) {
-                        frameClocker = (frameClocker - 7445) | 0;
+                        frameClocker -= 7445;
                         this.UpdateFrame(7445);
                     }
                     this.DoSetByte(currentEntry.time, currentEntry.address, currentEntry.data);
@@ -5861,7 +5861,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this.UpdateFrame(7445);
                 }
                 while (this.lastFrameHit > 0) {
-                    this.UpdateFrame(Bridge.Int.mul(7445, (((this.lastFrameHit + 1) | 0))));
+                    this.UpdateFrame(7445 * (this.lastFrameHit + 1));
                 }
             },
             HandleEvent: function (Clock) {
@@ -6909,111 +6909,146 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              * @return  {void}
              */
             DrawTo: function (cpuClockNum) {
-                var frClock = Bridge.Int.mul((((cpuClockNum - this.lastcpuClock) | 0)), 3);
+                var frClock = (cpuClockNum - this.lastcpuClock) * 3;
 
                 if (this.frameClock < 6820) {
                     // if the frameclock +frClock is in vblank (< 6820) dont do nothing, just update it
-                    if (((this.frameClock + frClock) | 0) < 6820) {
-                        this.frameClock = (this.frameClock + frClock) | 0;
+                    if (this.frameClock + frClock < 6820) {
+                        this.frameClock += frClock;
                         frClock = 0;
                     } else {
-                        frClock = (frClock + (((this.frameClock - 6820) | 0))) | 0;
+                        frClock += this.frameClock - 6820;
                         this.frameClock = 6820;
                     }
                 }
-                for (var i = 0; i < frClock; i = (i + 1) | 0) {
-                    this.BumpScanline();
+                for (var i = 0; i < frClock; ++i) {
+                    switch (this.frameClock++) {
+                        case 0: 
+                            //frameFinished();
+                            break;
+                        case 6820: 
+                            this.ClearVINT();
+                            this.frameOn = true;
+                            //
+                            this.ClearNESPalette();
+                            this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$ResetBankStartCache();
+                            // setFrameOn();
+                            if (this.spriteChanges) {
+                                this.UnpackSprites();
+                                this.spriteChanges = false;
+                            }
+                            break;
+                        case 7125: 
+                            break;
+                        case 7161: 
+                            //lockedVScroll = _vScroll;
+                            this.vbufLocation = 0;
+                            //curBufPos = bufStart;
+                            this.xNTXor = 0;
+                            this.yNTXor = 0;
+                            this.currentXPosition = 0;
+                            this.currentYPosition = 0;
+                            break;
+                        case NES.CPU.PPUClasses.PixelWhizzler.frameClockEnd: 
+                            //if (fillRGB) FillBuffer();
+                            this.shouldRender = true;
+                            this.frameFinished();
+                            this.SetupVINT();
+                            this.frameOn = false;
+                            this.frameClock = 0;
+                            if (this._isDebugging) {
+                                this.events.clear();
+                            }
+                            break;
+                    }
+
+                    if (this.frameClock >= 7161 && this.frameClock <= 89342) {
+
+
+                        if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
+                            /* update x position */
+                            this.xPosition = this.currentXPosition + this.lockedHScroll;
+
+
+                            if ((this.xPosition & 7) === 0) {
+                                this.xNTXor = ((this.xPosition & 256) === 256) ? 1024 : 0;
+                                this.xPosition &= 255;
+
+                                /* fetch next tile */
+                                var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
+
+                                var xTilePosition = this.xPosition >> 3;
+
+                                var tileRow = (this.yPosition >> 3) % 30 << 5;
+
+                                var tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+
+                                var TileIndex = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, tileNametablePosition);
+
+                                var patternTableYOffset = this.yPosition & 7;
+
+                                var patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+
+                                this.patternEntry = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, patternID);
+                                this.patternEntryByte2 = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, patternID + 8);
+
+                                this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
+                                /* end fetch next tile */
+
+                            }
+
+                            /* draw pixel */
+                            var tilePixel = this._tilesAreVisible ? this.GetNameTablePixel() : 0;
+                            var foregroundPixel = { v : false };
+                            var spritePixel = this._spritesAreVisible ? this.GetSpritePixel(foregroundPixel) : 0;
+
+                            if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
+                                this.hitSprite = true;
+                                this._PPUStatus = this._PPUStatus | 64;
+                            }
+
+                            var x = NES.CPU.PPUClasses.PixelWhizzler.pal[this._palette[(foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel]];
+                            //rgb32OutBuffer[vbufLocation] = x;
+                            this.byteOutBuffer[this.vbufLocation * 4] = x;
+                            this.byteOutBuffer[(this.vbufLocation * 4) + 1] = x >> 8;
+                            this.byteOutBuffer[(this.vbufLocation * 4) + 2] = x >> 16;
+                            this.byteOutBuffer[(this.vbufLocation * 4) + 3] = 255; // (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
+
+                            this.vbufLocation++;
+                        }
+                        if (this.currentXPosition === 256) {
+                            this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$UpdateScanlineCounter();
+                        }
+                        this.currentXPosition++;
+
+                        if (this.currentXPosition > 340) {
+
+                            this.currentXPosition = 0;
+                            this.currentYPosition++;
+
+                            this.PreloadSprites(this.currentYPosition);
+                            if (this.spritesOnThisScanline >= 7) {
+                                this._PPUStatus = this._PPUStatus | 32;
+                            }
+
+                            this.lockedHScroll = this._hScroll;
+
+                            this.UpdatePixelInfo();
+                            this.RunNewScanlineEvents();
+
+                        }
+
+                    }
+
                 }
                 this.lastcpuClock = cpuClockNum;
             },
             BumpScanline: function () {
-                switch (Bridge.identity(this.frameClock, (this.frameClock = (this.frameClock + 1) | 0))) {
-                    case 0: 
-                        //frameFinished();
-                        break;
-                    case 6820: 
-                        this.ClearVINT();
-                        this.frameOn = true;
-                        //
-                        this.ClearNESPalette();
-                        this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$ResetBankStartCache();
-                        // setFrameOn();
-                        if (this.spriteChanges) {
-                            this.UnpackSprites();
-                            this.spriteChanges = false;
-                        }
-                        break;
-                    case 7125: 
-                        break;
-                    case 7161: 
-                        //lockedVScroll = _vScroll;
-                        this.vbufLocation = 0;
-                        //curBufPos = bufStart;
-                        this.xNTXor = 0;
-                        this.yNTXor = 0;
-                        this.currentXPosition = 0;
-                        this.currentYPosition = 0;
-                        break;
-                    case NES.CPU.PPUClasses.PixelWhizzler.frameClockEnd: 
-                        //if (fillRGB) FillBuffer();
-                        this.shouldRender = true;
-                        this.frameFinished();
-                        this.SetupVINT();
-                        this.frameOn = false;
-                        this.frameClock = 0;
-                        if (this._isDebugging) {
-                            this.events.clear();
-                        }
-                        break;
-                }
-
-                if (this.frameClock >= 7161 && this.frameClock <= 89342) {
-
-
-                    if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
-                        this.UpdateXPosition();
-                        this.DrawPixel();
-
-                        this.vbufLocation = (this.vbufLocation + 1) | 0;
-                    }
-                    if (this.currentXPosition === 256) {
-                        this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$UpdateScanlineCounter();
-                    }
-                    this.currentXPosition = (this.currentXPosition + 1) | 0;
-
-                    if (this.currentXPosition > 340) {
-
-                        this.currentXPosition = 0;
-                        this.currentYPosition = (this.currentYPosition + 1) | 0;
-
-                        this.PreloadSprites(this.currentYPosition);
-                        if (this.spritesOnThisScanline >= 7) {
-                            this._PPUStatus = this._PPUStatus | 32;
-                        }
-
-                        this.lockedHScroll = this._hScroll;
-
-                        this.UpdatePixelInfo();
-                        this.RunNewScanlineEvents();
-
-                    }
-
-                }
 
 
             },
             UpdateXPosition: function () {
-                this.xPosition = (this.currentXPosition + this.lockedHScroll) | 0;
 
-
-                if ((this.xPosition & 7) === 0) {
-                    this.xNTXor = ((this.xPosition & 256) === 256) ? 1024 : 0;
-
-
-                    this.xPosition = this.xPosition & 255;
-
-                    this.FetchNextTile();
-                }
             },
             FillBuffer: function () {
                 var $t, $t1;
@@ -7056,22 +7091,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             DrawPixel: function () {
 
-                var tilePixel = this._tilesAreVisible ? this.GetNameTablePixel() : 0;
-                var foregroundPixel = { v : false };
-                var spritePixel = this._spritesAreVisible ? this.GetSpritePixel(foregroundPixel) : 0;
-
-                if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
-                    this.hitSprite = true;
-                    this._PPUStatus = this._PPUStatus | 64;
-                }
-
-                var pixel = (foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel;
-                var x = NES.CPU.PPUClasses.PixelWhizzler.pal[this._palette[pixel]];
-                //rgb32OutBuffer[vbufLocation] = x;
-                this.byteOutBuffer[Bridge.Int.mul(this.vbufLocation, 4)] = x & 255;
-                this.byteOutBuffer[(((Bridge.Int.mul(this.vbufLocation, 4)) + 1) | 0)] = (x >> 8) & 255;
-                this.byteOutBuffer[(((Bridge.Int.mul(this.vbufLocation, 4)) + 2) | 0)] = (x >> 16) & 255;
-                this.byteOutBuffer[(((Bridge.Int.mul(this.vbufLocation, 4)) + 3) | 0)] = 255; // (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
             },
             UpdatePixelInfo: function () {
                 this.nameTableMemoryStart = Bridge.Int.mul(this.nameTableBits, 1024);

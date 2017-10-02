@@ -15,18 +15,17 @@ import * as THREE from 'three'
 export class ChiChiComponent implements OnInit {
     private renderer: THREE.WebGLRenderer;
     private dkrom: number[];
-    private http: Http;
     @ViewChild('chichiPig') canvasRef: ElementRef;
     private canvasCtx: CanvasRenderingContext2D;
     private machine: NES.CPU.nitenedo.NESMachine;
-    private imgData: ImageData;
     private vbuffer: Uint8Array = new Uint8Array(256 * 256 * 4);
+
     private text: THREE.DataTexture;
     private draw: boolean;
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
-    constructor(http: Http, private nesService: Emulator) {
-        this.http = http;
+
+    constructor(private http: Http, private nesService: Emulator) {
     }
 
     private setupScene(): void {
@@ -66,7 +65,6 @@ export class ChiChiComponent implements OnInit {
 
     ngOnInit(): void {
         // this.canvasCtx = this.canvasRef.nativeElement.getContext('2d');
-        this.imgData = new ImageData(256, 256); //this.canvasCtx.createImageData(256, 256);
         this.setupScene();
         
         this.nesService.SetVideoBuffer(this.vbuffer);
@@ -74,7 +72,7 @@ export class ChiChiComponent implements OnInit {
             this.renderScene();
         });
 
-        this.http.get('/assets/smb.nes', {
+        this.http.get('/assets/Battletoads (U) [!].nes', {
             responseType: ResponseContentType.Blob
         }).map(res => {
             return res.blob();
@@ -85,8 +83,6 @@ export class ChiChiComponent implements OnInit {
                 fileReader.onload = (e) => {
                     this.dkrom = Array.from(new Uint8Array(fileReader.result));
                     this.nesService.LoadRom(this.dkrom);
-                    this.nesService.StartEmulator();
-                    
                 };
                 fileReader.readAsArrayBuffer(blob);
             }).subscribe();

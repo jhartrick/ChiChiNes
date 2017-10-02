@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bridge;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,6 +44,7 @@ namespace NES.CPU.PPUClasses
             // allow a setter to implement spriteRAM DMA xfers
         }
 
+        
         public void CopySprites(ref byte[] source, int copyFrom)
         {
             // should copy 0x100 items from source to spriteRAM, 
@@ -140,6 +142,7 @@ namespace NES.CPU.PPUClasses
             return 0;
         }
 
+        
         protected byte WhissaSpritePixel(int patternTableIndex, int x, int y, ref NESSprite sprite, int tileIndex)
         {
             // 8x8 tile

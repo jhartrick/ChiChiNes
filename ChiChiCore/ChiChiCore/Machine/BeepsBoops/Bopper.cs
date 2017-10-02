@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using NES.CPU.Fastendo;
 using NES.CPU.Machine.PortQueueing;
+using Bridge;
 
 namespace NES.CPU.Machine.BeepsBoops
 {
@@ -18,6 +19,7 @@ namespace NES.CPU.Machine.BeepsBoops
         bool EnableTriangle { get; set; }
         bool EnableNoise { get; set; }
     }
+    [Rules(Integer = IntegerRule.Plain)]
 
     public class Bopper : IClockedMemoryMappedIOElement, IAPU
     {
@@ -37,7 +39,7 @@ namespace NES.CPU.Machine.BeepsBoops
 
         const int master_vol = 65536 / 15;
         // 44.1 kHz sample rate
-        int _sampleRate = 44100;
+        int _sampleRate = 11025;
         // 1.78 MHz clock rate 
         const double clock_rate = 1789772.727; // 1.78 MHz clock rate 
         
