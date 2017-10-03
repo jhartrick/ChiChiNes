@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+﻿import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Http, ResponseContentType, Response } from '@angular/http';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Emulator } from './services/NESService'
@@ -12,12 +12,13 @@ import * as THREE from 'three'
     styleUrls: ['./chichi.component.css'],
     providers: [Emulator ]
 })
+
 export class ChiChiComponent implements OnInit {
+
     private renderer: THREE.WebGLRenderer;
     private dkrom: number[];
     @ViewChild('chichiPig') canvasRef: ElementRef;
     private canvasCtx: CanvasRenderingContext2D;
-    private machine: NES.CPU.nitenedo.NESMachine;
     private vbuffer: Uint8Array = new Uint8Array(256 * 256 * 4);
 
     private text: THREE.DataTexture;
@@ -26,6 +27,16 @@ export class ChiChiComponent implements OnInit {
     private camera: THREE.PerspectiveCamera;
 
     constructor(private http: Http, private nesService: Emulator) {
+    }
+
+    @HostListener('document:keydown', ['$event'])
+    handleKeyDownEvent(event: KeyboardEvent) {
+        this.nesService.handleKeyDownEvent(event);
+    }
+
+    @HostListener('document:keyup', ['$event'])
+    handleKeyUpEvent(event: KeyboardEvent) {
+        this.nesService.handleKeyUpEvent(event);
     }
 
     private setupScene(): void {
@@ -72,7 +83,7 @@ export class ChiChiComponent implements OnInit {
             this.renderScene();
         });
 
-        this.http.get('/assets/Battletoads (U) [!].nes', {
+        this.http.get('/assets/smb.nes', {
             responseType: ResponseContentType.Blob
         }).map(res => {
             return res.blob();
@@ -92,4 +103,5 @@ export class ChiChiComponent implements OnInit {
         this.text.needsUpdate = true;
         this.renderer.render(this.scene, this.camera);
     }
+
 }

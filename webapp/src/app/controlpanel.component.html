@@ -1,5 +1,6 @@
 ﻿<div style="display:block;">
-  {{ powerstate }}
-  <button (click)="poweron()">ON</button>
-  <button (click)="poweroff()">OFF</button>
+  
+  <button (click)="powertoggle()">{{ powerstate }}</button>
+  <button (click)="reset()">Reset</button>
+  <input type="file" id="input" (change)="handleFile($event)">
 </div>

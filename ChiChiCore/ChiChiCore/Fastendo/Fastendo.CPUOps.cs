@@ -16,14 +16,14 @@ namespace NES.CPU.Fastendo
             //negativeResult = (data & 0x80) == 0x80;
 
             if ((data & 0xFF) == 0)
-                _statusRegister |= (int)CPUStatusMasks.ZeroResultMask;
+                _statusRegister |= 0x02;//(int)CPUStatusMasks.ZeroResultMask;
             else
-                _statusRegister &= ~((int)CPUStatusMasks.ZeroResultMask);
+                _statusRegister &= ~0x02;// ((int)CPUStatusMasks.ZeroResultMask);
 
             if ((data & 0x80) == 0x80)
-                _statusRegister |= (int)CPUStatusMasks.NegativeResultMask;
+                _statusRegister |= 0x80; // (int)CPUStatusMasks.NegativeResultMask;
             else
-                _statusRegister &= ~((int)CPUStatusMasks.NegativeResultMask);
+                _statusRegister &= ~0x80;// ((int)CPUStatusMasks.NegativeResultMask);
             //SetFlag(CPUStatusBits.ZeroResult, (data & 0xFF) == 0);
             //SetFlag(CPUStatusBits.NegativeResult, (data & 0x80) == 0x80);
         }
@@ -97,7 +97,7 @@ namespace NES.CPU.Fastendo
 
         public void DEC()
         {
-            int val = (int)DecodeOperand();
+            byte val = (byte)DecodeOperand();
             val--;
             SetByte(DecodeAddress(), val);
             SetZNFlags( val);
@@ -105,7 +105,7 @@ namespace NES.CPU.Fastendo
 
         public void INC()
         {
-            int val = (int)DecodeOperand();
+            byte val = (byte)DecodeOperand();
             val++;
             SetByte(DecodeAddress(), val );
             SetZNFlags(val);
@@ -159,7 +159,7 @@ namespace NES.CPU.Fastendo
         {
             // start the read process
 
-            int data = DecodeOperand() ;
+            uint data = (uint)DecodeOperand() ;
 
             int carryFlag = ((_statusRegister ^ 0x01) & 0x1);
 

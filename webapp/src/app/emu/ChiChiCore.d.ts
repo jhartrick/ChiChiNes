@@ -346,7 +346,7 @@ declare module NES.CPU.Machine {
      * @implements  NES.CPU.Machine.IControlPad
      */
     export interface NullControlPad extends NES.CPU.Machine.IControlPad {
-        CurrentByte: number;
+        currentByte: number;
         refresh(): void;
         getByte(clock: number): number;
         setByte(clock: number, data: number): void;
@@ -360,7 +360,7 @@ declare module NES.CPU.Machine {
 
     export interface IControlPad extends System.IDisposable {
         NES$CPU$Machine$IControlPad$CurrentByte: number;
-        CurrentByte: number;
+        currentByte: number;
         NES$CPU$Machine$IControlPad$refresh(): void;
         refresh(): void;
         NES$CPU$Machine$IControlPad$getByte(clock: number): number;

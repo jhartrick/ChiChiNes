@@ -1783,16 +1783,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //negativeResult = (data & 0x80) == 0x80;
 
                 if ((data & 255) === 0) {
-                    this._statusRegister = this._statusRegister | (NES.CPU.Fastendo.CPUStatusMasks.ZeroResultMask);
+                    this._statusRegister = this._statusRegister | 2;
                 } else {
                     this._statusRegister = this._statusRegister & (-3);
-                }
+                } // ((int)CPUStatusMasks.ZeroResultMask);
 
                 if ((data & 128) === 128) {
-                    this._statusRegister = this._statusRegister | (NES.CPU.Fastendo.CPUStatusMasks.NegativeResultMask);
+                    this._statusRegister = this._statusRegister | 128;
                 } else {
                     this._statusRegister = this._statusRegister & (-129);
-                }
+                } // ((int)CPUStatusMasks.NegativeResultMask);
                 //SetFlag(CPUStatusBits.ZeroResult, (data & 0xFF) == 0);
                 //SetFlag(CPUStatusBits.NegativeResult, (data & 0x80) == 0x80);
             },
@@ -1838,14 +1838,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             DEC: function () {
-                var val = this.DecodeOperand();
-                val = (val - 1) | 0;
+                var val = (this.DecodeOperand()) & 255;
+                val = (val - 1) & 255;
                 this.SetByte$1(this.DecodeAddress(), val);
                 this.SetZNFlags(val);
             },
             INC: function () {
-                var val = this.DecodeOperand();
-                val = (val + 1) | 0;
+                var val = (this.DecodeOperand()) & 255;
+                val = (val + 1) & 255;
                 this.SetByte$1(this.DecodeAddress(), val);
                 this.SetZNFlags(val);
             },
@@ -1887,19 +1887,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SBC: function () {
                 // start the read process
 
-                var data = this.DecodeOperand();
+                var data = (this.DecodeOperand()) >>> 0;
 
                 var carryFlag = ((this._statusRegister ^ 1) & 1);
 
-                //            uint result = (uint)(_accumulator - data - carryFlag) ;
-                var result = (((((((((this._accumulator - data) | 0)) | 0) - carryFlag) | 0)) | 0)) >> 0;
+                var result = System.Int64.clipu32(System.Int64(this._accumulator).sub(System.Int64(data)).sub(System.Int64(carryFlag)));
 
                 // set overflow flag if sign bit of accumulator changed
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, ((this._accumulator ^ result) & 128) === 128 && ((this._accumulator ^ data) & 128) === 128);
+                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, ((System.Int64(this._accumulator).xor(System.Int64(result))).and(System.Int64(128))).equals(System.Int64(128)) && ((System.Int64(this._accumulator).xor(System.Int64(data))).and(System.Int64(128))).equals(System.Int64(128)));
 
                 this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (result < 256));
 
-                this._accumulator = result;
+                this._accumulator = result | 0;
                 this.SetZNFlags(this._accumulator);
 
 
@@ -2261,7 +2260,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 16384: 
                         switch (address) {
                             case 16406: 
-                                //result = _padOne.GetByte(clock, address);
+                                result = this._padOne.GetByte(this.clock, address);
                                 break;
                             case 16407: 
                                 //result = _padTwo.GetByte(clock, address);
@@ -2365,7 +2364,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                                 this._currentInstruction_ExtraTiming = (this._currentInstruction_ExtraTiming + 512) | 0;
                                 break;
                             case 16406: 
-                                // _padOne.SetByte(clock, address, data & 1);
+                                this._padOne.SetByte(this.clock, address, data & 1);
                                 //  _padTwo.SetByte(clock, address, data & 1);
                                 break;
                         }

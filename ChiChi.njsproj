@@ -53,6 +53,7 @@
     <Content Include="src\favicon.ico" />
     <Content Include="src\tsconfig.app.json" />
     <Content Include="src\tsconfig.spec.json" />
+    <TypeScriptCompile Include="src\app-typings\app_typings.d.ts" />
     <TypeScriptCompile Include="src\app\controlpanel.component.ts" />
     <TypeScriptCompile Include="src\app\emu\bridge.d.ts" />
     <TypeScriptCompile Include="src\app\emu\ChiChiCore.d.ts" />
@@ -106,6 +107,7 @@
     <Folder Include="src\assets" />
     <Folder Include="src\environments" />
     <Folder Include="src\app\services\" />
+    <Folder Include="src\app-typings\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <!--Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them.-->
