@@ -29,7 +29,7 @@ namespace NES.CPU.Fastendo
         }
 
         #region load/store operations
-        public void LDA()
+        private void LDA()
         {
 
             _accumulator = DecodeOperand();
@@ -38,50 +38,50 @@ namespace NES.CPU.Fastendo
 
         }
 
-        public void LDX()
+        private void LDX()
         {
 
             _indexRegisterX = DecodeOperand(); 
             SetZNFlags( _indexRegisterX);
         }
 
-        public void LDY()
+        private void LDY()
         {
             _indexRegisterY = DecodeOperand();
             SetZNFlags( _indexRegisterY);
         }
 
-        public void STA()
+        private void STA()
         {
             SetByte(DecodeAddress(), _accumulator);
         }
 
-        public void STX()
+        private void STX()
         {
             SetByte(DecodeAddress(), _indexRegisterX);
         }
 
-        public void STY()
+        private void STY()
         {
             SetByte(DecodeAddress(), _indexRegisterY);
         }
         #endregion
 
         #region status bit operations
-        public void SED()
+        private void SED()
         {
             SetFlag(CPUStatusMasks.DecimalModeMask, true);
             // StatusRegister = StatusRegister | 0x8;
         }
 
-        public void CLD()
+        private void CLD()
         {
             SetFlag(CPUStatusMasks.DecimalModeMask, false);
 //            StatusRegister = StatusRegister & 0xF7;
         }
         #endregion
 
-        public void JMP()
+        private void JMP()
         {
             // 6052 indirect jmp bug
             if (_currentInstruction_AddressingMode == AddressingModes.Indirect 
@@ -95,7 +95,7 @@ namespace NES.CPU.Fastendo
             }
         }
 
-        public void DEC()
+        private void DEC()
         {
             byte val = (byte)DecodeOperand();
             val--;
@@ -103,7 +103,7 @@ namespace NES.CPU.Fastendo
             SetZNFlags( val);
         }
 
-        public void INC()
+        private void INC()
         {
             byte val = (byte)DecodeOperand();
             val++;
@@ -111,7 +111,7 @@ namespace NES.CPU.Fastendo
             SetZNFlags(val);
         }
 
-        public void ADC()
+        private void ADC()
         {
             // start the read process
             int data = DecodeOperand();
@@ -134,7 +134,7 @@ namespace NES.CPU.Fastendo
 
         }
 
-        public void LSR()
+        private void LSR()
         {
             int rst = DecodeOperand();
             //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
@@ -155,7 +155,11 @@ namespace NES.CPU.Fastendo
             }
         }
 
-        public void SBC()
+        private void SKB() {
+            // _programCounter++;
+        }
+
+        private void SBC()
         {
             // start the read process
 
@@ -178,26 +182,26 @@ namespace NES.CPU.Fastendo
 
         }
 
-        public void AND()
+        private void AND()
         {
             _accumulator = (_accumulator & DecodeOperand());
             SetZNFlags(_accumulator);
         }
 
-        public void ORA()
+        private void ORA()
         {
 
             _accumulator = (_accumulator | DecodeOperand());
             SetZNFlags(_accumulator);
         }
 
-        public void EOR()
+        private void EOR()
         {
             _accumulator = (_accumulator ^ DecodeOperand());
             SetZNFlags( Accumulator);
         }
 
-        public void ASL()
+        private void ASL()
         {
             int data = DecodeOperand();
             // set carry flag
@@ -219,7 +223,7 @@ namespace NES.CPU.Fastendo
             SetZNFlags( data);
         }
 
-        public void BIT()
+        private void BIT()
         {
 
             int operand = DecodeOperand();
@@ -255,31 +259,31 @@ namespace NES.CPU.Fastendo
 
         }
 
-        public void SEC()
+        private void SEC()
         {
             // carry flag bit 0
             SetFlag(CPUStatusMasks.CarryMask, true);
         }
 
-        public void CLC()
+        private void CLC()
         {
             SetFlag(CPUStatusMasks.CarryMask, false);
         }
 
-        public void SEI()
+        private void SEI()
         {
             //StatusRegister = StatusRegister | 0x4;
             SetFlag(CPUStatusMasks.InterruptDisableMask, true);
         }
 
-        public void CLI()
+        private void CLI()
         {
 //            StatusRegister = StatusRegister & 0xFB;
             SetFlag(CPUStatusMasks.InterruptDisableMask, false);
         }
 
 
-        public void CLV()
+        private void CLV()
         {
             SetFlag(CPUStatusMasks.OverflowMask, false);
 
@@ -292,25 +296,25 @@ namespace NES.CPU.Fastendo
             SetZNFlags( data & 0xFF);
         }
 
-        public void CMP()
+        private void CMP()
         {
             int data = (Accumulator + 0x100 - DecodeOperand());
             Compare(data);
         }
 
-        public void CPX()
+        private void CPX()
         {
             int data = (_indexRegisterX + 0x100 - DecodeOperand());
             Compare(data);
         }
 
-        public void CPY()
+        private void CPY()
         {
             int data = (_indexRegisterY + 0x100 - DecodeOperand());
             Compare(data);
         }
 
-        public void NOP()
+        private void NOP()
         {
             if (_currentInstruction_AddressingMode == AddressingModes.AbsoluteX)
             {
@@ -342,50 +346,50 @@ namespace NES.CPU.Fastendo
 
         }
 
-        public void BCC()
+        private void BCC()
         {
             
             if ((_statusRegister & 0x1) != 0x1)
                 Branch();
         }
 
-        public void BCS()
+        private void BCS()
         {
             if ((_statusRegister & 0x1) == 0x1)
                 Branch();
         }
 
-        public void BPL()
+        private void BPL()
         {
             if ((_statusRegister & 0x80) != 0x80)
                 Branch();
         }
 
-        public void BMI()
+        private void BMI()
         {
             if ((_statusRegister & 0x80) == 0x80)
                 Branch();
         }
 
-        public void BVC()
+        private void BVC()
         {
             if ((_statusRegister & 0x40) != 0x40)
                 Branch();
         }
 
-        public void BVS()
+        private void BVS()
         {
             if ((_statusRegister & 0x40) == 0x40)
                 Branch();
         }
 
-        public void BNE()
+        private void BNE()
         {
             if ((_statusRegister & 0x2) != 0x2)
                 Branch();
         }
 
-        public void BEQ()
+        private void BEQ()
         {
             if ((_statusRegister & 0x2) == 0x2)
                 Branch();
@@ -394,28 +398,28 @@ namespace NES.CPU.Fastendo
 
         #region Register instructions
 
-        public void DEX()
+        private void DEX()
         {
             _indexRegisterX = _indexRegisterX - 1;
             _indexRegisterX = _indexRegisterX & 0xFF;
             SetZNFlags( _indexRegisterX);
         }
 
-        public void DEY()
+        private void DEY()
         {
             _indexRegisterY = _indexRegisterY - 1;
             _indexRegisterY = _indexRegisterY & 0xFF;
             SetZNFlags( _indexRegisterY);
         }
 
-        public void INX()
+        private void INX()
         {
             _indexRegisterX = _indexRegisterX + 1;
             _indexRegisterX = _indexRegisterX & 0xFF;
             SetZNFlags( _indexRegisterX);
         }
 
-        public void INY()
+        private void INY()
         {
             _indexRegisterY = _indexRegisterY + 1;
             _indexRegisterY = _indexRegisterY & 0xFF;
@@ -423,54 +427,54 @@ namespace NES.CPU.Fastendo
         }
 
 
-        public void TAX()
+        private void TAX()
         {
             _indexRegisterX = _accumulator;
             SetZNFlags( _indexRegisterX);
 
         }
 
-        public void TXA()
+        private void TXA()
         {
             _accumulator = _indexRegisterX;
             SetZNFlags(_accumulator);
         }
 
-        public void TAY()
+        private void TAY()
         {
             _indexRegisterY = _accumulator;
             SetZNFlags( _indexRegisterY);
         }
 
-        public void TYA()
+        private void TYA()
         {
             _accumulator = _indexRegisterY;
             SetZNFlags(_accumulator);
         }
 
-        public void TXS()
+        private void TXS()
         {
             _stackPointer = _indexRegisterX;
         }
-        public void TSX()
+        private void TSX()
         {
             _indexRegisterX = _stackPointer;
             SetZNFlags( _indexRegisterX);
         }
         #endregion
 
-        public void PHA()
+        private void PHA()
         {
             PushStack(_accumulator);
         }
 
-        public void PLA()
+        private void PLA()
         {
             _accumulator = PopStack();
             SetZNFlags(_accumulator);
         }
 
-        public void PHP()
+        private void PHP()
         {
              //PHP and BRK push the current status with bits 4 and 5 set on the stack; 
             // BRK then sets the I flag.
@@ -478,12 +482,12 @@ namespace NES.CPU.Fastendo
             PushStack(newStatus);
         }
 
-        public void PLP()
+        private void PLP()
         {
             _statusRegister = PopStack(); // | 0x20;
         }
 
-        public void JSR()
+        private void JSR()
         {
             PushStack( (_programCounter >> 8) & 0xFF);
             PushStack((_programCounter - 1) & 0xFF);
@@ -491,7 +495,7 @@ namespace NES.CPU.Fastendo
             _programCounter = DecodeAddress();
         }
 
-        public void ROR()
+        private void ROR()
         {
             int data = DecodeOperand();
 
@@ -521,7 +525,7 @@ namespace NES.CPU.Fastendo
             }
         }
 
-        public void ROL()
+        private void ROL()
         {
             int data= DecodeOperand();
 
@@ -547,7 +551,7 @@ namespace NES.CPU.Fastendo
             }
         }
 
-        public void RTS()
+        private void RTS()
         {
             int high, low;
             low = (PopStack() + 1) & 0xFF;
@@ -555,7 +559,7 @@ namespace NES.CPU.Fastendo
             _programCounter = ((high << 8) | low) ;
         }
 
-        public void RTI()
+        private void RTI()
         {
             _statusRegister = PopStack();// | 0x20;
             int low = PopStack();
@@ -563,7 +567,7 @@ namespace NES.CPU.Fastendo
             _programCounter = ((256 * high) + low);
         }
 
-        public void BRK()
+        private void BRK()
         {
             //BRK causes a non-maskable interrupt and increments the program counter by one. 
             //Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to replace a two-byte instruction 
@@ -592,6 +596,83 @@ namespace NES.CPU.Fastendo
 
             _programCounter = lowByte + highByte * 0x100;
         }
+
+        private void AAC() {
+            //AND byte with accumulator. If result is negative then carry is set.
+            //Status flags: N,Z,C
+            _accumulator = DecodeOperand() & _accumulator & 0xFF;
+
+            SetFlag(CPUStatusMasks.CarryMask, (_accumulator & 0x80) == 0x80);
+
+            SetZNFlags(_accumulator);
+
+        }
+
+        private void ASR()
+        {
+            //AND byte with accumulator, then shift right one bit in accumu-lator.
+            //Status flags: N,Z,C
+            _accumulator = DecodeOperand() & _accumulator;
+
+            SetFlag(CPUStatusMasks.CarryMask, (_accumulator & 1) == 1);
+            _accumulator = _accumulator >> 1;
+
+            SetZNFlags(_accumulator);
+
+        }
+
+        private void ARR() {
+            //AND byte with accumulator, then rotate one bit right in accu - mulator and
+            //  check bit 5 and 6:
+            //If both bits are 1: set C, clear V. 0x30
+            //If both bits are 0: clear C and V.
+            //If only bit 5 is 1: set V, clear C.
+            //If only bit 6 is 1: set C and V.
+            //Status flags: N,V,Z,C
+            _accumulator = DecodeOperand() & _accumulator;
+
+            if ((_statusRegister & 0x01) == 0x01)
+            {
+                _accumulator = (_accumulator >> 1) | 0x80;
+            }
+            else {
+                _accumulator = (_accumulator >> 1) ;
+            }
+
+            // original bit 0 shifted to carry
+            //            target.SetFlag(CPUStatusBits.Carry, (); 
+
+            SetFlag(CPUStatusMasks.CarryMask, (_accumulator & 0x01) == 0x01);
+
+
+            switch (_accumulator & 0x30) 
+            {
+                case 0x30:
+                    SetFlag(CPUStatusMasks.CarryMask, true);
+                    SetFlag(CPUStatusMasks.InterruptDisableMask, false);
+                    break;
+                case 0x00:
+                    SetFlag(CPUStatusMasks.CarryMask, false);
+                    SetFlag(CPUStatusMasks.InterruptDisableMask, false);
+                    break;
+                case 0x10:
+                    SetFlag(CPUStatusMasks.CarryMask, false);
+                    SetFlag(CPUStatusMasks.InterruptDisableMask, true);
+                    break;
+                case 0x20:
+                    SetFlag(CPUStatusMasks.CarryMask, true);
+                    SetFlag(CPUStatusMasks.InterruptDisableMask, true);
+                    break;
+            }
+        }
+
+        private void ATX() {
+            //AND byte with accumulator, then transfer accumulator to X register.
+            //Status flags: N,Z
+            _indexRegisterX = _accumulator = DecodeOperand() & _accumulator;
+            SetZNFlags(_indexRegisterX);
+        }
+
     }
 
 }

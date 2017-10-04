@@ -598,8 +598,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //instruction(0xa] = INS_ASLA;
                 this.addressmode[10] = NES.CPU.Fastendo.AddressingModes.Accumulator;
                 this.clockcount[11] = 2;
-                //instruction(0xb] = INS_NOP;
-                this.addressmode[11] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                //instruction(0xb] = AAC;
+                this.addressmode[11] = NES.CPU.Fastendo.AddressingModes.Immediate;
                 this.clockcount[12] = 4;
                 //instruction(0xc] = INS_NOP;
                 this.addressmode[12] = NES.CPU.Fastendo.AddressingModes.Absolute;
@@ -699,9 +699,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.clockcount[42] = 2;
                 //instruction(0x2a] = INS_ROLA;
                 this.addressmode[42] = NES.CPU.Fastendo.AddressingModes.Accumulator;
+
+                // undocumented
                 this.clockcount[43] = 2;
-                //instruction(0x2b] = INS_NOP;
-                this.addressmode[43] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                //instruction(0x2b] = INS_NOP; AAC
+                this.addressmode[43] = NES.CPU.Fastendo.AddressingModes.Immediate;
                 this.clockcount[44] = 4;
                 //instruction(0x2c] = INS_BIT;
                 this.addressmode[44] = NES.CPU.Fastendo.AddressingModes.Absolute;
@@ -796,8 +798,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //instruction(0x4a] = INS_LSRA;
                 this.addressmode[74] = NES.CPU.Fastendo.AddressingModes.Accumulator;
                 this.clockcount[75] = 2;
-                //instruction(0x4b] = INS_NOP;
-                this.addressmode[75] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                //instruction(0x4b] = INS_ASR;
+                this.addressmode[75] = NES.CPU.Fastendo.AddressingModes.Immediate;
                 this.clockcount[76] = 3;
                 //instruction(0x4c] = INS_JMP;
                 this.addressmode[76] = NES.CPU.Fastendo.AddressingModes.Absolute;
@@ -891,9 +893,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.clockcount[106] = 2;
                 //instruction(0x6a] = INS_RORA;
                 this.addressmode[106] = NES.CPU.Fastendo.AddressingModes.Accumulator;
+
                 this.clockcount[107] = 2;
-                //instruction(0x6b] = INS_NOP;
-                this.addressmode[107] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                //instruction(0x6b] = INS_ARR; U
+                this.addressmode[107] = NES.CPU.Fastendo.AddressingModes.Immediate;
+
                 this.clockcount[108] = 5;
                 //instruction(0x6c] = INS_JMP;
 
@@ -964,7 +968,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.addressmode[129] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
                 this.clockcount[130] = 2;
                 //instruction(0x82] = INS_NOP;
-                this.addressmode[130] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[130] = NES.CPU.Fastendo.AddressingModes.Immediate;
                 this.clockcount[131] = 2;
                 //instruction(0x83] = INS_NOP;
                 this.addressmode[131] = NES.CPU.Fastendo.AddressingModes.Implicit;
@@ -1086,8 +1090,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //instruction(0xaa] = INS_TAX;
                 this.addressmode[170] = NES.CPU.Fastendo.AddressingModes.Implicit;
                 this.clockcount[171] = 2;
-                //instruction(0xab] = INS_NOP;
-                this.addressmode[171] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                //instruction(0xab] = INS_NOP; ATX U
+                this.addressmode[171] = NES.CPU.Fastendo.AddressingModes.Immediate;
                 this.clockcount[172] = 4;
                 //instruction(0xac] = INS_LDY;
                 this.addressmode[172] = NES.CPU.Fastendo.AddressingModes.Absolute;
@@ -1155,9 +1159,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.clockcount[193] = 6;
                 //instruction(0xc1] = INS_CMP;
                 this.addressmode[193] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+
                 this.clockcount[194] = 2;
                 //instruction(0xc2] = INS_NOP;
-                this.addressmode[194] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[194] = NES.CPU.Fastendo.AddressingModes.Immediate;
+
                 this.clockcount[195] = 2;
                 //instruction(0xc3] = INS_NOP;
                 this.addressmode[195] = NES.CPU.Fastendo.AddressingModes.Implicit;
@@ -1183,8 +1189,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //instruction(0xca] = INS_DEX;
                 this.addressmode[202] = NES.CPU.Fastendo.AddressingModes.Implicit;
                 this.clockcount[203] = 2;
-                //instruction(0xcb] = INS_NOP;
-                this.addressmode[203] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                //instruction(0xcb] = INS_NOP; AXS
+                this.addressmode[203] = NES.CPU.Fastendo.AddressingModes.Immediate;
                 this.clockcount[204] = 4;
                 //instruction(0xcc] = INS_CPY;
                 this.addressmode[204] = NES.CPU.Fastendo.AddressingModes.Absolute;
@@ -1253,7 +1259,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.addressmode[225] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
                 this.clockcount[226] = 2;
                 //instruction(0xe2] = INS_NOP;
-                this.addressmode[226] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[226] = NES.CPU.Fastendo.AddressingModes.Immediate;
                 this.clockcount[227] = 2;
                 //instruction(0xe3] = INS_NOP;
                 this.addressmode[227] = NES.CPU.Fastendo.AddressingModes.Implicit;
@@ -1280,7 +1286,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.addressmode[234] = NES.CPU.Fastendo.AddressingModes.Implicit;
                 this.clockcount[235] = 2;
                 //instruction(0xeb] = INS_NOP;
-                this.addressmode[235] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[235] = NES.CPU.Fastendo.AddressingModes.Immediate;
                 this.clockcount[236] = 4;
                 //instruction(0xec] = INS_CPX;
                 this.addressmode[236] = NES.CPU.Fastendo.AddressingModes.Absolute;
@@ -1478,15 +1484,32 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             StoreOperand: function (address) { },
-            /**
-             * @instance
-             * @public
-             * @this NES.CPU.Fastendo.CPU2A03
-             * @memberof NES.CPU.Fastendo.CPU2A03
-             * @return  {void}
-             */
             Execute: function () {
                 switch (this._currentInstruction_OpCode) {
+                    case 128: 
+                    case 130: 
+                    case 194: 
+                    case 226: 
+                    case 4: 
+                    case 20: 
+                    case 52: 
+                    case 68: 
+                    case 84: 
+                    case 100: 
+                    case 116: 
+                    case 212: 
+                    case 244: 
+                    case 12: 
+                    case 28: 
+                    case 60: 
+                    case 92: 
+                    case 124: 
+                    case 220: 
+                    case 252: 
+                        //SKB()
+                        //SKW();
+                        this.DecodeAddress();
+                        break;
                     case 105: 
                     case 101: 
                     case 117: 
@@ -1656,25 +1679,25 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 122: 
                     case 218: 
                     case 250: 
-                    case 4: 
-                    case 20: 
-                    case 52: 
-                    case 68: 
-                    case 100: 
-                    case 128: 
-                    case 130: 
                     case 137: 
-                    case 194: 
-                    case 212: 
-                    case 226: 
-                    case 244: 
-                    case 12: 
-                    case 28: 
-                    case 60: 
-                    case 92: 
-                    case 124: 
-                    case 220: 
-                    case 252: 
+                        //case 0x04:
+                        //case 0x14:
+                        //case 0x34:
+                        //case 0x44:
+                        //case 0x64:
+                        //case 0x80:
+                        //case 0x82:
+                        //case 0xc2:
+                        //case 0xd4:
+                        //case 0xe2:
+                        //case 0xf4:
+                        //case 0x0c:
+                        //case 0x1c:
+                        //case 0x3c:
+                        //case 0x5c:
+                        //case 0x7c:
+                        //case 0xdc:
+                        //case 0xfc:
                         this.NOP();
                         break;
                     case 9: 
@@ -1719,6 +1742,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 96: 
                         this.RTS();
                         break;
+                    case 235: 
                     case 233: 
                     case 229: 
                     case 245: 
@@ -1726,7 +1750,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 253: 
                     case 249: 
                     case 225: 
-                    case 241: 
+                    case 241:  // undocumented sbc immediate
                         this.SBC();
                         break;
                     case 56: 
@@ -1774,6 +1798,19 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case 152: 
                         this.TYA();
+                        break;
+                    case 11: 
+                    case 43: 
+                        this.AAC();
+                        break;
+                    case 75: 
+                        this.ASR();
+                        break;
+                    case 107: 
+                        this.ARR();
+                        break;
+                    case 171: 
+                        this.ATX();
                         break;
                 }
             },
@@ -1883,6 +1920,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 } else {
                     this.SetByte$1(this.DecodeAddress(), rst);
                 }
+            },
+            SKB: function () {
+                // _programCounter++;
             },
             SBC: function () {
                 // start the read process
@@ -2208,6 +2248,74 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var highByte = this.GetByte();
 
                 this._programCounter = (lowByte + Bridge.Int.mul(highByte, 256)) | 0;
+            },
+            AAC: function () {
+                //AND byte with accumulator. If result is negative then carry is set.
+                //Status flags: N,Z,C
+                this._accumulator = this.DecodeOperand() & this._accumulator & 255;
+
+                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (this._accumulator & 128) === 128);
+
+                this.SetZNFlags(this._accumulator);
+
+            },
+            ASR: function () {
+                //AND byte with accumulator, then shift right one bit in accumu-lator.
+                //Status flags: N,Z,C
+                this._accumulator = this.DecodeOperand() & this._accumulator;
+
+                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
+                this._accumulator = this._accumulator >> 1;
+
+                this.SetZNFlags(this._accumulator);
+
+            },
+            ARR: function () {
+                //AND byte with accumulator, then rotate one bit right in accu - mulator and
+                //  check bit 5 and 6:
+                //If both bits are 1: set C, clear V. 0x30
+                //If both bits are 0: clear C and V.
+                //If only bit 5 is 1: set V, clear C.
+                //If only bit 6 is 1: set C and V.
+                //Status flags: N,V,Z,C
+                this._accumulator = this.DecodeOperand() & this._accumulator;
+
+                if ((this._statusRegister & 1) === 1) {
+                    this._accumulator = (this._accumulator >> 1) | 128;
+                } else {
+                    this._accumulator = (this._accumulator >> 1);
+                }
+
+                // original bit 0 shifted to carry
+                //            target.SetFlag(CPUStatusBits.Carry, (); 
+
+                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
+
+
+                switch (this._accumulator & 48) {
+                    case 48: 
+                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, true);
+                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, false);
+                        break;
+                    case 0: 
+                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, false);
+                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, false);
+                        break;
+                    case 16: 
+                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, false);
+                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, true);
+                        break;
+                    case 32: 
+                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, true);
+                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, true);
+                        break;
+                }
+            },
+            ATX: function () {
+                //AND byte with accumulator, then transfer accumulator to X register.
+                //Status flags: N,Z
+                this._indexRegisterX = (this._accumulator = this.DecodeOperand() & this._accumulator);
+                this.SetZNFlags(this._indexRegisterX);
             },
             NMIHandler: function () {
                 this._handleNMI = true;
@@ -6284,7 +6392,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             nameTableBits: 0,
             vidRamIsRam: false,
             _palette: null,
-            palCache: null,
             currentPalette: 0,
             nmiHandler: null,
             frameFinished: null,
@@ -6507,14 +6614,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._palette = value;
                 }
             },
-            PalCache: {
-                get: function () {
-                    return this.palCache;
-                },
-                set: function (value) {
-                    this.palCache = value;
-                }
-            },
             CurrentPalette: {
                 get: function () {
                     return this.currentPalette;
@@ -6694,7 +6793,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.nameTableBits = 0;
                 this.vidRamIsRam = true;
                 this._palette = System.Array.init(32, 0, System.Byte);
-                this.palCache = System.Array.init(256, null, System.Array.type(System.Byte));
                 this.currentPalette = 0;
                 this.NMIHasBeenThrownThisFrame = false;
                 this._hScroll = 0;
@@ -6722,9 +6820,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 NES.CPU.PPUClasses.PixelWhizzler.GetPalRGBA();
 
-                for (var i = 0; i < 256; i = (i + 1) | 0) {
-                    this.palCache[i] = System.Array.init(32, 0, System.Byte);
-                }
+                //for (int i = 0; i < 256; ++i)
+                //    palCache[i] = new byte[32];
             }
         },
         methods: {
@@ -7050,24 +7147,27 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
             },
             FillBuffer: function () {
-                var $t, $t1;
 
-                var i = 0;
-                while (i < 61440) {
-                    var tile = (this.outBuffer[i] & 15);
-                    var sprite = (((this.outBuffer[i] >> 4) & 15) + 16) | 0;
-                    var isSprite = (this.outBuffer[i] >> 8) & 64;
-                    var curPal = (this.outBuffer[i] >> 24) & 255;
+                //int i = 0;
+                //while (i < 256 * 240 )
+                //{
+                //    int tile = (outBuffer[i] & 0x0F);
+                //    int sprite = ((outBuffer[i] >> 4) & 0x0F) + 16;
+                //    int isSprite = (outBuffer[i] >> 8) & 64;
+                //    int curPal = (outBuffer[i] >> 24) & 0xFF;
 
-                    var pixel;
-                    if (isSprite > 0) {
-                        pixel = ($t = this.palCache[curPal])[sprite];
-                    } else {
-                        pixel = ($t1 = this.palCache[curPal])[tile];
-                    }
-                    this.rgb32OutBuffer[i] = NES.CPU.PPUClasses.PixelWhizzler.pal[pixel];
-                    i = (i + 1) | 0;
-                }
+                //    uint pixel;
+                //    if (isSprite > 0)
+                //    {
+                //        pixel = palCache[curPal][sprite];
+                //    }
+                //    else
+                //    {
+                //        pixel = palCache[curPal][tile];
+                //    }
+                //    rgb32OutBuffer[i] = pal[pixel];
+                //    i++;
+                //}
             },
             SetVideoBuffer: function (inBuffer) {
                 this.rgb32OutBuffer = inBuffer;

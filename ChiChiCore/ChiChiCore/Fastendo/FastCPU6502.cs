@@ -466,8 +466,8 @@ namespace NES.CPU.Fastendo
              //instruction(0xa] = INS_ASLA;
              addressmode[0xa] = AddressingModes.Accumulator;
              clockcount[0xb] = 2;
-             //instruction(0xb] = INS_NOP;
-             addressmode[0xb] = AddressingModes.Implicit;
+             //instruction(0xb] = AAC;
+             addressmode[0xb] = AddressingModes.Immediate;
              clockcount[0xc] = 4;
              //instruction(0xc] = INS_NOP;
              addressmode[0xc] = AddressingModes.Absolute;
@@ -567,9 +567,11 @@ namespace NES.CPU.Fastendo
              clockcount[0x2a] = 2;
              //instruction(0x2a] = INS_ROLA;
              addressmode[0x2a] = AddressingModes.Accumulator;
+
+                // undocumented
              clockcount[0x2b] = 2;
-             //instruction(0x2b] = INS_NOP;
-             addressmode[0x2b] = AddressingModes.Implicit;
+             //instruction(0x2b] = INS_NOP; AAC
+             addressmode[0x2b] = AddressingModes.Immediate;
              clockcount[0x2c] = 4;
              //instruction(0x2c] = INS_BIT;
              addressmode[0x2c] = AddressingModes.Absolute;
@@ -664,8 +666,8 @@ namespace NES.CPU.Fastendo
              //instruction(0x4a] = INS_LSRA;
              addressmode[0x4a] = AddressingModes.Accumulator;
              clockcount[0x4b] = 2;
-             //instruction(0x4b] = INS_NOP;
-             addressmode[0x4b] = AddressingModes.Implicit;
+             //instruction(0x4b] = INS_ASR;
+             addressmode[0x4b] = AddressingModes.Immediate;
              clockcount[0x4c] = 3;
              //instruction(0x4c] = INS_JMP;
              addressmode[0x4c] = AddressingModes.Absolute;
@@ -759,9 +761,11 @@ namespace NES.CPU.Fastendo
              clockcount[0x6a] = 2;
              //instruction(0x6a] = INS_RORA;
              addressmode[0x6a] = AddressingModes.Accumulator;
-             clockcount[0x6b] = 2;
-             //instruction(0x6b] = INS_NOP;
-             addressmode[0x6b] = AddressingModes.Implicit;
+
+            clockcount[0x6b] = 2;
+             //instruction(0x6b] = INS_ARR; U
+             addressmode[0x6b] = AddressingModes.Immediate;
+
              clockcount[0x6c] = 5;
              //instruction(0x6c] = INS_JMP;
             
@@ -832,7 +836,7 @@ namespace NES.CPU.Fastendo
              addressmode[0x81] = AddressingModes.IndexedIndirect;
              clockcount[0x82] = 2;
              //instruction(0x82] = INS_NOP;
-             addressmode[0x82] = AddressingModes.Implicit;
+             addressmode[0x82] = AddressingModes.Immediate;
              clockcount[0x83] = 2;
              //instruction(0x83] = INS_NOP;
              addressmode[0x83] = AddressingModes.Implicit;
@@ -954,8 +958,8 @@ namespace NES.CPU.Fastendo
              //instruction(0xaa] = INS_TAX;
              addressmode[0xaa] = AddressingModes.Implicit;
              clockcount[0xab] = 2;
-             //instruction(0xab] = INS_NOP;
-             addressmode[0xab] = AddressingModes.Implicit;
+             //instruction(0xab] = INS_NOP; ATX U
+             addressmode[0xab] = AddressingModes.Immediate;
              clockcount[0xac] = 4;
              //instruction(0xac] = INS_LDY;
              addressmode[0xac] = AddressingModes.Absolute;
@@ -1023,9 +1027,11 @@ namespace NES.CPU.Fastendo
              clockcount[0xc1] = 6;
              //instruction(0xc1] = INS_CMP;
              addressmode[0xc1] = AddressingModes.IndexedIndirect;
+
              clockcount[0xc2] = 2;
              //instruction(0xc2] = INS_NOP;
-             addressmode[0xc2] = AddressingModes.Implicit;
+             addressmode[0xc2] = AddressingModes.Immediate;
+
              clockcount[0xc3] = 2;
              //instruction(0xc3] = INS_NOP;
              addressmode[0xc3] = AddressingModes.Implicit;
@@ -1051,8 +1057,8 @@ namespace NES.CPU.Fastendo
              //instruction(0xca] = INS_DEX;
              addressmode[0xca] = AddressingModes.Implicit;
              clockcount[0xcb] = 2;
-             //instruction(0xcb] = INS_NOP;
-             addressmode[0xcb] = AddressingModes.Implicit;
+             //instruction(0xcb] = INS_NOP; AXS
+             addressmode[0xcb] = AddressingModes.Immediate;
              clockcount[0xcc] = 4;
              //instruction(0xcc] = INS_CPY;
              addressmode[0xcc] = AddressingModes.Absolute;
@@ -1121,7 +1127,7 @@ namespace NES.CPU.Fastendo
              addressmode[0xe1] = AddressingModes.IndexedIndirect;
              clockcount[0xe2] = 2;
              //instruction(0xe2] = INS_NOP;
-             addressmode[0xe2] = AddressingModes.Implicit;
+             addressmode[0xe2] = AddressingModes.Immediate;
              clockcount[0xe3] = 2;
              //instruction(0xe3] = INS_NOP;
              addressmode[0xe3] = AddressingModes.Implicit;
@@ -1148,7 +1154,7 @@ namespace NES.CPU.Fastendo
              addressmode[0xea] = AddressingModes.Implicit;
              clockcount[0xeb] = 2;
              //instruction(0xeb] = INS_NOP;
-             addressmode[0xeb] = AddressingModes.Implicit;
+             addressmode[0xeb] = AddressingModes.Immediate;
              clockcount[0xec] = 4;
              //instruction(0xec] = INS_CPX;
              addressmode[0xec] = AddressingModes.Absolute;

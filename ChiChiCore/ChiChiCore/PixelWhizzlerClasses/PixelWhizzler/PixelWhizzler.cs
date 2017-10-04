@@ -209,8 +209,8 @@ namespace NES.CPU.PPUClasses
 
             GetPalRGBA();
 
-            for (int i = 0; i < 256; ++i)
-                palCache[i] = new byte[32];
+            //for (int i = 0; i < 256; ++i)
+            //    palCache[i] = new byte[32];
         }
 
         private int ppuReadBuffer;

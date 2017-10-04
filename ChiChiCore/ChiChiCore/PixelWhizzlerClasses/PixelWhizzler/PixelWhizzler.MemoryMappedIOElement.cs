@@ -342,13 +342,13 @@ namespace NES.CPU.PPUClasses
         }
 
 
-        protected byte[][] palCache = new byte[256][];
+        //protected byte[][] palCache = new byte[256][];
 
-        public byte[][] PalCache
-        {
-            get { return palCache; }
-            set { palCache = value; }
-        }
+        //public byte[][] PalCache
+        //{
+        //    get { return palCache; }
+        //    set { palCache = value; }
+        //}
         protected int currentPalette = 0;
 
         public int CurrentPalette

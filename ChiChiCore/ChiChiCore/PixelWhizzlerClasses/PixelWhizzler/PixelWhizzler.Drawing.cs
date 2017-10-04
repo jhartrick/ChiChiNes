@@ -212,26 +212,26 @@ namespace NES.CPU.PPUClasses
         public virtual void FillBuffer()
         {
 
-            int i = 0;
-            while (i < 256 * 240 )
-            {
-                int tile = (outBuffer[i] & 0x0F);
-                int sprite = ((outBuffer[i] >> 4) & 0x0F) + 16;
-                int isSprite = (outBuffer[i] >> 8) & 64;
-                int curPal = (outBuffer[i] >> 24) & 0xFF;
+            //int i = 0;
+            //while (i < 256 * 240 )
+            //{
+            //    int tile = (outBuffer[i] & 0x0F);
+            //    int sprite = ((outBuffer[i] >> 4) & 0x0F) + 16;
+            //    int isSprite = (outBuffer[i] >> 8) & 64;
+            //    int curPal = (outBuffer[i] >> 24) & 0xFF;
 
-                uint pixel;
-                if (isSprite > 0)
-                {
-                    pixel = palCache[curPal][sprite];
-                }
-                else
-                {
-                    pixel = palCache[curPal][tile];
-                }
-                rgb32OutBuffer[i] = pal[pixel];
-                i++;
-            }
+            //    uint pixel;
+            //    if (isSprite > 0)
+            //    {
+            //        pixel = palCache[curPal][sprite];
+            //    }
+            //    else
+            //    {
+            //        pixel = palCache[curPal][tile];
+            //    }
+            //    rgb32OutBuffer[i] = pal[pixel];
+            //    i++;
+            //}
         }
 
         public int[] VideoBuffer

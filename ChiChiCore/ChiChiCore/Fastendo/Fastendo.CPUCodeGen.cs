@@ -12,6 +12,30 @@ namespace NES.CPU.Fastendo
         {
             switch (_currentInstruction_OpCode)
             {
+                case 0x80:
+                case 0x82:
+                case 0xC2:
+                case 0xE2:
+                case 0x04:
+                case 0x14:
+                case 0x34:
+                case 0x44:
+                case 0x54:
+                case 0x64:
+                case 0x74:
+                case 0xD4:
+                case 0xF4:
+                    //SKB()
+                case 0x0C:
+                case 0x1C:
+                case 0x3C:
+                case 0x5C:
+                case 0x7C:
+                case 0xDC:
+                case 0xFC:
+                    //SKW();
+                    DecodeAddress();
+                    break;
                 case 0x69:
                 case 0x65:
                 case 0x75:
@@ -214,25 +238,25 @@ namespace NES.CPU.Fastendo
                 case 0x7a:
                 case 0xda:
                 case 0xfa:
-                case 0x04:
-                case 0x14:
-                case 0x34:
-                case 0x44:
-                case 0x64:
-                case 0x80:
-                case 0x82:
+                //case 0x04:
+                //case 0x14:
+                //case 0x34:
+                //case 0x44:
+                //case 0x64:
+                //case 0x80:
+                //case 0x82:
                 case 0x89:
-                case 0xc2:
-                case 0xd4:
-                case 0xe2:
-                case 0xf4:
-                case 0x0c:
-                case 0x1c:
-                case 0x3c:
-                case 0x5c:
-                case 0x7c:
-                case 0xdc:
-                case 0xfc:
+                //case 0xc2:
+                //case 0xd4:
+                //case 0xe2:
+                //case 0xf4:
+                //case 0x0c:
+                //case 0x1c:
+                //case 0x3c:
+                //case 0x5c:
+                //case 0x7c:
+                //case 0xdc:
+                //case 0xfc:
                     NOP();
                     break;
 
@@ -287,6 +311,7 @@ namespace NES.CPU.Fastendo
                     RTS();
                     break;
 
+                case 0xeb: // undocumented sbc immediate
                 case 0xe9:
                 case 0xe5:
                 case 0xf5:
@@ -355,7 +380,20 @@ namespace NES.CPU.Fastendo
                 case 0x98:
                     TYA();
                     break;
-
+                    //undocumented opcodes
+                case 0x0b:
+                case 0x2b:
+                    AAC();
+                    break;
+                case 0x4b:
+                    ASR();
+                    break;
+                case 0x6b:
+                    ARR();
+                    break;
+                case 0xab:
+                    ATX();
+                    break;
             }
         }
     }
