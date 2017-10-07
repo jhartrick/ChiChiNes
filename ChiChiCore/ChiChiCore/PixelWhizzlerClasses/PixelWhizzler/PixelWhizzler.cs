@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.Fastendo;
-using NES.CPU.PixelWhizzlerClasses;
+using ChiChiNES;
+using ChiChiNES;
 
-namespace NES.CPU.PPUClasses
+namespace ChiChiNES
 {
     public partial class PixelWhizzler : IPPU
     {

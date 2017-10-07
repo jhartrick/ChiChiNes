@@ -1,5 +1,5 @@
 ﻿using System;
-namespace NES.CPU.Machine
+namespace ChiChiNES
 {
     public class ControlByteEventArgs : EventArgs
     {

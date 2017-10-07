@@ -7,9 +7,9 @@ using System.Text;
 
 // ported from shay green's (blargg) bandlimited wav synth
 
-namespace NES.CPU.Machine.BeepsBoops
+namespace ChiChiNES.BeepsBoops
 {
-    [Rules(Integer = IntegerRule.Plain)]
+    [Rules(Integer = IntegerRule.Managed)]
     public class Blip
     {
         const int bass_shift = 8; /* affects high-pass filter breakpoint frequency */

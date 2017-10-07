@@ -1,12 +1,24 @@
-﻿import { Component } from '@angular/core';
+﻿import { Component, ViewChild } from '@angular/core';
 import { ChiChiComponent } from './chichines.component'
+import {  MatSidenavModule, MatDrawer } from '@angular/material';
+
+import { Emulator } from './services/NESService'
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+  providers: [Emulator ]
 
-  styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'app';
+  @ViewChild('debugNav') public debugNav: MatDrawer;
+  constructor(private nesService: Emulator){
+    this.nesService.DebugUpdateEvent.subscribe(() => {
+      this.debugNav.open();
+    });
+  }
+
+  
+  title = 'ChiChiNES';
 }

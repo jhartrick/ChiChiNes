@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.PPUClasses;
-using NES.CPU.Fastendo;
+using ChiChiNES;
+using ChiChiNES;
 using System.Threading;
-using NES.CPU.Machine.Carts;
-using NES.CPU.Machine.BeepsBoops;
-using NES.CPU.Machine;
-using NES.CPU.Machine.ROMLoader;
-using NES.Sound;
-using NES.CPU.PixelWhizzlerClasses;
+using ChiChiNES;
+using ChiChiNES.BeepsBoops;
+using ChiChiNES;
+using ChiChiNES.ROMLoader;
+using ChiChiNES.Sound;
+using ChiChiNES;
 //using CPU6502.Machine;
 
-namespace NES.CPU.nitenedo
+namespace ChiChiNES
 {
     public partial class NESMachine
     {

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.PPUClasses;
+using ChiChiNES;
 
-using NES.CPU.Fastendo;
-using NES.CPU.PixelWhizzlerClasses;
+using ChiChiNES;
+using ChiChiNES;
 
-namespace NES.CPU.Machine.Carts
+namespace ChiChiNES
 {
     public delegate string ROMHashFunctionDelegate (byte[] prg, byte[] chr);
 
@@ -365,7 +365,7 @@ namespace NES.CPU.Machine.Carts
 
         #region INESCart Members
 
-        public NES.CPU.Fastendo.CPU2A03 CPU
+        public ChiChiNES.CPU2A03 CPU
         {
             get
             {

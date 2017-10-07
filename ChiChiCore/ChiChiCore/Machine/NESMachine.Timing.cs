@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.Fastendo;
+using ChiChiNES;
 
-namespace NES.CPU.nitenedo
+namespace ChiChiNES
 {
     public partial class NESMachine
     {
@@ -46,8 +46,8 @@ namespace NES.CPU.nitenedo
             _totalCPUClocks = _cpu.Clock;
             //lock (_sharedWave)
             //{
-            //    //soundBopper.FlushFrame(_totalCPUClocks);
-            //    //soundBopper.EndFrame(_totalCPUClocks);
+            //    soundBopper.FlushFrame(_totalCPUClocks);
+            //    soundBopper.EndFrame(_totalCPUClocks);
             //}
 
             if (PadOne != null) PadOne.Refresh();

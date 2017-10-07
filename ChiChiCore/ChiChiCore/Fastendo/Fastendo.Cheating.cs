@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.Fastendo.Hacking;
+using ChiChiNES.Hacking;
 
-namespace NES.CPU.Fastendo
+namespace ChiChiNES
 {
     public partial class CPU2A03
     {

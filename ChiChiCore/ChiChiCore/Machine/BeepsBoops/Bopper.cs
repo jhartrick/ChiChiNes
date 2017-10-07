@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.Fastendo;
-using NES.CPU.Machine.PortQueueing;
+using ChiChiNES;
+using ChiChiNES.PortQueueing;
 using Bridge;
 
-namespace NES.CPU.Machine.BeepsBoops
+namespace ChiChiNES.BeepsBoops
 {
     public interface IAPU
     {
@@ -112,7 +112,7 @@ namespace NES.CPU.Machine.BeepsBoops
         {
             if (address == 0x4000) _interruptRaised = false;
             //DoSetByte( Clock,  address,  data);
-            registers.Enqueue(new PortWriteEntry(Clock, (ushort)address, (byte)data));
+           // registers.Enqueue(new PortWriteEntry(Clock, (ushort)address, (byte)data));
 
 
         }

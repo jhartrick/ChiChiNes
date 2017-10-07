@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.Fastendo;
+using ChiChiNES;
 
-namespace NES.CPU.PPUClasses
+namespace ChiChiNES
 {
     public partial class PixelWhizzler : IClockedMemoryMappedIOElement
     {
@@ -19,11 +19,10 @@ namespace NES.CPU.PPUClasses
             get { return _palette; }
             set { _palette = value; }
         }
-
+        private int _openBus=0;
         public void SetByte(int Clock, int address, int data)
         {
             // DrawTo(Clock);
-
             if (_isDebugging)
             {
                 Events.Enqueue(new PPUWriteEvent { IsWrite = true, DataWritten = data, FrameClock = frameClock, RegisterAffected = address, ScanlineNum = frameClock / 341, ScanlinePos = frameClock % 341 });
@@ -57,16 +56,18 @@ namespace NES.CPU.PPUClasses
                     DrawTo(Clock);
 
                     _PPUControlByte0 = data;
+                    _openBus = data;
 
                     nameTableBits = _PPUControlByte0 & 0x3;
                     _backgroundPatternTableIndex = ((_PPUControlByte0 & 0x10) >> 4) * 0x1000;
-                    
+
                     // if we toggle /vbl we can throw multiple NMIs in a vblank period
                     //if ((data & 0x80) == 0x80 && NMIHasBeenThrownThisFrame)
                     //{
                     //     NMIHasBeenThrownThisFrame = false;
                     //}
-                    UpdatePixelInfo();
+                    //UpdatePixelInfo();
+                    nameTableMemoryStart = nameTableBits * 0x400;
                     break;
                 case 0x1:
                     //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
@@ -80,21 +81,25 @@ namespace NES.CPU.PPUClasses
                     DrawTo(Clock);
                     isRendering = (data & 0x18)!=0;
                     _PPUControlByte1 = data;
+
                     _spritesAreVisible = (_PPUControlByte1 & 0x10) == 0x10;
                     _tilesAreVisible = (_PPUControlByte1 & 0x08) == 0x08;
                     _clipTiles = (_PPUControlByte1 & 0x2) != 0x2;
                     _clipSprites = (_PPUControlByte1 & 0x4) != 0x4;
-                    UpdatePixelInfo();
+                    //UpdatePixelInfo();
+                    nameTableMemoryStart = nameTableBits * 0x400;
 
                     break;
                 case 0x2:
                     ppuReadBuffer = data;
+                    _openBus = data;
                     break;
                 case 0x3:
                     //3	    -	internal object attribute memory index pointer 
                     //          (64 attributes, 32 bits each, byte granular access). 
                     //          stored value post-increments on access to port 4.
                     _spriteAddress = data & 0xFF;
+                    _openBus = _spriteAddress;
                     break;
                 case 0x4:
                     spriteRAM[_spriteAddress] = (byte)data;
@@ -251,11 +256,15 @@ namespace NES.CPU.PPUClasses
 
             switch (address & 0x7)
             {
+                case 0x3:
                 case 0x0:
                 case 0x1:
                 case 0x5:
                 case 0x6:
-                    return ppuReadBuffer;
+                    return _openBus;
+                    // _openBus = ppuReadBuffer;
+
+                   // return ppuReadBuffer;
                 case 0x2:
 
                     int ret;
@@ -281,14 +290,17 @@ namespace NES.CPU.PPUClasses
                         
                     }
                     UpdatePixelInfo();
-                    
+
                     //}
+                    _openBus = ret;
+
                     return ret;
                 case 0x4:
                     int tmp = spriteRAM[_spriteAddress];
                     //ppuLatch = spriteRAM[SpriteAddress];
                     // should not increment on read ?
                     //SpriteAddress = (SpriteAddress + 1) & 0xFF;
+                    _openBus = tmp;
                     return tmp;
                 case 0x7:
                     //        If Mapper = 9 Then

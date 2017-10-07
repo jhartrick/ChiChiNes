@@ -10,8 +10,9 @@ import { Emulator } from './services/NESService'
 
 
 export class ControlPanelComponent {
-
+    show: boolean = true;
     powerstate: string;
+    currentFilename: string;
     constructor(private nesService: Emulator) {
         this.powerstate = 'OFF';
     }
@@ -26,6 +27,7 @@ export class ControlPanelComponent {
             this.poweron();
         };
         fileReader.readAsArrayBuffer(files[0]);
+        this.currentFilename = files[0].name;
     }
     poweron() {
         this.nesService.StartEmulator();   

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NES.CPU.PPUClasses
+namespace ChiChiNES
 {
     public partial class PixelWhizzler
     {
@@ -127,7 +127,29 @@ namespace NES.CPU.PPUClasses
                         }
                     }
 
-                    result = WhissaSpritePixel(spritePatternTable, xPos, yLine, ref currSprite, tileIndex);
+                    //result = WhissaSpritePixel(spritePatternTable, xPos, yLine, ref currSprite, tileIndex);
+                    // 8x8 tile
+                    int patternEntry;
+                    int patternEntryBit2;
+
+                    if (currSprite.FlipY)
+                    {
+                        yLine = spriteSize - yLine - 1;
+                    }
+
+                    if (yLine >= 8)
+                    {
+                        yLine += 8;
+                    }
+
+                    patternEntry = chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine);
+                    patternEntryBit2 = chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine + 8);
+
+                    result = (byte)
+                        (currSprite.FlipX ?
+                        ((patternEntry >> xPos) & 0x1) | (((patternEntryBit2 >> xPos) << 1) & 0x2)
+                        : ((patternEntry >> 7 - xPos) & 0x1) | (((patternEntryBit2 >> 7 - xPos) << 1) & 0x2));
+
                     if (result != 0)
                     {
                         if (currSprite.SpriteNumber == 0)

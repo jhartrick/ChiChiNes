@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.nitenedo;
-using NES.CPU.Machine.Carts;
-using NES.CPU.Machine.BeepsBoops;
-using NES.CPU.PixelWhizzlerClasses;
+using ChiChiNES;
+using ChiChiNES;
+using ChiChiNES.BeepsBoops;
+using ChiChiNES;
 
-namespace NES.CPU.Fastendo
+namespace ChiChiNES
 {
     public partial class CPU2A03
     {

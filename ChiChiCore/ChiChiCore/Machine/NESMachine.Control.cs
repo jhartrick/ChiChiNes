@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.Machine.ControlPanel;
-using NES.CPU.Machine.ROMLoader;
+using ChiChiNES.Machine.ControlPanel;
+using ChiChiNES.ROMLoader;
 
-using NES.CPU.Fastendo;
-using NES.CPU.Machine.Carts;
-using NES.CPU.Fastendo.Hacking;
+using ChiChiNES;
+using ChiChiNES;
+using ChiChiNES.Hacking;
 
-namespace NES.CPU.nitenedo
+namespace ChiChiNES
 {
 
     public partial class NESMachine

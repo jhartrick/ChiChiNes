@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NES.Machine.ControlPanel
+namespace ChiChiNES.Machine.ControlPanel
 {
     public enum RunningStatuses
     {

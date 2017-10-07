@@ -1,0 +1,31 @@
+﻿<mat-expansion-panel>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      Instruction History
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <div style="padding-top:20px;border-top: 1px solid">
+    <span>Instruction History</span>
+    <input type="checkbox" [checked]="nes.isDebugging" (change)="nes.isDebugging = !nes.isDebugging" name="debugcheck" />
+    <button mat-button>Step</button>
+    <button mat-button>StepFrame</button>
+
+    <div class="container">
+      <div class="instructionhistory row" *ngIf="nes.isDebugging">
+        <p *ngFor="let instruction of instructions">
+          {{ instruction }}
+        </p>
+      </div>
+    </div>
+  </div>
+</mat-expansion-panel>
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      PPU
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <div>
+    <span>PPU</span>
+  </div>
+</mat-expansion-panel>

@@ -1,6 +1,6 @@
 ﻿using System;
-using NES.CPU.Machine;
-namespace NES.CPU.PixelWhizzlerClasses
+using ChiChiNES;
+namespace ChiChiNES
 {
     public interface IPPU
     {
@@ -8,7 +8,7 @@ namespace NES.CPU.PixelWhizzlerClasses
 
         //bool BackgroundVisible { get; }
         //void CheckVBlank();
-        NES.CPU.Machine.Carts.INESCart ChrRomHandler { get; set; }
+        ChiChiNES.INESCart ChrRomHandler { get; set; }
         //void ClearVINT();
         void CopySprites(ref byte[] source, int copyFrom);
         byte[] CurrentFrame { get; }
@@ -18,7 +18,7 @@ namespace NES.CPU.PixelWhizzlerClasses
         void DrawTo(int cpuClockNum);
         //System.Collections.Generic.Queue<NES.CPU.PPUClasses.PPUWriteEvent> Events { get; }
         //bool FillRGB { get; set; }
-        NES.CPU.Fastendo.MachineEvent FrameFinishHandler { get; set; }
+        ChiChiNES.MachineEvent FrameFinishHandler { get; set; }
         //bool FrameOn { get; set; }
         //int Frames { get; }
         int GetByte(int Clock, int address);
@@ -36,7 +36,7 @@ namespace NES.CPU.PixelWhizzlerClasses
         int NameTableMemoryStart { get; set; }
         //bool NeedToDraw { get; }
         int NextEventAt { get; }
-        NES.CPU.Fastendo.MachineEvent NMIHandler { get; set; }
+        ChiChiNES.MachineEvent NMIHandler { get; set; }
         //bool NMIIsThrown { get; }
         //int[] OutBuffer { get; }
         //byte[][] PalCache { get; set; }

@@ -1,8 +1,8 @@
 ﻿using System;
-using NES.CPU.Fastendo;
+using ChiChiNES;
 using System.Collections.Generic;
-using NES.CPU.PixelWhizzlerClasses;
-namespace NES.CPU.Machine.Carts
+using ChiChiNES;
+namespace ChiChiNES
 {
     public interface INESCart : IClockedMemoryMappedIOElement
     {

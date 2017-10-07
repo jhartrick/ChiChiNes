@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.nitenedo.Interaction;
-using NES.CPU.Machine;
+using ChiChiNES.Interaction;
+using ChiChiNES;
 using Bridge;
 
-namespace NES.CPU.PPUClasses
+namespace ChiChiNES
 {
     public partial class PixelWhizzler
     {
@@ -38,6 +38,7 @@ namespace NES.CPU.PPUClasses
                 }
                 else
                 {
+                    //find number of pixels to draw since frame start
                     frClock += frameClock - 6820;
                     frameClock = 6820;
                 }
@@ -117,11 +118,11 @@ namespace NES.CPU.PPUClasses
 
                             int xTilePosition = xPosition >> 3;
 
-                            int tileRow = (yPosition >> 3) % 30 << 5;
+                            //int tileRow = (yPosition >> 3) % 30 << 5;
 
-                            int tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+                            //int tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
 
-                            int TileIndex = chrRomHandler.GetPPUByte(0, tileNametablePosition);
+                            int TileIndex = chrRomHandler.GetPPUByte(0, 0x2000 + ppuNameTableMemoryStart + xTilePosition + ((yPosition >> 3) % 30 << 5));
 
                             int patternTableYOffset = yPosition & 7;
 
@@ -146,6 +147,7 @@ namespace NES.CPU.PPUClasses
                             _PPUStatus = _PPUStatus | 0x40;
                         }
 
+                        //var x = _palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
                         var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
                         //rgb32OutBuffer[vbufLocation] = x;
                         byteOutBuffer[vbufLocation * 4] = (byte)(x);
@@ -247,36 +249,8 @@ namespace NES.CPU.PPUClasses
             rgb32OutBuffer = inBuffer;
         }
 
-        /// <summary>
-        /// Checks if NMI needs to be reasserted during vblank
-        /// </summary>
-        public void CheckVBlank()
-        {
-            if (!NMIHasBeenThrownThisFrame && !frameOn && NMIIsThrown && NMIOccurred )
-            {
-                nmiHandler();
-                HandleVBlankIRQ = true;
-                NMIHasBeenThrownThisFrame = true;
-            }
-        }
-
         protected int vbufLocation;
 
-        protected int pixelWidth = 32;
-
-        public int PixelWidth
-        {
-            get { return pixelWidth; }
-            set { pixelWidth = value; }
-        }
-
-        bool fillRGB = false;
-
-        public bool FillRGB
-        {
-            get { return fillRGB; }
-            set { fillRGB = value; }
-        }
 
         protected void DrawPixel()
         {

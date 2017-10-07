@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NES.CPU.nitenedo
+namespace ChiChiNES
 {
     public delegate void SRAMWriterDelegate(string RomID, byte[] SRAM);
     public delegate byte[] SRAMReaderDelegate(string RomID);

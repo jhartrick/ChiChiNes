@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NES.CPU.Machine.BeepsBoops
+namespace ChiChiNES.BeepsBoops
 {
     public interface IWavReader
     {

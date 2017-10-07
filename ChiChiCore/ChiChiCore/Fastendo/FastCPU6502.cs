@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections;
-using NES.CPU.nitenedo;
-using NES.CPU.PixelWhizzlerClasses;
+using ChiChiNES;
+using ChiChiNES;
 
-namespace NES.CPU.Fastendo
+namespace ChiChiNES
 {
 
     public partial class CPU2A03
@@ -16,7 +16,7 @@ namespace NES.CPU.Fastendo
         private int _accumulator = 0, _indexRegisterX = 0, _indexRegisterY = 0;
 
 
-        public CPU2A03(IPPU whizzler, NES.CPU.Machine.BeepsBoops.Bopper bopper)
+        public CPU2A03(IPPU whizzler, ChiChiNES.BeepsBoops.Bopper bopper)
         {
             // BuildOpArray();
 
@@ -291,18 +291,89 @@ namespace NES.CPU.Fastendo
             {
                 _handleNMI = false;
                 clock  += 7;
-                NonMaskableInterrupt();
+                //NonMaskableInterrupt();
+
+                //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
+                //  set is pushed on the stack, then the I flag is set. 
+                int newStatusReg = _statusRegister & ~0x10 | 0x20;
+
+                SetFlag(CPUStatusMasks.InterruptDisableMask, true);
+                // push pc onto stack (high byte first)
+                PushStack(_programCounter >> 8);
+                PushStack(_programCounter & 0xFF);
+                //c7ab
+                // push sr onto stack
+                PushStack(newStatusReg);
+                // point pc to interrupt service routine
+                byte lowByte = (byte)GetByte(0xFFFA);
+                byte highByte = (byte)GetByte(0xFFFB);
+                int jumpTo = lowByte | (highByte << 8);
+                ProgramCounter = jumpTo;
+                //nonOpCodeticks = 7;
             }
             else if (_handleIRQ)
             {
                 _handleIRQ = false;
-                clock += 7; 
-                InterruptRequest();
-                
+                clock += 7;
+                //InterruptRequest();
+                //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
+                //  set is pushed on the stack, then the I flag is set. 
+                if (GetFlag(CPUStatusMasks.InterruptDisableMask)) { return; }
+                SetFlag(CPUStatusMasks.InterruptDisableMask, true);
+
+                int newStatusReg = _statusRegister & ~0x10 | 0x20;
+
+                // if enabled
+
+                // push pc onto stack (high byte first)
+                PushStack(ProgramCounter / 0x100);
+                PushStack(ProgramCounter);
+                // push sr onto stack
+                PushStack(StatusRegister);
+
+                // point pc to interrupt service routine
+
+                ProgramCounter = GetByte(0xFFFE) + (GetByte(0xFFFF) << 8);
+
+                // nonOpCodeticks = 7;
+
             }
 
-            FetchNextInstruction();
-            FetchInstructionParameters();
+            //FetchNextInstruction();
+            _currentInstruction_Address = _programCounter;
+            _currentInstruction_OpCode = GetByte(_programCounter++);
+            _currentInstruction_AddressingMode = addressmode[_currentInstruction_OpCode];
+
+            //FetchInstructionParameters();
+            switch (_currentInstruction_AddressingMode)
+            {
+                // 3 byte opcodes
+                case AddressingModes.Absolute:
+                case AddressingModes.AbsoluteX:
+                case AddressingModes.AbsoluteY:
+                case AddressingModes.Indirect:
+                    // case AddressingModes.IndirectAbsoluteX:
+                    _currentInstruction_Parameters0 = GetByte(_programCounter++);
+                    _currentInstruction_Parameters1 = GetByte(_programCounter++);
+                    break;
+                case AddressingModes.ZeroPage:
+                case AddressingModes.ZeroPageX:
+                case AddressingModes.ZeroPageY:
+                case AddressingModes.Relative:
+                case AddressingModes.IndexedIndirect:
+                case AddressingModes.IndirectIndexed:
+                case AddressingModes.IndirectZeroPage:
+                case AddressingModes.Immediate:
+                    _currentInstruction_Parameters0 = GetByte(_programCounter++);
+                    break;
+                case AddressingModes.Accumulator:
+                case AddressingModes.Implicit:
+                    break;
+                default:
+                    //  throw new NotImplementedException("Invalid address mode!!");
+                    break;
+            }
+
             Execute();
             
             //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
@@ -330,83 +401,6 @@ namespace NES.CPU.Fastendo
                 Step();
             }
 
-        }
-
-        public bool FetchNextInstruction()
-        {
-            //AddressBus = ProgramCounter;
-            _currentInstruction_Address = _programCounter;
-            _currentInstruction_OpCode = GetByte(_programCounter++);
-            _currentInstruction_AddressingMode = addressmode[_currentInstruction_OpCode];
-            return true;
-        }
-
-        private void FetchInstructionParameters()
-        {
-
-            switch (_currentInstruction_AddressingMode)
-            {
-                // 3 byte opcodes
-                case AddressingModes.Absolute :
-                case AddressingModes.AbsoluteX:
-                case AddressingModes.AbsoluteY:
-                case AddressingModes.Indirect:
-                // case AddressingModes.IndirectAbsoluteX:
-                    _currentInstruction_Parameters0 = GetByte(_programCounter++);
-                    _currentInstruction_Parameters1 = GetByte(_programCounter++);
-                    break;
-                case AddressingModes.ZeroPage:
-                case AddressingModes.ZeroPageX:
-                case AddressingModes.ZeroPageY:
-                case AddressingModes.Relative:
-                case AddressingModes.IndexedIndirect:
-                case AddressingModes.IndirectIndexed:
-                case AddressingModes.IndirectZeroPage:
-                case AddressingModes.Immediate:
-                    _currentInstruction_Parameters0 = GetByte(_programCounter++);
-                    break;
-                case AddressingModes.Accumulator:
-                case AddressingModes.Implicit:
-                    break;
-                default:
-                  //  throw new NotImplementedException("Invalid address mode!!");
-                    break;
-            }
-        }
-
-        private void FetchInstructionParameters(ref Instruction inst, int address)
-        {
-            switch (inst.AddressingMode)
-            {
-
-                // 3 byte opcodes
-                case AddressingModes.Absolute:
-                case AddressingModes.AbsoluteX:
-                case AddressingModes.AbsoluteY:
-                case AddressingModes.Indirect:
-                    // case AddressingModes.IndirectAbsoluteX:
-                    inst.Length = 3;
-                    inst.Parameters0 = GetByte(address++);
-                    inst.Parameters1 = GetByte(address++);
-                    break;
-                case AddressingModes.ZeroPage:
-                case AddressingModes.ZeroPageX:
-                case AddressingModes.ZeroPageY:
-                case AddressingModes.Relative:
-                case AddressingModes.IndexedIndirect:
-                case AddressingModes.IndirectIndexed:
-                case AddressingModes.IndirectZeroPage:
-                case AddressingModes.Immediate:
-                    inst.Length = 2;
-                    inst.Parameters0 = GetByte(address++);
-                    break;
-                case AddressingModes.Accumulator:
-                case AddressingModes.Implicit:
-                    inst.Length = 1;
-                    break;
-                default:
-                    throw new NotImplementedException("Invalid address mode!!");
-            }
         }
 
         /// <summary>

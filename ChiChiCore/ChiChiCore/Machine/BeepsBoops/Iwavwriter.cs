@@ -1,5 +1,5 @@
 ﻿using System;
-namespace NES.CPU.Machine.BeepsBoops
+namespace ChiChiNES.BeepsBoops
 {
     public interface IWavWriter : IDisposable
     {

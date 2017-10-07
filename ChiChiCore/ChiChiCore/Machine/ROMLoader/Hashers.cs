@@ -4,7 +4,7 @@
 //using System.Text;
 //using System.Security.Cryptography;
 
-//namespace NES.CPU.Machine.ROMLoader
+//namespace NES.ROMLoader
 //{
 //    public static class Hashers
 //    {

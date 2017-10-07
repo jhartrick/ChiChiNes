@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 //using System.Windows.Threading;
-//using NES.CPU.Machine.FastendoDebugging;
+//using NES.FastendoDebugging;
 //using CPU6502.Machine;
 
-namespace NES.CPU.nitenedo
+namespace ChiChiNES
 {
     public partial class NESMachine : IDisposable
     {

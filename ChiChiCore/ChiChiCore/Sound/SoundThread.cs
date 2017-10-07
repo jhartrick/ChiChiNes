@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.nitenedo;
+using ChiChiNES;
 using System.Threading;
 using System.ComponentModel;
 
-namespace NES.Sound
+namespace ChiChiNES.Sound
 {
     public class SoundThreader : IDisposable
     {
@@ -28,7 +28,7 @@ namespace NES.Sound
 
         }
 
-        public void OnSoundStatusChanged(object sender, NES.CPU.Machine.BeepsBoops.SoundStatusChangeEventArgs e)
+        public void OnSoundStatusChanged(object sender, ChiChiNES.BeepsBoops.SoundStatusChangeEventArgs e)
         {
             _wavePlayer.Muted = e.Muted;
         }

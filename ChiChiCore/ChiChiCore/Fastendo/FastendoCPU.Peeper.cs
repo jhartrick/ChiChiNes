@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NES.CPU.Fastendo
+namespace ChiChiNES
 {
     public partial class CPU2A03
     {
@@ -37,20 +37,37 @@ namespace NES.CPU.Fastendo
 
         public void WriteInstructionHistoryAndUsage()
         {
-           // _instructionHistory[(instructionHistoryPointer--) & 0xFF] = new Instruction(_currentInstruction);
+            _instructionHistory[(instructionHistoryPointer--) & 0xFF] = new Instruction() {
+                OpCode= _currentInstruction_OpCode,
+                Parameters0 = _currentInstruction_Parameters0,
+                Parameters1 = _currentInstruction_Parameters1,
+                Address = _currentInstruction_Address,
+                AddressingMode = _currentInstruction_AddressingMode,
+                ExtraTiming = _currentInstruction_ExtraTiming
+            };
+            if ((instructionHistoryPointer & 0xFF) == 0) {
+                FireDebugEvent();
+            }
             instructionUsage[_currentInstruction_OpCode]++;
 
             
         }
+        public event EventHandler DebugEvent;
+
+        private void FireDebugEvent()
+        {
+            DebugEvent?.Invoke(this, new EventArgs());
+        }
 
         public Instruction PeekInstruction(int address)
         {
+            //TODO: this needs to be non-invasive
             Instruction inst = new Instruction();
 
-            inst.OpCode = GetByte(address++);
-            inst.AddressingMode = addressmode[inst.OpCode];
-            inst.Length = 1;
-            FetchInstructionParameters(ref inst, address);
+            //inst.OpCode = GetByte(address++);
+            //inst.AddressingMode = addressmode[inst.OpCode];
+            //inst.Length = 1;
+            //FetchInstructionParameters(ref inst, address);
             return inst;
         }
     }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace NES.CPU.Machine.BeepsBoops
+namespace ChiChiNES.BeepsBoops
 {
     public class WavSharer : IWavReader
     {

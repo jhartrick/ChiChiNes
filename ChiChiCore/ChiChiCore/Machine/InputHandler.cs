@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.Fastendo;
-using NES.CPU.Machine;
+using ChiChiNES;
+using ChiChiNES;
 
-namespace NES.CPU.nitenedo
+namespace ChiChiNES
 {
     public class InputHandler : IClockedMemoryMappedIOElement
     {

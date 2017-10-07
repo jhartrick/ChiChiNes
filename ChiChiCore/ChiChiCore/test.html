@@ -14,15 +14,15 @@
 <body>
     <canvas id="chichiPig" width="500" height="500"></canvas>
     <script type="text/javascript">
-              var wavsharer = new NES.CPU.Machine.BeepsBoops.WavSharer();
+              var wavsharer = new NES.BeepsBoops.WavSharer();
       var whizzler = new NES.CPU.PPUClasses.PixelWhizzler();
       whizzler.FillRGB = false;
 
 
-      var soundbop = new NES.CPU.Machine.BeepsBoops.Bopper(wavsharer);
-      var cpu = new NES.CPU.Fastendo.CPU2A03(whizzler, soundbop);
+      var soundbop = new NES.BeepsBoops.Bopper(wavsharer);
+      var cpu = new NES.CPU2A03(whizzler, soundbop);
 
-      this.machine = new NES.CPU.nitenedo.NESMachine(cpu, whizzler, new NES.CPU.PPUClasses.TileDoodler(whizzler), wavsharer, soundbop, new NES.Sound.SoundThreader(null));
+      this.machine = new NES.NESMachine(cpu, whizzler, new NES.CPU.PPUClasses.TileDoodler(whizzler), wavsharer, soundbop, new NES.Sound.SoundThreader(null));
 
       this.machine.LoadCart("dk.nes");
       this.machine.Reset();

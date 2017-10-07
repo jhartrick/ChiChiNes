@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NES.CPU.Machine
+namespace ChiChiNES
 {
     /// <summary>
     /// plugs up a nes control port, when nothing else is using it

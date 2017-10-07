@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NES.CPU.PPUClasses
+namespace ChiChiNES
 {
-	public partial class PixelWhizzler : NES.CPU.PixelWhizzlerClasses.IPPU
+	public partial class PixelWhizzler : ChiChiNES.IPPU
 	{
 
         private bool _isDebugging;

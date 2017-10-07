@@ -1,5 +1,5 @@
 ﻿using System;
-namespace NES.Sound
+namespace ChiChiNES.Sound
 {
     public interface IWavStreamer : IDisposable
     {

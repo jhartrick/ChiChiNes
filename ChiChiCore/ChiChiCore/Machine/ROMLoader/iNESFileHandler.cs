@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NES.CPU.Machine.Carts;
-using NES.CPU.Fastendo;
-using NES.CPU.PPUClasses;
+using ChiChiNES;
+using ChiChiNES;
+using ChiChiNES;
 
-using NES.CPU.PixelWhizzlerClasses;
+using ChiChiNES;
 
-namespace NES.CPU.Machine.ROMLoader
+namespace ChiChiNES.ROMLoader
 {
     public static class iNESFileHandler
     {
@@ -65,7 +65,7 @@ namespace NES.CPU.Machine.ROMLoader
                 case 2:
                 case 3:
                 case 7:
-                    _cart = new NESCart();
+                    _cart = new CPU.NESCart();
 
                     break;
                 case 1:

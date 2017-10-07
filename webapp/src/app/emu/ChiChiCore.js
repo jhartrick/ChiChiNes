@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @version 1.0.0.0
  * @copyright Copyright ©  2017
  * @compiler Bridge.NET 16.3.2
@@ -6,7 +6,7 @@
 Bridge.assembly("ChiChiCore", function ($asm, globals) {
     "use strict";
 
-    Bridge.define("NES.CPU.Fastendo.AddressingModes", {
+    Bridge.define("ChiChiNES.AddressingModes", {
         $kind: "enum",
         statics: {
             fields: {
@@ -30,7 +30,1609 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Fastendo.CPU2A03", {
+    Bridge.define("ChiChiNES.IClockedMemoryMappedIOElement", {
+        $kind: "interface"
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.Blip", {
+        statics: {
+            fields: {
+                bass_shift: 0,
+                end_frame_extra: 0,
+                time_bits: 0,
+                half_width: 0,
+                phase_bits: 0,
+                delta_bits: 0,
+                buf_extra: 0,
+                phase_count: 0,
+                time_unit: 0,
+                bl_step: null
+            },
+            ctors: {
+                init: function () {
+                    this.bass_shift = 8;
+                    this.end_frame_extra = 2;
+                    this.time_bits = 21;
+                    this.half_width = 8;
+                    this.phase_bits = 5;
+                    this.delta_bits = 15;
+                    this.bl_step = System.Array.create(0, [[
+                        43, 
+                        -115, 
+                        350, 
+                        -488, 
+                        1136, 
+                        -914, 
+                        5861, 
+                        21022
+                    ], [
+                        44, 
+                        -118, 
+                        348, 
+                        -473, 
+                        1076, 
+                        -799, 
+                        5274, 
+                        21001
+                    ], [
+                        45, 
+                        -121, 
+                        344, 
+                        -454, 
+                        1011, 
+                        -677, 
+                        4706, 
+                        20936
+                    ], [
+                        46, 
+                        -122, 
+                        336, 
+                        -431, 
+                        942, 
+                        -549, 
+                        4156, 
+                        20829
+                    ], [
+                        47, 
+                        -123, 
+                        327, 
+                        -404, 
+                        868, 
+                        -418, 
+                        3629, 
+                        20679
+                    ], [
+                        47, 
+                        -122, 
+                        316, 
+                        -375, 
+                        792, 
+                        -285, 
+                        3124, 
+                        20488
+                    ], [
+                        47, 
+                        -120, 
+                        303, 
+                        -344, 
+                        714, 
+                        -151, 
+                        2644, 
+                        20256
+                    ], [
+                        46, 
+                        -117, 
+                        289, 
+                        -310, 
+                        634, 
+                        -17, 
+                        2188, 
+                        19985
+                    ], [
+                        46, 
+                        -114, 
+                        273, 
+                        -275, 
+                        553, 
+                        117, 
+                        1758, 
+                        19675
+                    ], [
+                        44, 
+                        -108, 
+                        255, 
+                        -237, 
+                        471, 
+                        247, 
+                        1356, 
+                        19327
+                    ], [
+                        43, 
+                        -103, 
+                        237, 
+                        -199, 
+                        390, 
+                        373, 
+                        981, 
+                        18944
+                    ], [
+                        42, 
+                        -98, 
+                        218, 
+                        -160, 
+                        310, 
+                        495, 
+                        633, 
+                        18527
+                    ], [
+                        40, 
+                        -91, 
+                        198, 
+                        -121, 
+                        231, 
+                        611, 
+                        314, 
+                        18078
+                    ], [
+                        38, 
+                        -84, 
+                        178, 
+                        -81, 
+                        153, 
+                        722, 
+                        22, 
+                        17599
+                    ], [
+                        36, 
+                        -76, 
+                        157, 
+                        -43, 
+                        80, 
+                        824, 
+                        -241, 
+                        17092
+                    ], [
+                        34, 
+                        -68, 
+                        135, 
+                        -3, 
+                        8, 
+                        919, 
+                        -476, 
+                        16558
+                    ], [
+                        32, 
+                        -61, 
+                        115, 
+                        34, 
+                        -60, 
+                        1006, 
+                        -683, 
+                        16001
+                    ], [
+                        29, 
+                        -52, 
+                        94, 
+                        70, 
+                        -123, 
+                        1083, 
+                        -862, 
+                        15422
+                    ], [
+                        27, 
+                        -44, 
+                        73, 
+                        106, 
+                        -184, 
+                        1152, 
+                        -1015, 
+                        14824
+                    ], [
+                        25, 
+                        -36, 
+                        53, 
+                        139, 
+                        -239, 
+                        1211, 
+                        -1142, 
+                        14210
+                    ], [
+                        22, 
+                        -27, 
+                        34, 
+                        170, 
+                        -290, 
+                        1261, 
+                        -1244, 
+                        13582
+                    ], [
+                        20, 
+                        -20, 
+                        16, 
+                        199, 
+                        -335, 
+                        1301, 
+                        -1322, 
+                        12942
+                    ], [
+                        18, 
+                        -12, 
+                        -3, 
+                        226, 
+                        -375, 
+                        1331, 
+                        -1376, 
+                        12293
+                    ], [
+                        15, 
+                        -4, 
+                        -19, 
+                        250, 
+                        -410, 
+                        1351, 
+                        -1408, 
+                        11638
+                    ], [
+                        13, 
+                        3, 
+                        -35, 
+                        272, 
+                        -439, 
+                        1361, 
+                        -1419, 
+                        10979
+                    ], [
+                        11, 
+                        9, 
+                        -49, 
+                        292, 
+                        -464, 
+                        1362, 
+                        -1410, 
+                        10319
+                    ], [
+                        9, 
+                        16, 
+                        -63, 
+                        309, 
+                        -483, 
+                        1354, 
+                        -1383, 
+                        9660
+                    ], [
+                        7, 
+                        22, 
+                        -75, 
+                        322, 
+                        -496, 
+                        1337, 
+                        -1339, 
+                        9005
+                    ], [
+                        6, 
+                        26, 
+                        -85, 
+                        333, 
+                        -504, 
+                        1312, 
+                        -1280, 
+                        8355
+                    ], [
+                        4, 
+                        31, 
+                        -94, 
+                        341, 
+                        -507, 
+                        1278, 
+                        -1205, 
+                        7713
+                    ], [
+                        3, 
+                        35, 
+                        -102, 
+                        347, 
+                        -506, 
+                        1238, 
+                        -1119, 
+                        7082
+                    ], [
+                        1, 
+                        40, 
+                        -110, 
+                        350, 
+                        -499, 
+                        1190, 
+                        -1021, 
+                        6464
+                    ], [
+                        0, 
+                        43, 
+                        -115, 
+                        350, 
+                        -488, 
+                        1136, 
+                        -914, 
+                        5861
+                    ]], System.Int32, 33, 8);
+                },
+                ctor: function () {
+                    ChiChiNES.BeepsBoops.Blip.time_unit = 2097152;
+                    ChiChiNES.BeepsBoops.Blip.buf_extra = 18;
+                    ChiChiNES.BeepsBoops.Blip.phase_count = 32;
+                }
+            }
+        },
+        fields: {
+            _blipBuffer: null
+        },
+        props: {
+            BlipBuffer: {
+                get: function () {
+                    return this._blipBuffer;
+                },
+                set: function (value) {
+                    this._blipBuffer = value;
+                }
+            },
+            blip_samples_avail: {
+                get: function () {
+                    return this._blipBuffer.avail;
+                }
+            }
+        },
+        ctors: {
+            ctor: function (size) {
+                this.$initialize();
+                this.blip_new(size);
+            }
+        },
+        methods: {
+            blip_new: function (size) {
+                this._blipBuffer = new ChiChiNES.BeepsBoops.Blip.blip_buffer_t(size);
+                this._blipBuffer.size = size;
+                this._blipBuffer.factor = 0;
+                this.blip_clear();
+            },
+            blip_set_rates: function (clock_rate, sample_rate) {
+                this._blipBuffer.factor = Bridge.Int.clip32(ChiChiNES.BeepsBoops.Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375));
+
+                /* Fails if clock_rate exceeds maximum, relative to sample_rate */
+                System.Diagnostics.Debug.assert(this._blipBuffer.factor > 0);
+            },
+            blip_clear: function () {
+                this._blipBuffer.offset = 0;
+                this._blipBuffer.avail = 0;
+                this._blipBuffer.integrator = 0;
+                this._blipBuffer.samples = System.Array.init(((this._blipBuffer.size + ChiChiNES.BeepsBoops.Blip.buf_extra) | 0), 0, System.Int32);
+                //memset(BLIP_SAMPLES(s), 0, (s.size + buf_extra) * sizeof(buf_t));
+            },
+            blip_clocks_needed: function (samples) {
+                var needed = (((Bridge.Int.mul(samples, ChiChiNES.BeepsBoops.Blip.time_unit) - this._blipBuffer.offset) | 0)) >>> 0;
+
+                /* Fails if buffer can't hold that many more samples */
+                //assert( s->avail + samples <= s->size );
+
+                return System.Int64.clip32((System.Int64(needed).add(System.Int64(this._blipBuffer.factor)).sub(System.Int64(1))).div(System.Int64(this._blipBuffer.factor)));
+
+            },
+            blip_end_frame: function (t) {
+                var off = (Bridge.Int.mul(t, this._blipBuffer.factor) + this._blipBuffer.offset) | 0;
+                this._blipBuffer.avail = (this._blipBuffer.avail + (off >> ChiChiNES.BeepsBoops.Blip.time_bits)) | 0;
+                this._blipBuffer.offset = off & (((ChiChiNES.BeepsBoops.Blip.time_unit - 1) | 0));
+
+                /* Fails if buffer size was exceeded */
+                //assert(s->avail <= s->size);
+            },
+            remove_samples: function (count) {
+                var remain = (((this._blipBuffer.avail + ChiChiNES.BeepsBoops.Blip.buf_extra) | 0) - count) | 0;
+                this._blipBuffer.avail = (this._blipBuffer.avail - count) | 0;
+
+                System.Array.copy(this._blipBuffer.samples, count, this._blipBuffer.samples, 0, remain);
+                System.Array.fill(this._blipBuffer.samples, 0, remain, count);
+
+                this._blipBuffer.arrayLength = count;
+            },
+            ReadBytes: function (outbuf, count, stereo) {
+                var $t;
+                if (count > this._blipBuffer.avail) {
+                    count = this._blipBuffer.avail;
+                }
+
+                if (count !== 0) {
+                    var step = 2;
+                    //int inPtr  = BLIP_SAMPLES( s );
+                    //buf_t const* end = in + count;
+                    var inPtr = 0, outPtr = 0;
+                    var endPtr = (inPtr + count) | 0;
+                    var sum = this._blipBuffer.integrator;
+
+                    do {
+                        var st = sum >> ChiChiNES.BeepsBoops.Blip.delta_bits; /* assumes right shift preserves sign */
+                        sum = (sum + ($t = this._blipBuffer.samples)[inPtr]) | 0;
+                        inPtr = (inPtr + 1) | 0;
+                        if (Bridge.Int.sxs(st & 65535) !== st) {
+                            st = (st >> 31) ^ 32767;
+                        }
+                        outbuf[outPtr] = st & 255;
+                        outbuf[((outPtr + 1) | 0)] = (st >> 8) & 255;
+                        outPtr = (outPtr + step) | 0;
+                        sum = (sum - (st << (7))) | 0;
+                    } while (inPtr !== endPtr);
+
+                    this._blipBuffer.integrator = sum;
+
+                    this.remove_samples(count);
+                }
+
+                return count;
+            },
+            blip_add_delta: function (time, delta) {
+                var $t, $t1, $t2, $t3, $t4, $t5;
+                if (delta === 0) {
+                    return;
+                }
+                var fixedTime = System.Int64(((Bridge.Int.mul(time, this._blipBuffer.factor) + this._blipBuffer.offset) | 0));
+
+                var outPtr = System.Int64.clip32(System.Int64(this._blipBuffer.avail).add((fixedTime.shr(ChiChiNES.BeepsBoops.Blip.time_bits))));
+
+                var phase_shift = 16;
+                var phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((((ChiChiNES.BeepsBoops.Blip.phase_count - 1) | 0)))));
+
+                var inStep = phase; // bl_step[phase];
+                var rev = (ChiChiNES.BeepsBoops.Blip.phase_count - phase) | 0; // bl_step[phase_count - phase];
+
+                var interp_bits = 15;
+                var interp = System.Int64.clip32(fixedTime.shr((((phase_shift - interp_bits) | 0))).and(System.Int64(((((1 << interp_bits) - 1) | 0)))));
+                var delta2 = (Bridge.Int.mul(delta, interp)) >> interp_bits;
+                delta = (delta - delta2) | 0;
+
+                /* Fails if buffer size was exceeded */
+                //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
+
+                for (var i = 0; i < 8; i = (i + 1) | 0) {
+                    ($t = this._blipBuffer.samples)[($t1 = ((outPtr + i) | 0))] = (($t2 = this._blipBuffer.samples)[$t1] + (((Bridge.Int.mul(ChiChiNES.BeepsBoops.Blip.bl_step.get([inStep, i]), delta) + Bridge.Int.mul(ChiChiNES.BeepsBoops.Blip.bl_step.get([((inStep + 1) | 0), i]), delta2)) | 0))) | 0;
+                    ($t3 = this._blipBuffer.samples)[($t4 = ((outPtr + (((15 - i) | 0))) | 0))] = (($t5 = this._blipBuffer.samples)[$t4] + (((Bridge.Int.mul(ChiChiNES.BeepsBoops.Blip.bl_step.get([rev, i]), delta) + Bridge.Int.mul(ChiChiNES.BeepsBoops.Blip.bl_step.get([((rev - 1) | 0), i]), delta2)) | 0))) | 0;
+                }
+
+            },
+            blip_add_delta_fast: function (time, delta) {
+                var $t, $t1, $t2, $t3, $t4, $t5;
+                var fixedTime = (Bridge.Int.mul(time, this._blipBuffer.factor) + this._blipBuffer.offset) | 0;
+
+                var outPtr = ((this._blipBuffer.avail + (fixedTime >> ChiChiNES.BeepsBoops.Blip.time_bits)) | 0);
+
+                var delta_unit = 32768;
+                var phase_shift = 6;
+                var phase = fixedTime >> phase_shift & (((delta_unit - 1) | 0));
+                var delta2 = Bridge.Int.mul(delta, phase);
+
+                /* Fails if buffer size was exceeded */
+                //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
+
+
+                ($t = this._blipBuffer.samples)[($t1 = ((outPtr + 8) | 0))] = (($t2 = this._blipBuffer.samples)[$t1] + (((Bridge.Int.mul(delta, delta_unit) - delta2) | 0))) | 0;
+                ($t3 = this._blipBuffer.samples)[($t4 = ((outPtr + 9) | 0))] = (($t5 = this._blipBuffer.samples)[$t4] + delta2) | 0;
+                //out [8] += delta * delta_unit - delta2;
+                //out [9] += delta2;
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.Blip.blip_buffer_t", {
+        fields: {
+            factor: 0,
+            offset: 0,
+            avail: 0,
+            size: 0,
+            integrator: 0,
+            arrayLength: 0,
+            samples: null
+        },
+        ctors: {
+            ctor: function (size) {
+                this.$initialize();
+                this.samples = System.Array.init(size, 0, System.Int32);
+                this.arrayLength = size;
+
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.IAPU", {
+        $kind: "interface"
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.DMCChannel", {
+        fields: {
+            _chan: 0,
+            _bleeper: null,
+            LengthCounts: null,
+            _dutyCycle: 0,
+            _length: 0,
+            _timer: 0,
+            _rawTimer: 0,
+            _volume: 0,
+            _time: 0,
+            _envelope: 0,
+            _looping: false,
+            _enabled: false,
+            _amplitude: 0,
+            doodies: null,
+            _sweepShift: 0,
+            _sweepCounter: 0,
+            _sweepDivider: 0,
+            _sweepNegateFlag: false,
+            _sweepEnabled: false,
+            _startSweep: false,
+            _sweepInvalid: false,
+            _irqEnabled: false,
+            rate: 0,
+            dCounter: 0,
+            sampleAddress: 0,
+            _phase: 0,
+            _gain: 0,
+            _envTimer: 0,
+            _envStart: false,
+            _envConstantVolume: false,
+            _envVolume: 0,
+            _sweepComplement: false
+        },
+        props: {
+            Length: {
+                get: function () {
+                    return this._length;
+                },
+                set: function (value) {
+                    this._length = value;
+                }
+            },
+            /**
+             * Duty cycle of current square wave
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.DMCChannel
+             * @function DutyCycle
+             * @type number
+             */
+            DutyCycle: {
+                get: function () {
+                    return this._dutyCycle;
+                },
+                set: function (value) {
+                    this._dutyCycle = value;
+                }
+            },
+            /**
+             * Period of current waveform
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.DMCChannel
+             * @function Period
+             * @type number
+             */
+            Period: {
+                get: function () {
+                    return this._timer;
+                },
+                set: function (value) {
+                    this._timer = value;
+                }
+            },
+            /**
+             * Volume envelope for current waveform
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.DMCChannel
+             * @function Volume
+             * @type number
+             */
+            Volume: {
+                get: function () {
+                    return this._volume;
+                },
+                set: function (value) {
+                    this._volume = value;
+                }
+            },
+            /**
+             * current time in channel
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.DMCChannel
+             * @function Time
+             * @type number
+             */
+            Time: {
+                get: function () {
+                    return this._time;
+                },
+                set: function (value) {
+                    this._time = value;
+                }
+            },
+            Envelope: {
+                get: function () {
+                    return this._envelope;
+                },
+                set: function (value) {
+                    this._envelope = value;
+                }
+            },
+            Looping: {
+                get: function () {
+                    return this._looping;
+                },
+                set: function (value) {
+                    this._looping = value;
+                }
+            },
+            Enabled: {
+                get: function () {
+                    return this._enabled;
+                },
+                set: function (value) {
+                    this._enabled = value;
+                }
+            },
+            /**
+             * Master gain
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.DMCChannel
+             * @function Gain
+             * @type number
+             */
+            Gain: {
+                get: function () {
+                    return this._gain;
+                },
+                set: function (value) {
+                    this._gain = value;
+                }
+            },
+            /**
+             * True for ones complement, false for twos complement
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.DMCChannel
+             * @function SweepComplement
+             * @type boolean
+             */
+            SweepComplement: {
+                get: function () {
+                    return this._sweepComplement;
+                },
+                set: function (value) {
+                    this._sweepComplement = value;
+                }
+            }
+        },
+        ctors: {
+            init: function () {
+                this.LengthCounts = System.Array.init([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30], System.Byte);
+                this._enabled = true;
+                this.doodies = System.Array.init([2, 6, 30, 249], System.Byte);
+                this._sweepDivider = 1;
+                this._irqEnabled = false;
+                this._envTimer = 15;
+            },
+            ctor: function (bleeper, chan) {
+                this.$initialize();
+                this._bleeper = bleeper;
+                this._chan = chan;
+            }
+        },
+        methods: {
+            WriteRegister: function (register, data, time) {
+                // Run(time);
+
+                switch (register) {
+                    case 0: 
+                        this._irqEnabled = (data & 128) === 128;
+                        this._looping = (data & 64) === 64;
+                        this.rate = data & 15;
+                        break;
+                    case 1: 
+                        this.dCounter = data & 127;
+                        break;
+                    case 2: 
+                        this.sampleAddress = (data << 6) | 49152;
+                        break;
+                    case 3: 
+                        this._timer = data & 255;
+                        this._timer <<= 4;
+                        this._timer &= 1;
+                        break;
+                }
+            },
+            Run: function (end_time) {
+
+                for (; this._time < end_time; this._time++) {
+                    this.UpdateAmplitude((this._dutyCycle >> (this._phase & 7) & 1));
+                }
+                this._phase &= 7;
+            },
+            UpdateAmplitude: function (new_amp) {
+                var delta = new_amp * this._gain - this._amplitude;
+
+                this._amplitude += delta;
+                this._bleeper.blip_add_delta(this._time, delta);
+            },
+            EndFrame: function (time) {
+                this.Run(time);
+
+                this._time = 0;
+            },
+            FrameClock: function (time, step) {
+                this.Run(time);
+
+                if (!this._envStart) {
+                    this._envTimer--;
+                    if (this._envTimer === 0) {
+                        this._envTimer = this._volume + 1;
+                        if (this._envVolume > 0) {
+                            this._envVolume--;
+                        } else {
+                            this._envVolume = this._looping ? 15 : 0;
+                        }
+                    }
+                } else {
+                    this._envStart = false;
+                    this._envTimer = this._volume + 1;
+                    this._envVolume = 15;
+                }
+
+                switch (step) {
+                    case 1: 
+                    case 3: 
+                        --this._sweepCounter;
+                        if (this._sweepCounter === 0) {
+                            this._sweepCounter = this._sweepDivider + 1;
+                            if (this._sweepEnabled && this._sweepShift > 0) {
+                                var sweep = this._timer >> this._sweepShift;
+                                if (this._sweepComplement) {
+                                    this._timer += this._sweepNegateFlag ? ~sweep : sweep;
+                                } else {
+                                    this._timer += this._sweepNegateFlag ? ~sweep + 1 : sweep;
+                                }
+                                this._sweepInvalid = (this._rawTimer < 8 || (this._timer & 2048) === 2048);
+                                //if (_sweepInvalid)
+                                //{
+                                //    _sweepInvalid = true;
+                                //}
+                            }
+                        }
+                        if (this._startSweep) {
+                            this._startSweep = false;
+                            this._sweepCounter = this._sweepDivider + 1;
+
+                        }
+                        if (!this._looping && this._length > 0) {
+                            this._length--;
+                        }
+                        break;
+                }
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.IWavReader", {
+        $kind: "interface"
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.IWavWriter", {
+        inherits: [System.IDisposable],
+        $kind: "interface"
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.NoiseChannel", {
+        fields: {
+            _bleeper: null,
+            _chan: 0,
+            NoisePeriods: null,
+            LengthCounts: null,
+            _length: 0,
+            _period: 0,
+            _volume: 0,
+            _time: 0,
+            _envConstantVolume: false,
+            _envVolume: 0,
+            _looping: false,
+            _enabled: false,
+            amplitude: 0,
+            _phase: 0,
+            gain: 0,
+            _envTimer: 0,
+            _envStart: false
+        },
+        props: {
+            Length: {
+                get: function () {
+                    return this._length;
+                },
+                set: function (value) {
+                    this._length = value;
+                }
+            },
+            /**
+             * Period of current waveform
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.NoiseChannel
+             * @function Period
+             * @type number
+             */
+            Period: {
+                get: function () {
+                    return this._period;
+                },
+                set: function (value) {
+                    this._period = value;
+                }
+            },
+            /**
+             * Volume envelope for current waveform
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.NoiseChannel
+             * @function Volume
+             * @type number
+             */
+            Volume: {
+                get: function () {
+                    return this._volume;
+                },
+                set: function (value) {
+                    this._volume = value;
+                }
+            },
+            /**
+             * current time in channel
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.NoiseChannel
+             * @function Time
+             * @type number
+             */
+            Time: {
+                get: function () {
+                    return this._time;
+                },
+                set: function (value) {
+                    this._time = value;
+                }
+            },
+            Looping: {
+                get: function () {
+                    return this._looping;
+                },
+                set: function (value) {
+                    this._looping = value;
+                }
+            },
+            Enabled: {
+                get: function () {
+                    return this._enabled;
+                },
+                set: function (value) {
+                    this._enabled = value;
+                }
+            },
+            Gain: {
+                get: function () {
+                    return this.gain;
+                },
+                set: function (value) {
+                    this.gain = value;
+                }
+            }
+        },
+        ctors: {
+            init: function () {
+                this.NoisePeriods = System.Array.init([4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068], System.Int32);
+                this.LengthCounts = System.Array.init([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30], System.Byte);
+                this._enabled = true;
+                this._phase = 1;
+                this._envTimer = 15;
+            },
+            ctor: function (bleeper, chan) {
+                this.$initialize();
+                this._bleeper = bleeper;
+                this._chan = chan;
+            }
+        },
+        methods: {
+            WriteRegister: function (register, data, time) {
+                // Run(time);
+
+                switch (register) {
+                    case 0: 
+                        this._envConstantVolume = (data & 16) === 16;
+                        this._volume = data & 15;
+                        this._looping = (data & 128) === 128;
+                        break;
+                    case 1: 
+                        break;
+                    case 2: 
+                        this._period = this.NoisePeriods[data & 15];
+                        // _period |= data;
+                        break;
+                    case 3: 
+                        // setup length
+                        if (this._enabled) {
+                            this._length = this.LengthCounts[(data >> 3) & 31];
+                        }
+                        this._envStart = true;
+                        break;
+                    case 4: 
+                        this._enabled = (data !== 0);
+                        if (!this._enabled) {
+                            this._length = 0;
+                        }
+                        break;
+                }
+            },
+            Run: function (end_time) {
+                var volume = this._envConstantVolume ? this._volume : this._envVolume;
+                if (this._length === 0) {
+                    volume = 0;
+                }
+                if (this._period === 0) {
+                    this._time = end_time;
+                    this.UpdateAmplitude(0);
+                    return;
+                }
+
+                if (this._phase === 0) {
+                    this._phase = 1;
+                }
+
+                for (; this._time < end_time; this._time += this._period) {
+                    var new15;
+                    if (this._looping) {
+                        new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
+                    } else {
+                        new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
+                    }
+                    this.UpdateAmplitude(this._phase & 1 * volume);
+                    this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
+
+
+
+                }
+            },
+            UpdateAmplitude: function (amp) {
+                var delta = amp * this.gain - this.amplitude;
+                this.amplitude += delta;
+                this._bleeper.blip_add_delta(this._time, delta);
+            },
+            EndFrame: function (time) {
+                this.Run(time);
+                this._time = 0;
+            },
+            FrameClock: function (time, step) {
+                this.Run(time);
+
+                if (!this._envStart) {
+                    this._envTimer--;
+                    if (this._envTimer === 0) {
+                        this._envTimer = this._volume + 1;
+                        if (this._envVolume > 0) {
+                            this._envVolume--;
+                        } else {
+                            this._envVolume = this._looping ? 15 : 0;
+                        }
+
+                    }
+                } else {
+                    this._envStart = false;
+                    this._envTimer = this._volume + 1;
+                    this._envVolume = 15;
+                }
+
+                switch (step) {
+                    case 1: 
+                    case 2: 
+                        if (!!(!this._looping & this._length > 0)) {
+                            this._length--;
+                        }
+                        break;
+                }
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.SoundStatusChangeEventArgs", {
+        fields: {
+            muted: false
+        },
+        props: {
+            Muted: {
+                get: function () {
+                    return this.muted;
+                },
+                set: function (value) {
+                    this.muted = value;
+                }
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.SquareChannel", {
+        fields: {
+            _chan: 0,
+            _bleeper: null,
+            LengthCounts: null,
+            _dutyCycle: 0,
+            _length: 0,
+            _timer: 0,
+            _rawTimer: 0,
+            _volume: 0,
+            _time: 0,
+            _envelope: 0,
+            _looping: false,
+            _enabled: false,
+            _amplitude: 0,
+            doodies: null,
+            _sweepShift: 0,
+            _sweepCounter: 0,
+            _sweepDivider: 0,
+            _sweepNegateFlag: false,
+            _sweepEnabled: false,
+            _startSweep: false,
+            _sweepInvalid: false,
+            _phase: 0,
+            _gain: 0,
+            _envTimer: 0,
+            _envStart: false,
+            _envConstantVolume: false,
+            _envVolume: 0,
+            _sweepComplement: false
+        },
+        props: {
+            Length: {
+                get: function () {
+                    return this._length;
+                },
+                set: function (value) {
+                    this._length = value;
+                }
+            },
+            /**
+             * Duty cycle of current square wave
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.SquareChannel
+             * @function DutyCycle
+             * @type number
+             */
+            DutyCycle: {
+                get: function () {
+                    return this._dutyCycle;
+                },
+                set: function (value) {
+                    this._dutyCycle = value;
+                }
+            },
+            /**
+             * Period of current waveform
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.SquareChannel
+             * @function Period
+             * @type number
+             */
+            Period: {
+                get: function () {
+                    return this._timer;
+                },
+                set: function (value) {
+                    this._timer = value;
+                }
+            },
+            /**
+             * Volume envelope for current waveform
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.SquareChannel
+             * @function Volume
+             * @type number
+             */
+            Volume: {
+                get: function () {
+                    return this._volume;
+                },
+                set: function (value) {
+                    this._volume = value;
+                }
+            },
+            /**
+             * current time in channel
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.SquareChannel
+             * @function Time
+             * @type number
+             */
+            Time: {
+                get: function () {
+                    return this._time;
+                },
+                set: function (value) {
+                    this._time = value;
+                }
+            },
+            Envelope: {
+                get: function () {
+                    return this._envelope;
+                },
+                set: function (value) {
+                    this._envelope = value;
+                }
+            },
+            Looping: {
+                get: function () {
+                    return this._looping;
+                },
+                set: function (value) {
+                    this._looping = value;
+                }
+            },
+            Enabled: {
+                get: function () {
+                    return this._enabled;
+                },
+                set: function (value) {
+                    this._enabled = value;
+                }
+            },
+            /**
+             * Master gain
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.SquareChannel
+             * @function Gain
+             * @type number
+             */
+            Gain: {
+                get: function () {
+                    return this._gain;
+                },
+                set: function (value) {
+                    this._gain = value;
+                }
+            },
+            /**
+             * True for ones complement, false for twos complement
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.SquareChannel
+             * @function SweepComplement
+             * @type boolean
+             */
+            SweepComplement: {
+                get: function () {
+                    return this._sweepComplement;
+                },
+                set: function (value) {
+                    this._sweepComplement = value;
+                }
+            }
+        },
+        ctors: {
+            init: function () {
+                this.LengthCounts = System.Array.init([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30], System.Byte);
+                this._enabled = true;
+                this.doodies = System.Array.init([2, 6, 30, 249], System.Byte);
+                this._sweepDivider = 1;
+                this._envTimer = 15;
+            },
+            ctor: function (bleeper, chan) {
+                this.$initialize();
+                this._bleeper = bleeper;
+                this._chan = chan;
+            }
+        },
+        methods: {
+            WriteRegister: function (register, data, time) {
+                // Run(time);
+
+                switch (register) {
+                    case 0: 
+                        this._envConstantVolume = (data & 16) === 16;
+                        this._volume = data & 15;
+                        this._dutyCycle = this.doodies[(data >> 6) & 3];
+                        this._looping = (data & 32) === 32;
+                        this._sweepInvalid = false;
+                        break;
+                    case 1: 
+                        this._sweepShift = data & 7;
+                        this._sweepNegateFlag = (data & 8) === 8;
+                        this._sweepDivider = (data >> 4) & 7;
+                        this._sweepEnabled = (data & 128) === 128;
+                        this._startSweep = true;
+                        this._sweepInvalid = false;
+                        break;
+                    case 2: 
+                        this._timer &= 1792;
+                        this._timer |= data;
+                        this._rawTimer = this._timer;
+                        break;
+                    case 3: 
+                        this._timer &= 255;
+                        this._timer |= (data & 7) << 8;
+                        this._rawTimer = this._timer;
+                        this._phase = 0;
+                        // setup length
+                        if (this._enabled) {
+                            this._length = this.LengthCounts[(data >> 3) & 31];
+                        }
+                        this._envStart = true;
+                        break;
+                    case 4: 
+                        this._enabled = (data !== 0);
+                        if (!this._enabled) {
+                            this._length = 0;
+                        }
+                        break;
+                }
+            },
+            Run: function (end_time) {
+                var period = this._sweepEnabled ? ((this._timer + 1) & 2047) << 1 : ((this._rawTimer + 1) & 2047) << 1;
+
+                if (period === 0) {
+                    this._time = end_time;
+                    this.UpdateAmplitude(0);
+                    return;
+                }
+
+                var volume = this._envConstantVolume ? this._volume : this._envVolume;
+
+
+                if (this._length === 0 || volume === 0 || this._sweepInvalid) {
+                    this._phase += ((end_time - this._time) / period) & 7;
+                    this._time = end_time;
+                    this.UpdateAmplitude(0);
+                    return;
+                }
+                for (; this._time < end_time; this._time += period, this._phase++) {
+                    this.UpdateAmplitude((this._dutyCycle >> (this._phase & 7) & 1) * volume);
+                }
+                this._phase &= 7;
+            },
+            UpdateAmplitude: function (new_amp) {
+                var delta = new_amp * this._gain - this._amplitude;
+
+                this._amplitude += delta;
+                this._bleeper.blip_add_delta(this._time, delta);
+            },
+            EndFrame: function (time) {
+                this.Run(time);
+
+                this._time = 0;
+            },
+            FrameClock: function (time, step) {
+                this.Run(time);
+
+                if (!this._envStart) {
+                    this._envTimer--;
+                    if (this._envTimer === 0) {
+                        this._envTimer = this._volume + 1;
+                        if (this._envVolume > 0) {
+                            this._envVolume--;
+                        } else {
+                            this._envVolume = this._looping ? 15 : 0;
+                        }
+                    }
+                } else {
+                    this._envStart = false;
+                    this._envTimer = this._volume + 1;
+                    this._envVolume = 15;
+                }
+
+                switch (step) {
+                    case 1: 
+                    case 3: 
+                        --this._sweepCounter;
+                        if (this._sweepCounter === 0) {
+                            this._sweepCounter = this._sweepDivider + 1;
+                            if (this._sweepEnabled && this._sweepShift > 0) {
+                                var sweep = this._timer >> this._sweepShift;
+                                if (this._sweepComplement) {
+                                    this._timer += this._sweepNegateFlag ? ~sweep : sweep;
+                                } else {
+                                    this._timer += this._sweepNegateFlag ? ~sweep + 1 : sweep;
+                                }
+                                this._sweepInvalid = (this._rawTimer < 8 || (this._timer & 2048) === 2048);
+                                //if (_sweepInvalid)
+                                //{
+                                //    _sweepInvalid = true;
+                                //}
+                            }
+                        }
+                        if (this._startSweep) {
+                            this._startSweep = false;
+                            this._sweepCounter = this._sweepDivider + 1;
+
+                        }
+                        if (!this._looping && this._length > 0) {
+                            this._length--;
+                        }
+                        break;
+                }
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.BeepsBoops.TriangleChannel", {
+        fields: {
+            _bleeper: null,
+            _chan: 0,
+            LengthCounts: null,
+            _length: 0,
+            _period: 0,
+            _time: 0,
+            _envelope: 0,
+            _looping: false,
+            _enabled: false,
+            _amplitude: 0,
+            _gain: 0,
+            _linCtr: 0,
+            _phase: 0,
+            _linVal: 0,
+            _linStart: false
+        },
+        props: {
+            Length: {
+                get: function () {
+                    return this._length;
+                },
+                set: function (value) {
+                    this._length = value;
+                }
+            },
+            /**
+             * Period of current waveform
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.TriangleChannel
+             * @function Period
+             * @type number
+             */
+            Period: {
+                get: function () {
+                    return this._period;
+                },
+                set: function (value) {
+                    this._period = value;
+                }
+            },
+            /**
+             * current time in channel
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.BeepsBoops.TriangleChannel
+             * @function Time
+             * @type number
+             */
+            Time: {
+                get: function () {
+                    return this._time;
+                },
+                set: function (value) {
+                    this._time = value;
+                }
+            },
+            Envelope: {
+                get: function () {
+                    return this._envelope;
+                },
+                set: function (value) {
+                    this._envelope = value;
+                }
+            },
+            Looping: {
+                get: function () {
+                    return this._looping;
+                },
+                set: function (value) {
+                    this._looping = value;
+                }
+            },
+            Enabled: {
+                get: function () {
+                    return this._enabled;
+                },
+                set: function (value) {
+                    this._enabled = value;
+                }
+            },
+            Amplitude: {
+                get: function () {
+                    return this._amplitude;
+                },
+                set: function (value) {
+                    this._amplitude = value;
+                }
+            },
+            Gain: {
+                get: function () {
+                    return this._gain;
+                },
+                set: function (value) {
+                    this._gain = value;
+                }
+            }
+        },
+        ctors: {
+            init: function () {
+                this.LengthCounts = System.Array.init([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30], System.Int32);
+                this._enabled = true;
+            },
+            ctor: function (bleeper, chan) {
+                this.$initialize();
+                this._bleeper = bleeper;
+                this._chan = chan;
+            }
+        },
+        methods: {
+            WriteRegister: function (register, data, time) {
+                //Run(time);
+
+                switch (register) {
+                    case 0: 
+                        this._looping = (data & 128) === 128;
+                        this._linVal = data & 127;
+                        break;
+                    case 1: 
+                        break;
+                    case 2: 
+                        this._period &= 1792;
+                        this._period |= data;
+                        break;
+                    case 3: 
+                        this._period &= 255;
+                        this._period |= (data & 7) << 8;
+                        // setup lengthhave
+                        if (this._enabled) {
+                            this._length = this.LengthCounts[(data >> 3) & 31];
+                        }
+                        this._linStart = true;
+                        break;
+                    case 4: 
+                        this._enabled = (data !== 0);
+                        if (!this._enabled) {
+                            this._length = 0;
+                        }
+                        break;
+                }
+            },
+            Run: function (end_time) {
+
+                var period = this._period + 1;
+                if (this._linCtr === 0 || this._length === 0 || this._period < 4) {
+                    // leave it at it's current phase
+                    this._time = end_time;
+                    return;
+                }
+
+                for (; this._time < end_time; this._time += period, this._phase = (this._phase + 1) % 32) {
+                    this.UpdateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
+                }
+            },
+            UpdateAmplitude: function (new_amp) {
+                var delta = new_amp * this._gain - this._amplitude;
+                this._amplitude += delta;
+                this._bleeper.blip_add_delta(this._time, delta);
+            },
+            EndFrame: function (time) {
+                this.Run(time);
+                this._time = 0;
+            },
+            FrameClock: function (time, step) {
+                this.Run(time);
+
+                if (this._linStart) {
+                    this._linCtr = this._linVal;
+
+                } else {
+                    if (this._linCtr > 0) {
+                        this._linCtr--;
+                    }
+                }
+
+                if (!this._looping) {
+                    this._linStart = false;
+                }
+
+                switch (step) {
+                    case 1: 
+                    case 3: 
+                        if (this._length > 0 && !this._looping) {
+                            this._length--;
+                        }
+                        break;
+                }
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.CartDebugEvent", {
+        fields: {
+            clock: 0,
+            eventType: null
+        },
+        props: {
+            Clock: {
+                get: function () {
+                    return this.clock;
+                },
+                set: function (value) {
+                    this.clock = value;
+                }
+            },
+            EventType: {
+                get: function () {
+                    return this.eventType;
+                },
+                set: function (value) {
+                    this.eventType = value;
+                }
+            }
+        },
+        methods: {
+            toString: function () {
+                return System.String.format("{0}: {1}", this.clock, this.eventType);
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.ClockedRequestEventArgs", {
+        props: {
+            Clock: 0
+        }
+    });
+
+    Bridge.define("ChiChiNES.ControlByteEventArgs", {
+        fields: {
+            nextValue: 0
+        },
+        props: {
+            NextValue: {
+                get: function () {
+                    return this.nextValue;
+                },
+                set: function (value) {
+                    this.nextValue = value;
+                }
+            }
+        },
+        ctors: {
+            ctor: function (value) {
+                this.$initialize();
+                this.nextValue = value;
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.CPU2A03", {
         statics: {
             fields: {
                 cpuTiming: null
@@ -83,6 +1685,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             _debugging: false,
             instructionHistoryPointer: 0,
             _instructionHistory: null
+        },
+        events: {
+            DebugEvent: null
         },
         props: {
             Accumulator: {
@@ -165,13 +1770,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              * @instance
              * @public
              * @readonly
-             * @memberof NES.CPU.Fastendo.CPU2A03
+             * @memberof ChiChiNES.CPU2A03
              * @function CurrentInstruction
-             * @type NES.CPU.Fastendo.CPU2A03.Instruction
+             * @type ChiChiNES.CPU2A03.Instruction
              */
             CurrentInstruction: {
                 get: function () {
-                    return new NES.CPU.Fastendo.CPU2A03.Instruction.ctor();
+                    return new ChiChiNES.CPU2A03.Instruction.ctor();
                 }
             },
             OperationCounter: {
@@ -200,7 +1805,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @memberof NES.CPU.Fastendo.CPU2A03
+             * @memberof ChiChiNES.CPU2A03
              * @function Ticks
              * @type number
              */
@@ -246,7 +1851,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     this.soundBopper = value;
-                    this.soundBopper.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NMIHandler = this.irqUpdater;
+                    this.soundBopper.ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler = this.irqUpdater;
                 }
             },
             PadOne: {
@@ -271,7 +1876,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     this._cart = value;
-                    this._cart.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NMIHandler = this.irqUpdater;
+                    this._cart.ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler = this.irqUpdater;
                 }
             },
             PixelWhizzler: {
@@ -280,7 +1885,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     this._pixelWhizzler = value;
-                    this._pixelWhizzler.NES$CPU$PixelWhizzlerClasses$IPPU$NMIHandler = this.nmiHandler;
+                    this._pixelWhizzler.ChiChiNES$IPPU$NMIHandler = this.nmiHandler;
                 }
             },
             StackPointer: {
@@ -320,7 +1925,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._indexRegisterX = 0;
                 this._indexRegisterY = 0;
                 this._reset = false;
-                this._currentInstruction_AddressingMode = NES.CPU.Fastendo.AddressingModes.Bullshit;
+                this._currentInstruction_AddressingMode = ChiChiNES.AddressingModes.Bullshit;
                 this._currentInstruction_Address = 0;
                 this._currentInstruction_OpCode = 0;
                 this._currentInstruction_Parameters0 = 0;
@@ -329,8 +1934,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.nextEvent = -1;
                 this.clockcount = System.Array.init(256, 0, System.Int32);
                 this.instruction = System.Array.init(256, 0, System.Int32);
-                this.addressmode = System.Array.init(256, 0, NES.CPU.Fastendo.AddressingModes);
-                this.memoryPatches = new (System.Collections.Generic.Dictionary$2(System.Int32,NES.CPU.Fastendo.Hacking.IMemoryPatch))();
+                this.addressmode = System.Array.init(256, 0, ChiChiNES.AddressingModes);
+                this.memoryPatches = new (System.Collections.Generic.Dictionary$2(System.Int32,ChiChiNES.Hacking.IMemoryPatch))();
                 this.genieCodes = new (System.Collections.Generic.Dictionary$2(System.Int32,System.Int32))();
                 this._cheating = false;
                 this.Rams = System.Array.init(8192, 0, System.Byte);
@@ -338,14 +1943,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.instructionUsage = System.Array.init(256, 0, System.Int32);
                 this._debugging = false;
                 this.instructionHistoryPointer = 255;
-                this._instructionHistory = System.Array.init(256, null, NES.CPU.Fastendo.CPU2A03.Instruction);
+                this._instructionHistory = System.Array.init(256, null, ChiChiNES.CPU2A03.Instruction);
             },
             ctor: function (whizzler, bopper) {
                 this.$initialize();
                 // BuildOpArray();
 
-                this._padOne = new NES.CPU.nitenedo.InputHandler.ctor();
-                this._padTwo = new NES.CPU.nitenedo.InputHandler.ctor();
+                this._padOne = new ChiChiNES.InputHandler.ctor();
+                this._padTwo = new ChiChiNES.InputHandler.ctor();
                 this._pixelWhizzler = whizzler;
 
                 this.SoundBopper = bopper;
@@ -353,27 +1958,27 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.irqUpdater = Bridge.fn.cacheBind(this, this.IRQUpdater);
                 bopper.NMIHandler = Bridge.fn.cacheBind(this, this.IRQUpdater);
 
-                this._pixelWhizzler.NES$CPU$PixelWhizzlerClasses$IPPU$NMIHandler = this.nmiHandler;
+                this._pixelWhizzler.ChiChiNES$IPPU$NMIHandler = this.nmiHandler;
             }
         },
         methods: {
             getSRMask: function (flag) {
                 switch (flag) {
-                    case NES.CPU.Fastendo.CPUStatusBits.Carry: 
+                    case ChiChiNES.CPUStatusBits.Carry: 
                         return 1;
-                    case NES.CPU.Fastendo.CPUStatusBits.ZeroResult: 
+                    case ChiChiNES.CPUStatusBits.ZeroResult: 
                         return 2;
-                    case NES.CPU.Fastendo.CPUStatusBits.InterruptDisable: 
+                    case ChiChiNES.CPUStatusBits.InterruptDisable: 
                         return 4;
-                    case NES.CPU.Fastendo.CPUStatusBits.DecimalMode: 
+                    case ChiChiNES.CPUStatusBits.DecimalMode: 
                         return 8;
-                    case NES.CPU.Fastendo.CPUStatusBits.BreakCommand: 
+                    case ChiChiNES.CPUStatusBits.BreakCommand: 
                         return 16;
-                    case NES.CPU.Fastendo.CPUStatusBits.Expansion: 
+                    case ChiChiNES.CPUStatusBits.Expansion: 
                         return 32;
-                    case NES.CPU.Fastendo.CPUStatusBits.Overflow: 
+                    case ChiChiNES.CPUStatusBits.Overflow: 
                         return 64;
-                    case NES.CPU.Fastendo.CPUStatusBits.NegativeResult: 
+                    case ChiChiNES.CPUStatusBits.NegativeResult: 
                         return 128;
                 }
                 return 0;
@@ -381,7 +1986,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetFlag: function (Flag, value) {
                 this._statusRegister = (value ? (this._statusRegister | Flag) : (this._statusRegister & ~Flag));
 
-                this._statusRegister = this._statusRegister | (NES.CPU.Fastendo.CPUStatusMasks.ExpansionMask);
+                this._statusRegister = this._statusRegister | (ChiChiNES.CPUStatusMasks.ExpansionMask);
             },
             GetFlag: function (Flag) {
                 var flag = Flag;
@@ -391,10 +1996,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
                 //  set is pushed on the stack, then the I flag is set. 
-                if (this.GetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask)) {
+                if (this.GetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask)) {
                     return;
                 }
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, true);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
 
                 var newStatusReg = this._statusRegister & -17 | 32;
 
@@ -418,7 +2023,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //  set is pushed on the stack, then the I flag is set. 
                 var newStatusReg = this._statusRegister & -17 | 32;
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, true);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
                 // push pc onto stack (high byte first)
                 this.PushStack(this._programCounter >> 8);
                 this.PushStack(this._programCounter & 255);
@@ -454,16 +2059,87 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (this._handleNMI) {
                     this._handleNMI = false;
                     this.clock = (this.clock + 7) | 0;
-                    this.NonMaskableInterrupt();
+                    //NonMaskableInterrupt();
+
+                    //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
+                    //  set is pushed on the stack, then the I flag is set. 
+                    var newStatusReg = this._statusRegister & -17 | 32;
+
+                    this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
+                    // push pc onto stack (high byte first)
+                    this.PushStack(this._programCounter >> 8);
+                    this.PushStack(this._programCounter & 255);
+                    //c7ab
+                    // push sr onto stack
+                    this.PushStack(newStatusReg);
+                    // point pc to interrupt service routine
+                    var lowByte = (this.GetByte$1(65530)) & 255;
+                    var highByte = (this.GetByte$1(65531)) & 255;
+                    var jumpTo = lowByte | (highByte << 8);
+                    this.ProgramCounter = jumpTo;
+                    //nonOpCodeticks = 7;
                 } else if (this._handleIRQ) {
                     this._handleIRQ = false;
                     this.clock = (this.clock + 7) | 0;
-                    this.InterruptRequest();
+                    //InterruptRequest();
+                    //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
+                    //  set is pushed on the stack, then the I flag is set. 
+                    if (this.GetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask)) {
+                        return;
+                    }
+                    this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
+
+                    var newStatusReg1 = this._statusRegister & -17 | 32;
+
+                    // if enabled
+
+                    // push pc onto stack (high byte first)
+                    this.PushStack(((Bridge.Int.div(this.ProgramCounter, 256)) | 0));
+                    this.PushStack(this.ProgramCounter);
+                    // push sr onto stack
+                    this.PushStack(this.StatusRegister);
+
+                    // point pc to interrupt service routine
+
+                    this.ProgramCounter = (this.GetByte$1(65534) + (this.GetByte$1(65535) << 8)) | 0;
+
+                    // nonOpCodeticks = 7;
 
                 }
 
-                this.FetchNextInstruction();
-                this.FetchInstructionParameters();
+                //FetchNextInstruction();
+                this._currentInstruction_Address = this._programCounter;
+                this._currentInstruction_OpCode = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
+                this._currentInstruction_AddressingMode = this.addressmode[this._currentInstruction_OpCode];
+
+                //FetchInstructionParameters();
+                switch (this._currentInstruction_AddressingMode) {
+                    case ChiChiNES.AddressingModes.Absolute: 
+                    case ChiChiNES.AddressingModes.AbsoluteX: 
+                    case ChiChiNES.AddressingModes.AbsoluteY: 
+                    case ChiChiNES.AddressingModes.Indirect: 
+                        // case AddressingModes.IndirectAbsoluteX:
+                        this._currentInstruction_Parameters0 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
+                        this._currentInstruction_Parameters1 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
+                        break;
+                    case ChiChiNES.AddressingModes.ZeroPage: 
+                    case ChiChiNES.AddressingModes.ZeroPageX: 
+                    case ChiChiNES.AddressingModes.ZeroPageY: 
+                    case ChiChiNES.AddressingModes.Relative: 
+                    case ChiChiNES.AddressingModes.IndexedIndirect: 
+                    case ChiChiNES.AddressingModes.IndirectIndexed: 
+                    case ChiChiNES.AddressingModes.IndirectZeroPage: 
+                    case ChiChiNES.AddressingModes.Immediate: 
+                        this._currentInstruction_Parameters0 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
+                        break;
+                    case ChiChiNES.AddressingModes.Accumulator: 
+                    case ChiChiNES.AddressingModes.Implicit: 
+                        break;
+                    default: 
+                        //  throw new NotImplementedException("Invalid address mode!!");
+                        break;
+                }
+
                 this.Execute();
 
                 //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
@@ -472,15 +2148,15 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._operationCounter = (this._operationCounter + 1) | 0;
                 }
 
-                this.clock = (this.clock + (((NES.CPU.Fastendo.CPU2A03.cpuTiming[this._currentInstruction_OpCode] + this._currentInstruction_ExtraTiming) | 0))) | 0;
+                this.clock = (this.clock + (((ChiChiNES.CPU2A03.cpuTiming[this._currentInstruction_OpCode] + this._currentInstruction_ExtraTiming) | 0))) | 0;
             },
             /**
              * runs up to x clock cycles, then returns
              *
              * @instance
              * @public
-             * @this NES.CPU.Fastendo.CPU2A03
-             * @memberof NES.CPU.Fastendo.CPU2A03
+             * @this ChiChiNES.CPU2A03
+             * @memberof ChiChiNES.CPU2A03
              * @param   {number}    count
              * @return  {void}
              */
@@ -492,861 +2168,795 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
 
             },
-            FetchNextInstruction: function () {
-                //AddressBus = ProgramCounter;
-                this._currentInstruction_Address = this._programCounter;
-                this._currentInstruction_OpCode = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
-                this._currentInstruction_AddressingMode = this.addressmode[this._currentInstruction_OpCode];
-                return true;
-            },
-            FetchInstructionParameters: function () {
-
-                switch (this._currentInstruction_AddressingMode) {
-                    case NES.CPU.Fastendo.AddressingModes.Absolute: 
-                    case NES.CPU.Fastendo.AddressingModes.AbsoluteX: 
-                    case NES.CPU.Fastendo.AddressingModes.AbsoluteY: 
-                    case NES.CPU.Fastendo.AddressingModes.Indirect: 
-                        // case AddressingModes.IndirectAbsoluteX:
-                        this._currentInstruction_Parameters0 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
-                        this._currentInstruction_Parameters1 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
-                        break;
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPage: 
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPageX: 
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPageY: 
-                    case NES.CPU.Fastendo.AddressingModes.Relative: 
-                    case NES.CPU.Fastendo.AddressingModes.IndexedIndirect: 
-                    case NES.CPU.Fastendo.AddressingModes.IndirectIndexed: 
-                    case NES.CPU.Fastendo.AddressingModes.IndirectZeroPage: 
-                    case NES.CPU.Fastendo.AddressingModes.Immediate: 
-                        this._currentInstruction_Parameters0 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
-                        break;
-                    case NES.CPU.Fastendo.AddressingModes.Accumulator: 
-                    case NES.CPU.Fastendo.AddressingModes.Implicit: 
-                        break;
-                    default: 
-                        //  throw new NotImplementedException("Invalid address mode!!");
-                        break;
-                }
-            },
-            FetchInstructionParameters$1: function (inst, address) {
-                switch (inst.v.AddressingMode) {
-                    case NES.CPU.Fastendo.AddressingModes.Absolute: 
-                    case NES.CPU.Fastendo.AddressingModes.AbsoluteX: 
-                    case NES.CPU.Fastendo.AddressingModes.AbsoluteY: 
-                    case NES.CPU.Fastendo.AddressingModes.Indirect: 
-                        // case AddressingModes.IndirectAbsoluteX:
-                        inst.v.Length = 3;
-                        inst.v.Parameters0 = this.GetByte$1(Bridge.identity(address, (address = (address + 1) | 0)));
-                        inst.v.Parameters1 = this.GetByte$1(Bridge.identity(address, (address = (address + 1) | 0)));
-                        break;
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPage: 
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPageX: 
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPageY: 
-                    case NES.CPU.Fastendo.AddressingModes.Relative: 
-                    case NES.CPU.Fastendo.AddressingModes.IndexedIndirect: 
-                    case NES.CPU.Fastendo.AddressingModes.IndirectIndexed: 
-                    case NES.CPU.Fastendo.AddressingModes.IndirectZeroPage: 
-                    case NES.CPU.Fastendo.AddressingModes.Immediate: 
-                        inst.v.Length = 2;
-                        inst.v.Parameters0 = this.GetByte$1(Bridge.identity(address, (address = (address + 1) | 0)));
-                        break;
-                    case NES.CPU.Fastendo.AddressingModes.Accumulator: 
-                    case NES.CPU.Fastendo.AddressingModes.Implicit: 
-                        inst.v.Length = 1;
-                        break;
-                    default: 
-                        throw new System.NotImplementedException("Invalid address mode!!");
-                }
-            },
             setupticks: function () {
 
                 this.clockcount[0] = 7;
                 //instruction(0x0] = INS_BRK;
-                this.addressmode[0] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[0] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[1] = 6;
                 //instruction(0x1] = INS_ORA;
-                this.addressmode[1] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+                this.addressmode[1] = ChiChiNES.AddressingModes.IndexedIndirect;
                 this.clockcount[2] = 2;
                 //instruction(0x2] = INS_NOP;
-                this.addressmode[2] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[2] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[3] = 2;
                 //instruction(0x3] = INS_NOP;
-                this.addressmode[3] = NES.CPU.Fastendo.AddressingModes.Bullshit;
+                this.addressmode[3] = ChiChiNES.AddressingModes.Bullshit;
                 this.clockcount[4] = 3;
                 //instruction(0x4] = INS_NOP;
-                this.addressmode[4] = NES.CPU.Fastendo.AddressingModes.Bullshit;
+                this.addressmode[4] = ChiChiNES.AddressingModes.Bullshit;
                 this.clockcount[5] = 3;
                 //instruction(0x5] = INS_ORA;
-                this.addressmode[5] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[5] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[6] = 5;
                 //instruction(0x6] = INS_ASL;
 
-                this.addressmode[6] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[6] = ChiChiNES.AddressingModes.ZeroPage;
 
                 // asl-ora
                 this.clockcount[7] = 2;
                 //instruction(0x7] = INS_NOP;
-                this.addressmode[7] = NES.CPU.Fastendo.AddressingModes.Bullshit;
+                this.addressmode[7] = ChiChiNES.AddressingModes.Bullshit;
 
                 this.clockcount[8] = 3;
                 //instruction(0x8] = INS_PHP;
-                this.addressmode[8] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[8] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[9] = 3;
                 //instruction(0x9] = INS_ORA;
-                this.addressmode[9] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[9] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[10] = 2;
                 //instruction(0xa] = INS_ASLA;
-                this.addressmode[10] = NES.CPU.Fastendo.AddressingModes.Accumulator;
+                this.addressmode[10] = ChiChiNES.AddressingModes.Accumulator;
                 this.clockcount[11] = 2;
                 //instruction(0xb] = AAC;
-                this.addressmode[11] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[11] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[12] = 4;
                 //instruction(0xc] = INS_NOP;
-                this.addressmode[12] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[12] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[13] = 4;
                 //instruction(0xd] = INS_ORA;
-                this.addressmode[13] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[13] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[14] = 6;
                 //instruction(0xe] = INS_ASL;
-                this.addressmode[14] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[14] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[15] = 2;
                 //instruction(0xf] = INS_NOP;
-                this.addressmode[15] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[15] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[16] = 2;
                 //instruction(0x10] = INS_BPL;
 
-                this.addressmode[16] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[16] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[17] = 5;
                 //instruction(0x11] = INS_ORA;
 
-                this.addressmode[17] = NES.CPU.Fastendo.AddressingModes.IndirectIndexed;
+                this.addressmode[17] = ChiChiNES.AddressingModes.IndirectIndexed;
                 this.clockcount[18] = 3;
                 //instruction(0x12] = INS_ORA;
 
-                this.addressmode[18] = NES.CPU.Fastendo.AddressingModes.IndirectZeroPage;
+                this.addressmode[18] = ChiChiNES.AddressingModes.IndirectZeroPage;
                 this.clockcount[19] = 2;
                 //instruction(0x13] = INS_NOP;
-                this.addressmode[19] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[19] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[20] = 3;
                 //instruction(0x14] = INS_NOP;
-                this.addressmode[20] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[20] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[21] = 4;
                 //instruction(0x15] = INS_ORA;
-                this.addressmode[21] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[21] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[22] = 6;
                 //instruction(0x16] = INS_ASL;
-                this.addressmode[22] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[22] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[23] = 2;
                 //instruction(0x17] = INS_NOP;
-                this.addressmode[23] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[23] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[24] = 2;
                 //instruction(0x18] = INS_CLC;
-                this.addressmode[24] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[24] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[25] = 4;
                 //instruction(0x19] = INS_ORA;
 
-                this.addressmode[25] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[25] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[26] = 2;
                 //instruction(0x1a] = INS_INA;
-                this.addressmode[26] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[26] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[27] = 2;
                 //instruction(0x1b] = INS_NOP;
-                this.addressmode[27] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[27] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[28] = 4;
                 //instruction(0x1c] = INS_NOP;
-                this.addressmode[28] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[28] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[29] = 4;
                 //instruction(0x1d] = INS_ORA;
-                this.addressmode[29] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[29] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[30] = 7;
                 //instruction(0x1e] = INS_ASL;
-                this.addressmode[30] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[30] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[31] = 2;
                 //instruction(0x1f] = INS_NOP;
-                this.addressmode[31] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[31] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[32] = 6;
                 //instruction(0x20] = INS_JSR;
-                this.addressmode[32] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[32] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[33] = 6;
                 //instruction(0x21] = INS_AND;
 
-                this.addressmode[33] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+                this.addressmode[33] = ChiChiNES.AddressingModes.IndexedIndirect;
                 this.clockcount[34] = 2;
                 //instruction(0x22] = INS_NOP;
-                this.addressmode[34] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[34] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[35] = 2;
                 //instruction(0x23] = INS_NOP;
-                this.addressmode[35] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[35] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[36] = 3;
                 //instruction(0x24] = INS_BIT;
-                this.addressmode[36] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[36] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[37] = 3;
                 //instruction(0x25] = INS_AND;
-                this.addressmode[37] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[37] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[38] = 5;
                 //instruction(0x26] = INS_ROL;
-                this.addressmode[38] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[38] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[39] = 2;
                 //instruction(0x27] = INS_NOP;
-                this.addressmode[39] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[39] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[40] = 4;
                 //instruction(0x28] = INS_PLP;
-                this.addressmode[40] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[40] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[41] = 3;
                 //instruction(0x29] = INS_AND;
 
-                this.addressmode[41] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[41] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[42] = 2;
                 //instruction(0x2a] = INS_ROLA;
-                this.addressmode[42] = NES.CPU.Fastendo.AddressingModes.Accumulator;
+                this.addressmode[42] = ChiChiNES.AddressingModes.Accumulator;
 
                 // undocumented
                 this.clockcount[43] = 2;
                 //instruction(0x2b] = INS_NOP; AAC
-                this.addressmode[43] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[43] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[44] = 4;
                 //instruction(0x2c] = INS_BIT;
-                this.addressmode[44] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[44] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[45] = 4;
                 //instruction(0x2d] = INS_AND;
-                this.addressmode[45] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[45] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[46] = 6;
                 //instruction(0x2e] = INS_ROL;
-                this.addressmode[46] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[46] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[47] = 2;
                 //instruction(0x2f] = INS_NOP;
-                this.addressmode[47] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[47] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[48] = 2;
                 //instruction(0x30] = INS_BMI;
-                this.addressmode[48] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[48] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[49] = 5;
                 //instruction(0x31] = INS_AND;
-                this.addressmode[49] = NES.CPU.Fastendo.AddressingModes.IndirectIndexed;
+                this.addressmode[49] = ChiChiNES.AddressingModes.IndirectIndexed;
                 this.clockcount[50] = 3;
                 //instruction(0x32] = INS_AND;
-                this.addressmode[50] = NES.CPU.Fastendo.AddressingModes.IndirectZeroPage;
+                this.addressmode[50] = ChiChiNES.AddressingModes.IndirectZeroPage;
                 this.clockcount[51] = 2;
                 //instruction(0x33] = INS_NOP;
-                this.addressmode[51] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[51] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[52] = 4;
                 //instruction(0x34] = INS_BIT;
-                this.addressmode[52] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[52] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[53] = 4;
                 //instruction(0x35] = INS_AND;
-                this.addressmode[53] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[53] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[54] = 6;
                 //instruction(0x36] = INS_ROL;
-                this.addressmode[54] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[54] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[55] = 2;
                 //instruction(0x37] = INS_NOP;
-                this.addressmode[55] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[55] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[56] = 2;
                 //instruction(0x38] = INS_SEC;
-                this.addressmode[56] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[56] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[57] = 4;
                 //instruction(0x39] = INS_AND;
-                this.addressmode[57] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[57] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[58] = 2;
                 //instruction(0x3a] = INS_DEA;
-                this.addressmode[58] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[58] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[59] = 2;
                 //instruction(0x3b] = INS_NOP;
-                this.addressmode[59] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[59] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[60] = 4;
                 //instruction(0x3c] = INS_BIT;
-                this.addressmode[60] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[60] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[61] = 4;
                 //instruction(0x3d] = INS_AND;
-                this.addressmode[61] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[61] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[62] = 7;
                 //instruction(0x3e] = INS_ROL;
-                this.addressmode[62] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[62] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[63] = 2;
                 //instruction(0x3f] = INS_NOP;
-                this.addressmode[63] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[63] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[64] = 6;
                 //instruction(0x40] = INS_RTI;
-                this.addressmode[64] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[64] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[65] = 6;
                 //instruction(0x41] = INS_EOR;
-                this.addressmode[65] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+                this.addressmode[65] = ChiChiNES.AddressingModes.IndexedIndirect;
                 this.clockcount[66] = 2;
                 //instruction(0x42] = INS_NOP;
-                this.addressmode[66] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[66] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[67] = 2;
                 //instruction(0x43] = INS_NOP;
-                this.addressmode[67] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[67] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[68] = 2;
                 //instruction(0x44] = INS_NOP;
-                this.addressmode[68] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[68] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[69] = 3;
                 //instruction(0x45] = INS_EOR;
-                this.addressmode[69] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[69] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[70] = 5;
                 //instruction(0x46] = INS_LSR;
-                this.addressmode[70] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[70] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[71] = 2;
                 //instruction(0x47] = INS_NOP;
-                this.addressmode[71] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[71] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[72] = 3;
                 //instruction(0x48] = INS_PHA;
-                this.addressmode[72] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[72] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[73] = 3;
                 //instruction(0x49] = INS_EOR;
-                this.addressmode[73] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[73] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[74] = 2;
                 //instruction(0x4a] = INS_LSRA;
-                this.addressmode[74] = NES.CPU.Fastendo.AddressingModes.Accumulator;
+                this.addressmode[74] = ChiChiNES.AddressingModes.Accumulator;
                 this.clockcount[75] = 2;
                 //instruction(0x4b] = INS_ASR;
-                this.addressmode[75] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[75] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[76] = 3;
                 //instruction(0x4c] = INS_JMP;
-                this.addressmode[76] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[76] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[77] = 4;
                 //instruction(0x4d] = INS_EOR;
-                this.addressmode[77] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[77] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[78] = 6;
                 //instruction(0x4e] = INS_LSR;
-                this.addressmode[78] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[78] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[79] = 2;
                 //instruction(0x4f] = INS_NOP;
-                this.addressmode[79] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[79] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[80] = 2;
                 //instruction(0x50] = INS_BVC;
-                this.addressmode[80] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[80] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[81] = 5;
                 //instruction(0x51] = INS_EOR;
-                this.addressmode[81] = NES.CPU.Fastendo.AddressingModes.IndirectIndexed;
+                this.addressmode[81] = ChiChiNES.AddressingModes.IndirectIndexed;
                 this.clockcount[82] = 3;
                 //instruction(0x52] = INS_EOR;
-                this.addressmode[82] = NES.CPU.Fastendo.AddressingModes.IndirectZeroPage;
+                this.addressmode[82] = ChiChiNES.AddressingModes.IndirectZeroPage;
                 this.clockcount[83] = 2;
                 //instruction(0x53] = INS_NOP;
-                this.addressmode[83] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[83] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[84] = 2;
                 //instruction(0x54] = INS_NOP;
-                this.addressmode[84] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[84] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[85] = 4;
                 //instruction(0x55] = INS_EOR;
-                this.addressmode[85] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[85] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[86] = 6;
                 //instruction(0x56] = INS_LSR;
-                this.addressmode[86] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[86] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[87] = 2;
                 //instruction(0x57] = INS_NOP;
-                this.addressmode[87] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[87] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[88] = 2;
                 //instruction(0x58] = INS_CLI;
-                this.addressmode[88] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[88] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[89] = 4;
                 //instruction(0x59] = INS_EOR;
-                this.addressmode[89] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[89] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[90] = 3;
                 //instruction(0x5a] = INS_PHY;
-                this.addressmode[90] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[90] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[91] = 2;
                 //instruction(0x5b] = INS_NOP;
-                this.addressmode[91] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[91] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[92] = 2;
                 //instruction(0x5c] = INS_NOP;
-                this.addressmode[92] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[92] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[93] = 4;
                 //instruction(0x5d] = INS_EOR;
-                this.addressmode[93] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[93] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[94] = 7;
                 //instruction(0x5e] = INS_LSR;
-                this.addressmode[94] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[94] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[95] = 2;
                 //instruction(0x5f] = INS_NOP;
-                this.addressmode[95] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[95] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[96] = 6;
                 //instruction(0x60] = INS_RTS;
-                this.addressmode[96] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[96] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[97] = 6;
                 //instruction(0x61] = INS_ADC;
-                this.addressmode[97] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+                this.addressmode[97] = ChiChiNES.AddressingModes.IndexedIndirect;
                 this.clockcount[98] = 2;
                 //instruction(0x62] = INS_NOP;
-                this.addressmode[98] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[98] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[99] = 2;
                 //instruction(0x63] = INS_NOP;
-                this.addressmode[99] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[99] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[100] = 3;
                 //instruction(0x64] = INS_NOP;
-                this.addressmode[100] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[100] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[101] = 3;
                 //instruction(0x65] = INS_ADC;
-                this.addressmode[101] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[101] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[102] = 5;
                 //instruction(0x66] = INS_ROR;
-                this.addressmode[102] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[102] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[103] = 2;
                 //instruction(0x67] = INS_NOP;
-                this.addressmode[103] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[103] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[104] = 4;
                 //instruction(0x68] = INS_PLA;
-                this.addressmode[104] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[104] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[105] = 3;
                 //instruction(0x69] = INS_ADC;
-                this.addressmode[105] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[105] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[106] = 2;
                 //instruction(0x6a] = INS_RORA;
-                this.addressmode[106] = NES.CPU.Fastendo.AddressingModes.Accumulator;
+                this.addressmode[106] = ChiChiNES.AddressingModes.Accumulator;
 
                 this.clockcount[107] = 2;
                 //instruction(0x6b] = INS_ARR; U
-                this.addressmode[107] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[107] = ChiChiNES.AddressingModes.Immediate;
 
                 this.clockcount[108] = 5;
                 //instruction(0x6c] = INS_JMP;
 
-                this.addressmode[108] = NES.CPU.Fastendo.AddressingModes.Indirect;
+                this.addressmode[108] = ChiChiNES.AddressingModes.Indirect;
                 this.clockcount[109] = 4;
                 //instruction(0x6d] = INS_ADC;
-                this.addressmode[109] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[109] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[110] = 6;
                 //instruction(0x6e] = INS_ROR;
-                this.addressmode[110] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[110] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[111] = 2;
                 //instruction(0x6f] = INS_NOP;
-                this.addressmode[111] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[111] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[112] = 2;
                 //instruction(0x70] = INS_BVS;
-                this.addressmode[112] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[112] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[113] = 5;
                 //instruction(0x71] = INS_ADC;
-                this.addressmode[113] = NES.CPU.Fastendo.AddressingModes.IndirectIndexed;
+                this.addressmode[113] = ChiChiNES.AddressingModes.IndirectIndexed;
                 this.clockcount[114] = 3;
                 //instruction(0x72] = INS_ADC;
-                this.addressmode[114] = NES.CPU.Fastendo.AddressingModes.IndirectZeroPage;
+                this.addressmode[114] = ChiChiNES.AddressingModes.IndirectZeroPage;
                 this.clockcount[115] = 2;
                 //instruction(0x73] = INS_NOP;
-                this.addressmode[115] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[115] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[116] = 4;
                 //instruction(0x74] = INS_NOP;
-                this.addressmode[116] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[116] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[117] = 4;
                 //instruction(0x75] = INS_ADC;
-                this.addressmode[117] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[117] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[118] = 6;
                 //instruction(0x76] = INS_ROR;
-                this.addressmode[118] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[118] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[119] = 2;
                 //instruction(0x77] = INS_NOP;
-                this.addressmode[119] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[119] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[120] = 2;
                 //instruction(0x78] = INS_SEI;
-                this.addressmode[120] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[120] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[121] = 4;
                 //instruction(0x79] = INS_ADC;
-                this.addressmode[121] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[121] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[122] = 4;
                 //instruction(0x7a] = INS_PLY;
-                this.addressmode[122] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[122] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[123] = 2;
                 //instruction(0x7b] = INS_NOP;
-                this.addressmode[123] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[123] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[124] = 6;
                 //instruction(0x7c] = INS_JMP;
 
-                this.addressmode[124] = NES.CPU.Fastendo.AddressingModes.IndirectAbsoluteX;
+                this.addressmode[124] = ChiChiNES.AddressingModes.IndirectAbsoluteX;
                 this.clockcount[125] = 4;
                 //instruction(0x7d] = INS_ADC;
-                this.addressmode[125] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[125] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[126] = 7;
                 //instruction(0x7e] = INS_ROR;
-                this.addressmode[126] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[126] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[127] = 2;
                 //instruction(0x7f] = INS_NOP;
-                this.addressmode[127] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[127] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[128] = 2;
                 //instruction(0x80] = INS_BRA;
-                this.addressmode[128] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[128] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[129] = 6;
                 //instruction(0x81] = INS_STA;
-                this.addressmode[129] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+                this.addressmode[129] = ChiChiNES.AddressingModes.IndexedIndirect;
                 this.clockcount[130] = 2;
                 //instruction(0x82] = INS_NOP;
-                this.addressmode[130] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[130] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[131] = 2;
                 //instruction(0x83] = INS_NOP;
-                this.addressmode[131] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[131] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[132] = 2;
                 //instruction(0x84] = INS_STY;
-                this.addressmode[132] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[132] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[133] = 2;
                 //instruction(0x85] = INS_STA;
-                this.addressmode[133] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[133] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[134] = 2;
                 //instruction(0x86] = INS_STX;
-                this.addressmode[134] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[134] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[135] = 2;
                 //instruction(0x87] = INS_NOP;
-                this.addressmode[135] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[135] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[136] = 2;
                 //instruction(0x88] = INS_DEY;
-                this.addressmode[136] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[136] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[137] = 2;
                 //instruction(0x89] = INS_BIT;
-                this.addressmode[137] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[137] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[138] = 2;
                 //instruction(0x8a] = INS_TXA;
-                this.addressmode[138] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[138] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[139] = 2;
                 //instruction(0x8b] = INS_NOP;
-                this.addressmode[139] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[139] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[140] = 4;
                 //instruction(0x8c] = INS_STY;
-                this.addressmode[140] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[140] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[141] = 4;
                 //instruction(0x8d] = INS_STA;
-                this.addressmode[141] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[141] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[142] = 4;
                 //instruction(0x8e] = INS_STX;
-                this.addressmode[142] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[142] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[143] = 2;
                 //instruction(0x8f] = INS_NOP;
-                this.addressmode[143] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[143] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[144] = 2;
                 //instruction(0x90] = INS_BCC;
-                this.addressmode[144] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[144] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[145] = 6;
                 //instruction(0x91] = INS_STA;
-                this.addressmode[145] = NES.CPU.Fastendo.AddressingModes.IndirectIndexed;
+                this.addressmode[145] = ChiChiNES.AddressingModes.IndirectIndexed;
                 this.clockcount[146] = 3;
                 //instruction(0x92] = INS_STA;
-                this.addressmode[146] = NES.CPU.Fastendo.AddressingModes.IndirectZeroPage;
+                this.addressmode[146] = ChiChiNES.AddressingModes.IndirectZeroPage;
                 this.clockcount[147] = 2;
                 //instruction(0x93] = INS_NOP;
-                this.addressmode[147] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[147] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[148] = 4;
                 //instruction(0x94] = INS_STY;
-                this.addressmode[148] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[148] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[149] = 4;
                 //instruction(0x95] = INS_STA;
-                this.addressmode[149] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[149] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[150] = 4;
                 //instruction(0x96] = INS_STX;
-                this.addressmode[150] = NES.CPU.Fastendo.AddressingModes.ZeroPageY;
+                this.addressmode[150] = ChiChiNES.AddressingModes.ZeroPageY;
                 this.clockcount[151] = 2;
                 //instruction(0x97] = INS_NOP;
-                this.addressmode[151] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[151] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[152] = 2;
                 //instruction(0x98] = INS_TYA;
-                this.addressmode[152] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[152] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[153] = 5;
                 //instruction(0x99] = INS_STA;
-                this.addressmode[153] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[153] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[154] = 2;
                 //instruction(0x9a] = INS_TXS;
-                this.addressmode[154] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[154] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[155] = 2;
                 //instruction(0x9b] = INS_NOP;
-                this.addressmode[155] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[155] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[156] = 4;
                 //instruction(0x9c] = INS_NOP;
-                this.addressmode[156] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[156] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[157] = 5;
                 //instruction(0x9d] = INS_STA;
-                this.addressmode[157] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[157] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[158] = 5;
                 //instruction(0x9e] = INS_NOP;
-                this.addressmode[158] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[158] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[159] = 2;
                 //instruction(0x9f] = INS_NOP;
-                this.addressmode[159] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[159] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[160] = 3;
                 //instruction(0xa0] = INS_LDY;
-                this.addressmode[160] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[160] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[161] = 6;
                 //instruction(0xa1] = INS_LDA;
-                this.addressmode[161] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+                this.addressmode[161] = ChiChiNES.AddressingModes.IndexedIndirect;
                 this.clockcount[162] = 3;
                 //instruction(0xa2] = INS_LDX;
-                this.addressmode[162] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[162] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[163] = 2;
                 //instruction(0xa3] = INS_NOP;
-                this.addressmode[163] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[163] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[164] = 3;
                 //instruction(0xa4] = INS_LDY;
-                this.addressmode[164] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[164] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[165] = 3;
                 //instruction(0xa5] = INS_LDA;
-                this.addressmode[165] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[165] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[166] = 3;
                 //instruction(0xa6] = INS_LDX;
-                this.addressmode[166] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[166] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[167] = 2;
                 //instruction(0xa7] = INS_NOP;
-                this.addressmode[167] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[167] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[168] = 2;
                 //instruction(0xa8] = INS_TAY;
-                this.addressmode[168] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[168] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[169] = 3;
                 //instruction(0xa9] = INS_LDA;
-                this.addressmode[169] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[169] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[170] = 2;
                 //instruction(0xaa] = INS_TAX;
-                this.addressmode[170] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[170] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[171] = 2;
                 //instruction(0xab] = INS_NOP; ATX U
-                this.addressmode[171] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[171] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[172] = 4;
                 //instruction(0xac] = INS_LDY;
-                this.addressmode[172] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[172] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[173] = 4;
                 //instruction(0xad] = INS_LDA;
-                this.addressmode[173] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[173] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[174] = 4;
                 //instruction(0xae] = INS_LDX;
-                this.addressmode[174] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[174] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[175] = 2;
                 //instruction(0xaf] = INS_NOP;
-                this.addressmode[175] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[175] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[176] = 2;
                 //instruction(0xb0] = INS_BCS;
-                this.addressmode[176] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[176] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[177] = 5;
                 //instruction(0xb1] = INS_LDA;
-                this.addressmode[177] = NES.CPU.Fastendo.AddressingModes.IndirectIndexed;
+                this.addressmode[177] = ChiChiNES.AddressingModes.IndirectIndexed;
                 this.clockcount[178] = 3;
                 //instruction(0xb2] = INS_LDA;
-                this.addressmode[178] = NES.CPU.Fastendo.AddressingModes.IndirectZeroPage;
+                this.addressmode[178] = ChiChiNES.AddressingModes.IndirectZeroPage;
                 this.clockcount[179] = 2;
                 //instruction(0xb3] = INS_NOP;
-                this.addressmode[179] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[179] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[180] = 4;
                 //instruction(0xb4] = INS_LDY;
-                this.addressmode[180] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[180] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[181] = 4;
                 //instruction(0xb5] = INS_LDA;
-                this.addressmode[181] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[181] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[182] = 4;
                 //instruction(0xb6] = INS_LDX;
 
-                this.addressmode[182] = NES.CPU.Fastendo.AddressingModes.ZeroPageY;
+                this.addressmode[182] = ChiChiNES.AddressingModes.ZeroPageY;
                 this.clockcount[183] = 2;
                 //instruction(0xb7] = INS_NOP;
-                this.addressmode[183] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[183] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[184] = 2;
                 //instruction(0xb8] = INS_CLV;
-                this.addressmode[184] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[184] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[185] = 4;
                 //instruction(0xb9] = INS_LDA;
-                this.addressmode[185] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[185] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[186] = 2;
                 //instruction(0xba] = INS_TSX;
-                this.addressmode[186] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[186] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[187] = 2;
                 //instruction(0xbb] = INS_NOP;
-                this.addressmode[187] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[187] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[188] = 4;
                 //instruction(0xbc] = INS_LDY;
-                this.addressmode[188] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[188] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[189] = 4;
                 //instruction(0xbd] = INS_LDA;
-                this.addressmode[189] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[189] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[190] = 4;
                 //instruction(0xbe] = INS_LDX;
-                this.addressmode[190] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[190] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[191] = 2;
                 //instruction(0xbf] = INS_NOP;
-                this.addressmode[191] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[191] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[192] = 3;
                 //instruction(0xc0] = INS_CPY;
-                this.addressmode[192] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[192] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[193] = 6;
                 //instruction(0xc1] = INS_CMP;
-                this.addressmode[193] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+                this.addressmode[193] = ChiChiNES.AddressingModes.IndexedIndirect;
 
                 this.clockcount[194] = 2;
                 //instruction(0xc2] = INS_NOP;
-                this.addressmode[194] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[194] = ChiChiNES.AddressingModes.Immediate;
 
                 this.clockcount[195] = 2;
                 //instruction(0xc3] = INS_NOP;
-                this.addressmode[195] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[195] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[196] = 3;
                 //instruction(0xc4] = INS_CPY;
-                this.addressmode[196] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[196] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[197] = 3;
                 //instruction(0xc5] = INS_CMP;
-                this.addressmode[197] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[197] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[198] = 5;
                 //instruction(0xc6] = INS_DEC;
-                this.addressmode[198] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[198] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[199] = 2;
                 //instruction(0xc7] = INS_NOP;
-                this.addressmode[199] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[199] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[200] = 2;
                 //instruction(0xc8] = INS_INY;
-                this.addressmode[200] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[200] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[201] = 3;
                 //instruction(0xc9] = INS_CMP;
-                this.addressmode[201] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[201] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[202] = 2;
                 //instruction(0xca] = INS_DEX;
-                this.addressmode[202] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[202] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[203] = 2;
                 //instruction(0xcb] = INS_NOP; AXS
-                this.addressmode[203] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[203] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[204] = 4;
                 //instruction(0xcc] = INS_CPY;
-                this.addressmode[204] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[204] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[205] = 4;
                 //instruction(0xcd] = INS_CMP;
-                this.addressmode[205] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[205] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[206] = 6;
                 //instruction(0xce] = INS_DEC;
-                this.addressmode[206] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[206] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[207] = 2;
                 //instruction(0xcf] = INS_NOP;
-                this.addressmode[207] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[207] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[208] = 2;
                 //instruction(0xd0] = INS_BNE;
-                this.addressmode[208] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[208] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[209] = 5;
                 //instruction(0xd1] = INS_CMP;
-                this.addressmode[209] = NES.CPU.Fastendo.AddressingModes.IndirectIndexed;
+                this.addressmode[209] = ChiChiNES.AddressingModes.IndirectIndexed;
                 this.clockcount[210] = 3;
                 //instruction(0xd2] = INS_CMP;
-                this.addressmode[210] = NES.CPU.Fastendo.AddressingModes.IndirectZeroPage;
+                this.addressmode[210] = ChiChiNES.AddressingModes.IndirectZeroPage;
                 this.clockcount[211] = 2;
                 //instruction(0xd3] = INS_NOP;
-                this.addressmode[211] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[211] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[212] = 2;
                 //instruction(0xd4] = INS_NOP;
-                this.addressmode[212] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[212] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[213] = 4;
                 //instruction(0xd5] = INS_CMP;
-                this.addressmode[213] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[213] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[214] = 6;
                 //instruction(0xd6] = INS_DEC;
-                this.addressmode[214] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[214] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[215] = 2;
                 //instruction(0xd7] = INS_NOP;
-                this.addressmode[215] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[215] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[216] = 2;
                 //instruction(0xd8] = INS_CLD;
-                this.addressmode[216] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[216] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[217] = 4;
                 //instruction(0xd9] = INS_CMP;
-                this.addressmode[217] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[217] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[218] = 3;
                 //instruction(0xda] = INS_PHX;
-                this.addressmode[218] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[218] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[219] = 2;
                 //instruction(0xdb] = INS_NOP;
-                this.addressmode[219] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[219] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[220] = 2;
                 //instruction(0xdc] = INS_NOP;
-                this.addressmode[220] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[220] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[221] = 4;
                 //instruction(0xdd] = INS_CMP;
-                this.addressmode[221] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[221] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[222] = 7;
                 //instruction(0xde] = INS_DEC;
-                this.addressmode[222] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[222] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[223] = 2;
                 //instruction(0xdf] = INS_NOP;
-                this.addressmode[223] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[223] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[224] = 3;
                 //instruction(0xe0] = INS_CPX;
-                this.addressmode[224] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[224] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[225] = 6;
                 //instruction(0xe1] = INS_SBC;
-                this.addressmode[225] = NES.CPU.Fastendo.AddressingModes.IndexedIndirect;
+                this.addressmode[225] = ChiChiNES.AddressingModes.IndexedIndirect;
                 this.clockcount[226] = 2;
                 //instruction(0xe2] = INS_NOP;
-                this.addressmode[226] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[226] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[227] = 2;
                 //instruction(0xe3] = INS_NOP;
-                this.addressmode[227] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[227] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[228] = 3;
                 //instruction(0xe4] = INS_CPX;
-                this.addressmode[228] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[228] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[229] = 3;
                 //instruction(0xe5] = INS_SBC;
-                this.addressmode[229] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[229] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[230] = 5;
                 //instruction(0xe6] = INS_INC;
-                this.addressmode[230] = NES.CPU.Fastendo.AddressingModes.ZeroPage;
+                this.addressmode[230] = ChiChiNES.AddressingModes.ZeroPage;
                 this.clockcount[231] = 2;
                 //instruction(0xe7] = INS_NOP;
-                this.addressmode[231] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[231] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[232] = 2;
                 //instruction(0xe8] = INS_INX;
-                this.addressmode[232] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[232] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[233] = 3;
                 //instruction(0xe9] = INS_SBC;
-                this.addressmode[233] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[233] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[234] = 2;
                 //instruction(0xea] = INS_NOP;
-                this.addressmode[234] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[234] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[235] = 2;
                 //instruction(0xeb] = INS_NOP;
-                this.addressmode[235] = NES.CPU.Fastendo.AddressingModes.Immediate;
+                this.addressmode[235] = ChiChiNES.AddressingModes.Immediate;
                 this.clockcount[236] = 4;
                 //instruction(0xec] = INS_CPX;
-                this.addressmode[236] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[236] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[237] = 4;
                 //instruction(0xed] = INS_SBC;
-                this.addressmode[237] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[237] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[238] = 6;
                 //instruction(0xee] = INS_INC;
-                this.addressmode[238] = NES.CPU.Fastendo.AddressingModes.Absolute;
+                this.addressmode[238] = ChiChiNES.AddressingModes.Absolute;
                 this.clockcount[239] = 2;
                 //instruction(0xef] = INS_NOP;
-                this.addressmode[239] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[239] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[240] = 2;
                 //instruction(0xf0] = INS_BEQ;
-                this.addressmode[240] = NES.CPU.Fastendo.AddressingModes.Relative;
+                this.addressmode[240] = ChiChiNES.AddressingModes.Relative;
                 this.clockcount[241] = 5;
                 //instruction(0xf1] = INS_SBC;
-                this.addressmode[241] = NES.CPU.Fastendo.AddressingModes.IndirectIndexed;
+                this.addressmode[241] = ChiChiNES.AddressingModes.IndirectIndexed;
                 this.clockcount[242] = 3;
                 //instruction(0xf2] = INS_SBC;
-                this.addressmode[242] = NES.CPU.Fastendo.AddressingModes.IndirectZeroPage;
+                this.addressmode[242] = ChiChiNES.AddressingModes.IndirectZeroPage;
                 this.clockcount[243] = 2;
                 //instruction(0xf3] = INS_NOP;
-                this.addressmode[243] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[243] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[244] = 2;
                 //instruction(0xf4] = INS_NOP;
-                this.addressmode[244] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[244] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[245] = 4;
                 //instruction(0xf5] = INS_SBC;
-                this.addressmode[245] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[245] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[246] = 6;
                 //instruction(0xf6] = INS_INC;
-                this.addressmode[246] = NES.CPU.Fastendo.AddressingModes.ZeroPageX;
+                this.addressmode[246] = ChiChiNES.AddressingModes.ZeroPageX;
                 this.clockcount[247] = 2;
                 //instruction(0xf7] = INS_NOP;
-                this.addressmode[247] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[247] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[248] = 2;
                 //instruction(0xf8] = INS_SED;
-                this.addressmode[248] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[248] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[249] = 4;
                 //instruction(0xf9] = INS_SBC;
-                this.addressmode[249] = NES.CPU.Fastendo.AddressingModes.AbsoluteY;
+                this.addressmode[249] = ChiChiNES.AddressingModes.AbsoluteY;
                 this.clockcount[250] = 4;
                 //instruction(0xfa] = INS_PLX;
-                this.addressmode[250] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[250] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[251] = 2;
                 //instruction(0xfb] = INS_NOP;
-                this.addressmode[251] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[251] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[252] = 2;
                 //instruction(0xfc] = INS_NOP;
-                this.addressmode[252] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[252] = ChiChiNES.AddressingModes.Implicit;
                 this.clockcount[253] = 4;
                 //instruction(0xfd] = INS_SBC;
-                this.addressmode[253] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[253] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[254] = 7;
                 //instruction(0xfe] = INS_INC;
-                this.addressmode[254] = NES.CPU.Fastendo.AddressingModes.AbsoluteX;
+                this.addressmode[254] = ChiChiNES.AddressingModes.AbsoluteX;
                 this.clockcount[255] = 2;
                 //instruction(0xff] = INS_NOP;
-                this.addressmode[255] = NES.CPU.Fastendo.AddressingModes.Implicit;
+                this.addressmode[255] = ChiChiNES.AddressingModes.Implicit;
             },
             ResetCPU: function () {
                 this._statusRegister = 52;
@@ -1408,35 +3018,35 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._currentInstruction_ExtraTiming = 0;
                 var result = 0;
                 switch (this._currentInstruction_AddressingMode) {
-                    case NES.CPU.Fastendo.AddressingModes.Absolute: 
+                    case ChiChiNES.AddressingModes.Absolute: 
                         // two parameters refer to the memory position
                         result = ((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0);
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.AbsoluteX: 
+                    case ChiChiNES.AddressingModes.AbsoluteX: 
                         // absolute, x indexed - two paramaters + Index register x
                         result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterX) | 0));
                         if ((result & 255) < this._indexRegisterX) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.AbsoluteY: 
+                    case ChiChiNES.AddressingModes.AbsoluteY: 
                         // absolute, y indexed - two paramaters + Index register y
                         result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterY) | 0));
                         if ((result & 255) < this._indexRegisterY) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPage: 
+                    case ChiChiNES.AddressingModes.ZeroPage: 
                         // first parameter represents offset in zero page
                         result = this._currentInstruction_Parameters0 & 255;
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPageX: 
+                    case ChiChiNES.AddressingModes.ZeroPageX: 
                         result = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 255;
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.ZeroPageY: 
+                    case ChiChiNES.AddressingModes.ZeroPageY: 
                         result = (((this._currentInstruction_Parameters0 + this._indexRegisterY) | 0)) & 255;
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.Indirect: 
+                    case ChiChiNES.AddressingModes.Indirect: 
                         this.lowByte = this._currentInstruction_Parameters0;
                         this.highByte = this._currentInstruction_Parameters1 << 8;
                         var indAddr = (this.highByte | this.lowByte) & 65535;
@@ -1446,7 +3056,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         indirectAddr = indirectAddr | (this.GetByte$1(indAddr) << 8);
                         result = indirectAddr;
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.IndexedIndirect: 
+                    case ChiChiNES.AddressingModes.IndexedIndirect: 
                         var addr = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 255;
                         this.lowByte = this.GetByte$1(addr);
                         addr = (addr + 1) | 0;
@@ -1454,7 +3064,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.highByte = this.highByte << 8;
                         result = this.highByte | this.lowByte;
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.IndirectIndexed: 
+                    case ChiChiNES.AddressingModes.IndirectIndexed: 
                         this.lowByte = this.GetByte$1(this._currentInstruction_Parameters0);
                         this.highByte = this.GetByte$1((((this._currentInstruction_Parameters0 + 1) | 0)) & 255) << 8;
                         addr = (this.lowByte | this.highByte);
@@ -1463,7 +3073,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
                         break;
-                    case NES.CPU.Fastendo.AddressingModes.Relative: 
+                    case ChiChiNES.AddressingModes.Relative: 
                         result = (((this._programCounter + this._currentInstruction_Parameters0) | 0));
                         break;
                     default: 
@@ -1473,10 +3083,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             DecodeOperand: function () {
                 switch (this._currentInstruction_AddressingMode) {
-                    case NES.CPU.Fastendo.AddressingModes.Immediate: 
+                    case ChiChiNES.AddressingModes.Immediate: 
                         this.DataBus = this._currentInstruction_Parameters0;
                         return this._currentInstruction_Parameters0;
-                    case NES.CPU.Fastendo.AddressingModes.Accumulator: 
+                    case ChiChiNES.AddressingModes.Accumulator: 
                         return this._accumulator;
                     default: 
                         this.DataBus = this.GetByte$1(this.DecodeAddress());
@@ -1859,16 +3469,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.SetByte$1(this.DecodeAddress(), this._indexRegisterY);
             },
             SED: function () {
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.DecimalModeMask, true);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.DecimalModeMask, true);
                 // StatusRegister = StatusRegister | 0x8;
             },
             CLD: function () {
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.DecimalModeMask, false);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.DecimalModeMask, false);
                 //            StatusRegister = StatusRegister & 0xF7;
             },
             JMP: function () {
                 // 6052 indirect jmp bug
-                if (this._currentInstruction_AddressingMode === NES.CPU.Fastendo.AddressingModes.Indirect && this._currentInstruction_Parameters0 === 255) {
+                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Indirect && this._currentInstruction_Parameters0 === 255) {
                     this._programCounter = 255 | this._currentInstruction_Parameters1 << 8;
                 } else {
                     this._programCounter = this.DecodeAddress();
@@ -1894,11 +3504,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 // carry flag
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, result > 255);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, result > 255);
 
                 // overflow flag
                 // SetFlag(CPUStatusBits.Overflow, (result > 0x7f || ~result > 0x7f));
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, ((this._accumulator ^ data) & 128) !== 128 && ((this._accumulator ^ result) & 128) === 128);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, ((this._accumulator ^ data) & 128) !== 128 && ((this._accumulator ^ result) & 128) === 128);
 
                 // occurs when bit 7 is set
                 this._accumulator = result & 255;
@@ -1909,13 +3519,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var rst = this.DecodeOperand();
                 //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (rst & 1) === 1);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (rst & 1) === 1);
                 //target.SetFlag(CPUStatusBits.Carry, (rst & 1) == 1);
                 rst = rst >> 1 & 255;
 
                 this.SetZNFlags(rst);
 
-                if (this._currentInstruction_AddressingMode === NES.CPU.Fastendo.AddressingModes.Accumulator) {
+                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
                     this._accumulator = rst;
                 } else {
                     this.SetByte$1(this.DecodeAddress(), rst);
@@ -1934,9 +3544,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var result = System.Int64.clipu32(System.Int64(this._accumulator).sub(System.Int64(data)).sub(System.Int64(carryFlag)));
 
                 // set overflow flag if sign bit of accumulator changed
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, ((System.Int64(this._accumulator).xor(System.Int64(result))).and(System.Int64(128))).equals(System.Int64(128)) && ((System.Int64(this._accumulator).xor(System.Int64(data))).and(System.Int64(128))).equals(System.Int64(128)));
+                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, ((System.Int64(this._accumulator).xor(System.Int64(result))).and(System.Int64(128))).equals(System.Int64(128)) && ((System.Int64(this._accumulator).xor(System.Int64(data))).and(System.Int64(128))).equals(System.Int64(128)));
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (result < 256));
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (result < 256));
 
                 this._accumulator = result | 0;
                 this.SetZNFlags(this._accumulator);
@@ -1960,11 +3570,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var data = this.DecodeOperand();
                 // set carry flag
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, ((data & 128) === 128));
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, ((data & 128) === 128));
 
                 data = (data << 1) & 254;
 
-                if (this._currentInstruction_AddressingMode === NES.CPU.Fastendo.AddressingModes.Accumulator) {
+                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
                     this._accumulator = data;
                 } else {
                     this.SetByte$1(this.DecodeAddress(), data);
@@ -1977,7 +3587,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 var operand = this.DecodeOperand();
                 // overflow is bit 6
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, (operand & 64) === 64);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, (operand & 64) === 64);
                 //if ((operand & 64) == 64)
                 //{
                 //    _statusRegister = _statusRegister | 0x40;
@@ -2003,25 +3613,25 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             SEC: function () {
                 // carry flag bit 0
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, true);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
             },
             CLC: function () {
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, false);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
             },
             SEI: function () {
                 //StatusRegister = StatusRegister | 0x4;
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, true);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
             },
             CLI: function () {
                 //            StatusRegister = StatusRegister & 0xFB;
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, false);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
             },
             CLV: function () {
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.OverflowMask, false);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, false);
 
             },
             Compare: function (data) {
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, data > 255);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, data > 255);
                 this.SetZNFlags(data & 255);
             },
             CMP: function () {
@@ -2037,12 +3647,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.Compare(data);
             },
             NOP: function () {
-                if (this._currentInstruction_AddressingMode === NES.CPU.Fastendo.AddressingModes.AbsoluteX) {
+                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.AbsoluteX) {
                     this.DecodeAddress();
                 }
             },
             Branch: function () {
-                System.Diagnostics.Debug.assert(NES.CPU.Fastendo.CPU2A03.cpuTiming[this._currentInstruction_OpCode] === 2);
+                System.Diagnostics.Debug.assert(ChiChiNES.CPU2A03.cpuTiming[this._currentInstruction_OpCode] === 2);
 
                 this._currentInstruction_ExtraTiming = 1;
                 var addr = this._currentInstruction_Parameters0 & 255;
@@ -2170,20 +3780,20 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 // old carry bit shifted into bit 7
                 var oldbit = 0;
-                if (this.GetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask)) {
+                if (this.GetFlag(ChiChiNES.CPUStatusMasks.CarryMask)) {
                     oldbit = 128;
                 }
 
                 // original bit 0 shifted to carry
                 //            target.SetFlag(CPUStatusBits.Carry, (); 
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (data & 1) === 1);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (data & 1) === 1);
 
                 data = (data >> 1) | oldbit;
 
                 this.SetZNFlags(data);
 
-                if (this._currentInstruction_AddressingMode === NES.CPU.Fastendo.AddressingModes.Accumulator) {
+                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
                     this._accumulator = data;
                 } else {
                     this.SetByte$1(this.DecodeAddress(), data);
@@ -2193,17 +3803,17 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var data = this.DecodeOperand();
 
                 var oldbit = 0;
-                if (this.GetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask)) {
+                if (this.GetFlag(ChiChiNES.CPUStatusMasks.CarryMask)) {
                     oldbit = 1;
                 }
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (data & 128) === 128);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (data & 128) === 128);
 
                 data = data << 1;
                 data = data & 255;
                 data = data | oldbit;
                 this.SetZNFlags(data);
 
-                if (this._currentInstruction_AddressingMode === NES.CPU.Fastendo.AddressingModes.Accumulator) {
+                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
                     this._accumulator = data;
                 } else {
                     this.SetByte$1(this.DecodeAddress(), data);
@@ -2254,7 +3864,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //Status flags: N,Z,C
                 this._accumulator = this.DecodeOperand() & this._accumulator & 255;
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (this._accumulator & 128) === 128);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 128) === 128);
 
                 this.SetZNFlags(this._accumulator);
 
@@ -2264,7 +3874,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //Status flags: N,Z,C
                 this._accumulator = this.DecodeOperand() & this._accumulator;
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
                 this._accumulator = this._accumulator >> 1;
 
                 this.SetZNFlags(this._accumulator);
@@ -2289,25 +3899,25 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 // original bit 0 shifted to carry
                 //            target.SetFlag(CPUStatusBits.Carry, (); 
 
-                this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
+                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
 
 
                 switch (this._accumulator & 48) {
                     case 48: 
-                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, true);
-                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, false);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
                         break;
                     case 0: 
-                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, false);
-                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, false);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
                         break;
                     case 16: 
-                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, false);
-                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, true);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
                         break;
                     case 32: 
-                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.CarryMask, true);
-                        this.SetFlag(NES.CPU.Fastendo.CPUStatusMasks.InterruptDisableMask, true);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
                         break;
                 }
             },
@@ -2321,7 +3931,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._handleNMI = true;
             },
             IRQUpdater: function () {
-                this._handleIRQ = !!(this.soundBopper.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$IRQAsserted | this._cart.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$IRQAsserted);
+                this._handleIRQ = !!(this.soundBopper.ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted | this._cart.ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted);
             },
             LoadBytes: function (offset, bytes) {
                 System.Array.copy(bytes, 0, this.Rams, offset, bytes.length);
@@ -2363,7 +3973,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case 8192: 
                     case 12288: 
-                        result = this._pixelWhizzler.NES$CPU$PixelWhizzlerClasses$IPPU$GetByte(this.clock, address);
+                        result = this._pixelWhizzler.ChiChiNES$IPPU$GetByte(this.clock, address);
                         break;
                     case 16384: 
                         switch (address) {
@@ -2374,7 +3984,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                                 //result = _padTwo.GetByte(clock, address);
                                 break;
                             case 16405: 
-                                result = this.soundBopper.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$GetByte(this.clock, address);
+                                result = this.soundBopper.ChiChiNES$IClockedMemoryMappedIOElement$GetByte(this.clock, address);
                                 break;
                             default: 
                                 // return open bus?
@@ -2397,14 +4007,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 57344: 
                     case 61440: 
                         // cart 
-                        result = this._cart.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$GetByte(this.clock, address);
+                        result = this._cart.ChiChiNES$IClockedMemoryMappedIOElement$GetByte(this.clock, address);
                         break;
                     default: 
                         throw new System.Exception("Bullshit!");
                 }
                 if (this._cheating && this.memoryPatches.containsKey(address)) {
 
-                    return this.memoryPatches.get(address).NES$CPU$Fastendo$Hacking$IMemoryPatch$Activated ? this.memoryPatches.get(address).NES$CPU$Fastendo$Hacking$IMemoryPatch$GetData(result) & 255 : result & 255;
+                    return this.memoryPatches.get(address).ChiChiNES$Hacking$IMemoryPatch$Activated ? this.memoryPatches.get(address).ChiChiNES$Hacking$IMemoryPatch$GetData(result) & 255 : result & 255;
                 }
 
                 return result & 255;
@@ -2426,7 +4036,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.Rams[address & 2047] = data & 255;
                         break;
                     case 20480: 
-                        this.Cart.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
+                        this.Cart.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
                         break;
                     case 24576: 
                     case 28672: 
@@ -2439,11 +4049,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 57344: 
                     case 61440: 
                         // cart rom banks
-                        this.Cart.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
+                        this.Cart.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
                         break;
                     case 8192: 
                     case 12288: 
-                        this._pixelWhizzler.NES$CPU$PixelWhizzlerClasses$IPPU$SetByte(this.clock, address, data);
+                        this._pixelWhizzler.ChiChiNES$IPPU$SetByte(this.clock, address, data);
                         break;
                     case 16384: 
                         switch (address) {
@@ -2465,10 +4075,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             case 16399: 
                             case 16405: 
                             case 16407: 
-                                this.soundBopper.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
+                                this.soundBopper.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
                                 break;
                             case 16404: 
-                                this._pixelWhizzler.NES$CPU$PixelWhizzlerClasses$IPPU$CopySprites(Bridge.ref(this, "Rams"), Bridge.Int.mul(data, 256));
+                                this._pixelWhizzler.ChiChiNES$IPPU$CopySprites(Bridge.ref(this, "Rams"), Bridge.Int.mul(data, 256));
                                 this._currentInstruction_ExtraTiming = (this._currentInstruction_ExtraTiming + 512) | 0;
                                 break;
                             case 16406: 
@@ -2481,32 +4091,40 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             FindNextEvent: function () {
                 // it'll either be the ppu's NMI, or an irq from either the apu or the cart
-                this.nextEvent = (this.clock + this._pixelWhizzler.NES$CPU$PixelWhizzlerClasses$IPPU$NextEventAt) | 0;
+                this.nextEvent = (this.clock + this._pixelWhizzler.ChiChiNES$IPPU$NextEventAt) | 0;
 
             },
             HandleNextEvent: function () {
-                this._pixelWhizzler.NES$CPU$PixelWhizzlerClasses$IPPU$HandleEvent(this.Clock);
+                this._pixelWhizzler.ChiChiNES$IPPU$HandleEvent(this.Clock);
                 this.FindNextEvent();
             },
             WriteInstructionHistoryAndUsage: function () {
-                // _instructionHistory[(instructionHistoryPointer--) & 0xFF] = new Instruction(_currentInstruction);
+                var $t;
+                this._instructionHistory[(Bridge.identity(this.instructionHistoryPointer, (this.instructionHistoryPointer = (this.instructionHistoryPointer - 1) | 0))) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
+                if ((this.instructionHistoryPointer & 255) === 0) {
+                    this.FireDebugEvent();
+                }
                 this.instructionUsage[this._currentInstruction_OpCode] = (this.instructionUsage[this._currentInstruction_OpCode] + 1) | 0;
 
 
             },
+            FireDebugEvent: function () {
+                !Bridge.staticEquals(this.DebugEvent, null) ? this.DebugEvent(this, { }) : null;
+            },
             PeekInstruction: function (address) {
-                var inst = { v : new NES.CPU.Fastendo.CPU2A03.Instruction.ctor() };
+                //TODO: this needs to be non-invasive
+                var inst = new ChiChiNES.CPU2A03.Instruction.ctor();
 
-                inst.v.OpCode = this.GetByte$1(Bridge.identity(address, (address = (address + 1) | 0)));
-                inst.v.AddressingMode = this.addressmode[inst.v.OpCode];
-                inst.v.Length = 1;
-                this.FetchInstructionParameters$1(inst, address);
-                return inst.v;
+                //inst.OpCode = GetByte(address++);
+                //inst.AddressingMode = addressmode[inst.OpCode];
+                //inst.Length = 1;
+                //FetchInstructionParameters(ref inst, address);
+                return inst;
             }
         }
     });
 
-    Bridge.define("NES.CPU.Fastendo.CPU2A03.CPUStatus", {
+    Bridge.define("ChiChiNES.CPU2A03.CPUStatus", {
         fields: {
             StatusRegister: 0,
             ProgramCounter: 0,
@@ -2516,7 +4134,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Fastendo.CPU2A03.Instruction", {
+    Bridge.define("ChiChiNES.CPU2A03.Instruction", {
         fields: {
             AddressingMode: 0,
             Address: 0,
@@ -2544,18 +4162,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Fastendo.CPU2A03.smallInstruction", {
+    Bridge.define("ChiChiNES.CPU2A03.smallInstruction", {
         $kind: "struct",
         statics: {
             methods: {
                 UnpackInstruction: function (instruction) {
-                    var inst = new NES.CPU.Fastendo.CPU2A03.Instruction.ctor();
+                    var inst = new ChiChiNES.CPU2A03.Instruction.ctor();
                     inst.OpCode = (instruction | 0) & 255;
                     inst.Parameters0 = (((instruction >>> 8)) | 0) & 255;
                     inst.Parameters1 = (((instruction >>> 16)) | 0) & 255;
                     return inst;
                 },
-                getDefaultValue: function () { return new NES.CPU.Fastendo.CPU2A03.smallInstruction(); }
+                getDefaultValue: function () { return new ChiChiNES.CPU2A03.smallInstruction(); }
             }
         },
         methods: {
@@ -2563,7 +4181,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Fastendo.CPUStatusBits", {
+    Bridge.define("ChiChiNES.CPUStatusBits", {
         $kind: "enum",
         statics: {
             fields: {
@@ -2579,7 +4197,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Fastendo.CPUStatusMasks", {
+    Bridge.define("ChiChiNES.CPUStatusMasks", {
         $kind: "enum",
         statics: {
             fields: {
@@ -2595,1745 +4213,20 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Fastendo.Hacking.IMemoryPatch", {
+    Bridge.define("ChiChiNES.Hacking.IMemoryPatch", {
         $kind: "interface"
     });
 
-    Bridge.define("NES.CPU.Fastendo.IClockedMemoryMappedIOElement", {
-        $kind: "interface"
-    });
-
-    Bridge.define("NES.CPU.Fastendo.IMemoryMappedIOElement", {
-        $kind: "interface"
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.Blip", {
-        statics: {
-            fields: {
-                bass_shift: 0,
-                end_frame_extra: 0,
-                time_bits: 0,
-                half_width: 0,
-                phase_bits: 0,
-                delta_bits: 0,
-                buf_extra: 0,
-                phase_count: 0,
-                time_unit: 0,
-                bl_step: null
-            },
-            ctors: {
-                init: function () {
-                    this.bass_shift = 8;
-                    this.end_frame_extra = 2;
-                    this.time_bits = 21;
-                    this.half_width = 8;
-                    this.phase_bits = 5;
-                    this.delta_bits = 15;
-                    this.bl_step = System.Array.create(0, [[
-                        43, 
-                        -115, 
-                        350, 
-                        -488, 
-                        1136, 
-                        -914, 
-                        5861, 
-                        21022
-                    ], [
-                        44, 
-                        -118, 
-                        348, 
-                        -473, 
-                        1076, 
-                        -799, 
-                        5274, 
-                        21001
-                    ], [
-                        45, 
-                        -121, 
-                        344, 
-                        -454, 
-                        1011, 
-                        -677, 
-                        4706, 
-                        20936
-                    ], [
-                        46, 
-                        -122, 
-                        336, 
-                        -431, 
-                        942, 
-                        -549, 
-                        4156, 
-                        20829
-                    ], [
-                        47, 
-                        -123, 
-                        327, 
-                        -404, 
-                        868, 
-                        -418, 
-                        3629, 
-                        20679
-                    ], [
-                        47, 
-                        -122, 
-                        316, 
-                        -375, 
-                        792, 
-                        -285, 
-                        3124, 
-                        20488
-                    ], [
-                        47, 
-                        -120, 
-                        303, 
-                        -344, 
-                        714, 
-                        -151, 
-                        2644, 
-                        20256
-                    ], [
-                        46, 
-                        -117, 
-                        289, 
-                        -310, 
-                        634, 
-                        -17, 
-                        2188, 
-                        19985
-                    ], [
-                        46, 
-                        -114, 
-                        273, 
-                        -275, 
-                        553, 
-                        117, 
-                        1758, 
-                        19675
-                    ], [
-                        44, 
-                        -108, 
-                        255, 
-                        -237, 
-                        471, 
-                        247, 
-                        1356, 
-                        19327
-                    ], [
-                        43, 
-                        -103, 
-                        237, 
-                        -199, 
-                        390, 
-                        373, 
-                        981, 
-                        18944
-                    ], [
-                        42, 
-                        -98, 
-                        218, 
-                        -160, 
-                        310, 
-                        495, 
-                        633, 
-                        18527
-                    ], [
-                        40, 
-                        -91, 
-                        198, 
-                        -121, 
-                        231, 
-                        611, 
-                        314, 
-                        18078
-                    ], [
-                        38, 
-                        -84, 
-                        178, 
-                        -81, 
-                        153, 
-                        722, 
-                        22, 
-                        17599
-                    ], [
-                        36, 
-                        -76, 
-                        157, 
-                        -43, 
-                        80, 
-                        824, 
-                        -241, 
-                        17092
-                    ], [
-                        34, 
-                        -68, 
-                        135, 
-                        -3, 
-                        8, 
-                        919, 
-                        -476, 
-                        16558
-                    ], [
-                        32, 
-                        -61, 
-                        115, 
-                        34, 
-                        -60, 
-                        1006, 
-                        -683, 
-                        16001
-                    ], [
-                        29, 
-                        -52, 
-                        94, 
-                        70, 
-                        -123, 
-                        1083, 
-                        -862, 
-                        15422
-                    ], [
-                        27, 
-                        -44, 
-                        73, 
-                        106, 
-                        -184, 
-                        1152, 
-                        -1015, 
-                        14824
-                    ], [
-                        25, 
-                        -36, 
-                        53, 
-                        139, 
-                        -239, 
-                        1211, 
-                        -1142, 
-                        14210
-                    ], [
-                        22, 
-                        -27, 
-                        34, 
-                        170, 
-                        -290, 
-                        1261, 
-                        -1244, 
-                        13582
-                    ], [
-                        20, 
-                        -20, 
-                        16, 
-                        199, 
-                        -335, 
-                        1301, 
-                        -1322, 
-                        12942
-                    ], [
-                        18, 
-                        -12, 
-                        -3, 
-                        226, 
-                        -375, 
-                        1331, 
-                        -1376, 
-                        12293
-                    ], [
-                        15, 
-                        -4, 
-                        -19, 
-                        250, 
-                        -410, 
-                        1351, 
-                        -1408, 
-                        11638
-                    ], [
-                        13, 
-                        3, 
-                        -35, 
-                        272, 
-                        -439, 
-                        1361, 
-                        -1419, 
-                        10979
-                    ], [
-                        11, 
-                        9, 
-                        -49, 
-                        292, 
-                        -464, 
-                        1362, 
-                        -1410, 
-                        10319
-                    ], [
-                        9, 
-                        16, 
-                        -63, 
-                        309, 
-                        -483, 
-                        1354, 
-                        -1383, 
-                        9660
-                    ], [
-                        7, 
-                        22, 
-                        -75, 
-                        322, 
-                        -496, 
-                        1337, 
-                        -1339, 
-                        9005
-                    ], [
-                        6, 
-                        26, 
-                        -85, 
-                        333, 
-                        -504, 
-                        1312, 
-                        -1280, 
-                        8355
-                    ], [
-                        4, 
-                        31, 
-                        -94, 
-                        341, 
-                        -507, 
-                        1278, 
-                        -1205, 
-                        7713
-                    ], [
-                        3, 
-                        35, 
-                        -102, 
-                        347, 
-                        -506, 
-                        1238, 
-                        -1119, 
-                        7082
-                    ], [
-                        1, 
-                        40, 
-                        -110, 
-                        350, 
-                        -499, 
-                        1190, 
-                        -1021, 
-                        6464
-                    ], [
-                        0, 
-                        43, 
-                        -115, 
-                        350, 
-                        -488, 
-                        1136, 
-                        -914, 
-                        5861
-                    ]], System.Int32, 33, 8);
-                },
-                ctor: function () {
-                    NES.CPU.Machine.BeepsBoops.Blip.time_unit = 2097152;
-                    NES.CPU.Machine.BeepsBoops.Blip.buf_extra = 18;
-                    NES.CPU.Machine.BeepsBoops.Blip.phase_count = 32;
-                }
-            }
-        },
-        fields: {
-            _blipBuffer: null
-        },
-        props: {
-            BlipBuffer: {
-                get: function () {
-                    return this._blipBuffer;
-                },
-                set: function (value) {
-                    this._blipBuffer = value;
-                }
-            },
-            blip_samples_avail: {
-                get: function () {
-                    return this._blipBuffer.avail;
-                }
-            }
-        },
-        ctors: {
-            ctor: function (size) {
-                this.$initialize();
-                this.blip_new(size);
-            }
-        },
-        methods: {
-            blip_new: function (size) {
-                this._blipBuffer = new NES.CPU.Machine.BeepsBoops.Blip.blip_buffer_t(size);
-                this._blipBuffer.size = size;
-                this._blipBuffer.factor = 0;
-                this.blip_clear();
-            },
-            blip_set_rates: function (clock_rate, sample_rate) {
-                this._blipBuffer.factor = NES.CPU.Machine.BeepsBoops.Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375);
-
-                /* Fails if clock_rate exceeds maximum, relative to sample_rate */
-                System.Diagnostics.Debug.assert(this._blipBuffer.factor > 0);
-            },
-            blip_clear: function () {
-                this._blipBuffer.offset = 0;
-                this._blipBuffer.avail = 0;
-                this._blipBuffer.integrator = 0;
-                this._blipBuffer.samples = System.Array.init(this._blipBuffer.size + NES.CPU.Machine.BeepsBoops.Blip.buf_extra, 0, System.Int32);
-                //memset(BLIP_SAMPLES(s), 0, (s.size + buf_extra) * sizeof(buf_t));
-            },
-            blip_clocks_needed: function (samples) {
-                var needed = samples * NES.CPU.Machine.BeepsBoops.Blip.time_unit - this._blipBuffer.offset;
-
-                /* Fails if buffer can't hold that many more samples */
-                //assert( s->avail + samples <= s->size );
-
-                return System.Int64.clip32((System.Int64(needed).add(System.Int64(this._blipBuffer.factor)).sub(System.Int64(1))).div(System.Int64(this._blipBuffer.factor)));
-
-            },
-            blip_end_frame: function (t) {
-                var off = t * this._blipBuffer.factor + this._blipBuffer.offset;
-                this._blipBuffer.avail += off >> NES.CPU.Machine.BeepsBoops.Blip.time_bits;
-                this._blipBuffer.offset = off & (NES.CPU.Machine.BeepsBoops.Blip.time_unit - 1);
-
-                /* Fails if buffer size was exceeded */
-                //assert(s->avail <= s->size);
-            },
-            remove_samples: function (count) {
-                var remain = this._blipBuffer.avail + NES.CPU.Machine.BeepsBoops.Blip.buf_extra - count;
-                this._blipBuffer.avail -= count;
-
-                System.Array.copy(this._blipBuffer.samples, count, this._blipBuffer.samples, 0, remain);
-                System.Array.fill(this._blipBuffer.samples, 0, remain, count);
-
-                this._blipBuffer.arrayLength = count;
-            },
-            ReadBytes: function (outbuf, count, stereo) {
-                var $t;
-                if (count > this._blipBuffer.avail) {
-                    count = this._blipBuffer.avail;
-                }
-
-                if (count !== 0) {
-                    var step = 2;
-                    //int inPtr  = BLIP_SAMPLES( s );
-                    //buf_t const* end = in + count;
-                    var inPtr = 0, outPtr = 0;
-                    var endPtr = inPtr + count;
-                    var sum = this._blipBuffer.integrator;
-
-                    do {
-                        var st = sum >> NES.CPU.Machine.BeepsBoops.Blip.delta_bits; /* assumes right shift preserves sign */
-                        sum = sum + ($t = this._blipBuffer.samples)[inPtr];
-                        inPtr++;
-                        if (st !== st) {
-                            st = (st >> 31) ^ 32767;
-                        }
-                        outbuf[outPtr] = st;
-                        outbuf[outPtr + 1] = st >> 8;
-                        outPtr += step;
-                        sum = sum - (st << (7));
-                    } while (inPtr !== endPtr);
-
-                    this._blipBuffer.integrator = sum;
-
-                    this.remove_samples(count);
-                }
-
-                return count;
-            },
-            blip_add_delta: function (time, delta) {
-                var $t, $t1;
-                if (delta === 0) {
-                    return;
-                }
-                var fixedTime = System.Int64(time * this._blipBuffer.factor + this._blipBuffer.offset);
-
-                var outPtr = System.Int64.clip32(System.Int64(this._blipBuffer.avail).add((fixedTime.shr(NES.CPU.Machine.BeepsBoops.Blip.time_bits))));
-
-                var phase_shift = 16;
-                var phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((NES.CPU.Machine.BeepsBoops.Blip.phase_count - 1))));
-
-                var inStep = phase; // bl_step[phase];
-                var rev = NES.CPU.Machine.BeepsBoops.Blip.phase_count - phase; // bl_step[phase_count - phase];
-
-                var interp_bits = 15;
-                var interp = System.Int64.clip32(fixedTime.shr((phase_shift - interp_bits)).and(System.Int64(((1 << interp_bits) - 1))));
-                var delta2 = (delta * interp) >> interp_bits;
-                delta -= delta2;
-
-                /* Fails if buffer size was exceeded */
-                //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
-
-                for (var i = 0; i < 8; ++i) {
-                    ($t = this._blipBuffer.samples)[outPtr + i] += NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([inStep, i]) * delta + NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([inStep + 1, i]) * delta2;
-                    ($t1 = this._blipBuffer.samples)[outPtr + (15 - i)] += NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([rev, i]) * delta + NES.CPU.Machine.BeepsBoops.Blip.bl_step.get([rev - 1, i]) * delta2;
-                }
-
-            },
-            blip_add_delta_fast: function (time, delta) {
-                var $t, $t1;
-                var fixedTime = time * this._blipBuffer.factor + this._blipBuffer.offset;
-
-                var outPtr = this._blipBuffer.avail + (fixedTime >> NES.CPU.Machine.BeepsBoops.Blip.time_bits);
-
-                var delta_unit = 32768;
-                var phase_shift = 6;
-                var phase = fixedTime >> phase_shift & (delta_unit - 1);
-                var delta2 = delta * phase;
-
-                /* Fails if buffer size was exceeded */
-                //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
-
-
-                ($t = this._blipBuffer.samples)[outPtr + 8] += delta * delta_unit - delta2;
-                ($t1 = this._blipBuffer.samples)[outPtr + 9] += delta2;
-                //out [8] += delta * delta_unit - delta2;
-                //out [9] += delta2;
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.Blip.blip_buffer_t", {
-        fields: {
-            factor: 0,
-            offset: 0,
-            avail: 0,
-            size: 0,
-            integrator: 0,
-            arrayLength: 0,
-            samples: null
-        },
-        ctors: {
-            ctor: function (size) {
-                this.$initialize();
-                this.samples = System.Array.init(size, 0, System.Int32);
-                this.arrayLength = size;
-
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.IAPU", {
-        $kind: "interface"
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.DMCChannel", {
-        fields: {
-            _chan: 0,
-            _bleeper: null,
-            LengthCounts: null,
-            _dutyCycle: 0,
-            _length: 0,
-            _timer: 0,
-            _rawTimer: 0,
-            _volume: 0,
-            _time: 0,
-            _envelope: 0,
-            _looping: false,
-            _enabled: false,
-            _amplitude: 0,
-            doodies: null,
-            _sweepShift: 0,
-            _sweepCounter: 0,
-            _sweepDivider: 0,
-            _sweepNegateFlag: false,
-            _sweepEnabled: false,
-            _startSweep: false,
-            _sweepInvalid: false,
-            _irqEnabled: false,
-            rate: 0,
-            dCounter: 0,
-            sampleAddress: 0,
-            _phase: 0,
-            _gain: 0,
-            _envTimer: 0,
-            _envStart: false,
-            _envConstantVolume: false,
-            _envVolume: 0,
-            _sweepComplement: false
-        },
-        props: {
-            Length: {
-                get: function () {
-                    return this._length;
-                },
-                set: function (value) {
-                    this._length = value;
-                }
-            },
-            /**
-             * Duty cycle of current square wave
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.DMCChannel
-             * @function DutyCycle
-             * @type number
-             */
-            DutyCycle: {
-                get: function () {
-                    return this._dutyCycle;
-                },
-                set: function (value) {
-                    this._dutyCycle = value;
-                }
-            },
-            /**
-             * Period of current waveform
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.DMCChannel
-             * @function Period
-             * @type number
-             */
-            Period: {
-                get: function () {
-                    return this._timer;
-                },
-                set: function (value) {
-                    this._timer = value;
-                }
-            },
-            /**
-             * Volume envelope for current waveform
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.DMCChannel
-             * @function Volume
-             * @type number
-             */
-            Volume: {
-                get: function () {
-                    return this._volume;
-                },
-                set: function (value) {
-                    this._volume = value;
-                }
-            },
-            /**
-             * current time in channel
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.DMCChannel
-             * @function Time
-             * @type number
-             */
-            Time: {
-                get: function () {
-                    return this._time;
-                },
-                set: function (value) {
-                    this._time = value;
-                }
-            },
-            Envelope: {
-                get: function () {
-                    return this._envelope;
-                },
-                set: function (value) {
-                    this._envelope = value;
-                }
-            },
-            Looping: {
-                get: function () {
-                    return this._looping;
-                },
-                set: function (value) {
-                    this._looping = value;
-                }
-            },
-            Enabled: {
-                get: function () {
-                    return this._enabled;
-                },
-                set: function (value) {
-                    this._enabled = value;
-                }
-            },
-            /**
-             * Master gain
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.DMCChannel
-             * @function Gain
-             * @type number
-             */
-            Gain: {
-                get: function () {
-                    return this._gain;
-                },
-                set: function (value) {
-                    this._gain = value;
-                }
-            },
-            /**
-             * True for ones complement, false for twos complement
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.DMCChannel
-             * @function SweepComplement
-             * @type boolean
-             */
-            SweepComplement: {
-                get: function () {
-                    return this._sweepComplement;
-                },
-                set: function (value) {
-                    this._sweepComplement = value;
-                }
-            }
-        },
-        ctors: {
-            init: function () {
-                this.LengthCounts = System.Array.init([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30], System.Byte);
-                this._enabled = true;
-                this.doodies = System.Array.init([2, 6, 30, 249], System.Byte);
-                this._sweepDivider = 1;
-                this._irqEnabled = false;
-                this._envTimer = 15;
-            },
-            ctor: function (bleeper, chan) {
-                this.$initialize();
-                this._bleeper = bleeper;
-                this._chan = chan;
-            }
-        },
-        methods: {
-            WriteRegister: function (register, data, time) {
-                // Run(time);
-
-                switch (register) {
-                    case 0: 
-                        this._irqEnabled = (data & 128) === 128;
-                        this._looping = (data & 64) === 64;
-                        this.rate = data & 15;
-                        break;
-                    case 1: 
-                        this.dCounter = data & 127;
-                        break;
-                    case 2: 
-                        this.sampleAddress = (data << 6) | 49152;
-                        break;
-                    case 3: 
-                        this._timer = data & 255;
-                        this._timer <<= 4;
-                        this._timer &= 1;
-                        break;
-                }
-            },
-            Run: function (end_time) {
-
-                for (; this._time < end_time; this._time++) {
-                    this.UpdateAmplitude((this._dutyCycle >> (this._phase & 7) & 1));
-                }
-                this._phase &= 7;
-            },
-            UpdateAmplitude: function (new_amp) {
-                var delta = new_amp * this._gain - this._amplitude;
-
-                this._amplitude += delta;
-                this._bleeper.blip_add_delta(this._time, delta);
-            },
-            EndFrame: function (time) {
-                this.Run(time);
-
-                this._time = 0;
-            },
-            FrameClock: function (time, step) {
-                this.Run(time);
-
-                if (!this._envStart) {
-                    this._envTimer--;
-                    if (this._envTimer === 0) {
-                        this._envTimer = this._volume + 1;
-                        if (this._envVolume > 0) {
-                            this._envVolume--;
-                        } else {
-                            this._envVolume = this._looping ? 15 : 0;
-                        }
-                    }
-                } else {
-                    this._envStart = false;
-                    this._envTimer = this._volume + 1;
-                    this._envVolume = 15;
-                }
-
-                switch (step) {
-                    case 1: 
-                    case 3: 
-                        --this._sweepCounter;
-                        if (this._sweepCounter === 0) {
-                            this._sweepCounter = this._sweepDivider + 1;
-                            if (this._sweepEnabled && this._sweepShift > 0) {
-                                var sweep = this._timer >> this._sweepShift;
-                                if (this._sweepComplement) {
-                                    this._timer += this._sweepNegateFlag ? ~sweep : sweep;
-                                } else {
-                                    this._timer += this._sweepNegateFlag ? ~sweep + 1 : sweep;
-                                }
-                                this._sweepInvalid = (this._rawTimer < 8 || (this._timer & 2048) === 2048);
-                                //if (_sweepInvalid)
-                                //{
-                                //    _sweepInvalid = true;
-                                //}
-                            }
-                        }
-                        if (this._startSweep) {
-                            this._startSweep = false;
-                            this._sweepCounter = this._sweepDivider + 1;
-
-                        }
-                        if (!this._looping && this._length > 0) {
-                            this._length--;
-                        }
-                        break;
-                }
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.IWavReader", {
-        $kind: "interface"
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.IWavWriter", {
+    Bridge.define("ChiChiNES.IControlPad", {
         inherits: [System.IDisposable],
         $kind: "interface"
     });
 
-    Bridge.define("NES.CPU.Machine.BeepsBoops.NoiseChannel", {
-        fields: {
-            _bleeper: null,
-            _chan: 0,
-            NoisePeriods: null,
-            LengthCounts: null,
-            _length: 0,
-            _period: 0,
-            _volume: 0,
-            _time: 0,
-            _envConstantVolume: false,
-            _envVolume: 0,
-            _looping: false,
-            _enabled: false,
-            amplitude: 0,
-            _phase: 0,
-            gain: 0,
-            _envTimer: 0,
-            _envStart: false
-        },
-        props: {
-            Length: {
-                get: function () {
-                    return this._length;
-                },
-                set: function (value) {
-                    this._length = value;
-                }
-            },
-            /**
-             * Period of current waveform
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.NoiseChannel
-             * @function Period
-             * @type number
-             */
-            Period: {
-                get: function () {
-                    return this._period;
-                },
-                set: function (value) {
-                    this._period = value;
-                }
-            },
-            /**
-             * Volume envelope for current waveform
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.NoiseChannel
-             * @function Volume
-             * @type number
-             */
-            Volume: {
-                get: function () {
-                    return this._volume;
-                },
-                set: function (value) {
-                    this._volume = value;
-                }
-            },
-            /**
-             * current time in channel
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.NoiseChannel
-             * @function Time
-             * @type number
-             */
-            Time: {
-                get: function () {
-                    return this._time;
-                },
-                set: function (value) {
-                    this._time = value;
-                }
-            },
-            Looping: {
-                get: function () {
-                    return this._looping;
-                },
-                set: function (value) {
-                    this._looping = value;
-                }
-            },
-            Enabled: {
-                get: function () {
-                    return this._enabled;
-                },
-                set: function (value) {
-                    this._enabled = value;
-                }
-            },
-            Gain: {
-                get: function () {
-                    return this.gain;
-                },
-                set: function (value) {
-                    this.gain = value;
-                }
-            }
-        },
-        ctors: {
-            init: function () {
-                this.NoisePeriods = System.Array.init([4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068], System.Int32);
-                this.LengthCounts = System.Array.init([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30], System.Byte);
-                this._enabled = true;
-                this._phase = 1;
-                this._envTimer = 15;
-            },
-            ctor: function (bleeper, chan) {
-                this.$initialize();
-                this._bleeper = bleeper;
-                this._chan = chan;
-            }
-        },
-        methods: {
-            WriteRegister: function (register, data, time) {
-                // Run(time);
-
-                switch (register) {
-                    case 0: 
-                        this._envConstantVolume = (data & 16) === 16;
-                        this._volume = data & 15;
-                        this._looping = (data & 128) === 128;
-                        break;
-                    case 1: 
-                        break;
-                    case 2: 
-                        this._period = this.NoisePeriods[data & 15];
-                        // _period |= data;
-                        break;
-                    case 3: 
-                        // setup length
-                        if (this._enabled) {
-                            this._length = this.LengthCounts[(data >> 3) & 31];
-                        }
-                        this._envStart = true;
-                        break;
-                    case 4: 
-                        this._enabled = (data !== 0);
-                        if (!this._enabled) {
-                            this._length = 0;
-                        }
-                        break;
-                }
-            },
-            Run: function (end_time) {
-                var volume = this._envConstantVolume ? this._volume : this._envVolume;
-                if (this._length === 0) {
-                    volume = 0;
-                }
-                if (this._period === 0) {
-                    this._time = end_time;
-                    this.UpdateAmplitude(0);
-                    return;
-                }
-
-                if (this._phase === 0) {
-                    this._phase = 1;
-                }
-
-                for (; this._time < end_time; this._time += this._period) {
-                    var new15;
-                    if (this._looping) {
-                        new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
-                    } else {
-                        new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
-                    }
-                    this.UpdateAmplitude(this._phase & 1 * volume);
-                    this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
-
-
-
-                }
-            },
-            UpdateAmplitude: function (amp) {
-                var delta = amp * this.gain - this.amplitude;
-                this.amplitude += delta;
-                this._bleeper.blip_add_delta(this._time, delta);
-            },
-            EndFrame: function (time) {
-                this.Run(time);
-                this._time = 0;
-            },
-            FrameClock: function (time, step) {
-                this.Run(time);
-
-                if (!this._envStart) {
-                    this._envTimer--;
-                    if (this._envTimer === 0) {
-                        this._envTimer = this._volume + 1;
-                        if (this._envVolume > 0) {
-                            this._envVolume--;
-                        } else {
-                            this._envVolume = this._looping ? 15 : 0;
-                        }
-
-                    }
-                } else {
-                    this._envStart = false;
-                    this._envTimer = this._volume + 1;
-                    this._envVolume = 15;
-                }
-
-                switch (step) {
-                    case 1: 
-                    case 2: 
-                        if (!!(!this._looping & this._length > 0)) {
-                            this._length--;
-                        }
-                        break;
-                }
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.SoundStatusChangeEventArgs", {
-        fields: {
-            muted: false
-        },
-        props: {
-            Muted: {
-                get: function () {
-                    return this.muted;
-                },
-                set: function (value) {
-                    this.muted = value;
-                }
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.SquareChannel", {
-        fields: {
-            _chan: 0,
-            _bleeper: null,
-            LengthCounts: null,
-            _dutyCycle: 0,
-            _length: 0,
-            _timer: 0,
-            _rawTimer: 0,
-            _volume: 0,
-            _time: 0,
-            _envelope: 0,
-            _looping: false,
-            _enabled: false,
-            _amplitude: 0,
-            doodies: null,
-            _sweepShift: 0,
-            _sweepCounter: 0,
-            _sweepDivider: 0,
-            _sweepNegateFlag: false,
-            _sweepEnabled: false,
-            _startSweep: false,
-            _sweepInvalid: false,
-            _phase: 0,
-            _gain: 0,
-            _envTimer: 0,
-            _envStart: false,
-            _envConstantVolume: false,
-            _envVolume: 0,
-            _sweepComplement: false
-        },
-        props: {
-            Length: {
-                get: function () {
-                    return this._length;
-                },
-                set: function (value) {
-                    this._length = value;
-                }
-            },
-            /**
-             * Duty cycle of current square wave
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.SquareChannel
-             * @function DutyCycle
-             * @type number
-             */
-            DutyCycle: {
-                get: function () {
-                    return this._dutyCycle;
-                },
-                set: function (value) {
-                    this._dutyCycle = value;
-                }
-            },
-            /**
-             * Period of current waveform
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.SquareChannel
-             * @function Period
-             * @type number
-             */
-            Period: {
-                get: function () {
-                    return this._timer;
-                },
-                set: function (value) {
-                    this._timer = value;
-                }
-            },
-            /**
-             * Volume envelope for current waveform
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.SquareChannel
-             * @function Volume
-             * @type number
-             */
-            Volume: {
-                get: function () {
-                    return this._volume;
-                },
-                set: function (value) {
-                    this._volume = value;
-                }
-            },
-            /**
-             * current time in channel
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.SquareChannel
-             * @function Time
-             * @type number
-             */
-            Time: {
-                get: function () {
-                    return this._time;
-                },
-                set: function (value) {
-                    this._time = value;
-                }
-            },
-            Envelope: {
-                get: function () {
-                    return this._envelope;
-                },
-                set: function (value) {
-                    this._envelope = value;
-                }
-            },
-            Looping: {
-                get: function () {
-                    return this._looping;
-                },
-                set: function (value) {
-                    this._looping = value;
-                }
-            },
-            Enabled: {
-                get: function () {
-                    return this._enabled;
-                },
-                set: function (value) {
-                    this._enabled = value;
-                }
-            },
-            /**
-             * Master gain
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.SquareChannel
-             * @function Gain
-             * @type number
-             */
-            Gain: {
-                get: function () {
-                    return this._gain;
-                },
-                set: function (value) {
-                    this._gain = value;
-                }
-            },
-            /**
-             * True for ones complement, false for twos complement
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.SquareChannel
-             * @function SweepComplement
-             * @type boolean
-             */
-            SweepComplement: {
-                get: function () {
-                    return this._sweepComplement;
-                },
-                set: function (value) {
-                    this._sweepComplement = value;
-                }
-            }
-        },
-        ctors: {
-            init: function () {
-                this.LengthCounts = System.Array.init([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30], System.Byte);
-                this._enabled = true;
-                this.doodies = System.Array.init([2, 6, 30, 249], System.Byte);
-                this._sweepDivider = 1;
-                this._envTimer = 15;
-            },
-            ctor: function (bleeper, chan) {
-                this.$initialize();
-                this._bleeper = bleeper;
-                this._chan = chan;
-            }
-        },
-        methods: {
-            WriteRegister: function (register, data, time) {
-                // Run(time);
-
-                switch (register) {
-                    case 0: 
-                        this._envConstantVolume = (data & 16) === 16;
-                        this._volume = data & 15;
-                        this._dutyCycle = this.doodies[(data >> 6) & 3];
-                        this._looping = (data & 32) === 32;
-                        this._sweepInvalid = false;
-                        break;
-                    case 1: 
-                        this._sweepShift = data & 7;
-                        this._sweepNegateFlag = (data & 8) === 8;
-                        this._sweepDivider = (data >> 4) & 7;
-                        this._sweepEnabled = (data & 128) === 128;
-                        this._startSweep = true;
-                        this._sweepInvalid = false;
-                        break;
-                    case 2: 
-                        this._timer &= 1792;
-                        this._timer |= data;
-                        this._rawTimer = this._timer;
-                        break;
-                    case 3: 
-                        this._timer &= 255;
-                        this._timer |= (data & 7) << 8;
-                        this._rawTimer = this._timer;
-                        this._phase = 0;
-                        // setup length
-                        if (this._enabled) {
-                            this._length = this.LengthCounts[(data >> 3) & 31];
-                        }
-                        this._envStart = true;
-                        break;
-                    case 4: 
-                        this._enabled = (data !== 0);
-                        if (!this._enabled) {
-                            this._length = 0;
-                        }
-                        break;
-                }
-            },
-            Run: function (end_time) {
-                var period = this._sweepEnabled ? ((this._timer + 1) & 2047) << 1 : ((this._rawTimer + 1) & 2047) << 1;
-
-                if (period === 0) {
-                    this._time = end_time;
-                    this.UpdateAmplitude(0);
-                    return;
-                }
-
-                var volume = this._envConstantVolume ? this._volume : this._envVolume;
-
-
-                if (this._length === 0 || volume === 0 || this._sweepInvalid) {
-                    this._phase += ((end_time - this._time) / period) & 7;
-                    this._time = end_time;
-                    this.UpdateAmplitude(0);
-                    return;
-                }
-                for (; this._time < end_time; this._time += period, this._phase++) {
-                    this.UpdateAmplitude((this._dutyCycle >> (this._phase & 7) & 1) * volume);
-                }
-                this._phase &= 7;
-            },
-            UpdateAmplitude: function (new_amp) {
-                var delta = new_amp * this._gain - this._amplitude;
-
-                this._amplitude += delta;
-                this._bleeper.blip_add_delta(this._time, delta);
-            },
-            EndFrame: function (time) {
-                this.Run(time);
-
-                this._time = 0;
-            },
-            FrameClock: function (time, step) {
-                this.Run(time);
-
-                if (!this._envStart) {
-                    this._envTimer--;
-                    if (this._envTimer === 0) {
-                        this._envTimer = this._volume + 1;
-                        if (this._envVolume > 0) {
-                            this._envVolume--;
-                        } else {
-                            this._envVolume = this._looping ? 15 : 0;
-                        }
-                    }
-                } else {
-                    this._envStart = false;
-                    this._envTimer = this._volume + 1;
-                    this._envVolume = 15;
-                }
-
-                switch (step) {
-                    case 1: 
-                    case 3: 
-                        --this._sweepCounter;
-                        if (this._sweepCounter === 0) {
-                            this._sweepCounter = this._sweepDivider + 1;
-                            if (this._sweepEnabled && this._sweepShift > 0) {
-                                var sweep = this._timer >> this._sweepShift;
-                                if (this._sweepComplement) {
-                                    this._timer += this._sweepNegateFlag ? ~sweep : sweep;
-                                } else {
-                                    this._timer += this._sweepNegateFlag ? ~sweep + 1 : sweep;
-                                }
-                                this._sweepInvalid = (this._rawTimer < 8 || (this._timer & 2048) === 2048);
-                                //if (_sweepInvalid)
-                                //{
-                                //    _sweepInvalid = true;
-                                //}
-                            }
-                        }
-                        if (this._startSweep) {
-                            this._startSweep = false;
-                            this._sweepCounter = this._sweepDivider + 1;
-
-                        }
-                        if (!this._looping && this._length > 0) {
-                            this._length--;
-                        }
-                        break;
-                }
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.TriangleChannel", {
-        fields: {
-            _bleeper: null,
-            _chan: 0,
-            LengthCounts: null,
-            _length: 0,
-            _period: 0,
-            _time: 0,
-            _envelope: 0,
-            _looping: false,
-            _enabled: false,
-            _amplitude: 0,
-            _gain: 0,
-            _linCtr: 0,
-            _phase: 0,
-            _linVal: 0,
-            _linStart: false
-        },
-        props: {
-            Length: {
-                get: function () {
-                    return this._length;
-                },
-                set: function (value) {
-                    this._length = value;
-                }
-            },
-            /**
-             * Period of current waveform
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.TriangleChannel
-             * @function Period
-             * @type number
-             */
-            Period: {
-                get: function () {
-                    return this._period;
-                },
-                set: function (value) {
-                    this._period = value;
-                }
-            },
-            /**
-             * current time in channel
-             *
-             * @instance
-             * @public
-             * @memberof NES.CPU.Machine.BeepsBoops.TriangleChannel
-             * @function Time
-             * @type number
-             */
-            Time: {
-                get: function () {
-                    return this._time;
-                },
-                set: function (value) {
-                    this._time = value;
-                }
-            },
-            Envelope: {
-                get: function () {
-                    return this._envelope;
-                },
-                set: function (value) {
-                    this._envelope = value;
-                }
-            },
-            Looping: {
-                get: function () {
-                    return this._looping;
-                },
-                set: function (value) {
-                    this._looping = value;
-                }
-            },
-            Enabled: {
-                get: function () {
-                    return this._enabled;
-                },
-                set: function (value) {
-                    this._enabled = value;
-                }
-            },
-            Amplitude: {
-                get: function () {
-                    return this._amplitude;
-                },
-                set: function (value) {
-                    this._amplitude = value;
-                }
-            },
-            Gain: {
-                get: function () {
-                    return this._gain;
-                },
-                set: function (value) {
-                    this._gain = value;
-                }
-            }
-        },
-        ctors: {
-            init: function () {
-                this.LengthCounts = System.Array.init([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30], System.Int32);
-                this._enabled = true;
-            },
-            ctor: function (bleeper, chan) {
-                this.$initialize();
-                this._bleeper = bleeper;
-                this._chan = chan;
-            }
-        },
-        methods: {
-            WriteRegister: function (register, data, time) {
-                //Run(time);
-
-                switch (register) {
-                    case 0: 
-                        this._looping = (data & 128) === 128;
-                        this._linVal = data & 127;
-                        break;
-                    case 1: 
-                        break;
-                    case 2: 
-                        this._period &= 1792;
-                        this._period |= data;
-                        break;
-                    case 3: 
-                        this._period &= 255;
-                        this._period |= (data & 7) << 8;
-                        // setup lengthhave
-                        if (this._enabled) {
-                            this._length = this.LengthCounts[(data >> 3) & 31];
-                        }
-                        this._linStart = true;
-                        break;
-                    case 4: 
-                        this._enabled = (data !== 0);
-                        if (!this._enabled) {
-                            this._length = 0;
-                        }
-                        break;
-                }
-            },
-            Run: function (end_time) {
-
-                var period = this._period + 1;
-                if (this._linCtr === 0 || this._length === 0 || this._period < 4) {
-                    // leave it at it's current phase
-                    this._time = end_time;
-                    return;
-                }
-
-                for (; this._time < end_time; this._time += period, this._phase = (this._phase + 1) % 32) {
-                    this.UpdateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
-                }
-            },
-            UpdateAmplitude: function (new_amp) {
-                var delta = new_amp * this._gain - this._amplitude;
-                this._amplitude += delta;
-                this._bleeper.blip_add_delta(this._time, delta);
-            },
-            EndFrame: function (time) {
-                this.Run(time);
-                this._time = 0;
-            },
-            FrameClock: function (time, step) {
-                this.Run(time);
-
-                if (this._linStart) {
-                    this._linCtr = this._linVal;
-
-                } else {
-                    if (this._linCtr > 0) {
-                        this._linCtr--;
-                    }
-                }
-
-                if (!this._looping) {
-                    this._linStart = false;
-                }
-
-                switch (step) {
-                    case 1: 
-                    case 3: 
-                        if (this._length > 0 && !this._looping) {
-                            this._length--;
-                        }
-                        break;
-                }
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.Carts.CartDebugEvent", {
-        fields: {
-            clock: 0,
-            eventType: null
-        },
-        props: {
-            Clock: {
-                get: function () {
-                    return this.clock;
-                },
-                set: function (value) {
-                    this.clock = value;
-                }
-            },
-            EventType: {
-                get: function () {
-                    return this.eventType;
-                },
-                set: function (value) {
-                    this.eventType = value;
-                }
-            }
-        },
-        methods: {
-            toString: function () {
-                return System.String.format("{0}: {1}", this.clock, this.eventType);
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.Carts.NameTableMirroring", {
-        $kind: "enum",
-        statics: {
-            fields: {
-                OneScreen: 0,
-                Vertical: 1,
-                Horizontal: 2,
-                FourScreen: 3
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.ClockedRequestEventArgs", {
-        props: {
-            Clock: 0
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.ControlByteEventArgs", {
-        fields: {
-            nextValue: 0
-        },
-        props: {
-            NextValue: {
-                get: function () {
-                    return this.nextValue;
-                },
-                set: function (value) {
-                    this.nextValue = value;
-                }
-            }
-        },
-        ctors: {
-            ctor: function (value) {
-                this.$initialize();
-                this.nextValue = value;
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.IControlPad", {
-        inherits: [System.IDisposable],
+    Bridge.define("ChiChiNES.IMemoryMappedIOElement", {
         $kind: "interface"
     });
 
-    Bridge.define("NES.CPU.Machine.IPixelAwareDevice", {
-        $kind: "interface"
-    });
-
-    Bridge.define("NES.CPU.Machine.PortQueueing.PortWriteEntry", {
-        fields: {
-            time: 0,
-            address: 0,
-            data: 0
-        },
-        ctors: {
-            ctor: function (time, address, data) {
-                this.$initialize();
-                this.time = time;
-                this.address = address;
-                this.data = data;
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.ROMLoader.CartLoadException", {
-        inherits: [System.Exception],
-        ctors: {
-            $ctor1: function (message, innerException) {
-                this.$initialize();
-                System.Exception.ctor.call(this, message, innerException);
-            },
-            ctor: function (message) {
-                this.$initialize();
-                System.Exception.ctor.call(this, message);
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.ROMLoader.iNESFileHandler", {
-        statics: {
-            methods: {
-                LoadROM: function (ppu, thefile) {
-                    var _cart = null;
-                    var iNesHeader = System.Array.init(16, 0, System.Byte);
-                    var bytesRead = 16;
-                    System.Array.copy(thefile, 0, iNesHeader, 0, 16);
-                    /* 
-                    .NES file format
-                    ---------------------------------------------------------------------------
-                    0-3      String "NES^Z" used to recognize .NES files.
-                    4        Number of 16kB ROM banks.
-                    5        Number of 8kB VROM banks.
-                    6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
-                    bit 1     1 for battery-backed RAM at $6000-$7FFF
-                    bit 2     1 for a 512-byte trainer at $7000-$71FF
-                    bit 3     1 for a four-screen VRAM layout 
-                    bit 4-7   Four lower bits of ROM Mapper Type.
-                    7        bit 0-3   Reserved, must be zeroes!
-                    bit 4-7   Four higher bits of ROM Mapper Type.
-                    8-15     Reserved, must be zeroes!
-                    16-...   ROM banks, in ascending order. If a trainer is present, its
-                    512 bytes precede the ROM bank contents.
-                    ...-EOF  VROM banks, in ascending order.
-                    ---------------------------------------------------------------------------
-                    */
-                    var mapperId = (iNesHeader[6] & 240);
-                    mapperId = (Bridge.Int.div(mapperId, 16)) | 0;
-                    mapperId = (mapperId + iNesHeader[7]) | 0;
-
-                    var prgRomCount = iNesHeader[4];
-                    var chrRomCount = iNesHeader[5];
-
-                    var theRom = System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
-                    var chrRom = System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-
-                    var chrOffset = 0;
-
-                    //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
-                    System.Array.copy(thefile, 16, theRom, 0, theRom.length);
-                    chrOffset = (16 + theRom.length) | 0;
-                    var len = chrRom.length;
-                    if (((chrOffset + chrRom.length) | 0) > thefile.length) {
-                        len = (thefile.length - chrOffset) | 0;
-                    }
-                    System.Array.copy(thefile, chrOffset, chrRom, 0, len);
-                    //zipStream.Read(chrRom, 0, chrRom.Length);
-                    switch (mapperId) {
-                        case 0: 
-                        case 2: 
-                        case 3: 
-                        case 7: 
-                            _cart = new NES.CPU.NESCart();
-                            break;
-                        case 1: 
-                            _cart = new NES.CPU.Machine.Carts.NesCartMMC1();
-                            break;
-                        case 4: 
-                            _cart = new NES.CPU.Machine.Carts.NesCartMMC3();
-                            break;
-                    }
-
-                    if (_cart != null) {
-                        _cart.NES$CPU$Machine$Carts$INESCart$Whizzler = ppu;
-                        ppu.NES$CPU$PixelWhizzlerClasses$IPPU$ChrRomHandler = _cart;
-                        _cart.NES$CPU$Machine$Carts$INESCart$ROMHashFunction = null; //Hashers.HashFunction;
-                        _cart.NES$CPU$Machine$Carts$INESCart$LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-                    }
-
-                    return _cart;
-
-                }
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.nitenedo.Interaction.CallbackType", {
+    Bridge.define("ChiChiNES.Interaction.CallbackType", {
         $kind: "enum",
         statics: {
             fields: {
@@ -4345,20 +4238,20 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    /** @namespace NES.CPU.nitenedo.Interaction */
+    /** @namespace ChiChiNES.Interaction */
 
     /**
      * Defines what the main windows interaction with the current renderer
      *
      * @abstract
      * @public
-     * @class NES.CPU.nitenedo.Interaction.IDisplayContext
+     * @class ChiChiNES.Interaction.IDisplayContext
      */
-    Bridge.define("NES.CPU.nitenedo.Interaction.IDisplayContext", {
+    Bridge.define("ChiChiNES.Interaction.IDisplayContext", {
         $kind: "interface"
     });
 
-    Bridge.define("NES.CPU.nitenedo.Interaction.InvalidDisplayContextException", {
+    Bridge.define("ChiChiNES.Interaction.InvalidDisplayContextException", {
         inherits: [System.Exception],
         ctors: {
             ctor: function (s) {
@@ -4372,11 +4265,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.nitenedo.Interaction.NESDisplayPluginAttribute", {
+    Bridge.define("ChiChiNES.Interaction.NESDisplayPluginAttribute", {
         inherits: [System.Attribute]
     });
 
-    Bridge.define("NES.CPU.nitenedo.Interaction.NESPixelFormats", {
+    Bridge.define("ChiChiNES.Interaction.NESPixelFormats", {
         $kind: "enum",
         statics: {
             fields: {
@@ -4387,7 +4280,40 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.nitenedo.NESMachine", {
+    Bridge.define("ChiChiNES.IPixelAwareDevice", {
+        $kind: "interface"
+    });
+
+    Bridge.define("ChiChiNES.IPPU", {
+        $kind: "interface"
+    });
+
+    Bridge.define("ChiChiNES.Machine.ControlPanel.RunningStatuses", {
+        $kind: "enum",
+        statics: {
+            fields: {
+                Unloaded: 0,
+                Off: 1,
+                Running: 2,
+                Frozen: 3,
+                Paused: 4
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.NameTableMirroring", {
+        $kind: "enum",
+        statics: {
+            fields: {
+                OneScreen: 0,
+                Vertical: 1,
+                Horizontal: 2,
+                FourScreen: 3
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.NESMachine", {
         inherits: [System.IDisposable],
         fields: {
             _currCartName: null,
@@ -4476,7 +4402,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                     if (this._enableSound !== value) {
                         if (!Bridge.staticEquals(this.SoundStatusChanged, null)) {
-                            this.SoundStatusChanged(this, ($t = new NES.CPU.Machine.BeepsBoops.SoundStatusChangeEventArgs(), $t.Muted = !value, $t));
+                            this.SoundStatusChanged(this, ($t = new ChiChiNES.BeepsBoops.SoundStatusChangeEventArgs(), $t.Muted = !value, $t));
                         }
                         this.soundBopper.Muted = !value;
                         this._enableSound = value;
@@ -4520,7 +4446,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     this._cpu.PadTwo.ControlPad = value;
-                    this.PPU.NES$CPU$PixelWhizzlerClasses$IPPU$PixelAwareDevice = Bridge.as(value, NES.CPU.Machine.IPixelAwareDevice);
+                    this.PPU.ChiChiNES$IPPU$PixelAwareDevice = Bridge.as(value, ChiChiNES.IPixelAwareDevice);
                 }
             },
             SRAMReader: null,
@@ -4530,7 +4456,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         ctors: {
             init: function () {
                 this._currCartName = "";
-                this.runState = NES.Machine.ControlPanel.RunningStatuses.Unloaded;
+                this.runState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Unloaded;
                 this.lastSaveState = System.Array.init(10, null, System.Array.type(System.Int32));
                 this._enableSound = true;
                 this.breakpointHit = false;
@@ -4547,7 +4473,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 this._cpu = cpu;
                 this._ppu = ppu;
-                this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$FrameFinishHandler = Bridge.fn.cacheBind(this, this.FrameFinished);
+                this._ppu.ChiChiNES$IPPU$FrameFinishHandler = Bridge.fn.cacheBind(this, this.FrameFinished);
                 this.tiler = tiler;
 
                 this._sharedWave = wavSharer;
@@ -4570,43 +4496,43 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (this._cpu != null && this._cart != null) {
                     // ForceStop();
                     this.soundBopper.RebuildSound();
-                    this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$Initialize();
-                    this._cart.NES$CPU$Machine$Carts$INESCart$InitializeCart();
+                    this._ppu.ChiChiNES$IPPU$Initialize();
+                    this._cart.ChiChiNES$INESCart$InitializeCart();
                     this._cpu.ResetCPU();
                     this.ClearGenieCodes();
                     this._cpu.PowerOn();
-                    this.RunState = NES.Machine.ControlPanel.RunningStatuses.Running;
+                    this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
                 }
             },
             PowerOn: function () {
                 if (this._cpu != null && this._cart != null) {
 
                     this.soundBopper.RebuildSound();
-                    this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$Initialize();
-                    this._cart.NES$CPU$Machine$Carts$INESCart$InitializeCart();
-                    if (!Bridge.staticEquals(this.SRAMReader, null) && this._cart.NES$CPU$Machine$Carts$INESCart$UsesSRAM) {
-                        this._cart.NES$CPU$Machine$Carts$INESCart$SRAM = this.SRAMReader(this._cart.NES$CPU$Machine$Carts$INESCart$CheckSum);
+                    this._ppu.ChiChiNES$IPPU$Initialize();
+                    this._cart.ChiChiNES$INESCart$InitializeCart();
+                    if (!Bridge.staticEquals(this.SRAMReader, null) && this._cart.ChiChiNES$INESCart$UsesSRAM) {
+                        this._cart.ChiChiNES$INESCart$SRAM = this.SRAMReader(this._cart.ChiChiNES$INESCart$CheckSum);
                     }
                     this._cpu.ResetCPU();
                     this.ClearGenieCodes();
                     this._cpu.PowerOn();
-                    this.RunState = NES.Machine.ControlPanel.RunningStatuses.Running;
+                    this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
                 }
             },
             PowerOff: function () {
-                if (this._cart != null && !Bridge.staticEquals(this.SRAMWriter, null) && this._cart.NES$CPU$Machine$Carts$INESCart$UsesSRAM) {
-                    this.SRAMWriter(this._cart.NES$CPU$Machine$Carts$INESCart$CheckSum, this._cart.NES$CPU$Machine$Carts$INESCart$SRAM);
+                if (this._cart != null && !Bridge.staticEquals(this.SRAMWriter, null) && this._cart.ChiChiNES$INESCart$UsesSRAM) {
+                    this.SRAMWriter(this._cart.ChiChiNES$INESCart$CheckSum, this._cart.ChiChiNES$INESCart$SRAM);
                 }
                 //ThreadStoptendo();
             },
             EjectCart: function () {
-                if (this._cart != null && !Bridge.staticEquals(this.SRAMWriter, null) && this._cart.NES$CPU$Machine$Carts$INESCart$UsesSRAM) {
-                    this.SRAMWriter(this._cart.NES$CPU$Machine$Carts$INESCart$CheckSum, this._cart.NES$CPU$Machine$Carts$INESCart$SRAM);
+                if (this._cart != null && !Bridge.staticEquals(this.SRAMWriter, null) && this._cart.ChiChiNES$INESCart$UsesSRAM) {
+                    this.SRAMWriter(this._cart.ChiChiNES$INESCart$CheckSum, this._cart.ChiChiNES$INESCart$SRAM);
                 }
                 //ForceStop();
                 this._cart = null;
                 this._currCartName = null;
-                this.RunState = NES.Machine.ControlPanel.RunningStatuses.Unloaded;
+                this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Unloaded;
                 //_ppu.CurrentScanLine = 0;
             },
             LoadCart: function (rom) {
@@ -4620,18 +4546,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._currCartName = "Streamed";
 
 
-                this._cart = NES.CPU.Machine.ROMLoader.iNESFileHandler.LoadROM(this._ppu, rom);
+                this._cart = ChiChiNES.ROMLoader.iNESFileHandler.LoadROM(this._ppu, rom);
                 if (this._cart != null) {
 
 
-                    this._cpu.Cart = Bridge.cast(this._cart, NES.CPU.Fastendo.IClockedMemoryMappedIOElement);
-                    this._cpu.Cart.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NMIHandler = Bridge.fn.cacheBind(this._cpu, this._cpu.InterruptRequest);
-                    this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$ChrRomHandler = this._cart;
+                    this._cpu.Cart = Bridge.cast(this._cart, ChiChiNES.IClockedMemoryMappedIOElement);
+                    this._cpu.Cart.ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler = Bridge.fn.cacheBind(this._cpu, this._cpu.InterruptRequest);
+                    this._ppu.ChiChiNES$IPPU$ChrRomHandler = this._cart;
 
                     this.Reset();
 
                 } else {
-                    throw new NES.CPU.Machine.ROMLoader.CartLoadException.ctor("Unsupported ROM type - load failed.");
+                    throw new ChiChiNES.ROMLoader.CartLoadException.ctor("Unsupported ROM type - load failed.");
                 }
             },
             GoTendo_NoThread: function (fileName) {
@@ -4694,8 +4620,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var state = new (System.Collections.Generic.Queue$1(System.Int32)).ctor();
                 state = new (System.Collections.Generic.Queue$1(System.Int32)).ctor();
                 this._cpu.GetState(state);
-                this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$WriteState(state);
-                this._cart.NES$CPU$Machine$Carts$INESCart$WriteState(state);
+                this._ppu.ChiChiNES$IPPU$WriteState(state);
+                this._cart.ChiChiNES$INESCart$WriteState(state);
                 this.lastSaveState[index] = System.Array.init(state.Count, 0, System.Int32);
                 state.copyTo$1(this.lastSaveState[index], 0);
             },
@@ -4703,8 +4629,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (this.lastSaveState != null) {
                     var cloneState = new (System.Collections.Generic.Queue$1(System.Int32)).$ctor1(this.lastSaveState[index]);
                     this._cpu.SetState(cloneState);
-                    this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$ReadState(cloneState);
-                    this._cart.NES$CPU$Machine$Carts$INESCart$ReadState(cloneState);
+                    this._ppu.ChiChiNES$IPPU$ReadState(cloneState);
+                    this._cart.ChiChiNES$INESCart$ReadState(cloneState);
                 }
             },
             ClearGenieCodes: function () {
@@ -4789,19 +4715,19 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (hexCode.length === 6) {
                     data = ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4) | (hexCode[0] & 7) | (hexCode[5] & 8);
 
-                    patch.v = new NES.CPU.Fastendo.Hacking.MemoryPatch(address, data);
+                    patch.v = new ChiChiNES.Hacking.MemoryPatch(address, data);
                 } else if (hexCode.length === 8) {
                     data = ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4) | (hexCode[0] & 7) | (hexCode[7] & 8);
                     compare = ((hexCode[7] & 7) << 4) | ((hexCode[6] & 8) << 4) | (hexCode[6] & 7) | (hexCode[5] & 8);
 
-                    patch.v = new NES.CPU.Fastendo.Hacking.ComparedMemoryPatch(address, (compare & 255), (data & 255));
+                    patch.v = new ChiChiNES.Hacking.ComparedMemoryPatch(address, (compare & 255), (data & 255));
                 } else {
                     // not a genie code!  
                     patch.v = null;
                     return false;
                 }
                 try {
-                    patch.v.NES$CPU$Fastendo$Hacking$IMemoryPatch$Activated = true;
+                    patch.v.ChiChiNES$Hacking$IMemoryPatch$Activated = true;
                     this._cpu.MemoryPatches.add(address, patch.v);
                     this._cpu.Cheating = true;
                 }
@@ -4818,9 +4744,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._sharedWave.AppendFile(null);
             },
             SetupSound: function () {
-                this._sharedWave = new NES.CPU.Machine.BeepsBoops.WavSharer.ctor();
+                this._sharedWave = new ChiChiNES.BeepsBoops.WavSharer.ctor();
                 //writer = new wavwriter(44100, "d:\\nesout.wav");
-                this.soundBopper = new NES.CPU.Machine.BeepsBoops.Bopper(this._sharedWave);
+                this.soundBopper = new ChiChiNES.BeepsBoops.Bopper(this._sharedWave);
             },
             Runtendo: function () {
                 this.isDebugging = false;
@@ -4829,8 +4755,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             dispose: function () {
 
 
-                if (this._cart != null && this._cart.NES$CPU$Machine$Carts$INESCart$CheckSum != null && !Bridge.staticEquals(this.SRAMWriter, null)) {
-                    this.SRAMWriter(this._cart.NES$CPU$Machine$Carts$INESCart$CheckSum, this._cart.NES$CPU$Machine$Carts$INESCart$SRAM);
+                if (this._cart != null && this._cart.ChiChiNES$INESCart$CheckSum != null && !Bridge.staticEquals(this.SRAMWriter, null)) {
+                    this.SRAMWriter(this._cart.ChiChiNES$INESCart$CheckSum, this._cart.ChiChiNES$INESCart$SRAM);
                 }
 
 
@@ -4846,8 +4772,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.nitenedo.NESMachine
-             * @memberof NES.CPU.nitenedo.NESMachine
+             * @this ChiChiNES.NESMachine
+             * @memberof ChiChiNES.NESMachine
              * @return  {void}
              */
             Step: function () {
@@ -4870,17 +4796,17 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._totalCPUClocks = this._cpu.Clock;
                 //lock (_sharedWave)
                 //{
-                //    //soundBopper.FlushFrame(_totalCPUClocks);
-                //    //soundBopper.EndFrame(_totalCPUClocks);
+                //    soundBopper.FlushFrame(_totalCPUClocks);
+                //    soundBopper.EndFrame(_totalCPUClocks);
                 //}
 
                 if (this.PadOne != null) {
-                    this.PadOne.NES$CPU$Machine$IControlPad$refresh();
+                    this.PadOne.ChiChiNES$IControlPad$refresh();
                 }
 
                 this._totalCPUClocks = 0;
                 this._cpu.Clock = 0;
-                this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$LastcpuClock = 0;
+                this._ppu.ChiChiNES$IPPU$LastcpuClock = 0;
 
 
             },
@@ -4892,15 +4818,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.PixelWhizzlerClasses.IPPU", {
-        $kind: "interface"
-    });
-
-    Bridge.define("NES.CPU.PPUClasses.NESSprite", {
+    Bridge.define("ChiChiNES.NESSprite", {
         $kind: "struct",
         statics: {
             methods: {
-                getDefaultValue: function () { return new NES.CPU.PPUClasses.NESSprite(); }
+                getDefaultValue: function () { return new ChiChiNES.NESSprite(); }
             }
         },
         fields: {
@@ -4926,13 +4848,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 return h;
             },
             equals: function (o) {
-                if (!Bridge.is(o, NES.CPU.PPUClasses.NESSprite)) {
+                if (!Bridge.is(o, ChiChiNES.NESSprite)) {
                     return false;
                 }
                 return Bridge.equals(this.YPosition, o.YPosition) && Bridge.equals(this.XPosition, o.XPosition) && Bridge.equals(this.SpriteNumber, o.SpriteNumber) && Bridge.equals(this.Foreground, o.Foreground) && Bridge.equals(this.IsVisible, o.IsVisible) && Bridge.equals(this.TileIndex, o.TileIndex) && Bridge.equals(this.AttributeByte, o.AttributeByte) && Bridge.equals(this.FlipX, o.FlipX) && Bridge.equals(this.FlipY, o.FlipY) && Bridge.equals(this.Changed, o.Changed);
             },
             $clone: function (to) {
-                var s = to || new NES.CPU.PPUClasses.NESSprite();
+                var s = to || new ChiChiNES.NESSprite();
                 s.YPosition = this.YPosition;
                 s.XPosition = this.XPosition;
                 s.SpriteNumber = this.SpriteNumber;
@@ -4948,7 +4870,23 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.PPUClasses.PPUWriteEvent", {
+    Bridge.define("ChiChiNES.PortQueueing.PortWriteEntry", {
+        fields: {
+            time: 0,
+            address: 0,
+            data: 0
+        },
+        ctors: {
+            ctor: function (time, address, data) {
+                this.$initialize();
+                this.time = time;
+                this.address = address;
+                this.data = data;
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.PPUWriteEvent", {
         inherits: [System.ComponentModel.INotifyPropertyChanged],
         fields: {
             isWrite: false,
@@ -5025,7 +4963,142 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.PPUClasses.TileDoodler", {
+    Bridge.define("ChiChiNES.ROMLoader.CartLoadException", {
+        inherits: [System.Exception],
+        ctors: {
+            $ctor1: function (message, innerException) {
+                this.$initialize();
+                System.Exception.ctor.call(this, message, innerException);
+            },
+            ctor: function (message) {
+                this.$initialize();
+                System.Exception.ctor.call(this, message);
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.ROMLoader.iNESFileHandler", {
+        statics: {
+            methods: {
+                LoadROM: function (ppu, thefile) {
+                    var _cart = null;
+                    var iNesHeader = System.Array.init(16, 0, System.Byte);
+                    var bytesRead = 16;
+                    System.Array.copy(thefile, 0, iNesHeader, 0, 16);
+                    /* 
+                    .NES file format
+                    ---------------------------------------------------------------------------
+                    0-3      String "NES^Z" used to recognize .NES files.
+                    4        Number of 16kB ROM banks.
+                    5        Number of 8kB VROM banks.
+                    6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
+                    bit 1     1 for battery-backed RAM at $6000-$7FFF
+                    bit 2     1 for a 512-byte trainer at $7000-$71FF
+                    bit 3     1 for a four-screen VRAM layout 
+                    bit 4-7   Four lower bits of ROM Mapper Type.
+                    7        bit 0-3   Reserved, must be zeroes!
+                    bit 4-7   Four higher bits of ROM Mapper Type.
+                    8-15     Reserved, must be zeroes!
+                    16-...   ROM banks, in ascending order. If a trainer is present, its
+                    512 bytes precede the ROM bank contents.
+                    ...-EOF  VROM banks, in ascending order.
+                    ---------------------------------------------------------------------------
+                    */
+                    var mapperId = (iNesHeader[6] & 240);
+                    mapperId = (Bridge.Int.div(mapperId, 16)) | 0;
+                    mapperId = (mapperId + iNesHeader[7]) | 0;
+
+                    var prgRomCount = iNesHeader[4];
+                    var chrRomCount = iNesHeader[5];
+
+                    var theRom = System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
+                    var chrRom = System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
+
+                    var chrOffset = 0;
+
+                    //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
+                    System.Array.copy(thefile, 16, theRom, 0, theRom.length);
+                    chrOffset = (16 + theRom.length) | 0;
+                    var len = chrRom.length;
+                    if (((chrOffset + chrRom.length) | 0) > thefile.length) {
+                        len = (thefile.length - chrOffset) | 0;
+                    }
+                    System.Array.copy(thefile, chrOffset, chrRom, 0, len);
+                    //zipStream.Read(chrRom, 0, chrRom.Length);
+                    switch (mapperId) {
+                        case 0: 
+                        case 2: 
+                        case 3: 
+                        case 7: 
+                            _cart = new ChiChiNES.CPU.NESCart();
+                            break;
+                        case 1: 
+                            _cart = new ChiChiNES.NesCartMMC1();
+                            break;
+                        case 4: 
+                            _cart = new ChiChiNES.NesCartMMC3();
+                            break;
+                    }
+
+                    if (_cart != null) {
+                        _cart.ChiChiNES$INESCart$Whizzler = ppu;
+                        ppu.ChiChiNES$IPPU$ChrRomHandler = _cart;
+                        _cart.ChiChiNES$INESCart$ROMHashFunction = null; //Hashers.HashFunction;
+                        _cart.ChiChiNES$INESCart$LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
+                    }
+
+                    return _cart;
+
+                }
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.Sound.IWavStreamer", {
+        inherits: [System.IDisposable],
+        $kind: "interface"
+    });
+
+    Bridge.define("ChiChiNES.Sound.SoundThreader", {
+        inherits: [System.IDisposable],
+        fields: {
+            _wavePlayer: null
+        },
+        props: {
+            WavePlayer: {
+                get: function () {
+                    return this._wavePlayer;
+                },
+                set: function (value) {
+                    this._wavePlayer = value;
+                }
+            }
+        },
+        alias: ["dispose", "System$IDisposable$dispose"],
+        ctors: {
+            ctor: function (streamer) {
+                this.$initialize();
+
+                this._wavePlayer = streamer;
+
+                //ThreadPool.QueueUserWorkItem(PlaySound, null);
+
+            }
+        },
+        methods: {
+            OnSoundStatusChanged: function (sender, e) {
+                this._wavePlayer.ChiChiNES$Sound$IWavStreamer$Muted = e.Muted;
+            },
+            PlaySound: function (o) {
+                this._wavePlayer.ChiChiNES$Sound$IWavStreamer$playPCM();
+            },
+            dispose: function () {
+                this._wavePlayer.System$IDisposable$dispose();
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.TileDoodler", {
         fields: {
             _ppu: null,
             currentNameTableEntries: null,
@@ -5076,17 +5149,17 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 actualAddress.v = System.Array.init(8, 0, System.Int32);
 
                 for (var i = 0; i < 8; i = (i + 1) | 0) {
-                    var patternEntry = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$ChrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
+                    var patternEntry = this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
 
-                    actualAddress.v[i] = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$ChrRomHandler.NES$CPU$Machine$Carts$INESCart$ActualChrRomOffset(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
+                    actualAddress.v[i] = this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$ActualChrRomOffset(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
 
-                    var patternEntryBit2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$ChrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
+                    var patternEntryBit2 = this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
 
                     for (var bit = 0; bit < 8; bit = (bit + 1) | 0) {
-                        if ((patternEntry & ($t = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
+                        if ((patternEntry & ($t = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
                             result[(((Bridge.Int.mul(i, 8)) + bit) | 0)] = 1 | attributeByte;
                         }
-                        if ((patternEntryBit2 & ($t1 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
+                        if ((patternEntryBit2 & ($t1 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
                             result[($t2 = (((Bridge.Int.mul(i, 8)) + bit) | 0))] = result[$t2] | (2 | attributeByte);
                         }
                     }
@@ -5106,28 +5179,28 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     var patternEntry;
                     var patternEntryBit2;
                     if (flipY) {
-                        patternEntry = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0));
-                        patternEntryBit2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0) + 8) | 0));
+                        patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0));
+                        patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0) + 8) | 0));
                     } else {
 
-                        patternEntry = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
-                        patternEntryBit2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
+                        patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
+                        patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
                     }
                     if (flipX) {
                         for (var bit = 7; bit >= 0; bit = (bit - 1) | 0) {
-                            if ((patternEntry & ($t = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
+                            if ((patternEntry & ($t = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
                                 result[(((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0)] = 1 | attributeByte;
                             }
-                            if ((patternEntryBit2 & ($t1 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
+                            if ((patternEntryBit2 & ($t1 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
                                 result[($t2 = (((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0))] = result[$t2] | (2 | attributeByte);
                             }
                         }
                     } else {
                         for (var bit1 = 0; bit1 < 8; bit1 = (bit1 + 1) | 0) {
-                            if ((patternEntry & ($t3 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
+                            if ((patternEntry & ($t3 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
                                 result[(((Bridge.Int.mul(i, 8)) + bit1) | 0)] = 1 | attributeByte;
                             }
-                            if ((patternEntryBit2 & ($t4 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
+                            if ((patternEntryBit2 & ($t4 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
                                 result[($t5 = (((Bridge.Int.mul(i, 8)) + bit1) | 0))] = result[$t5] | (2 | attributeByte);
                             }
                         }
@@ -5146,21 +5219,21 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     var patternEntry;
                     var patternEntryBit2;
                     if (flipY) {
-                        patternEntry = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0));
-                        patternEntryBit2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0) + 8) | 0));
+                        patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0));
+                        patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0) + 8) | 0));
                     } else {
-                        patternEntry = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
-                        patternEntryBit2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
+                        patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
+                        patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
                     }
 
                     if (flipX) {
                         for (var bit = 7; bit >= 0; bit = (bit - 1) | 0) {
                             result[(((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0)] = 0;
-                            if ((patternEntry & ($t = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
+                            if ((patternEntry & ($t = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
                                 result[(((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0)] = 1 | attributeByte;
                                 hasData = true;
                             }
-                            if ((patternEntryBit2 & ($t1 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
+                            if ((patternEntryBit2 & ($t1 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
                                 result[($t2 = (((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0))] = result[$t2] | (2 | attributeByte);
                                 hasData = true;
                             }
@@ -5168,11 +5241,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     } else {
                         for (var bit1 = 0; bit1 < 8; bit1 = (bit1 + 1) | 0) {
                             result[(((Bridge.Int.mul(i, 8)) + bit1) | 0)] = 0;
-                            if ((patternEntry & ($t3 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
+                            if ((patternEntry & ($t3 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
                                 result[(((Bridge.Int.mul(i, 8)) + bit1) | 0)] = 1 | attributeByte;
                                 hasData = true;
                             }
-                            if ((patternEntryBit2 & ($t4 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
+                            if ((patternEntryBit2 & ($t4 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
                                 result[($t5 = (((Bridge.Int.mul(i, 8)) + bit1) | 0))] = result[$t5] | (2 | attributeByte);
                                 hasData = true;
                             }
@@ -5186,8 +5259,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.PPUClasses.TileDoodler
-             * @memberof NES.CPU.PPUClasses.TileDoodler
+             * @this ChiChiNES.TileDoodler
+             * @memberof ChiChiNES.TileDoodler
              * @param   {System.Int32}    result           
              * @param   {number}          startPosition    
              * @param   {number}          LineNumber       
@@ -5200,14 +5273,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var $t, $t1, $t2;
                 // 8x8 tile
 
-                var patternEntry = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + LineNumber) | 0));
-                var patternEntryBit2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + LineNumber) | 0) + 8) | 0));
+                var patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + LineNumber) | 0));
+                var patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + LineNumber) | 0) + 8) | 0));
 
                 for (var bit = 0; bit < 8; bit = (bit + 1) | 0) {
-                    if ((patternEntry & ($t = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
+                    if ((patternEntry & ($t = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
                         result.v[(((Bridge.Int.mul(LineNumber, 8)) + bit) | 0)] = 1 | attributeByte;
                     }
-                    if ((patternEntryBit2 & ($t1 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
+                    if ((patternEntryBit2 & ($t1 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
                         result.v[($t2 = (((Bridge.Int.mul(LineNumber, 8)) + bit) | 0))] = result.v[$t2] | (2 | attributeByte);
                     }
                 }
@@ -5224,7 +5297,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         if (xPosition >= 256 || yPosition >= 240) {
                             return;
                         }
-                        ($t = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) & 255;
+                        ($t = this._ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) & 255;
                     }
                 }
             },
@@ -5246,7 +5319,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             return;
                         }
                         if (newData[(((Bridge.Int.mul(j, width)) + i) | 0)] !== 0) {
-                            ($t = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte((((newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) + 16128) | 0))) & 255;
+                            ($t = this._ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte((((newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) + 16128) | 0))) & 255;
                         }
                     }
                 }
@@ -5263,8 +5336,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         if (xPosition >= 256 || yPosition >= 240) {
                             return;
                         }
-                        if (($t = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] === this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(16128)) {
-                            ($t1 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte((((newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) + 16128) | 0))) & 255;
+                        if (($t = this._ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] === this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(16128)) {
+                            ($t1 = this._ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte((((newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) + 16128) | 0))) & 255;
                         }
                     }
                 }
@@ -5280,7 +5353,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 //_ppu.RawBuffer = new byte[_ppu.RawBuffer.Length + 1];
 
-                var NameTable = (8192 + (Bridge.Int.mul(1024, (this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PPUControlByte0 & 3)))) | 0;
+                var NameTable = (8192 + (Bridge.Int.mul(1024, (this._ppu.ChiChiNES$IPPU$PPUControlByte0 & 3)))) | 0;
                 var nt2 = (Bridge.Int.div((NameTable & 3072), 1024)) | 0;
 
                 //int PatternTable;
@@ -5292,10 +5365,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 for (var i = 0; i < 32; i = (i + 1) | 0) {
                     for (var j = 0; j < 30; j = (j + 1) | 0) {
                         //int TileIndex = (byte)_ppu.NameTable[_ppu.Mirror[nt2], i + (j * 32)];
-                        var TileIndex = (this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((8192 + this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$NameTableMemoryStart) | 0) + i) | 0) + (Bridge.Int.mul(j, 32))) | 0))) & 255;
+                        var TileIndex = (this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((8192 + this._ppu.ChiChiNES$IPPU$NameTableMemoryStart) | 0) + i) | 0) + (Bridge.Int.mul(j, 32))) | 0))) & 255;
 
-                        var addToCol = this.GetAttributeTableEntry(this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$NameTableMemoryStart, i, j);
-                        this.DrawRect(this.GetPatternTableEntry(this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PatternTableIndex, TileIndex, addToCol, Bridge.ref(($t = this.currentNameTableEntries[i]), j)), 8, 8, (((Bridge.Int.mul(i, 8)) + this.XOffset) | 0), (((Bridge.Int.mul(j, 8)) + this.YOffset) | 0));
+                        var addToCol = this.GetAttributeTableEntry(this._ppu.ChiChiNES$IPPU$NameTableMemoryStart, i, j);
+                        this.DrawRect(this.GetPatternTableEntry(this._ppu.ChiChiNES$IPPU$PatternTableIndex, TileIndex, addToCol, Bridge.ref(($t = this.currentNameTableEntries[i]), j)), 8, 8, (((Bridge.Int.mul(i, 8)) + this.XOffset) | 0), (((Bridge.Int.mul(j, 8)) + this.YOffset) | 0));
 
                     }
                 }
@@ -5304,7 +5377,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //int LookUp = _ppu.NameTable[_ppu.Mirror[nameTableIndex],
                 //    0x3C0 + (i / 4) + ((j / 4) * 0x8)];
 
-                var LookUp = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((((8192 + ppuNameTableMemoryStart) | 0) + 960) | 0) + (((Bridge.Int.div(i, 4)) | 0))) | 0) + (Bridge.Int.mul((((Bridge.Int.div(j, 4)) | 0)), 8))) | 0));
+                var LookUp = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((((8192 + ppuNameTableMemoryStart) | 0) + 960) | 0) + (((Bridge.Int.div(i, 4)) | 0))) | 0) + (Bridge.Int.mul((((Bridge.Int.div(j, 4)) | 0)), 8))) | 0));
 
                 var AttribByte = 0;
                 switch ((i & 2) | Bridge.Int.mul((j & 2), 2)) {
@@ -5328,16 +5401,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.PPUClasses.TileDoodler
-             * @memberof NES.CPU.PPUClasses.TileDoodler
+             * @this ChiChiNES.TileDoodler
+             * @memberof ChiChiNES.TileDoodler
              * @param   {number}    xPosition    X position of pixel (0 to 255)
              * @param   {number}    yPosition    Y position of pixel (0 to 239)
              * @return  {number}
              */
             GetNameTablePixel: function (xPosition, yPosition) {
-                var ppuNameTableMemoryStart = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$NameTableMemoryStart;
+                var ppuNameTableMemoryStart = this._ppu.ChiChiNES$IPPU$NameTableMemoryStart;
                 //yPosition += 1;
-                xPosition = (xPosition + this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$HScroll) | 0;
+                xPosition = (xPosition + this._ppu.ChiChiNES$IPPU$HScroll) | 0;
 
                 if (xPosition > 255) {
                     xPosition = (xPosition - 256) | 0;
@@ -5355,7 +5428,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 // index of this pixels bit in pattern table
                 var patternTableEntryIndex = (7 - (xPosition & 7)) | 0;
 
-                yPosition = (yPosition + this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VScroll) | 0;
+                yPosition = (yPosition + this._ppu.ChiChiNES$IPPU$VScroll) | 0;
                 if (yPosition > 240) {
                     yPosition = (yPosition - 241) | 0;
                     ppuNameTableMemoryStart = ppuNameTableMemoryStart ^ 2048;
@@ -5369,10 +5442,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //int mirrorIndexLookup = (nameTableMemoryStart & 0xC00) / 0x400;
                 //int TileIndex = (byte)_ppu.NameTable[_ppu.CurrentNameTable, xTilePosition + (yTilePosition * 32)];
 
-                var TileIndex = (this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((8192 + ppuNameTableMemoryStart) | 0) + xTilePosition) | 0) + ((Bridge.Int.mul(yTilePosition, 32)))) | 0))) & 255;
+                var TileIndex = (this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((8192 + ppuNameTableMemoryStart) | 0) + xTilePosition) | 0) + ((Bridge.Int.mul(yTilePosition, 32)))) | 0))) & 255;
 
-                var patternEntry = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PatternTableIndex + Bridge.Int.mul(TileIndex, 16)) | 0) + patternTableYOffset) | 0));
-                var patternEntryByte2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PatternTableIndex + Bridge.Int.mul(TileIndex, 16)) | 0) + 8) | 0) + patternTableYOffset) | 0));
+                var patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((this._ppu.ChiChiNES$IPPU$PatternTableIndex + Bridge.Int.mul(TileIndex, 16)) | 0) + patternTableYOffset) | 0));
+                var patternEntryByte2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((this._ppu.ChiChiNES$IPPU$PatternTableIndex + Bridge.Int.mul(TileIndex, 16)) | 0) + 8) | 0) + patternTableYOffset) | 0));
 
                 var attributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, yTilePosition);
 
@@ -5381,15 +5454,15 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             SpriteZeroHit: function (xPosition, yPosition) {
                 var $t, $t1, $t2, $t3;
-                var y = ($t = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$SpriteRam)[0];
+                var y = ($t = this._ppu.ChiChiNES$IPPU$SpriteRam)[0];
                 var yLine = yPosition % 8;
                 var xPos = xPosition % 8;
                 if (yPosition > y && yPosition <= ((y + 9) | 0)) {
-                    var tileIndex = ($t1 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$SpriteRam)[1];
-                    var patternEntry = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PatternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + 7) | 0) - yLine) | 0));
-                    var patternEntryBit2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte(((((((((this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PatternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + 7) | 0) - yLine) | 0) + 8) | 0));
+                    var tileIndex = ($t1 = this._ppu.ChiChiNES$IPPU$SpriteRam)[1];
+                    var patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((this._ppu.ChiChiNES$IPPU$PatternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + 7) | 0) - yLine) | 0));
+                    var patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((((this._ppu.ChiChiNES$IPPU$PatternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + 7) | 0) - yLine) | 0) + 8) | 0));
 
-                    if (((patternEntry & ($t2 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[xPos]) !== 0) || ((patternEntryBit2 & ($t3 = NES.CPU.PPUClasses.PixelWhizzler.PowersOfTwo)[xPos]) !== 0)) {
+                    if (((patternEntry & ($t2 = ChiChiNES.PixelWhizzler.PowersOfTwo)[xPos]) !== 0) || ((patternEntryBit2 & ($t3 = ChiChiNES.PixelWhizzler.PowersOfTwo)[xPos]) !== 0)) {
                         return true;
                     }
                 }
@@ -5398,10 +5471,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             DrawSprite: function (spriteNum) {
                 var $t, $t1, $t2, $t3;
                 var spriteAddress = Bridge.Int.mul(4, spriteNum);
-                var y = ($t = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$SpriteRam)[spriteAddress];
-                var attributeByte = ($t1 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$SpriteRam)[((spriteAddress + 2) | 0)];
-                var x = ($t2 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$SpriteRam)[((spriteAddress + 3) | 0)];
-                var tileIndex = ($t3 = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$SpriteRam)[((spriteAddress + 1) | 0)];
+                var y = ($t = this._ppu.ChiChiNES$IPPU$SpriteRam)[spriteAddress];
+                var attributeByte = ($t1 = this._ppu.ChiChiNES$IPPU$SpriteRam)[((spriteAddress + 2) | 0)];
+                var x = ($t2 = this._ppu.ChiChiNES$IPPU$SpriteRam)[((spriteAddress + 3) | 0)];
+                var tileIndex = ($t3 = this._ppu.ChiChiNES$IPPU$SpriteRam)[((spriteAddress + 1) | 0)];
 
                 var attrColor = ((attributeByte & 3) << 2) | 16;
                 var isInFront = (attributeByte & 32) === 32;
@@ -5410,7 +5483,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 var spritePatternTable = 0;
                 // if these are 8x16 sprites, read high and low, draw
-                if ((this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PPUControlByte0 & 32) === 32) {
+                if ((this._ppu.ChiChiNES$IPPU$PPUControlByte0 & 32) === 32) {
                     if ((tileIndex & 1) === 1) {
                         spritePatternTable = 4096;
                     }
@@ -5428,7 +5501,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     }
                 } else {
                     // 8x8 sprites
-                    if ((this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PPUControlByte0 & 8) === 8) {
+                    if ((this._ppu.ChiChiNES$IPPU$PPUControlByte0 & 8) === 8) {
                         spritePatternTable = 4096;
                     }
                     var getPatternTableEntry1 = this.GetSprite(spritePatternTable, tileIndex, attrColor, flipX, flipY);
@@ -5449,8 +5522,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.PPUClasses.TileDoodler
-             * @memberof NES.CPU.PPUClasses.TileDoodler
+             * @this ChiChiNES.TileDoodler
+             * @memberof ChiChiNES.TileDoodler
              * @param   {number}            PatternTable
              * @return  {Array.<number>}
              */
@@ -5483,8 +5556,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.PPUClasses.TileDoodler
-             * @memberof NES.CPU.PPUClasses.TileDoodler
+             * @this ChiChiNES.TileDoodler
+             * @memberof ChiChiNES.TileDoodler
              * @param   {number}            NameTable
              * @return  {Array.<number>}
              */
@@ -5497,10 +5570,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     for (var j = 0; j < 30; j = (j + 1) | 0) {
 
                         var address = (((((8192 + NameTable) | 0) + i) | 0) + (Bridge.Int.mul(j, 32))) | 0;
-                        var TileIndex = this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$ChrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, address);
+                        var TileIndex = this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address);
 
                         var addToCol = this.GetAttributeTableEntry(NameTable, i, j);
-                        var tile = this.GetPatternTableEntry(this._ppu.NES$CPU$PixelWhizzlerClasses$IPPU$PatternTableIndex, TileIndex, addToCol, Bridge.ref(($t = this.currentNameTableEntries[i]), j));
+                        var tile = this.GetPatternTableEntry(this._ppu.ChiChiNES$IPPU$PatternTableIndex, TileIndex, addToCol, Bridge.ref(($t = this.currentNameTableEntries[i]), j));
                         this.DrawTile(result, 256, 240, tile, Bridge.Int.mul(i, 8), Bridge.Int.mul(j, 8));
                     }
                 }
@@ -5536,129 +5609,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.Machine.ControlPanel.RunningStatuses", {
-        $kind: "enum",
-        statics: {
-            fields: {
-                Unloaded: 0,
-                Off: 1,
-                Running: 2,
-                Frozen: 3,
-                Paused: 4
-            }
-        }
-    });
-
-    Bridge.define("NES.Sound.IWavStreamer", {
-        inherits: [System.IDisposable],
+    Bridge.define("ChiChiNES.INESCart", {
+        inherits: [ChiChiNES.IClockedMemoryMappedIOElement],
         $kind: "interface"
     });
 
-    Bridge.define("NES.Sound.SoundThreader", {
-        inherits: [System.IDisposable],
-        fields: {
-            _wavePlayer: null
-        },
-        props: {
-            WavePlayer: {
-                get: function () {
-                    return this._wavePlayer;
-                },
-                set: function (value) {
-                    this._wavePlayer = value;
-                }
-            }
-        },
-        alias: ["dispose", "System$IDisposable$dispose"],
-        ctors: {
-            ctor: function (streamer) {
-                this.$initialize();
-
-                this._wavePlayer = streamer;
-
-                //ThreadPool.QueueUserWorkItem(PlaySound, null);
-
-            }
-        },
-        methods: {
-            OnSoundStatusChanged: function (sender, e) {
-                this._wavePlayer.NES$Sound$IWavStreamer$Muted = e.Muted;
-            },
-            PlaySound: function (o) {
-                this._wavePlayer.NES$Sound$IWavStreamer$playPCM();
-            },
-            dispose: function () {
-                this._wavePlayer.System$IDisposable$dispose();
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Fastendo.Hacking.ComparedMemoryPatch", {
-        inherits: [NES.CPU.Fastendo.Hacking.IMemoryPatch],
-        fields: {
-            _CompareData: 0,
-            _ReplaceData: 0
-        },
-        props: {
-            Activated: false,
-            Address: 0
-        },
-        alias: [
-            "Activated", "NES$CPU$Fastendo$Hacking$IMemoryPatch$Activated",
-            "Address", "NES$CPU$Fastendo$Hacking$IMemoryPatch$Address",
-            "GetData", "NES$CPU$Fastendo$Hacking$IMemoryPatch$GetData"
-        ],
-        ctors: {
-            ctor: function (Address, CompareToData, ReplaceWithData) {
-                this.$initialize();
-                this._CompareData = CompareToData;
-                this._ReplaceData = ReplaceWithData;
-                this.Address = Address;
-            }
-        },
-        methods: {
-            GetData: function (data) {
-                return (data === this._CompareData) ? this._ReplaceData : data;
-            },
-            toString: function () {
-                return System.String.format("{0} = {1} if {2} Activated: {3}", this.Address, this._ReplaceData, this._CompareData, this.Activated);
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Fastendo.Hacking.MemoryPatch", {
-        inherits: [NES.CPU.Fastendo.Hacking.IMemoryPatch],
-        fields: {
-            _data: 0
-        },
-        props: {
-            Activated: false,
-            Address: 0
-        },
-        alias: [
-            "Activated", "NES$CPU$Fastendo$Hacking$IMemoryPatch$Activated",
-            "Address", "NES$CPU$Fastendo$Hacking$IMemoryPatch$Address",
-            "GetData", "NES$CPU$Fastendo$Hacking$IMemoryPatch$GetData"
-        ],
-        ctors: {
-            ctor: function (Address, Data) {
-                this.$initialize();
-                this._data = Data;
-                this.Address = Address;
-            }
-        },
-        methods: {
-            GetData: function (data) {
-                return this._data;
-            },
-            toString: function () {
-                return System.String.format("{0} = {1}  Activated: {2}", this.Address, this._data, this.Activated);
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.BeepsBoops.Bopper", {
-        inherits: [NES.CPU.Fastendo.IClockedMemoryMappedIOElement,NES.CPU.Machine.BeepsBoops.IAPU],
+    Bridge.define("ChiChiNES.BeepsBoops.Bopper", {
+        inherits: [ChiChiNES.IClockedMemoryMappedIOElement,ChiChiNES.BeepsBoops.IAPU],
         statics: {
             fields: {
                 master_vol: 0,
@@ -5780,25 +5737,25 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             }
         },
         alias: [
-            "GetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$GetByte",
-            "SetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte",
-            "Muted", "NES$CPU$Machine$BeepsBoops$IAPU$Muted",
-            "UpdateFrame", "NES$CPU$Machine$BeepsBoops$IAPU$UpdateFrame",
-            "EndFrame", "NES$CPU$Machine$BeepsBoops$IAPU$EndFrame",
-            "InterruptRaised", "NES$CPU$Machine$BeepsBoops$IAPU$InterruptRaised",
-            "EnableSquare0", "NES$CPU$Machine$BeepsBoops$IAPU$EnableSquare0",
-            "EnableSquare1", "NES$CPU$Machine$BeepsBoops$IAPU$EnableSquare1",
-            "EnableTriangle", "NES$CPU$Machine$BeepsBoops$IAPU$EnableTriangle",
-            "EnableNoise", "NES$CPU$Machine$BeepsBoops$IAPU$EnableNoise",
-            "NMIHandler", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NMIHandler",
-            "IRQAsserted", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$IRQAsserted",
-            "NextEventAt", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NextEventAt",
-            "HandleEvent", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$HandleEvent",
-            "ResetClock", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$ResetClock"
+            "GetByte", "ChiChiNES$IClockedMemoryMappedIOElement$GetByte",
+            "SetByte", "ChiChiNES$IClockedMemoryMappedIOElement$SetByte",
+            "Muted", "ChiChiNES$BeepsBoops$IAPU$Muted",
+            "UpdateFrame", "ChiChiNES$BeepsBoops$IAPU$UpdateFrame",
+            "EndFrame", "ChiChiNES$BeepsBoops$IAPU$EndFrame",
+            "InterruptRaised", "ChiChiNES$BeepsBoops$IAPU$InterruptRaised",
+            "EnableSquare0", "ChiChiNES$BeepsBoops$IAPU$EnableSquare0",
+            "EnableSquare1", "ChiChiNES$BeepsBoops$IAPU$EnableSquare1",
+            "EnableTriangle", "ChiChiNES$BeepsBoops$IAPU$EnableTriangle",
+            "EnableNoise", "ChiChiNES$BeepsBoops$IAPU$EnableNoise",
+            "NMIHandler", "ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler",
+            "IRQAsserted", "ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted",
+            "NextEventAt", "ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt",
+            "HandleEvent", "ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent",
+            "ResetClock", "ChiChiNES$IClockedMemoryMappedIOElement$ResetClock"
         ],
         ctors: {
             init: function () {
-                this.registers = new NES.CPU.Machine.PortQueueing.QueuedPort();
+                this.registers = new ChiChiNES.PortQueueing.QueuedPort();
                 this._sampleRate = 11025;
                 this.square0Gain = 873;
                 this.square1Gain = 873;
@@ -5819,8 +5776,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         methods: {
             RebuildSound: function () {
                 var $t;
-                this.myBlipper = new NES.CPU.Machine.BeepsBoops.Blip(this._sampleRate / 5);
-                this.myBlipper.blip_set_rates(NES.CPU.Machine.BeepsBoops.Bopper.clock_rate, this._sampleRate);
+                this.myBlipper = new ChiChiNES.BeepsBoops.Blip(this._sampleRate / 5);
+                this.myBlipper.blip_set_rates(ChiChiNES.BeepsBoops.Bopper.clock_rate, this._sampleRate);
 
 
                 this.registers.clear();
@@ -5830,11 +5787,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.triangleGain = 1004;
                 this.noiseGain = 567;
 
-                this.square0 = ($t = new NES.CPU.Machine.BeepsBoops.SquareChannel(this.myBlipper, 0), $t.Gain = this.square0Gain, $t.Period = 10, $t.SweepComplement = true, $t);
-                this.square1 = ($t = new NES.CPU.Machine.BeepsBoops.SquareChannel(this.myBlipper, 1), $t.Gain = this.square1Gain, $t.Period = 10, $t.SweepComplement = false, $t);
-                this.triangle = ($t = new NES.CPU.Machine.BeepsBoops.TriangleChannel(this.myBlipper, 2), $t.Gain = this.triangleGain, $t.Period = 0, $t);
-                this.noise = ($t = new NES.CPU.Machine.BeepsBoops.NoiseChannel(this.myBlipper, 3), $t.Gain = this.noiseGain, $t.Period = 0, $t);
-                this.dmc = ($t = new NES.CPU.Machine.BeepsBoops.DMCChannel(this.myBlipper, 4), $t.Gain = 873, $t.Period = 10, $t);
+                this.square0 = ($t = new ChiChiNES.BeepsBoops.SquareChannel(this.myBlipper, 0), $t.Gain = this.square0Gain, $t.Period = 10, $t.SweepComplement = true, $t);
+                this.square1 = ($t = new ChiChiNES.BeepsBoops.SquareChannel(this.myBlipper, 1), $t.Gain = this.square1Gain, $t.Period = 10, $t.SweepComplement = false, $t);
+                this.triangle = ($t = new ChiChiNES.BeepsBoops.TriangleChannel(this.myBlipper, 2), $t.Gain = this.triangleGain, $t.Period = 0, $t);
+                this.noise = ($t = new ChiChiNES.BeepsBoops.NoiseChannel(this.myBlipper, 3), $t.Gain = this.noiseGain, $t.Period = 0, $t);
+                this.dmc = ($t = new ChiChiNES.BeepsBoops.DMCChannel(this.myBlipper, 4), $t.Gain = 873, $t.Period = 10, $t);
             },
             GetByte: function (Clock, address) {
                 if (address === 16384) {
@@ -5854,7 +5811,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._interruptRaised = false;
                 }
                 //DoSetByte( Clock,  address,  data);
-                this.registers.enqueue(new NES.CPU.Machine.PortQueueing.PortWriteEntry(Clock, address, data));
+                // registers.Enqueue(new PortWriteEntry(Clock, (ushort)address, (byte)data));
 
 
             },
@@ -5988,8 +5945,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Machine.BeepsBoops.WavSharer", {
-        inherits: [NES.CPU.Machine.BeepsBoops.IWavReader],
+    Bridge.define("ChiChiNES.BeepsBoops.WavSharer", {
+        inherits: [ChiChiNES.BeepsBoops.IWavReader],
         statics: {
             fields: {
                 sample_size: 0
@@ -6057,14 +6014,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             }
         },
         alias: [
-            "Frequency", "NES$CPU$Machine$BeepsBoops$IWavReader$Frequency",
-            "SharedBuffer", "NES$CPU$Machine$BeepsBoops$IWavReader$SharedBuffer",
-            "SharedBufferLength", "NES$CPU$Machine$BeepsBoops$IWavReader$SharedBufferLength",
-            "BufferAvailable", "NES$CPU$Machine$BeepsBoops$IWavReader$BufferAvailable",
-            "StartReadWaves", "NES$CPU$Machine$BeepsBoops$IWavReader$StartReadWaves",
-            "ReadWaves", "NES$CPU$Machine$BeepsBoops$IWavReader$ReadWaves",
-            "BytesWritten", "NES$CPU$Machine$BeepsBoops$IWavReader$BytesWritten",
-            "SetSharedBuffer", "NES$CPU$Machine$BeepsBoops$IWavReader$SetSharedBuffer"
+            "Frequency", "ChiChiNES$BeepsBoops$IWavReader$Frequency",
+            "SharedBuffer", "ChiChiNES$BeepsBoops$IWavReader$SharedBuffer",
+            "SharedBufferLength", "ChiChiNES$BeepsBoops$IWavReader$SharedBufferLength",
+            "BufferAvailable", "ChiChiNES$BeepsBoops$IWavReader$BufferAvailable",
+            "StartReadWaves", "ChiChiNES$BeepsBoops$IWavReader$StartReadWaves",
+            "ReadWaves", "ChiChiNES$BeepsBoops$IWavReader$ReadWaves",
+            "BytesWritten", "ChiChiNES$BeepsBoops$IWavReader$BytesWritten",
+            "SetSharedBuffer", "ChiChiNES$BeepsBoops$IWavReader$SetSharedBuffer"
         ],
         ctors: {
             init: function () {
@@ -6072,7 +6029,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.frequency = 22050;
             },
             $ctor1: function (frequency) {
-                NES.CPU.Machine.BeepsBoops.WavSharer.ctor.call(this);
+                ChiChiNES.BeepsBoops.WavSharer.ctor.call(this);
                 this.frequency = frequency;
             },
             ctor: function () {
@@ -6085,7 +6042,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         },
         methods: {
             WavesWritten: function (remain) {
-                var n = (Bridge.Int.div(this._sharedBuffer.length, NES.CPU.Machine.BeepsBoops.WavSharer.sample_size)) | 0;
+                var n = (Bridge.Int.div(this._sharedBuffer.length, ChiChiNES.BeepsBoops.WavSharer.sample_size)) | 0;
                 if (n > remain) {
                     n = remain;
                 }
@@ -6127,59 +6084,72 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Machine.Carts.INESCart", {
-        inherits: [NES.CPU.Fastendo.IClockedMemoryMappedIOElement],
-        $kind: "interface"
-    });
-
-    /** @namespace NES.CPU.Machine */
-
-    /**
-     * plugs up a nes control port, when nothing else is using it
-     *
-     * @public
-     * @class NES.CPU.Machine.NullControlPad
-     * @implements  NES.CPU.Machine.IControlPad
-     */
-    Bridge.define("NES.CPU.Machine.NullControlPad", {
-        inherits: [NES.CPU.Machine.IControlPad],
+    Bridge.define("ChiChiNES.Hacking.ComparedMemoryPatch", {
+        inherits: [ChiChiNES.Hacking.IMemoryPatch],
+        fields: {
+            _CompareData: 0,
+            _ReplaceData: 0
+        },
         props: {
-            CurrentByte: {
-                get: function () {
-                    return 0;
-                },
-                set: function (value) { }
-            }
+            Activated: false,
+            Address: 0
         },
         alias: [
-            "CurrentByte", "NES$CPU$Machine$IControlPad$CurrentByte",
-            "refresh", "NES$CPU$Machine$IControlPad$refresh",
-            "getByte", "NES$CPU$Machine$IControlPad$getByte",
-            "setByte", "NES$CPU$Machine$IControlPad$setByte",
-            "dispose", "System$IDisposable$dispose"
+            "Activated", "ChiChiNES$Hacking$IMemoryPatch$Activated",
+            "Address", "ChiChiNES$Hacking$IMemoryPatch$Address",
+            "GetData", "ChiChiNES$Hacking$IMemoryPatch$GetData"
         ],
-        methods: {
-            refresh: function () { },
-            getByte: function (clock) {
-                return 0;
-            },
-            setByte: function (clock, data) { },
-            dispose: function () { }
-        }
-    });
-
-    Bridge.define("NES.CPU.Machine.PortQueueing.QueuedPort", {
-        inherits: [System.Collections.Generic.Queue$1(NES.CPU.Machine.PortQueueing.PortWriteEntry)],
         ctors: {
-            ctor: function () {
+            ctor: function (Address, CompareToData, ReplaceWithData) {
                 this.$initialize();
-                System.Collections.Generic.Queue$1(NES.CPU.Machine.PortQueueing.PortWriteEntry).$ctor2.call(this, 256);
+                this._CompareData = CompareToData;
+                this._ReplaceData = ReplaceWithData;
+                this.Address = Address;
+            }
+        },
+        methods: {
+            GetData: function (data) {
+                return (data === this._CompareData) ? this._ReplaceData : data;
+            },
+            toString: function () {
+                return System.String.format("{0} = {1} if {2} Activated: {3}", this.Address, this._ReplaceData, this._CompareData, this.Activated);
             }
         }
     });
 
-    Bridge.define("NES.CPU.nitenedo.InputHandler", {
-        inherits: [NES.CPU.Fastendo.IClockedMemoryMappedIOElement],
+    Bridge.define("ChiChiNES.Hacking.MemoryPatch", {
+        inherits: [ChiChiNES.Hacking.IMemoryPatch],
+        fields: {
+            _data: 0
+        },
+        props: {
+            Activated: false,
+            Address: 0
+        },
+        alias: [
+            "Activated", "ChiChiNES$Hacking$IMemoryPatch$Activated",
+            "Address", "ChiChiNES$Hacking$IMemoryPatch$Address",
+            "GetData", "ChiChiNES$Hacking$IMemoryPatch$GetData"
+        ],
+        ctors: {
+            ctor: function (Address, Data) {
+                this.$initialize();
+                this._data = Data;
+                this.Address = Address;
+            }
+        },
+        methods: {
+            GetData: function (data) {
+                return this._data;
+            },
+            toString: function () {
+                return System.String.format("{0} = {1}  Activated: {2}", this.Address, this._data, this.Activated);
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.InputHandler", {
+        inherits: [ChiChiNES.IClockedMemoryMappedIOElement],
         fields: {
             currentByte: 0,
             nextByte: 0,
@@ -6236,13 +6206,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             }
         },
         alias: [
-            "GetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$GetByte",
-            "SetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte",
-            "NMIHandler", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NMIHandler",
-            "IRQAsserted", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$IRQAsserted",
-            "NextEventAt", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NextEventAt",
-            "HandleEvent", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$HandleEvent",
-            "ResetClock", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$ResetClock"
+            "GetByte", "ChiChiNES$IClockedMemoryMappedIOElement$GetByte",
+            "SetByte", "ChiChiNES$IClockedMemoryMappedIOElement$SetByte",
+            "NMIHandler", "ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler",
+            "IRQAsserted", "ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted",
+            "NextEventAt", "ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt",
+            "HandleEvent", "ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent",
+            "ResetClock", "ChiChiNES$IClockedMemoryMappedIOElement$ResetClock"
         ],
         ctors: {
             init: function () {
@@ -6263,12 +6233,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.SetNextControlByte(e.NextValue);
             },
             GetByte: function (clock, address) {
-                return this.controlPad.NES$CPU$Machine$IControlPad$getByte(clock);
+                return this.controlPad.ChiChiNES$IControlPad$getByte(clock);
 
 
             },
             SetByte: function (clock, address, data) {
-                this.controlPad.NES$CPU$Machine$IControlPad$setByte(clock, data);
+                this.controlPad.ChiChiNES$IControlPad$setByte(clock, data);
             },
             SetNextControlByte: function (data) {
 
@@ -6284,8 +6254,44 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.PPUClasses.PixelWhizzler", {
-        inherits: [NES.CPU.PixelWhizzlerClasses.IPPU,NES.CPU.Fastendo.IClockedMemoryMappedIOElement],
+    /** @namespace ChiChiNES */
+
+    /**
+     * plugs up a nes control port, when nothing else is using it
+     *
+     * @public
+     * @class ChiChiNES.NullControlPad
+     * @implements  ChiChiNES.IControlPad
+     */
+    Bridge.define("ChiChiNES.NullControlPad", {
+        inherits: [ChiChiNES.IControlPad],
+        props: {
+            CurrentByte: {
+                get: function () {
+                    return 0;
+                },
+                set: function (value) { }
+            }
+        },
+        alias: [
+            "CurrentByte", "ChiChiNES$IControlPad$CurrentByte",
+            "refresh", "ChiChiNES$IControlPad$refresh",
+            "getByte", "ChiChiNES$IControlPad$getByte",
+            "setByte", "ChiChiNES$IControlPad$setByte",
+            "dispose", "System$IDisposable$dispose"
+        ],
+        methods: {
+            refresh: function () { },
+            getByte: function (clock) {
+                return 0;
+            },
+            setByte: function (clock, data) { },
+            dispose: function () { }
+        }
+    });
+
+    Bridge.define("ChiChiNES.PixelWhizzler", {
+        inherits: [ChiChiNES.IPPU,ChiChiNES.IClockedMemoryMappedIOElement],
         statics: {
             fields: {
                 ScanlinePreRenderDummyScanline: 0,
@@ -6304,7 +6310,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             props: {
                 PowersOfTwo: {
                     get: function () {
-                        return NES.CPU.PPUClasses.PixelWhizzler._powersOfTwo;
+                        return ChiChiNES.PixelWhizzler._powersOfTwo;
                     }
                 }
             },
@@ -6325,7 +6331,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 ctor: function () {
                     for (var i = 0; i < 32; i = (i + 1) | 0) {
-                        NES.CPU.PPUClasses.PixelWhizzler._powersOfTwo[i] = Bridge.Int.clip32(Math.pow(2.0, i));
+                        ChiChiNES.PixelWhizzler._powersOfTwo[i] = Bridge.Int.clip32(Math.pow(2.0, i));
                     }
                 }
             },
@@ -6334,11 +6340,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 GetPalRGBA: function () {
                     //Open App.Path & "\" + file For Binary As #FileNum
                     for (var n = 0; n < 64; n = (n + 1) | 0) {
-                        NES.CPU.PPUClasses.PixelWhizzler.pal[((n + 64) | 0)] = NES.CPU.PPUClasses.PixelWhizzler.pal[n];
-                        NES.CPU.PPUClasses.PixelWhizzler.pal[((n + 128) | 0)] = NES.CPU.PPUClasses.PixelWhizzler.pal[n];
-                        NES.CPU.PPUClasses.PixelWhizzler.pal[((n + 192) | 0)] = NES.CPU.PPUClasses.PixelWhizzler.pal[n];
+                        ChiChiNES.PixelWhizzler.pal[((n + 64) | 0)] = ChiChiNES.PixelWhizzler.pal[n];
+                        ChiChiNES.PixelWhizzler.pal[((n + 128) | 0)] = ChiChiNES.PixelWhizzler.pal[n];
+                        ChiChiNES.PixelWhizzler.pal[((n + 192) | 0)] = ChiChiNES.PixelWhizzler.pal[n];
                     }
-                    return NES.CPU.PPUClasses.PixelWhizzler.pal;
+                    return ChiChiNES.PixelWhizzler.pal;
                 }
             }
         },
@@ -6366,7 +6372,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @private
-             * @memberof NES.CPU.PPUClasses.PixelWhizzler
+             * @memberof ChiChiNES.PixelWhizzler
              * @type Array.<number>
              */
             p32: null,
@@ -6383,8 +6389,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             byteOutBuffer: null,
             outBuffer: null,
             vbufLocation: 0,
-            pixelWidth: 0,
-            fillRGB: false,
             drawInfo: null,
             pixelDevices: null,
             _clipTiles: false,
@@ -6392,6 +6396,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             nameTableBits: 0,
             vidRamIsRam: false,
             _palette: null,
+            _openBus: 0,
             currentPalette: 0,
             nmiHandler: null,
             frameFinished: null,
@@ -6574,22 +6579,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     return this.rgb32OutBuffer;
                 }
             },
-            PixelWidth: {
-                get: function () {
-                    return this.pixelWidth;
-                },
-                set: function (value) {
-                    this.pixelWidth = value;
-                }
-            },
-            FillRGB: {
-                get: function () {
-                    return this.fillRGB;
-                },
-                set: function (value) {
-                    this.fillRGB = value;
-                }
-            },
             PixelAwareDevice: {
                 get: function () {
                     return this.pixelDevices;
@@ -6632,7 +6621,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @memberof NES.CPU.PPUClasses.PixelWhizzler
+             * @memberof ChiChiNES.PixelWhizzler
              * @function IRQAsserted
              * @type boolean
              */
@@ -6722,50 +6711,50 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             }
         },
         alias: [
-            "ScanlinePos", "NES$CPU$PixelWhizzlerClasses$IPPU$ScanlinePos",
-            "ScanlineNum", "NES$CPU$PixelWhizzlerClasses$IPPU$ScanlineNum",
-            "Initialize", "NES$CPU$PixelWhizzlerClasses$IPPU$Initialize",
-            "WriteState", "NES$CPU$PixelWhizzlerClasses$IPPU$WriteState",
-            "ReadState", "NES$CPU$PixelWhizzlerClasses$IPPU$ReadState",
-            "VidRAM_GetNTByte", "NES$CPU$PixelWhizzlerClasses$IPPU$VidRAM_GetNTByte",
-            "PPUControlByte0", "NES$CPU$PixelWhizzlerClasses$IPPU$PPUControlByte0",
-            "PPUControlByte1", "NES$CPU$PixelWhizzlerClasses$IPPU$PPUControlByte1",
-            "SpritesAreVisible", "NES$CPU$PixelWhizzlerClasses$IPPU$SpritesAreVisible",
-            "SetupBufferForDisplay", "NES$CPU$PixelWhizzlerClasses$IPPU$SetupBufferForDisplay",
-            "PatternTableIndex", "NES$CPU$PixelWhizzlerClasses$IPPU$PatternTableIndex",
-            "NameTableMemoryStart", "NES$CPU$PixelWhizzlerClasses$IPPU$NameTableMemoryStart",
-            "CurrentFrame", "NES$CPU$PixelWhizzlerClasses$IPPU$CurrentFrame",
-            "RenderScanline", "NES$CPU$PixelWhizzlerClasses$IPPU$RenderScanline",
-            "LastcpuClock", "NES$CPU$PixelWhizzlerClasses$IPPU$LastcpuClock",
-            "DrawTo", "NES$CPU$PixelWhizzlerClasses$IPPU$DrawTo",
-            "VideoBuffer", "NES$CPU$PixelWhizzlerClasses$IPPU$VideoBuffer",
-            "SetVideoBuffer", "NES$CPU$PixelWhizzlerClasses$IPPU$SetVideoBuffer",
-            "UpdatePixelInfo", "NES$CPU$PixelWhizzlerClasses$IPPU$UpdatePixelInfo",
-            "PixelAwareDevice", "NES$CPU$PixelWhizzlerClasses$IPPU$PixelAwareDevice",
-            "ByteOutBuffer", "NES$CPU$PixelWhizzlerClasses$IPPU$ByteOutBuffer",
-            "Palette", "NES$CPU$PixelWhizzlerClasses$IPPU$Palette",
-            "SetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte",
-            "SetByte", "NES$CPU$PixelWhizzlerClasses$IPPU$SetByte",
-            "GetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$GetByte",
-            "GetByte", "NES$CPU$PixelWhizzlerClasses$IPPU$GetByte",
-            "NMIHandler", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NMIHandler",
-            "NMIHandler", "NES$CPU$PixelWhizzlerClasses$IPPU$NMIHandler",
-            "IRQAsserted", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$IRQAsserted",
-            "NextEventAt", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NextEventAt",
-            "NextEventAt", "NES$CPU$PixelWhizzlerClasses$IPPU$NextEventAt",
-            "HandleEvent", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$HandleEvent",
-            "HandleEvent", "NES$CPU$PixelWhizzlerClasses$IPPU$HandleEvent",
-            "ResetClock", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$ResetClock",
-            "ResetClock", "NES$CPU$PixelWhizzlerClasses$IPPU$ResetClock",
-            "FrameFinishHandler", "NES$CPU$PixelWhizzlerClasses$IPPU$FrameFinishHandler",
-            "SetupVINT", "NES$CPU$PixelWhizzlerClasses$IPPU$SetupVINT",
-            "HScroll", "NES$CPU$PixelWhizzlerClasses$IPPU$HScroll",
-            "VScroll", "NES$CPU$PixelWhizzlerClasses$IPPU$VScroll",
-            "SpriteRam", "NES$CPU$PixelWhizzlerClasses$IPPU$SpriteRam",
-            "CopySprites", "NES$CPU$PixelWhizzlerClasses$IPPU$CopySprites",
-            "SpritesOnLine", "NES$CPU$PixelWhizzlerClasses$IPPU$SpritesOnLine",
-            "PreloadSprites", "NES$CPU$PixelWhizzlerClasses$IPPU$PreloadSprites",
-            "ChrRomHandler", "NES$CPU$PixelWhizzlerClasses$IPPU$ChrRomHandler"
+            "ScanlinePos", "ChiChiNES$IPPU$ScanlinePos",
+            "ScanlineNum", "ChiChiNES$IPPU$ScanlineNum",
+            "Initialize", "ChiChiNES$IPPU$Initialize",
+            "WriteState", "ChiChiNES$IPPU$WriteState",
+            "ReadState", "ChiChiNES$IPPU$ReadState",
+            "VidRAM_GetNTByte", "ChiChiNES$IPPU$VidRAM_GetNTByte",
+            "PPUControlByte0", "ChiChiNES$IPPU$PPUControlByte0",
+            "PPUControlByte1", "ChiChiNES$IPPU$PPUControlByte1",
+            "SpritesAreVisible", "ChiChiNES$IPPU$SpritesAreVisible",
+            "SetupBufferForDisplay", "ChiChiNES$IPPU$SetupBufferForDisplay",
+            "PatternTableIndex", "ChiChiNES$IPPU$PatternTableIndex",
+            "NameTableMemoryStart", "ChiChiNES$IPPU$NameTableMemoryStart",
+            "CurrentFrame", "ChiChiNES$IPPU$CurrentFrame",
+            "RenderScanline", "ChiChiNES$IPPU$RenderScanline",
+            "LastcpuClock", "ChiChiNES$IPPU$LastcpuClock",
+            "DrawTo", "ChiChiNES$IPPU$DrawTo",
+            "VideoBuffer", "ChiChiNES$IPPU$VideoBuffer",
+            "SetVideoBuffer", "ChiChiNES$IPPU$SetVideoBuffer",
+            "UpdatePixelInfo", "ChiChiNES$IPPU$UpdatePixelInfo",
+            "PixelAwareDevice", "ChiChiNES$IPPU$PixelAwareDevice",
+            "ByteOutBuffer", "ChiChiNES$IPPU$ByteOutBuffer",
+            "Palette", "ChiChiNES$IPPU$Palette",
+            "SetByte", "ChiChiNES$IClockedMemoryMappedIOElement$SetByte",
+            "SetByte", "ChiChiNES$IPPU$SetByte",
+            "GetByte", "ChiChiNES$IClockedMemoryMappedIOElement$GetByte",
+            "GetByte", "ChiChiNES$IPPU$GetByte",
+            "NMIHandler", "ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler",
+            "NMIHandler", "ChiChiNES$IPPU$NMIHandler",
+            "IRQAsserted", "ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted",
+            "NextEventAt", "ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt",
+            "NextEventAt", "ChiChiNES$IPPU$NextEventAt",
+            "HandleEvent", "ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent",
+            "HandleEvent", "ChiChiNES$IPPU$HandleEvent",
+            "ResetClock", "ChiChiNES$IClockedMemoryMappedIOElement$ResetClock",
+            "ResetClock", "ChiChiNES$IPPU$ResetClock",
+            "FrameFinishHandler", "ChiChiNES$IPPU$FrameFinishHandler",
+            "SetupVINT", "ChiChiNES$IPPU$SetupVINT",
+            "HScroll", "ChiChiNES$IPPU$HScroll",
+            "VScroll", "ChiChiNES$IPPU$VScroll",
+            "SpriteRam", "ChiChiNES$IPPU$SpriteRam",
+            "CopySprites", "ChiChiNES$IPPU$CopySprites",
+            "SpritesOnLine", "ChiChiNES$IPPU$SpritesOnLine",
+            "PreloadSprites", "ChiChiNES$IPPU$PreloadSprites",
+            "ChrRomHandler", "ChiChiNES$IPPU$ChrRomHandler"
         ],
         ctors: {
             init: function () {
@@ -6787,12 +6776,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.rgb32OutBuffer = System.Array.init(65536, 0, System.Int32);
                 this.byteOutBuffer = System.Array.init(262144, 0, System.Byte);
                 this.outBuffer = System.Array.init(65536, 0, System.Int32);
-                this.pixelWidth = 32;
-                this.fillRGB = false;
                 this.drawInfo = System.Array.init(65536, 0, System.Int32);
                 this.nameTableBits = 0;
                 this.vidRamIsRam = true;
                 this._palette = System.Array.init(32, 0, System.Byte);
+                this._openBus = 0;
                 this.currentPalette = 0;
                 this.NMIHasBeenThrownThisFrame = false;
                 this._hScroll = 0;
@@ -6810,7 +6798,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.xNTXor = 0;
                 this.yNTXor = 0;
                 this.fetchTile = true;
-                this.events = new (System.Collections.Generic.Queue$1(NES.CPU.PPUClasses.PPUWriteEvent)).ctor();
+                this.events = new (System.Collections.Generic.Queue$1(ChiChiNES.PPUWriteEvent)).ctor();
             },
             ctor: function () {
                 this.$initialize();
@@ -6818,7 +6806,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 this.vBuffer = System.Array.init(61440, 0, System.Byte);
 
-                NES.CPU.PPUClasses.PixelWhizzler.GetPalRGBA();
+                ChiChiNES.PixelWhizzler.GetPalRGBA();
 
                 //for (int i = 0; i < 256; ++i)
                 //    palCache[i] = new byte[32];
@@ -6865,7 +6853,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 for (var i = 0; i < 16384; i = (i + 4) | 0) {
 
-                    writer.enqueue(this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, i) << 24 | (this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((i + 1) | 0)) << 16) | (this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((i + 2) | 0)) << 8) | (this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((i + 3) | 0)) << 0));
+                    writer.enqueue(this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, i) << 24 | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((i + 1) | 0)) << 16) | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((i + 2) | 0)) << 8) | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((i + 3) | 0)) << 0));
                 }
                 writer.enqueue(this._spriteAddress);
 
@@ -6874,9 +6862,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     writer.enqueue((this.spriteRAM[i1] << 24) | (this.spriteRAM[((i1 + 1) | 0)] << 16) | (this.spriteRAM[((i1 + 2) | 0)] << 8) | (this.spriteRAM[((i1 + 3) | 0)]));
                 }
 
-                for (var i2 = 0; i2 < NES.CPU.PPUClasses.PixelWhizzler.pal.length; i2 = (i2 + 4) | 0) {
+                for (var i2 = 0; i2 < ChiChiNES.PixelWhizzler.pal.length; i2 = (i2 + 4) | 0) {
 
-                    writer.enqueue((NES.CPU.PPUClasses.PixelWhizzler.pal[i2] << 24) | (NES.CPU.PPUClasses.PixelWhizzler.pal[((i2 + 1) | 0)] << 16) | (NES.CPU.PPUClasses.PixelWhizzler.pal[((i2 + 2) | 0)] << 8) | (NES.CPU.PPUClasses.PixelWhizzler.pal[((i2 + 3) | 0)]));
+                    writer.enqueue((ChiChiNES.PixelWhizzler.pal[i2] << 24) | (ChiChiNES.PixelWhizzler.pal[((i2 + 1) | 0)] << 16) | (ChiChiNES.PixelWhizzler.pal[((i2 + 2) | 0)] << 8) | (ChiChiNES.PixelWhizzler.pal[((i2 + 3) | 0)]));
                 }
 
                 for (var i3 = 0; i3 < this._palette.length; i3 = (i3 + 4) | 0) {
@@ -6915,10 +6903,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var packedByte = 0;
                 for (var i = 0; i < 16384; i = (i + 4) | 0) {
                     packedByte = state.dequeue();
-                    this.chrRomHandler.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte(0, i, ((packedByte >> 24) & 255));
-                    this.chrRomHandler.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte(0, ((i + 1) | 0), ((packedByte >> 16) & 255));
-                    this.chrRomHandler.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte(0, ((i + 2) | 0), ((packedByte >> 8) & 255));
-                    this.chrRomHandler.NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte(0, ((i + 3) | 0), (packedByte & 255));
+                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, i, ((packedByte >> 24) & 255));
+                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, ((i + 1) | 0), ((packedByte >> 16) & 255));
+                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, ((i + 2) | 0), ((packedByte >> 8) & 255));
+                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, ((i + 3) | 0), (packedByte & 255));
                 }
 
                 this._spriteAddress = state.dequeue();
@@ -6931,12 +6919,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this.spriteRAM[((i1 + 3) | 0)] = packedByte & 255;
                 }
 
-                for (var i2 = 0; i2 < NES.CPU.PPUClasses.PixelWhizzler.pal.length; i2 = (i2 + 4) | 0) {
+                for (var i2 = 0; i2 < ChiChiNES.PixelWhizzler.pal.length; i2 = (i2 + 4) | 0) {
                     packedByte = state.dequeue();
-                    NES.CPU.PPUClasses.PixelWhizzler.pal[i2] = (packedByte >> 24) & 255;
-                    NES.CPU.PPUClasses.PixelWhizzler.pal[((i2 + 1) | 0)] = (packedByte >> 16) & 255;
-                    NES.CPU.PPUClasses.PixelWhizzler.pal[((i2 + 2) | 0)] = (packedByte >> 8) & 255;
-                    NES.CPU.PPUClasses.PixelWhizzler.pal[((i2 + 3) | 0)] = packedByte & 255;
+                    ChiChiNES.PixelWhizzler.pal[i2] = (packedByte >> 24) & 255;
+                    ChiChiNES.PixelWhizzler.pal[((i2 + 1) | 0)] = (packedByte >> 16) & 255;
+                    ChiChiNES.PixelWhizzler.pal[((i2 + 2) | 0)] = (packedByte >> 8) & 255;
+                    ChiChiNES.PixelWhizzler.pal[((i2 + 3) | 0)] = packedByte & 255;
                 }
 
                 for (var i3 = 0; i3 < this._palette.length; i3 = (i3 + 4) | 0) {
@@ -6955,10 +6943,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var result = 0;
                 if (address >= 8192 && address < 12288) {
 
-                    result = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, address);
+                    result = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address);
 
                 } else {
-                    result = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, address);
+                    result = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address);
                 }
                 return result;
             },
@@ -6974,14 +6962,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.PPUClasses.PixelWhizzler
-             * @memberof NES.CPU.PPUClasses.PixelWhizzler
+             * @this ChiChiNES.PixelWhizzler
+             * @memberof ChiChiNES.PixelWhizzler
              * @param   {System.Int32}    buffer
              * @return  {void}
              */
             SetupBufferForDisplay: function (buffer) {
                 for (var i = 0; i < 30; i = (i + 1) | 0) {
-                    this.p32[i] = NES.CPU.PPUClasses.PixelWhizzler.pal[i]; // pal[_vidRAM[i + 0x3F00]];
+                    this.p32[i] = ChiChiNES.PixelWhizzler.pal[i]; // pal[_vidRAM[i + 0x3F00]];
                 }
 
                 for (var i1 = 0; i1 < buffer.v.length; i1 = (i1 + 4) | 0) {
@@ -6999,8 +6987,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.PPUClasses.PixelWhizzler
-             * @memberof NES.CPU.PPUClasses.PixelWhizzler
+             * @this ChiChiNES.PixelWhizzler
+             * @memberof ChiChiNES.PixelWhizzler
              * @param   {number}    cpuClockNum
              * @return  {void}
              */
@@ -7013,6 +7001,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.frameClock += frClock;
                         frClock = 0;
                     } else {
+                        //find number of pixels to draw since frame start
                         frClock += this.frameClock - 6820;
                         this.frameClock = 6820;
                     }
@@ -7027,7 +7016,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             this.frameOn = true;
                             //
                             this.ClearNESPalette();
-                            this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$ResetBankStartCache();
+                            this.chrRomHandler.ChiChiNES$INESCart$ResetBankStartCache();
                             // setFrameOn();
                             if (this.spriteChanges) {
                                 this.UnpackSprites();
@@ -7045,7 +7034,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             this.currentXPosition = 0;
                             this.currentYPosition = 0;
                             break;
-                        case NES.CPU.PPUClasses.PixelWhizzler.frameClockEnd: 
+                        case ChiChiNES.PixelWhizzler.frameClockEnd: 
                             //if (fillRGB) FillBuffer();
                             this.shouldRender = true;
                             this.frameFinished();
@@ -7075,18 +7064,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                                 var xTilePosition = this.xPosition >> 3;
 
-                                var tileRow = (this.yPosition >> 3) % 30 << 5;
+                                //int tileRow = (yPosition >> 3) % 30 << 5;
 
-                                var tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+                                //int tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
 
-                                var TileIndex = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, tileNametablePosition);
+                                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + xTilePosition + ((this.yPosition >> 3) % 30 << 5));
 
                                 var patternTableYOffset = this.yPosition & 7;
 
                                 var patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
 
-                                this.patternEntry = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, patternID);
-                                this.patternEntryByte2 = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, patternID + 8);
+                                this.patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID);
+                                this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID + 8);
 
                                 this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
                                 /* end fetch next tile */
@@ -7103,7 +7092,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                                 this._PPUStatus = this._PPUStatus | 64;
                             }
 
-                            var x = NES.CPU.PPUClasses.PixelWhizzler.pal[this._palette[(foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel]];
+                            //var x = _palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
+                            var x = ChiChiNES.PixelWhizzler.pal[this._palette[(foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel]];
                             //rgb32OutBuffer[vbufLocation] = x;
                             this.byteOutBuffer[this.vbufLocation * 4] = x;
                             this.byteOutBuffer[(this.vbufLocation * 4) + 1] = x >> 8;
@@ -7113,7 +7103,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             this.vbufLocation++;
                         }
                         if (this.currentXPosition === 256) {
-                            this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$UpdateScanlineCounter();
+                            this.chrRomHandler.ChiChiNES$INESCart$UpdateScanlineCounter();
                         }
                         this.currentXPosition++;
 
@@ -7172,22 +7162,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetVideoBuffer: function (inBuffer) {
                 this.rgb32OutBuffer = inBuffer;
             },
-            /**
-             * Checks if NMI needs to be reasserted during vblank
-             *
-             * @instance
-             * @public
-             * @this NES.CPU.PPUClasses.PixelWhizzler
-             * @memberof NES.CPU.PPUClasses.PixelWhizzler
-             * @return  {void}
-             */
-            CheckVBlank: function () {
-                if (!this.NMIHasBeenThrownThisFrame && !this.frameOn && this.NMIIsThrown && this.NMIOccurred) {
-                    this.nmiHandler();
-                    this.HandleVBlankIRQ = true;
-                    this.NMIHasBeenThrownThisFrame = true;
-                }
-            },
             DrawPixel: function () {
 
             },
@@ -7203,9 +7177,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetByte: function (Clock, address, data) {
                 var $t;
                 // DrawTo(Clock);
-
                 if (this._isDebugging) {
-                    this.Events.enqueue(($t = new NES.CPU.PPUClasses.PPUWriteEvent(), $t.IsWrite = true, $t.DataWritten = data, $t.FrameClock = this.frameClock, $t.RegisterAffected = address, $t.ScanlineNum = ((Bridge.Int.div(this.frameClock, 341)) | 0), $t.ScanlinePos = this.frameClock % 341, $t));
+                    this.Events.enqueue(($t = new ChiChiNES.PPUWriteEvent(), $t.IsWrite = true, $t.DataWritten = data, $t.FrameClock = this.frameClock, $t.RegisterAffected = address, $t.ScanlineNum = ((Bridge.Int.div(this.frameClock, 341)) | 0), $t.ScanlinePos = this.frameClock % 341, $t));
                 }
                 this.needToDraw = true;
                 //Writable 2C02 registers
@@ -7223,6 +7196,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 0: 
                         this.DrawTo(Clock);
                         this._PPUControlByte0 = data;
+                        this._openBus = data;
                         this.nameTableBits = this._PPUControlByte0 & 3;
                         this._backgroundPatternTableIndex = Bridge.Int.mul(((this._PPUControlByte0 & 16) >> 4), 4096);
                         // if we toggle /vbl we can throw multiple NMIs in a vblank period
@@ -7230,7 +7204,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         //{
                         //     NMIHasBeenThrownThisFrame = false;
                         //}
-                        this.UpdatePixelInfo();
+                        //UpdatePixelInfo();
+                        this.nameTableMemoryStart = Bridge.Int.mul(this.nameTableBits, 1024);
                         break;
                     case 1: 
                         //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
@@ -7248,16 +7223,19 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this._tilesAreVisible = (this._PPUControlByte1 & 8) === 8;
                         this._clipTiles = (this._PPUControlByte1 & 2) !== 2;
                         this._clipSprites = (this._PPUControlByte1 & 4) !== 4;
-                        this.UpdatePixelInfo();
+                        //UpdatePixelInfo();
+                        this.nameTableMemoryStart = Bridge.Int.mul(this.nameTableBits, 1024);
                         break;
                     case 2: 
                         this.ppuReadBuffer = data;
+                        this._openBus = data;
                         break;
                     case 3: 
                         //3	    -	internal object attribute memory index pointer 
                         //          (64 attributes, 32 bits each, byte granular access). 
                         //          stored value post-increments on access to port 4.
                         this._spriteAddress = data & 255;
+                        this._openBus = this._spriteAddress;
                         break;
                     case 4: 
                         this.spriteRAM[this._spriteAddress] = data & 255;
@@ -7359,10 +7337,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         } else {
                             // if its a nametable byte, mask it according to current mirroring
                             if ((this._PPUAddress & 61440) === 8192) {
-                                this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$SetPPUByte(Clock, this._PPUAddress, (data & 255));
+                                this.chrRomHandler.ChiChiNES$INESCart$SetPPUByte(Clock, this._PPUAddress, (data & 255));
                             } else {
                                 if (this.vidRamIsRam) {
-                                    this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$SetPPUByte(Clock, this._PPUAddress, (data & 255));
+                                    this.chrRomHandler.ChiChiNES$INESCart$SetPPUByte(Clock, this._PPUAddress, (data & 255));
                                 }
                             }
                         }
@@ -7381,15 +7359,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             GetByte: function (Clock, address) {
                 var $t;
                 if (this._isDebugging) {
-                    this.Events.enqueue(($t = new NES.CPU.PPUClasses.PPUWriteEvent(), $t.IsWrite = false, $t.DataWritten = 0, $t.FrameClock = this.frameClock, $t.RegisterAffected = address, $t.ScanlineNum = ((Bridge.Int.div(this.frameClock, 341)) | 0), $t.ScanlinePos = this.frameClock % 341, $t));
+                    this.Events.enqueue(($t = new ChiChiNES.PPUWriteEvent(), $t.IsWrite = false, $t.DataWritten = 0, $t.FrameClock = this.frameClock, $t.RegisterAffected = address, $t.ScanlineNum = ((Bridge.Int.div(this.frameClock, 341)) | 0), $t.ScanlinePos = this.frameClock % 341, $t));
                 }
 
                 switch (address & 7) {
+                    case 3: 
                     case 0: 
                     case 1: 
                     case 5: 
                     case 6: 
-                        return this.ppuReadBuffer;
+                        return this._openBus;
                     case 2: 
                         var ret;
                         this.PPUAddressLatchIsHigh = true;
@@ -7413,12 +7392,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         }
                         this.UpdatePixelInfo();
                         //}
+                        this._openBus = ret;
                         return ret;
                     case 4: 
                         var tmp = this.spriteRAM[this._spriteAddress];
                         //ppuLatch = spriteRAM[SpriteAddress];
                         // should not increment on read ?
                         //SpriteAddress = (SpriteAddress + 1) & 0xFF;
+                        this._openBus = tmp;
                         return tmp;
                     case 7: 
                         //        If Mapper = 9 Then
@@ -7439,13 +7420,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             // will also fetch nametable data from the corresponding address (which is mirrored from PPU $2F00-$2FFF). 
 
                             // note: writes do not work this way 
-                            this.ppuReadBuffer = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(Clock, ((this._PPUAddress - 4096) | 0));
+                            this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, ((this._PPUAddress - 4096) | 0));
                         } else {
                             tmp = this.ppuReadBuffer;
                             if (!!(this._PPUAddress >= 8192 & this._PPUAddress <= 12287)) {
-                                this.ppuReadBuffer = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(Clock, this._PPUAddress);
+                                this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress);
                             } else {
-                                this.ppuReadBuffer = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(Clock, this._PPUAddress & 16383);
+                                this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress & 16383);
                             }
                         }
                         if ((this._PPUControlByte0 & 4) === 4) {
@@ -7562,18 +7543,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             InitSprites: function () {
                 this.currentSprites = System.Array.init(this._maxSpritesPerScanline, function (){
-                    return new NES.CPU.PPUClasses.NESSprite();
-                }, NES.CPU.PPUClasses.NESSprite);
+                    return new ChiChiNES.NESSprite();
+                }, ChiChiNES.NESSprite);
                 for (var i = 0; i < this._maxSpritesPerScanline; i = (i + 1) | 0) {
-                    this.currentSprites[i] = new NES.CPU.PPUClasses.NESSprite();
+                    this.currentSprites[i] = new ChiChiNES.NESSprite();
                 }
 
                 this.unpackedSprites = System.Array.init(64, function (){
-                    return new NES.CPU.PPUClasses.NESSprite();
-                }, NES.CPU.PPUClasses.NESSprite);
+                    return new ChiChiNES.NESSprite();
+                }, ChiChiNES.NESSprite);
 
                 for (var i1 = 0; i1 < 64; i1 = (i1 + 1) | 0) {
-                    this.unpackedSprites[i1] = new NES.CPU.PPUClasses.NESSprite();
+                    this.unpackedSprites[i1] = new ChiChiNES.NESSprite();
                 }
 
             },
@@ -7586,19 +7567,19 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var tileIndex = 0;
 
                 for (var i = 0; i < this.spritesOnThisScanline; i = (i + 1) | 0) {
-                    var currSprite = { v : this.currentSprites[i].$clone() };
-                    if (currSprite.v.XPosition > 0 && this.currentXPosition >= currSprite.v.XPosition && this.currentXPosition < ((currSprite.v.XPosition + 8) | 0)) {
+                    var currSprite = this.currentSprites[i];
+                    if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < ((currSprite.XPosition + 8) | 0)) {
 
                         var spritePatternTable = 0;
                         if ((this._PPUControlByte0 & 8) === 8) {
                             spritePatternTable = 4096;
                         }
-                        xPos = (this.currentXPosition - currSprite.v.XPosition) | 0;
-                        yLine = (((this.currentYPosition - currSprite.v.YPosition) | 0) - 1) | 0;
+                        xPos = (this.currentXPosition - currSprite.XPosition) | 0;
+                        yLine = (((this.currentYPosition - currSprite.YPosition) | 0) - 1) | 0;
 
                         yLine = yLine & (((this.spriteSize - 1) | 0));
 
-                        tileIndex = currSprite.v.TileIndex;
+                        tileIndex = currSprite.TileIndex;
 
                         if ((this._PPUControlByte0 & 32) === 32) {
                             if ((tileIndex & 1) === 1) {
@@ -7609,13 +7590,30 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             }
                         }
 
-                        result = this.WhissaSpritePixel(spritePatternTable, xPos, yLine, currSprite, tileIndex);
+                        //result = WhissaSpritePixel(spritePatternTable, xPos, yLine, ref currSprite, tileIndex);
+                        // 8x8 tile
+                        var patternEntry;
+                        var patternEntryBit2;
+
+                        if (currSprite.FlipY) {
+                            yLine = (((this.spriteSize - yLine) | 0) - 1) | 0;
+                        }
+
+                        if (yLine >= 8) {
+                            yLine = (yLine + 8) | 0;
+                        }
+
+                        patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((spritePatternTable + Bridge.Int.mul(tileIndex, 16)) | 0) + yLine) | 0));
+                        patternEntryBit2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((spritePatternTable + Bridge.Int.mul(tileIndex, 16)) | 0) + yLine) | 0) + 8) | 0));
+
+                        result = (currSprite.FlipX ? ((patternEntry >> xPos) & 1) | (((patternEntryBit2 >> xPos) << 1) & 2) : ((patternEntry >> ((7 - xPos) | 0)) & 1) | (((patternEntryBit2 >> ((7 - xPos) | 0)) << 1) & 2)) & 255;
+
                         if (result !== 0) {
-                            if (currSprite.v.SpriteNumber === 0) {
+                            if (currSprite.SpriteNumber === 0) {
                                 this.spriteZeroHit = true;
                             }
-                            isForegroundPixel.v = currSprite.v.Foreground;
-                            return ((result | currSprite.v.AttributeByte) & 255);
+                            isForegroundPixel.v = currSprite.Foreground;
+                            return ((result | currSprite.AttributeByte) & 255);
                         }
                     }
                 }
@@ -7634,8 +7632,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     y = (y + 8) | 0;
                 }
 
-                patternEntry = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((((patternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + y) | 0));
-                patternEntryBit2 = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((((((patternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + y) | 0) + 8) | 0));
+                patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((patternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + y) | 0));
+                patternEntryBit2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((patternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + y) | 0) + 8) | 0));
 
                 return ((sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> ((7 - x) | 0)) & 1) | (((patternEntryBit2 >> ((7 - x) | 0)) << 1) & 2)) & 255);
             },
@@ -7645,8 +7643,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.PPUClasses.PixelWhizzler
-             * @memberof NES.CPU.PPUClasses.PixelWhizzler
+             * @this ChiChiNES.PixelWhizzler
+             * @memberof ChiChiNES.PixelWhizzler
              * @param   {number}    scanline    the scanline to preload sprites for
              * @return  {void}
              */
@@ -7678,7 +7676,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             this.outBuffer[($t1 = (((65024) + yLine) | 0))] = this.outBuffer[$t1] | (1 << (((spId - 32) | 0)));
                         }
 
-                        this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID].$clone();
+                        this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID];
                         this.currentSprites[this.spritesOnThisScanline].IsVisible = true;
 
                         this.spritesOnThisScanline = (this.spritesOnThisScanline + 1) | 0;
@@ -7724,8 +7722,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              *
              * @instance
              * @public
-             * @this NES.CPU.PPUClasses.PixelWhizzler
-             * @memberof NES.CPU.PPUClasses.PixelWhizzler
+             * @this ChiChiNES.PixelWhizzler
+             * @memberof ChiChiNES.PixelWhizzler
              * @return  {number}
              */
             GetNameTablePixel: function () {
@@ -7746,14 +7744,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 var tileNametablePosition = (((((8192 + ppuNameTableMemoryStart) | 0) + xTilePosition) | 0) + tileRow) | 0;
 
-                var TileIndex = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, tileNametablePosition);
+                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, tileNametablePosition);
 
                 var patternTableYOffset = this.yPosition & 7;
 
                 var patternID = (((this._backgroundPatternTableIndex + (Bridge.Int.mul(TileIndex, 16))) | 0) + patternTableYOffset) | 0;
 
-                this.patternEntry = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, patternID);
-                this.patternEntryByte2 = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((patternID + 8) | 0));
+                this.patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID);
+                this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((patternID + 8) | 0));
 
                 this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
             },
@@ -7792,14 +7790,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 var tileNametablePosition = (((((8192 + ppuNameTableMemoryStart) | 0) + (((Bridge.Int.div(xPosition, 8)) | 0))) | 0) + (Bridge.Int.mul(tileRow, 32))) | 0;
 
-                var TileIndex = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, tileNametablePosition);
+                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, tileNametablePosition);
 
 
                 var patternTableYOffset = yPosition & 7;
 
 
-                var patternEntry = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((((this._backgroundPatternTableIndex + (Bridge.Int.mul(TileIndex, 16))) | 0) + patternTableYOffset) | 0));
-                var patternEntryByte2 = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((((((this._backgroundPatternTableIndex + (Bridge.Int.mul(TileIndex, 16))) | 0) + 8) | 0) + patternTableYOffset) | 0));
+                var patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((this._backgroundPatternTableIndex + (Bridge.Int.mul(TileIndex, 16))) | 0) + patternTableYOffset) | 0));
+                var patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((this._backgroundPatternTableIndex + (Bridge.Int.mul(TileIndex, 16))) | 0) + 8) | 0) + patternTableYOffset) | 0));
 
 
                 // i want the patternTableEntryIndex'th bit of patternEntry in the 1st bit of pixel
@@ -7811,7 +7809,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 return result;
             },
             GetAttributeTableEntry: function (ppuNameTableMemoryStart, i, j) {
-                var LookUp = this.chrRomHandler.NES$CPU$Machine$Carts$INESCart$GetPPUByte(0, ((((((((8192 + ppuNameTableMemoryStart) | 0) + 960) | 0) + (((Bridge.Int.div(i, 4)) | 0))) | 0) + (Bridge.Int.mul((((Bridge.Int.div(j, 4)) | 0)), 8))) | 0));
+                var LookUp = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((((8192 + ppuNameTableMemoryStart) | 0) + 960) | 0) + (((Bridge.Int.div(i, 4)) | 0))) | 0) + (Bridge.Int.mul((((Bridge.Int.div(j, 4)) | 0)), 8))) | 0));
 
                 switch ((i & 2) | Bridge.Int.mul((j & 2), 2)) {
                     case 0: 
@@ -7828,8 +7826,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("NES.CPU.Machine.Carts.BaseCart", {
-        inherits: [NES.CPU.Machine.Carts.INESCart],
+    Bridge.define("ChiChiNES.PortQueueing.QueuedPort", {
+        inherits: [System.Collections.Generic.Queue$1(ChiChiNES.PortQueueing.PortWriteEntry)],
+        ctors: {
+            ctor: function () {
+                this.$initialize();
+                System.Collections.Generic.Queue$1(ChiChiNES.PortQueueing.PortWriteEntry).$ctor2.call(this, 256);
+            }
+        }
+    });
+
+    Bridge.define("ChiChiNES.BaseCart", {
+        inherits: [ChiChiNES.INESCart],
         fields: {
             pixelEffects: null,
             debugging: false,
@@ -7840,7 +7848,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             chrRom: null,
             /**
              * @instance
-             * @memberof NES.CPU.Machine.Carts.BaseCart
+             * @memberof ChiChiNES.BaseCart
              * @type number
              */
             current8: 0,
@@ -8047,45 +8055,45 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             }
         },
         alias: [
-            "ChrRom", "NES$CPU$Machine$Carts$INESCart$ChrRom",
-            "ROMHashFunction", "NES$CPU$Machine$Carts$INESCart$ROMHashFunction",
-            "LoadiNESCart", "NES$CPU$Machine$Carts$INESCart$LoadiNESCart",
-            "Whizzler", "NES$CPU$Machine$Carts$INESCart$Whizzler",
-            "UpdateScanlineCounter", "NES$CPU$Machine$Carts$INESCart$UpdateScanlineCounter",
-            "GetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$GetByte",
-            "CheckSum", "NES$CPU$Machine$Carts$INESCart$CheckSum",
-            "WriteState", "NES$CPU$Machine$Carts$INESCart$WriteState",
-            "ReadState", "NES$CPU$Machine$Carts$INESCart$ReadState",
-            "CPU", "NES$CPU$Machine$Carts$INESCart$CPU",
-            "SRAM", "NES$CPU$Machine$Carts$INESCart$SRAM",
-            "CartName", "NES$CPU$Machine$Carts$INESCart$CartName",
-            "NumberOfPrgRoms", "NES$CPU$Machine$Carts$INESCart$NumberOfPrgRoms",
-            "NumberOfChrRoms", "NES$CPU$Machine$Carts$INESCart$NumberOfChrRoms",
-            "MapperID", "NES$CPU$Machine$Carts$INESCart$MapperID",
-            "Mirroring", "NES$CPU$Machine$Carts$INESCart$Mirroring",
-            "NMIHandler", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NMIHandler",
-            "IRQAsserted", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$IRQAsserted",
-            "NextEventAt", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NextEventAt",
-            "HandleEvent", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$HandleEvent",
-            "ResetClock", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$ResetClock",
-            "BankStartCache", "NES$CPU$Machine$Carts$INESCart$BankStartCache",
-            "CurrentBank", "NES$CPU$Machine$Carts$INESCart$CurrentBank",
-            "ResetBankStartCache", "NES$CPU$Machine$Carts$INESCart$ResetBankStartCache",
-            "UpdateBankStartCache", "NES$CPU$Machine$Carts$INESCart$UpdateBankStartCache",
-            "BankSwitchesChanged", "NES$CPU$Machine$Carts$INESCart$BankSwitchesChanged",
-            "GetPPUByte", "NES$CPU$Machine$Carts$INESCart$GetPPUByte",
-            "ActualChrRomOffset", "NES$CPU$Machine$Carts$INESCart$ActualChrRomOffset",
-            "SetPPUByte", "NES$CPU$Machine$Carts$INESCart$SetPPUByte",
-            "FetchPixelEffect", "NES$CPU$Machine$Carts$INESCart$FetchPixelEffect",
-            "UsesSRAM", "NES$CPU$Machine$Carts$INESCart$UsesSRAM",
-            "ChrRamStart", "NES$CPU$Machine$Carts$INESCart$ChrRamStart",
-            "PPUBankStarts", "NES$CPU$Machine$Carts$INESCart$PPUBankStarts"
+            "ChrRom", "ChiChiNES$INESCart$ChrRom",
+            "ROMHashFunction", "ChiChiNES$INESCart$ROMHashFunction",
+            "LoadiNESCart", "ChiChiNES$INESCart$LoadiNESCart",
+            "Whizzler", "ChiChiNES$INESCart$Whizzler",
+            "UpdateScanlineCounter", "ChiChiNES$INESCart$UpdateScanlineCounter",
+            "GetByte", "ChiChiNES$IClockedMemoryMappedIOElement$GetByte",
+            "CheckSum", "ChiChiNES$INESCart$CheckSum",
+            "WriteState", "ChiChiNES$INESCart$WriteState",
+            "ReadState", "ChiChiNES$INESCart$ReadState",
+            "CPU", "ChiChiNES$INESCart$CPU",
+            "SRAM", "ChiChiNES$INESCart$SRAM",
+            "CartName", "ChiChiNES$INESCart$CartName",
+            "NumberOfPrgRoms", "ChiChiNES$INESCart$NumberOfPrgRoms",
+            "NumberOfChrRoms", "ChiChiNES$INESCart$NumberOfChrRoms",
+            "MapperID", "ChiChiNES$INESCart$MapperID",
+            "Mirroring", "ChiChiNES$INESCart$Mirroring",
+            "NMIHandler", "ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler",
+            "IRQAsserted", "ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted",
+            "NextEventAt", "ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt",
+            "HandleEvent", "ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent",
+            "ResetClock", "ChiChiNES$IClockedMemoryMappedIOElement$ResetClock",
+            "BankStartCache", "ChiChiNES$INESCart$BankStartCache",
+            "CurrentBank", "ChiChiNES$INESCart$CurrentBank",
+            "ResetBankStartCache", "ChiChiNES$INESCart$ResetBankStartCache",
+            "UpdateBankStartCache", "ChiChiNES$INESCart$UpdateBankStartCache",
+            "BankSwitchesChanged", "ChiChiNES$INESCart$BankSwitchesChanged",
+            "GetPPUByte", "ChiChiNES$INESCart$GetPPUByte",
+            "ActualChrRomOffset", "ChiChiNES$INESCart$ActualChrRomOffset",
+            "SetPPUByte", "ChiChiNES$INESCart$SetPPUByte",
+            "FetchPixelEffect", "ChiChiNES$INESCart$FetchPixelEffect",
+            "UsesSRAM", "ChiChiNES$INESCart$UsesSRAM",
+            "ChrRamStart", "ChiChiNES$INESCart$ChrRamStart",
+            "PPUBankStarts", "ChiChiNES$INESCart$PPUBankStarts"
         ],
         ctors: {
             init: function () {
                 this.pixelEffects = new (System.Collections.Generic.Dictionary$2(System.Int32,System.Array.type(System.Byte)))();
                 this.debugging = false;
-                this.debugEvents = new (System.Collections.Generic.List$1(NES.CPU.Machine.Carts.CartDebugEvent)).ctor();
+                this.debugEvents = new (System.Collections.Generic.List$1(ChiChiNES.CartDebugEvent)).ctor();
                 this.iNesHeader = System.Array.init(16, 0, System.Byte);
                 this.romControlBytes = System.Array.init(2, 0, System.Byte);
                 this.current8 = -1;
@@ -8316,7 +8324,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             UpdateBankStartCache: function () {
                 this.currentBank = (this.currentBank + 1) | 0;
                 System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, Bridge.Int.mul(this.currentBank, 16), 16);
-                this.whizzler.NES$CPU$PixelWhizzlerClasses$IPPU$UpdatePixelInfo();
+                this.whizzler.ChiChiNES$IPPU$UpdatePixelInfo();
                 return this.currentBank;
 
             },
@@ -8375,7 +8383,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //    // 0x000 = 000000000000
 
                 if (this.debugging) {
-                    this.DebugEvents.add(($t = new NES.CPU.Machine.Carts.CartDebugEvent(), $t.Clock = clockNum, $t.EventType = System.String.format("Mirror set to {0}", mirroring), $t));
+                    this.DebugEvents.add(($t = new ChiChiNES.CartDebugEvent(), $t.Clock = clockNum, $t.EventType = System.String.format("Mirror set to {0}", mirroring), $t));
                 }
 
                 //if (mirroring == this.mirroring) return;
@@ -8383,7 +8391,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.mirroring = mirroring;
 
                 if (clockNum > -1) {
-                    this.whizzler.NES$CPU$PixelWhizzlerClasses$IPPU$DrawTo(clockNum);
+                    this.whizzler.ChiChiNES$IPPU$DrawTo(clockNum);
                 }
 
                 //Console.WriteLine("Mirroring set to {0}", mirroring);
@@ -8415,310 +8423,121 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                 }
                 this.UpdateBankStartCache();
-                this.whizzler.NES$CPU$PixelWhizzlerClasses$IPPU$UpdatePixelInfo();
+                this.whizzler.ChiChiNES$IPPU$UpdatePixelInfo();
 
             }
         }
     });
 
-    Bridge.define("NES.CPU.Machine.Carts.NSFCart", {
-        inherits: [NES.CPU.Machine.Carts.INESCart],
+    Bridge.define("ChiChiNES.CPU.NESCart", {
+        inherits: [ChiChiNES.BaseCart],
         fields: {
-            roms: null,
-            sram: null,
-            bankStarts: null,
-            banks: null,
-            bankInitVals: null,
-            numSongs: 0,
-            startSong: 0,
-            loadAddress: 0,
-            initAddress: 0,
-            playAddress: 0,
-            songname: null,
-            artist: null,
-            copyright: null,
-            BIOS: null,
-            cpu: null
-        },
-        props: {
-            Whizzler: {
-                get: function () {
-                    return null;
-                },
-                set: function (value) { }
-            },
-            CPU: {
-                get: function () {
-                    return this.cpu;
-                },
-                set: function (value) {
-                    this.cpu = value;
-                }
-            },
-            IrqRaised: {
-                get: function () {
-                    return false;
-                },
-                set: function (value) { }
-            },
-            ROMHashFunction: null,
-            CheckSum: {
-                get: function () {
-                    return null;
-                }
-            },
-            SRAM: {
-                get: function () {
-                    return this.SRAM;
-                },
-                set: function (value) {
-                    this.sram = value;
-                }
-            },
-            Mirroring: {
-                get: function () {
-                    return NES.CPU.Machine.Carts.NameTableMirroring.OneScreen;
-                }
-            },
-            CartName: {
-                get: function () {
-                    return "tunes";
-                }
-            },
-            NumberOfPrgRoms: {
-                get: function () {
-                    return 0;
-                }
-            },
-            NumberOfChrRoms: {
-                get: function () {
-                    return 0;
-                }
-            },
-            MapperID: {
-                get: function () {
-                    return -1;
-                }
-            },
-            NMIHandler: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                },
-                set: function (value) {
-                    throw new System.NotImplementedException();
-                }
-            },
-            IRQAsserted: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                },
-                set: function (value) {
-                    throw new System.NotImplementedException();
-                }
-            },
-            NextEventAt: {
-                get: function () {
-                    return -1;
-                }
-            },
-            NES$CPU$Machine$Carts$INESCart$Whizzler: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                },
-                set: function (value) {
-                    throw new System.NotImplementedException();
-                }
-            },
-            ChrRamStart: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                }
-            },
-            PPUBankStarts: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                },
-                set: function (value) {
-                    throw new System.NotImplementedException();
-                }
-            },
-            BankSwitchesChanged: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                },
-                set: function (value) {
-                    throw new System.NotImplementedException();
-                }
-            },
-            BankStartCache: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                }
-            },
-            CurrentBank: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                }
-            },
-            ChrRom: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                },
-                set: function (value) {
-                    throw new System.NotImplementedException();
-                }
-            },
-            UsesSRAM: {
-                get: function () {
-                    return false;
-                },
-                set: function (value) {
-
-                }
-            }
+            prgRomBank6$1: null,
+            prevBSSrc: null
         },
         alias: [
-            "LoadiNESCart", "NES$CPU$Machine$Carts$INESCart$LoadiNESCart",
-            "CPU", "NES$CPU$Machine$Carts$INESCart$CPU",
-            "InitializeCart", "NES$CPU$Machine$Carts$INESCart$InitializeCart",
-            "UpdateScanlineCounter", "NES$CPU$Machine$Carts$INESCart$UpdateScanlineCounter",
-            "WriteState", "NES$CPU$Machine$Carts$INESCart$WriteState",
-            "ReadState", "NES$CPU$Machine$Carts$INESCart$ReadState",
-            "ROMHashFunction", "NES$CPU$Machine$Carts$INESCart$ROMHashFunction",
-            "CheckSum", "NES$CPU$Machine$Carts$INESCart$CheckSum",
-            "SRAM", "NES$CPU$Machine$Carts$INESCart$SRAM",
-            "Mirroring", "NES$CPU$Machine$Carts$INESCart$Mirroring",
-            "CartName", "NES$CPU$Machine$Carts$INESCart$CartName",
-            "NumberOfPrgRoms", "NES$CPU$Machine$Carts$INESCart$NumberOfPrgRoms",
-            "NumberOfChrRoms", "NES$CPU$Machine$Carts$INESCart$NumberOfChrRoms",
-            "MapperID", "NES$CPU$Machine$Carts$INESCart$MapperID",
-            "GetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$GetByte",
-            "SetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte",
-            "NMIHandler", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NMIHandler",
-            "IRQAsserted", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$IRQAsserted",
-            "NextEventAt", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$NextEventAt",
-            "HandleEvent", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$HandleEvent",
-            "ResetClock", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$ResetClock",
-            "ChrRamStart", "NES$CPU$Machine$Carts$INESCart$ChrRamStart",
-            "PPUBankStarts", "NES$CPU$Machine$Carts$INESCart$PPUBankStarts",
-            "BankSwitchesChanged", "NES$CPU$Machine$Carts$INESCart$BankSwitchesChanged",
-            "UpdateBankStartCache", "NES$CPU$Machine$Carts$INESCart$UpdateBankStartCache",
-            "ResetBankStartCache", "NES$CPU$Machine$Carts$INESCart$ResetBankStartCache",
-            "BankStartCache", "NES$CPU$Machine$Carts$INESCart$BankStartCache",
-            "CurrentBank", "NES$CPU$Machine$Carts$INESCart$CurrentBank",
-            "ChrRom", "NES$CPU$Machine$Carts$INESCart$ChrRom",
-            "GetPPUByte", "NES$CPU$Machine$Carts$INESCart$GetPPUByte",
-            "SetPPUByte", "NES$CPU$Machine$Carts$INESCart$SetPPUByte",
-            "FetchPixelEffect", "NES$CPU$Machine$Carts$INESCart$FetchPixelEffect",
-            "ActualChrRomOffset", "NES$CPU$Machine$Carts$INESCart$ActualChrRomOffset",
-            "UsesSRAM", "NES$CPU$Machine$Carts$INESCart$UsesSRAM"
+            "InitializeCart", "ChiChiNES$INESCart$InitializeCart",
+            "SetByte", "ChiChiNES$IClockedMemoryMappedIOElement$SetByte"
         ],
         ctors: {
             init: function () {
-                this.sram = System.Array.init(2048, 0, System.Byte);
-                this.bankStarts = System.Array.init(8, 0, System.Int32);
-                this.bankInitVals = System.Array.init(8, 0, System.Int32);
-                this.BIOS = System.Array.init([255, 255, 255, 32, 51, 63, 120, 162, 255, 142, 23, 64, 232, 142, 21, 64, 142, 0, 32, 142, 1, 32, 142, 18, 62, 88, 76, 26, 63, 72, 138, 72, 152, 72, 174, 18, 62, 240, 86, 202, 240, 217, 32, 249, 63, 104, 168, 104, 170, 104, 64, 173, 19, 62, 74, 144, 9, 142, 2, 144, 142, 2, 160, 142, 2, 176, 74, 144, 13, 160, 32, 140, 16, 144, 142, 48, 144, 200, 192, 38, 208, 245, 74, 144, 11, 160, 128, 140, 131, 64, 140, 135, 64, 140, 137, 64, 74, 144, 3, 142, 21, 80, 74, 144, 8, 202, 142, 0, 248, 232, 142, 0, 72, 74, 144, 8, 160, 7, 140, 0, 192, 140, 0, 224, 96, 32, 51, 63, 138, 202, 154, 142, 247, 95, 202, 142, 246, 95, 162, 127, 133, 0, 134, 1, 168, 162, 39, 145, 0, 200, 208, 251, 202, 48, 10, 198, 1, 224, 7, 208, 242, 134, 1, 240, 238, 162, 20, 202, 157, 0, 64, 208, 250, 162, 7, 189, 8, 62, 157, 248, 95, 202, 16, 247, 160, 15, 140, 21, 64, 173, 19, 62, 41, 4, 240, 16, 173, 14, 62, 240, 3, 141, 246, 95, 173, 15, 62, 240, 3, 141, 247, 95, 174, 17, 62, 189, 4, 62, 141, 16, 62, 189, 6, 62, 141, 17, 62, 140, 18, 62, 173, 18, 62, 88, 173, 16, 62, 32, 246, 63, 141, 19, 62, 76, 26, 63, 108, 0, 62, 108, 2, 62, 6, 63, 29, 63], System.Byte);
+                this.prgRomBank6$1 = System.Array.init(2048, 0, System.Byte);
+                this.prevBSSrc = System.Array.init(8, 0, System.Int32);
             }
         },
         methods: {
-            LoadiNESCart: function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
+            InitializeCart: function () {
 
-                this.banks = System.Array.init(8, null, System.Array.type(System.Byte));
                 for (var i = 0; i < 8; i = (i + 1) | 0) {
-                    this.banks[i] = System.Array.init(4096, 0, System.Byte);
+                    this.prevBSSrc[i] = -1;
                 }
-                //0000    5   STRING  "NESM",01Ah  ; denotes an NES sound format file
-                //0005    1   BYTE    Version number (currently 01h)
-                //0006    1   BYTE    Total songs   (1=1 song, 2=2 songs, etc)
-                this.numSongs = header[6];
-                //0007    1   BYTE    Starting song (1= 1st song, 2=2nd song, etc)
-                this.startSong = header[7];
-                //0008    2   WORD    (lo/hi) load address of data (8000-FFFF)
-                this.loadAddress = (header[8] | (header[9] << 8)) & 65535;
-                //000a    2   WORD    (lo/hi) init address of data (8000-FFFF)
-                for (var i1 = 0; i1 < 8; i1 = (i1 + 1) | 0) {
-                    this.bankStarts[i1] = (((this.loadAddress + (Bridge.Int.mul(i1, 4096))) | 0)) & 65535;
+                //SRAMEnabled = SRAMCanSave;
+
+
+                switch (this.mapperId) {
+                    case 0: 
+                    case 1: 
+                    case 2: 
+                    case 3: 
+                        if (this.ChrRomCount > 0) {
+                            this.CopyBanks(0, 0, 0, 1);
+                        }
+                        this.SetupBankStarts(0, 1, ((Bridge.Int.mul(this.PrgRomCount, 2) - 2) | 0), ((Bridge.Int.mul(this.PrgRomCount, 2) - 1) | 0));
+                        break;
+                    case 7: 
+                        //SetupBanks(0, 1, 2, 3);
+                        this.SetupBankStarts(0, 1, 2, 3);
+                        this.Mirror(0, 0);
+                        break;
+                    default: 
+                        throw new System.NotImplementedException("Mapper " + (this.mapperId.toString() || "") + " not implemented.");
                 }
-                this.initAddress = (header[10] | (header[11] << 8)) & 65535;
-                //000c    2   WORD    (lo/hi) play address of data (8000-FFFF)
-                this.playAddress = (header[12] | (header[13] << 8)) & 65535;
-                //000e    32  STRING  The name of the song, null terminated
-                this.songname = "unk";
-                //002e    32  STRING  The artist, if known, null terminated
-                //004e    32  STRING  The Copyright holder, null terminated
-                //006e    2   WORD    (lo/hi) speed, in 1/1000000th sec ticks, NTSC (see text)
-                //0070    8   BYTE    Bankswitch Init Values (see text, and FDS section)
-                var bankSwitchUsed = false;
-                for (var i2 = 0; i2 < 8; i2 = (i2 + 1) | 0) {
-                    this.bankInitVals[i2] = header[((112 + i2) | 0)];
-                    if (this.bankInitVals[i2] !== 0) {
-                        bankSwitchUsed = true;
+            },
+            CopyBanks: function (clock, dest, src, numberOf8kBanks) {
+
+                if (dest >= this.ChrRomCount) {
+                    dest = (this.ChrRomCount - 1) | 0;
+                }
+
+                var oneKsrc = Bridge.Int.mul(src, 8);
+                var oneKdest = Bridge.Int.mul(dest, 8);
+                //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+                //  setup ppuBankStarts in 0x400 block chunks 
+                for (var i = 0; i < (Bridge.Int.mul(numberOf8kBanks, 8)); i = (i + 1) | 0) {
+                    this.ppuBankStarts[((oneKdest + i) | 0)] = Bridge.Int.mul((((oneKsrc + i) | 0)), 1024);
+
+                }
+                this.UpdateBankStartCache();
+            },
+            SetByte: function (clock, address, val) {
+                if (address >= 24576 && address <= 32767) {
+                    if (this.SRAMEnabled) {
+                        this.prgRomBank6$1[address & 8191] = val & 255;
                     }
+
+                    return;
+                }
+
+                if (this.mapperId === 7) {
+                    // val selects which bank to swap, 32k at a time
+                    var newbank8 = 0;
+                    newbank8 = Bridge.Int.mul(4, (val & 15));
+
+                    this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
+                    // whizzler.DrawTo(clock);
+                    if ((val & 16) === 16) {
+                        this.OneScreenOffset = 1024;
+                    } else {
+                        this.OneScreenOffset = 0;
+                    }
+                    this.Mirror(clock, 0);
+                }
+
+                if (this.mapperId === 3 && address >= 32768) {
+
+                    this.CopyBanks(clock, 0, val, 1);
+                }
+
+                if (this.mapperId === 2 && address >= 32768) {
+                    var newbank81 = 0;
+
+                    newbank81 = (Bridge.Int.mul((val), 2));
+                    // keep two high banks, swap low banks
+
+                    // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
+                    this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
                 }
 
 
-                //0078    2   WORD    (lo/hi) speed, in 1/1000000th sec ticks, PAL (see text)
-                //007a    1   BYTE    PAL/NTSC bits:
-                //                 bit 0: if clear, this is an NTSC tune
-                //                 bit 0: if set, this is a PAL tune
-                //                 bit 1: if set, this is a dual PAL/NTSC tune
-                //                 bits 2-7: not used. they *must* be 0
-                //007b    1   BYTE    Extra Sound Chip Support
-                //                 bit 0: if set, this song uses VRCVI
-                //                 bit 1: if set, this song uses VRCVII
-                //                 bit 2: if set, this song uses FDS Sound
-                //                 bit 3: if set, this song uses MMC5 audio
-                //                 bit 4: if set, this song uses Namco 106
-                //                 bit 5: if set, this song uses Sunsoft FME-07
-                //                 bits 6,7: future expansion: they *must* be 0
-                //007c    4   ----    4 extra bytes for expansion (must be 00h)
-                //0080    nnn ----    The music program/data follows
-                this.roms = prgRomData;
 
-                // throw new NotImplementedException();
-            },
-            InitializeCart: function () { },
-            UpdateScanlineCounter: function () { },
-            WriteState: function (state) { },
-            ReadState: function (state) { },
-            GetByte: function (Clock, address) {
-                return this.roms[((this.bankStarts[((((((Bridge.Int.div((address & 32768), 4096)) | 0)) - 8) | 0))] + (((address - 32768) | 0))) | 0)];
-            },
-            SetByte: function (Clock, address, data) {
-                if (address >= 24568 && address <= 24575) {
-                    this.bankStarts[((address - 24568) | 0)] = data;
-                    this.UpdateBankSwitch();
-                }
-            },
-            UpdateBankSwitch: function () { },
-            HandleEvent: function (Clock) {
-                throw new System.NotImplementedException();
-            },
-            ResetClock: function (Clock) { },
-            UpdateBankStartCache: function () {
-                throw new System.NotImplementedException();
-            },
-            ResetBankStartCache: function () {
-                throw new System.NotImplementedException();
-            },
-            GetPPUByte: function (clock, address) {
-                throw new System.NotImplementedException();
-            },
-            SetPPUByte: function (clock, address, data) {
-                throw new System.NotImplementedException();
-            },
-            FetchPixelEffect: function (vramAddress) {
-                throw new System.NotImplementedException();
-            },
-            ActualChrRomOffset: function (address) {
-                throw new System.NotImplementedException();
+
+
             }
         }
     });
 
-    Bridge.define("NES.CPU.Machine.Carts.NesCartMMC1", {
-        inherits: [NES.CPU.Machine.Carts.BaseCart],
+    Bridge.define("ChiChiNES.NesCartMMC1", {
+        inherits: [ChiChiNES.BaseCart],
         fields: {
             sequence: 0,
             accumulator: 0,
@@ -8728,8 +8547,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             lastClock: 0
         },
         alias: [
-            "InitializeCart", "NES$CPU$Machine$Carts$INESCart$InitializeCart",
-            "SetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte"
+            "InitializeCart", "ChiChiNES$INESCart$InitializeCart",
+            "SetByte", "ChiChiNES$IClockedMemoryMappedIOElement$SetByte"
         ],
         ctors: {
             init: function () {
@@ -8831,7 +8650,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetMMC1ChrBanking: function (clock) {
                 //	bit 4 - sets 8KB or 4KB CHRROM switching mode
                 // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
-                this.whizzler.NES$CPU$PixelWhizzlerClasses$IPPU$DrawTo(clock);
+                this.whizzler.ChiChiNES$IPPU$DrawTo(clock);
                 if ((this._registers[0] & 16) === 16) {
                     this.CopyBanks(0, this._registers[1], 1);
                     this.CopyBanks(1, this._registers[2], 1);
@@ -8842,7 +8661,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
                 this.BankSwitchesChanged = true;
 
-                this.whizzler.NES$CPU$PixelWhizzlerClasses$IPPU$UpdatePixelInfo();
+                this.whizzler.ChiChiNES$IPPU$UpdatePixelInfo();
             },
             SetMMC1PrgBanking: function () {
                 var reg;
@@ -8874,7 +8693,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetMMC1Mirroring: function (clock) {
                 //bit 1 - toggles between H/V and "one-screen" mirroring
                 //0 = one-screen mirroring, 1 = H/V mirroring
-                this.whizzler.NES$CPU$PixelWhizzlerClasses$IPPU$DrawTo(clock);
+                this.whizzler.ChiChiNES$IPPU$DrawTo(clock);
                 switch (this._registers[0] & 3) {
                     case 0: 
                         this.OneScreenOffset = 0;
@@ -8892,13 +8711,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                 }
                 this.BankSwitchesChanged = true;
-                this.whizzler.NES$CPU$PixelWhizzlerClasses$IPPU$UpdatePixelInfo();
+                this.whizzler.ChiChiNES$IPPU$UpdatePixelInfo();
             }
         }
     });
 
-    Bridge.define("NES.CPU.Machine.Carts.NesCartMMC3", {
-        inherits: [NES.CPU.Machine.Carts.BaseCart],
+    Bridge.define("ChiChiNES.NesCartMMC3", {
+        inherits: [ChiChiNES.BaseCart],
         fields: {
             _registers: null,
             chr2kBank0: 0,
@@ -8931,10 +8750,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             }
         },
         alias: [
-            "InitializeCart", "NES$CPU$Machine$Carts$INESCart$InitializeCart",
-            "IRQAsserted", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$IRQAsserted",
-            "SetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte",
-            "UpdateScanlineCounter", "NES$CPU$Machine$Carts$INESCart$UpdateScanlineCounter"
+            "InitializeCart", "ChiChiNES$INESCart$InitializeCart",
+            "IRQAsserted", "ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted",
+            "SetByte", "ChiChiNES$IClockedMemoryMappedIOElement$SetByte",
+            "UpdateScanlineCounter", "ChiChiNES$INESCart$UpdateScanlineCounter"
         ],
         ctors: {
             init: function () {
@@ -9201,113 +9020,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.scanlineCounter = this._mmc3IrqVal;
                     }
                 }
-
-            }
-        }
-    });
-
-    Bridge.define("NES.CPU.NESCart", {
-        inherits: [NES.CPU.Machine.Carts.BaseCart],
-        fields: {
-            prgRomBank6$1: null,
-            prevBSSrc: null
-        },
-        alias: [
-            "InitializeCart", "NES$CPU$Machine$Carts$INESCart$InitializeCart",
-            "SetByte", "NES$CPU$Fastendo$IClockedMemoryMappedIOElement$SetByte"
-        ],
-        ctors: {
-            init: function () {
-                this.prgRomBank6$1 = System.Array.init(2048, 0, System.Byte);
-                this.prevBSSrc = System.Array.init(8, 0, System.Int32);
-            }
-        },
-        methods: {
-            InitializeCart: function () {
-
-                for (var i = 0; i < 8; i = (i + 1) | 0) {
-                    this.prevBSSrc[i] = -1;
-                }
-                //SRAMEnabled = SRAMCanSave;
-
-
-                switch (this.mapperId) {
-                    case 0: 
-                    case 1: 
-                    case 2: 
-                    case 3: 
-                        if (this.ChrRomCount > 0) {
-                            this.CopyBanks(0, 0, 0, 1);
-                        }
-                        this.SetupBankStarts(0, 1, ((Bridge.Int.mul(this.PrgRomCount, 2) - 2) | 0), ((Bridge.Int.mul(this.PrgRomCount, 2) - 1) | 0));
-                        break;
-                    case 7: 
-                        //SetupBanks(0, 1, 2, 3);
-                        this.SetupBankStarts(0, 1, 2, 3);
-                        this.Mirror(0, 0);
-                        break;
-                    default: 
-                        throw new System.NotImplementedException("Mapper " + (this.mapperId.toString() || "") + " not implemented.");
-                }
-            },
-            CopyBanks: function (clock, dest, src, numberOf8kBanks) {
-
-                if (dest >= this.ChrRomCount) {
-                    dest = (this.ChrRomCount - 1) | 0;
-                }
-
-                var oneKsrc = Bridge.Int.mul(src, 8);
-                var oneKdest = Bridge.Int.mul(dest, 8);
-                //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-                //  setup ppuBankStarts in 0x400 block chunks 
-                for (var i = 0; i < (Bridge.Int.mul(numberOf8kBanks, 8)); i = (i + 1) | 0) {
-                    this.ppuBankStarts[((oneKdest + i) | 0)] = Bridge.Int.mul((((oneKsrc + i) | 0)), 1024);
-
-                }
-                this.UpdateBankStartCache();
-            },
-            SetByte: function (clock, address, val) {
-                if (address >= 24576 && address <= 32767) {
-                    if (this.SRAMEnabled) {
-                        this.prgRomBank6$1[address & 8191] = val & 255;
-                    }
-
-                    return;
-                }
-
-                if (this.mapperId === 7) {
-                    // val selects which bank to swap, 32k at a time
-                    var newbank8 = 0;
-                    newbank8 = Bridge.Int.mul(4, (val & 15));
-
-                    this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
-                    // whizzler.DrawTo(clock);
-                    if ((val & 16) === 16) {
-                        this.OneScreenOffset = 1024;
-                    } else {
-                        this.OneScreenOffset = 0;
-                    }
-                    this.Mirror(clock, 0);
-                }
-
-                if (this.mapperId === 3 && address >= 32768) {
-
-                    this.CopyBanks(clock, 0, val, 1);
-                }
-
-                if (this.mapperId === 2 && address >= 32768) {
-                    var newbank81 = 0;
-
-                    newbank81 = (Bridge.Int.mul((val), 2));
-                    // keep two high banks, swap low banks
-
-                    // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
-                    this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
-                }
-
-
-
-
 
             }
         }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.ComponentModel;
 
-namespace NES.CPU.PPUClasses
+namespace ChiChiNES
 {
     public class PPUWriteEvent : INotifyPropertyChanged
     {

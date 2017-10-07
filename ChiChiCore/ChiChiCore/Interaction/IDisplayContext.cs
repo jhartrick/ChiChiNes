@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NES.CPU.nitenedo.Interaction
+namespace ChiChiNES.Interaction
 {
     public class InvalidDisplayContextException : Exception
     {
