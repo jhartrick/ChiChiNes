@@ -28,10 +28,13 @@
     <Compile Include="src\app\emu\ChiChiCore.meta.min.js" />
     <Compile Include="src\app\emu\ChiChiCore.min.js" />
     <Content Include=".angular-cli.json" />
-    <Content Include="dk.nes" />
     <Content Include="package.json" />
-    <Content Include="src\app\controlpanel.component.css" />
-    <Content Include="src\app\controlpanel.component.html" />
+    <Content Include="src\app\chichines.instructionhistory\chichines.instructionhistory.component.css" />
+    <Content Include="src\app\chichines.instructionhistory\chichines.instructionhistory.component.html" />
+    <Content Include="src\app\chichines.memviewer\chichines.memviewer.component.css" />
+    <Content Include="src\app\chichines.memviewer\chichines.memviewer.component.html" />
+    <Content Include="src\app\controlpanel\controlpanel.component.css" />
+    <Content Include="src\app\controlpanel\controlpanel.component.html" />
     <Content Include="src\app\debugoutput\debugoutput.component.css" />
     <Content Include="src\app\debugoutput\debugoutput.component.html" />
     <Content Include="src\app\emu\bridge.log" />
@@ -56,11 +59,19 @@
     <Content Include="src\tsconfig.app.json" />
     <Content Include="src\tsconfig.spec.json" />
     <TypeScriptCompile Include="src\app-typings\app_typings.d.ts" />
-    <TypeScriptCompile Include="src\app\controlpanel.component.ts" />
+    <TypeScriptCompile Include="src\app\chichines.instructionhistory\chichines.instructionhistory.component.ts" />
+    <TypeScriptCompile Include="src\app\chichines.memviewer\chichines.memviewer.component.ts" />
+    <TypeScriptCompile Include="src\app\controlpanel\controlpanel.component.ts" />
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.spec.ts" />
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.ts" />
     <TypeScriptCompile Include="src\app\emu\bridge.d.ts" />
     <TypeScriptCompile Include="src\app\emu\ChiChiCore.d.ts" />
+    <TypeScriptCompile Include="src\app\services\chichines.service.controlpad.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="src\app\services\debug.interface.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\main.ts" />
     <TypeScriptCompile Include="src\polyfills.ts" />
     <TypeScriptCompile Include="src\app\services\NESService.ts">
@@ -82,13 +93,13 @@
     <Content Include="obj\Debug\NodejsApp1.njsproj.FileListAbsolute.txt" />
     <Content Include="obj\Debug\TypeScriptCompilerOutput.txt" />
     <Content Include="src\app\app.component.html" />
-    <Content Include="src\app\chichi.component.html" />
+    <Content Include="src\app\chichines\chichi.component.html" />
     <Content Include="src\app\app.component.css" />
-    <Content Include="src\app\chichi.component.css" />
+    <Content Include="src\app\chichines\chichi.component.css" />
     <TypeScriptCompile Include="src\app\app.component.spec.ts" />
     <TypeScriptCompile Include="src\app\app.component.ts" />
     <TypeScriptCompile Include="src\app\app.module.ts" />
-    <TypeScriptCompile Include="src\app\chichines.component.ts" />
+    <TypeScriptCompile Include="src\app\chichines\chichines.component.ts" />
     <TypeScriptCompile Include="src\environments\environment.prod.ts" />
     <TypeScriptCompile Include="src\environments\environment.ts" />
   </ItemGroup>
@@ -102,13 +113,16 @@
     <Folder Include="dist\out-tsc\src\app" />
     <Folder Include="dist\out-tsc\src\environments" />
     <Folder Include="e2e" />
-    <Folder Include="NodejsApp1" />
     <Folder Include="obj" />
     <Folder Include="obj\Debug" />
     <Folder Include="src" />
     <Folder Include="src\app" />
+    <Folder Include="src\app\chichines.instructionhistory\" />
+    <Folder Include="src\app\chichines.memviewer\" />
     <Folder Include="src\app\debugoutput\" />
     <Folder Include="src\app\emu\" />
+    <Folder Include="src\app\chichines\" />
+    <Folder Include="src\app\controlpanel\" />
     <Folder Include="src\assets" />
     <Folder Include="src\environments" />
     <Folder Include="src\app\services\" />

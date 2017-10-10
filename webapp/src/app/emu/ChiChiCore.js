@@ -2963,7 +2963,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._operationCounter = 0;
                 this._stackPointer = 253;
                 this.setupticks();
-                this.Ticks = 0;
+                this.Ticks = 4;
                 this.ProgramCounter = (this.GetByte$1(65532) + Bridge.Int.mul(this.GetByte$1(65533), 256)) | 0;
             },
             PowerOn: function () {
@@ -2972,7 +2972,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._stackPointer = 253;
                 this._operationCounter = 0;
                 this.setupticks();
-                this.Ticks = 0;
+                this.Ticks = 4;
 
                 // wram initialized to 0xFF, with some exceptions
                 // probably doesn't affect games, but why not?
@@ -3044,7 +3044,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         result = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 255;
                         break;
                     case ChiChiNES.AddressingModes.ZeroPageY: 
-                        result = (((this._currentInstruction_Parameters0 + this._indexRegisterY) | 0)) & 255;
+                        result = ((((this._currentInstruction_Parameters0 & 255) + (this._indexRegisterY & 255)) | 0)) & 255;
                         break;
                     case ChiChiNES.AddressingModes.Indirect: 
                         this.lowByte = this._currentInstruction_Parameters0;
@@ -3065,7 +3065,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         result = this.highByte | this.lowByte;
                         break;
                     case ChiChiNES.AddressingModes.IndirectIndexed: 
-                        this.lowByte = this.GetByte$1(this._currentInstruction_Parameters0);
+                        this.lowByte = this.GetByte$1(this._currentInstruction_Parameters0 & 255);
                         this.highByte = this.GetByte$1((((this._currentInstruction_Parameters0 + 1) | 0)) & 255) << 8;
                         addr = (this.lowByte | this.highByte);
                         result = (addr + this._indexRegisterY) | 0;
@@ -3077,9 +3077,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         result = (((this._programCounter + this._currentInstruction_Parameters0) | 0));
                         break;
                     default: 
-                        throw new System.NotImplementedException("Executors.DecodeAddress() recieved an invalid addressmode");
+                        this.HandleBadOperation();
+                        break;
                 }
                 return (result & 65535);
+            },
+            HandleBadOperation: function () {
+                throw new System.NotImplementedException("Executors.DecodeAddress() recieved an invalid addressmode");
             },
             DecodeOperand: function () {
                 switch (this._currentInstruction_AddressingMode) {
@@ -4019,6 +4023,86 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 return result & 255;
             },
+            PeekByte: function (address) {
+                var result = 0;
+
+
+                // check high byte, find appropriate handler
+                switch (address & 61440) {
+                    case 0: 
+                    case 4096: 
+                        if (address < 2048) {
+                            result = this.Rams[address];
+                        } else {
+                            result = address >> 8;
+                        }
+                        break;
+                    case 8192: 
+                    case 12288: 
+                        result = this._pixelWhizzler.ChiChiNES$IPPU$GetByte(this.clock, address);
+                        break;
+                    case 16384: 
+                        switch (address) {
+                            case 16406: 
+                                result = 0; //  _padOne.GetByte(clock, address);
+                                break;
+                            case 16407: 
+                                //result = _padTwo.GetByte(clock, address);
+                                break;
+                            case 16405: 
+                                result = 0; //  soundBopper.GetByte(clock, address);
+                                break;
+                            default: 
+                                // return open bus?
+                                result = address >> 8;
+                                break;
+                        }
+                        break;
+                    case 20480: 
+                        // ??
+                        result = address >> 8;
+                        break;
+                    case 24576: 
+                    case 28672: 
+                    case 32768: 
+                    case 36864: 
+                    case 40960: 
+                    case 45056: 
+                    case 49152: 
+                    case 53248: 
+                    case 57344: 
+                    case 61440: 
+                        // cart 
+                        result = this._cart.ChiChiNES$IClockedMemoryMappedIOElement$GetByte(this.clock, address);
+                        break;
+                    default: 
+                        throw new System.Exception("Bullshit!");
+                }
+                if (this._cheating && this.memoryPatches.containsKey(address)) {
+
+                    return this.memoryPatches.get(address).ChiChiNES$Hacking$IMemoryPatch$Activated ? this.memoryPatches.get(address).ChiChiNES$Hacking$IMemoryPatch$GetData(result) & 255 : result & 255;
+                }
+
+                return result & 255;
+            },
+            /**
+             * gets an array of cpu memory, without affecting emulation
+             *
+             * @instance
+             * @public
+             * @this ChiChiNES.CPU2A03
+             * @memberof ChiChiNES.CPU2A03
+             * @param   {number}            start     
+             * @param   {number}            finish
+             * @return  {Array.<number>}
+             */
+            PeekBytes: function (start, finish) {
+                var array = System.Array.init(((finish - start) | 0), 0, System.Int32);
+                for (var i = 0; i < ((finish - start) | 0); i = (i + 1) | 0) {
+                    array[i] = this.PeekByte(((start + i) | 0));
+                }
+                return array;
+            },
             SetByte: function () {
 
                 this.SetByte$1(this.AddressBus, this.DataBus & 255);
@@ -4098,17 +4182,22 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._pixelWhizzler.ChiChiNES$IPPU$HandleEvent(this.Clock);
                 this.FindNextEvent();
             },
-            WriteInstructionHistoryAndUsage: function () {
-                var $t;
-                this._instructionHistory[(Bridge.identity(this.instructionHistoryPointer, (this.instructionHistoryPointer = (this.instructionHistoryPointer - 1) | 0))) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
-                if ((this.instructionHistoryPointer & 255) === 0) {
-                    this.FireDebugEvent();
-                }
-                this.instructionUsage[this._currentInstruction_OpCode] = (this.instructionUsage[this._currentInstruction_OpCode] + 1) | 0;
-
+            ResetInstructionHistory: function () {
+                //_instructionHistory = new Instruction[0x100];
+                this.instructionHistoryPointer = 255;
 
             },
-            FireDebugEvent: function () {
+            WriteInstructionHistoryAndUsage: function () {
+                var $t;
+
+                this._instructionHistory[(Bridge.identity(this.instructionHistoryPointer, (this.instructionHistoryPointer = (this.instructionHistoryPointer - 1) | 0))) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.time = this.clock, $t.A = this._accumulator, $t.X = this._indexRegisterX, $t.Y = this._indexRegisterY, $t.SR = this._statusRegister, $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
+                this.instructionUsage[this._currentInstruction_OpCode] = (this.instructionUsage[this._currentInstruction_OpCode] + 1) | 0;
+                if ((this.instructionHistoryPointer & 255) === 255) {
+                    this.FireDebugEvent("instructionHistoryFull");
+                }
+
+            },
+            FireDebugEvent: function (s) {
                 !Bridge.staticEquals(this.DebugEvent, null) ? this.DebugEvent(this, { }) : null;
             },
             PeekInstruction: function (address) {
@@ -4137,6 +4226,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
     Bridge.define("ChiChiNES.CPU2A03.Instruction", {
         fields: {
             AddressingMode: 0,
+            time: 0,
+            A: 0,
+            X: 0,
+            Y: 0,
+            SR: 0,
+            Idx: 0,
             Address: 0,
             OpCode: 0,
             Parameters0: 0,
@@ -4157,6 +4252,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.Parameters1 = inst.Parameters1;
                 this.ExtraTiming = inst.ExtraTiming;
                 this.Length = inst.Length;
+
 
             }
         }
@@ -4333,8 +4429,20 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             isDebugging: false,
             _totalCPUClocks: 0,
             frameCount: 0,
-            framesRendered: 0,
-            frameOn: false
+            /**
+             * runs a "step", either a pending non-maskable interrupt, maskable interupt, or a sprite DMA transfer,
+              or a regular machine cycle, then runs the appropriate number of PPU clocks based on CPU action
+              ppuclocks = cpuclocks * 3
+             note: this approach relies on very precise cpu timing
+             *
+             * @instance
+             * @private
+             * @memberof ChiChiNES.NESMachine
+             * @default true
+             * @type boolean
+             */
+            frameOn: false,
+            frameJustEnded: false
         },
         events: {
             SoundStatusChanged: null,
@@ -4463,8 +4571,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.doDraw = false;
                 this._totalCPUClocks = 0;
                 this.frameCount = 0;
-                this.framesRendered = 0;
                 this.frameOn = true;
+                this.frameJustEnded = false;
             },
             ctor: function (cpu, ppu, tiler, wavSharer, soundBopper, soundThread) {
                 this.$initialize();
@@ -4554,7 +4662,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._cpu.Cart.ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler = Bridge.fn.cacheBind(this._cpu, this._cpu.InterruptRequest);
                     this._ppu.ChiChiNES$IPPU$ChrRomHandler = this._cart;
 
-                    this.Reset();
 
                 } else {
                     throw new ChiChiNES.ROMLoader.CartLoadException.ctor("Unsupported ROM type - load failed.");
@@ -4764,22 +4871,26 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._sharedWave.Dispose();
                 this.soundThreader.dispose();
             },
-            /**
-             * runs a "step", either a pending non-maskable interrupt, maskable interupt, or a sprite DMA transfer,
-              or a regular machine cycle, then runs the appropriate number of PPU clocks based on CPU action
-              ppuclocks = cpuclocks * 3
-             note: this approach relies on very precise cpu timing
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.NESMachine
-             * @memberof ChiChiNES.NESMachine
-             * @return  {void}
-             */
             Step: function () {
+                if (this.frameJustEnded) {
+                    this._cpu.FindNextEvent();
+                    this.frameOn = true;
+                    this.frameJustEnded = false;
+                }
                 this._cpu.Step();
 
-                this._totalCPUClocks = this._cpu.Clock;
+                if (!this.frameOn) {
+                    this._totalCPUClocks = this._cpu.Clock;
+                    //lock (_sharedWave)
+                    //{
+                    //    soundBopper.FlushFrame(_totalCPUClocks);
+                    //    soundBopper.EndFrame(_totalCPUClocks);
+                    //}
+                    this._totalCPUClocks = 0;
+                    this._cpu.Clock = 0;
+                    this._ppu.ChiChiNES$IPPU$LastcpuClock = 0;
+                    this.frameJustEnded = true;
+                }
                 //_cpu.Clock = _totalCPUClocks;
                 //breakpoints: HandleBreaks();
 
@@ -4787,12 +4898,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             RunFrame: function () {
 
                 this.frameOn = true;
+                this.frameJustEnded = false;
 
                 this._cpu.FindNextEvent();
                 do {
                     this._cpu.Step();
                 } while (this.frameOn);
-
                 this._totalCPUClocks = this._cpu.Clock;
                 //lock (_sharedWave)
                 //{
@@ -4811,8 +4922,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
             },
             FrameFinished: function () {
+                this.frameJustEnded = true;
                 this.frameOn = false;
-                this.framesRendered = (this.framesRendered + 1) | 0;
                 this.Drawscreen(this, { });
             }
         }
@@ -7092,13 +7203,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                                 this._PPUStatus = this._PPUStatus | 64;
                             }
 
-                            //var x = _palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
-                            var x = ChiChiNES.PixelWhizzler.pal[this._palette[(foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel]];
-                            //rgb32OutBuffer[vbufLocation] = x;
+                            //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
+                            var x = this._palette[(foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+
                             this.byteOutBuffer[this.vbufLocation * 4] = x;
-                            this.byteOutBuffer[(this.vbufLocation * 4) + 1] = x >> 8;
-                            this.byteOutBuffer[(this.vbufLocation * 4) + 2] = x >> 16;
-                            this.byteOutBuffer[(this.vbufLocation * 4) + 3] = 255; // (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
+                            //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
+                            //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
+                            //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
 
                             this.vbufLocation++;
                         }

@@ -1,0 +1,42 @@
+﻿p, span {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.75em;
+  margin: 0;
+}
+
+.mat-expansion-panel, .mat-table {
+  background-color: rgba(41, 141, 39, 0.5);
+}
+
+.mat-column-time {
+  flex: 0 0 80px;
+}
+
+.mat-column-asm {
+  flex: 0 0 225px;
+}
+
+.mat-column-A {
+  flex: 0 0 60px;
+}
+
+.mat-column-X {
+  flex: 0 0 60px;
+}
+
+.mat-column-Y {
+  flex: 0 0 60px;
+}
+
+.mat-table {
+  overflow: auto;
+  max-height: 500px;
+}
+
+.mat-header-row {
+  font-size: 0.9em;
+}
+
+.hidden {
+  display: none;
+}

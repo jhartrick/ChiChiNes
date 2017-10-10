@@ -14,7 +14,7 @@ namespace ChiChiNES
             _operationCounter = 0;
             _stackPointer = 0xFD;
             setupticks();
-            Ticks = 0;
+            Ticks = 4;
             ProgramCounter = GetByte(0xFFFC) + GetByte(0xFFFD) * 0x100;
         }
 
@@ -25,7 +25,7 @@ namespace ChiChiNES
             _stackPointer = 0xFD;
             _operationCounter = 0;
             setupticks();
-            Ticks = 0;
+            Ticks = 4;
 
             // wram initialized to 0xFF, with some exceptions
             // probably doesn't affect games, but why not?
@@ -51,11 +51,7 @@ namespace ChiChiNES
             outStream.Enqueue(_stackPointer);
             for (int i = 0; i < 0x800; i+=4)
             {
-                outStream.Enqueue( (Rams[i] << 24) | 
-                                    (Rams[i+1] << 16) | 
-                                    (Rams[i+2] << 8)  | 
-                                    (Rams[i + 3])
-                        );
+                outStream.Enqueue( (Rams[i] << 24) | (Rams[i+1] << 16) | (Rams[i+2] << 8) | (Rams[i + 3]) );
             }
         }
 

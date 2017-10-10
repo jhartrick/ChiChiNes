@@ -124,7 +124,6 @@ namespace ChiChiNES
                 _cpu.Cart.NMIHandler = _cpu.InterruptRequest;
                 _ppu.ChrRomHandler = _cart;
 
-                Reset();
 
             }
             else

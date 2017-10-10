@@ -35,11 +35,19 @@ namespace ChiChiNES
                 Parameters1 = inst.Parameters1;
                 ExtraTiming = inst.ExtraTiming;
                 Length = inst.Length;
+
                 
             }
 
+
             public AddressingModes AddressingMode;
+            public int time;
+            public int A;
+            public int X;
+            public int Y;
+            public int SR;
             // 2 bytes
+            public int Idx;
             public int Address;
             // one byte
             public int OpCode;

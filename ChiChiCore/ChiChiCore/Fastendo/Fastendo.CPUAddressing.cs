@@ -43,13 +43,15 @@ namespace ChiChiNES
                     result = (_currentInstruction_Parameters0 + _indexRegisterX) & 0xFF;
                     break;
                 case AddressingModes.ZeroPageY:
-                    result = (_currentInstruction_Parameters0 + _indexRegisterY) & 0xFF;
+                    result = ((_currentInstruction_Parameters0 & 0xFF) + (_indexRegisterY & 0xFF)) & 0xFF;
                     break;
                 case AddressingModes.Indirect:
                     lowByte = _currentInstruction_Parameters0;
                     highByte = _currentInstruction_Parameters1 << 8;
+
                     int indAddr = (highByte | lowByte ) & 0xFFFF;
                     int indirectAddr = (GetByte(indAddr));
+
                     lowByte = (lowByte + 1) & 0xFF;
                     indAddr = (highByte | lowByte) & 0xFFFF;
                     indirectAddr |= (GetByte(indAddr) << 8);
@@ -64,7 +66,7 @@ namespace ChiChiNES
                     result = highByte | lowByte;
                     break;
                 case AddressingModes.IndirectIndexed:
-                    lowByte = GetByte(_currentInstruction_Parameters0 ) ;
+                    lowByte = GetByte(_currentInstruction_Parameters0 & 0xFF) ;
                     highByte = GetByte((_currentInstruction_Parameters0 + 1) & 0xFF )  << 8;
                     addr = (lowByte | highByte) ;
                     result = addr + _indexRegisterY;
@@ -78,9 +80,15 @@ namespace ChiChiNES
                     result = (_programCounter + _currentInstruction_Parameters0);
                     break;
                 default:
-                    throw new NotImplementedException("Executors.DecodeAddress() recieved an invalid addressmode");
+                    HandleBadOperation();
+                    break;
             }
             return (ushort)result;
+        }
+
+        private void HandleBadOperation()
+        {
+            throw new NotImplementedException("Executors.DecodeAddress() recieved an invalid addressmode");
         }
 
         int DecodeOperand()

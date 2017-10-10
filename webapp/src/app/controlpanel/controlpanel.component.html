@@ -6,7 +6,7 @@
     </mat-expansion-panel-header>
 
     <div class="">
-      <mat-button-toggle value="powertoggle" (change)="powertoggle(toggleEvent)">
+      <mat-button-toggle value="powertoggle" (change)="powertoggle()" [disabled]="!nesService.canStart">
         {{ powerstate }}
       </mat-button-toggle>
 
@@ -22,8 +22,15 @@
         <div class="mat-button-toggle-focus-overlay"></div>
       </div>
     </div>
-    <div >
-      Loaded : {{ currentFilename }}
+    <div *ngIf="currentFilename">
+      <p>
+        Loaded: {{ currentFilename }}
+      </p>
+        <p>Mapper: {{ nesService.cartInfo.mapperId }}</p>
+        <p>Prg Roms: {{ nesService.cartInfo.prgRomCount }}</p>
+        <p>Chr Roms: {{ nesService.cartInfo.chrRomCount }}</p>
+      <p>FPS: {{ nesService.framesPerSecond }}</p>
     </div>
   </mat-expansion-panel>
 
+  <button mat-button (click)="showDebugger()">Open Debugger</button>

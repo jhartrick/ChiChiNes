@@ -1,7 +1,5 @@
 ﻿import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener } from '@angular/core';
-import { Http, ResponseContentType, Response } from '@angular/http';
-import { DomSanitizer } from '@angular/platform-browser';
-import { Emulator } from './services/NESService'
+import { Emulator } from 'app/services/NESService'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/catch'
 import * as THREE from 'three'
@@ -13,38 +11,44 @@ import * as THREE from 'three'
 })
 
 export class ChiChiComponent implements AfterViewInit {
+    @ViewChild('chichiHolder') chichiHolder: ElementRef;
+    @ViewChild('chichiPig') canvasRef: ElementRef;
+    @ViewChild('fragmentShader') fragmentShader: ElementRef;
+    @ViewChild('vertexShader') vertexShader: ElementRef;
     
     private renderer: THREE.WebGLRenderer;
     private dkrom: number[];
-    @ViewChild('chichiHolder') chichiHolder: ElementRef;
-    @ViewChild('chichiPig') canvasRef: ElementRef;
     private canvasCtx: CanvasRenderingContext2D;
     private vbuffer: Uint8Array = new Uint8Array(256 * 256 * 4);
+    private pal: Uint8Array = new Uint8Array(256 * 4);
 
     private text: THREE.DataTexture;
+    private paltext: THREE.DataTexture;
     private draw: boolean;
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
+    private material: THREE.ShaderMaterial;
+
+
     private sound: THREE.Audio;
-    private listener : THREE.AudioListener;
-    
+    private listener: THREE.AudioListener;
     private audioCtx : AudioContext;
     private audioSource : AudioBufferSourceNode;
 
     public canvasLeft: string = '0px';
     public canvasTop: string = '0px';
 
-     constructor(private http: Http, private nesService: Emulator) {
+     constructor(private nesService: Emulator) {
     }
 
     @HostListener('document:keydown', ['$event'])
     handleKeyDownEvent(event: KeyboardEvent) {
-        this.nesService.handleKeyDownEvent(event);
+        this.nesService.controlPad.handleKeyDownEvent(event);
     }
 
     @HostListener('document:keyup', ['$event'])
     handleKeyUpEvent(event: KeyboardEvent) {
-        this.nesService.handleKeyUpEvent(event);
+        this.nesService.controlPad.handleKeyUpEvent(event);
     }
 
     @HostListener('window:resize', ['$event'])
@@ -75,27 +79,52 @@ export class ChiChiComponent implements AfterViewInit {
 
         this.nesService.wavBuffer = this.audioCtx.createBuffer(2, 16, 44100);
 
-
         var w = 1;
         var h = 1;
         var geometry = new THREE.PlaneGeometry(5, 5);
 
-        var uvs = geometry.faceVertexUvs[0];
-        uvs[0][0].set(0, 0);
-        uvs[0][1].set(0, h);
-        uvs[0][2].set(w, 0);
-        uvs[1][0].set(0, h);
-        uvs[1][1].set(w, h);
-        uvs[1][2].set(w, 0);
-        geometry.uvsNeedUpdate = true;
         this.text = new THREE.DataTexture(this.vbuffer, 256, 256, THREE.RGBAFormat);
 
-//        , THREE.RGBAFormat, THREE.UnsignedByteType, THREE.UVMapping,
-//            THREE.RepeatWrapping, THREE.RepeatWrapping, THREE.NearestFilter, THREE.NearestFilter, 1.0, THREE.LinearEncoding );
+        for (var i = 0; i < 256; i++) {
+            var color = ChiChiNES.PixelWhizzler.pal[i];
+            this.pal[i * 4] = color & 0xFF;
+            this.pal[(i * 4) +1] = (color >> 8) & 0xFF;
+            this.pal[(i * 4) + 2] = (color >> 16) & 0xFF;
+            this.pal[(i * 4) + 3] =  0xFF;
+        }
+        this.paltext = new THREE.DataTexture(this.pal, 256, 1, THREE.RGBAFormat);
 
-        var material = new THREE.MeshBasicMaterial({ map: this.text });
+        this.material = new THREE.ShaderMaterial({
+            uniforms: {
+                myTexture: { value: this.text },
+                myPalette: { value: this.paltext }
+            },
+            vertexShader: 
+`
+    varying vec2 v_texCoord;
+    void main()
+    {
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        v_texCoord = uv.st;
+    }
+`,
+            fragmentShader: 
+`uniform sampler2D myTexture;
+uniform sampler2D myPalette;
+varying vec2 v_texCoord;
+ 
 
-        var cube = new THREE.Mesh(geometry, material);
+void main()	{
+  vec2 texCoord = vec2(v_texCoord.s, 1.0 - v_texCoord.t);
+  vec4 color = texture2D(myTexture, texCoord);
+  vec4 finalColor = texture2D(myPalette,vec2(color.r,0.5));
+  gl_FragColor = vec4(finalColor.rgb, 1.0); 
+}`
+        });
+        this.paltext.needsUpdate = true;
+        //var material = new THREE.MeshBasicMaterial({ map: this.text });
+
+        var cube = new THREE.Mesh(geometry, this.material);
 
         this.scene.add(cube);
         //cube.rotateZ(2 & Math.PI);
@@ -137,25 +166,12 @@ export class ChiChiComponent implements AfterViewInit {
         
 
 
-        this.http.get('/assets/smb.nes', {
-            responseType: ResponseContentType.Blob
-        }).map(res => {
-            return res.blob();
-        })
-            .map(blob => {
-                
-                var fileReader: FileReader = new FileReader();
-                fileReader.onload = (e) => {
-                    this.dkrom = Array.from(new Uint8Array(fileReader.result));
-                    this.nesService.LoadRom(this.dkrom);
-                    
-                };
-                fileReader.readAsArrayBuffer(blob);
-            }).subscribe();
+
   }
 
     renderScene(): void {
         this.text.needsUpdate = true;
+        //this.paltext.needsUpdate = true;
         this.renderer.render(this.scene, this.camera);
     }
 

@@ -147,13 +147,13 @@ namespace ChiChiNES
                             _PPUStatus = _PPUStatus | 0x40;
                         }
 
-                        //var x = _palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
-                        var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
-                        //rgb32OutBuffer[vbufLocation] = x;
-                        byteOutBuffer[vbufLocation * 4] = (byte)(x);
-                        byteOutBuffer[(vbufLocation * 4) + 1] = (byte)(x >> 8);
-                        byteOutBuffer[(vbufLocation * 4) + 2] = (byte)(x >> 16);
-                        byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
+                        //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
+                        var x = _palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
+
+                        byteOutBuffer[vbufLocation * 4] = x;
+                        //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
+                        //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
+                        //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
 
                         vbufLocation++;
                     }

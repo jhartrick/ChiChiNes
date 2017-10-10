@@ -1,7 +1,4 @@
-﻿using System;
-using ChiChiNES;
-using System.Collections.Generic;
-using ChiChiNES;
+﻿using System.Collections.Generic;
 namespace ChiChiNES
 {
     public interface INESCart : IClockedMemoryMappedIOElement

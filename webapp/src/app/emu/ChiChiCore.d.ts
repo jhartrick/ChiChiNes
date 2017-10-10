@@ -594,7 +594,7 @@ declare module ChiChiNES {
         pal: number[];
         frameClockEnd: number;
         PowersOfTwo: number[];
-        
+        GetPalBytes(): number[];
         GetPalRGBA(): number[];
     }
     var PixelWhizzler: PixelWhizzlerFunc;
@@ -762,6 +762,7 @@ declare module ChiChiNES {
         InstructionHistoryPointer: number;
         InstructionHistory: ChiChiNES.CPU2A03.Instruction[];
         FireDebugEvent: any;
+        HandleBadOperation : any;
         getSRMask(flag: ChiChiNES.CPUStatusBits): number;
         SetFlag(Flag: ChiChiNES.CPUStatusMasks, value: boolean): void;
         GetFlag(Flag: ChiChiNES.CPUStatusMasks): boolean;
@@ -865,11 +866,13 @@ declare module ChiChiNES {
         PopStack(): number;
         GetByte(): number;
         GetByte$1(address: number): number;
+        PeekBytes(start: number, finish: number): number[];
         SetByte(): void;
         SetByte$1(address: number, data: number): void;
         FindNextEvent(): void;
         HandleNextEvent(): void;
         WriteInstructionHistoryAndUsage(): void;
+        ResetInstructionHistory(): void;
         PeekInstruction(address: number): ChiChiNES.CPU2A03.Instruction;
     }
     export interface CPU2A03Func extends Function {
@@ -881,6 +884,7 @@ declare module ChiChiNES {
     }
     var CPU2A03: CPU2A03Func;
     module CPU2A03 {
+        
         export interface Instruction {
             AddressingMode: ChiChiNES.AddressingModes;
             Address: number;
@@ -889,6 +893,11 @@ declare module ChiChiNES {
             Parameters1: number;
             ExtraTiming: number;
             Length: number;
+            time: number;
+            A: number;
+            X: number;
+            Y: number;
+            SR: number;
         }
         export interface InstructionFunc extends Function {
             prototype: Instruction;

@@ -1827,6 +1827,10 @@ input.mat-input-element {
   color: #ffd740
 }
 
+.mat-button {
+  border:1px solid black;
+  border-radius: 3px 4px;
+}
 
 body {
   background-color: burlywood;

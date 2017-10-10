@@ -1,0 +1,48 @@
+﻿  History:
+
+<div class="instructionhistory">
+  <div class="example-container mat-elevation-z8">
+    <div class="mat-table">
+      <div class="mat-header-row">
+        <!---->
+        <div class="mat-header-cell mat-column-time">Time</div>
+        <div class="mat-header-cell mat-column-asm">Dasm</div>
+        <div class="mat-header-cell mat-column-A">ACC</div>
+        <div class="mat-header-cell mat-column-X">IDX</div>
+        <div class="mat-header-cell mat-column-Y">IDY</div>
+      </div>
+    </div>
+
+    <mat-table #table [dataSource]="dbgDataSource">
+      <ng-container matColumnDef="time">
+        <mat-header-cell *matHeaderCellDef>Time</mat-header-cell>
+        <mat-cell *matCellDef="let row"> {{row.time }} </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="asm">
+        <mat-header-cell *matHeaderCellDef>Dasm</mat-header-cell>
+        <mat-cell *matCellDef="let row"> {{row.asm}} </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="A">
+        <mat-header-cell *matHeaderCellDef>ACC</mat-header-cell>
+        <mat-cell *matCellDef="let row"> {{row.A.toString(16)}} </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="X">
+        <mat-header-cell *matHeaderCellDef>IDX</mat-header-cell>
+        <mat-cell *matCellDef="let row"> {{row.X.toString(16)}} </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="Y">
+        <mat-header-cell *matHeaderCellDef>IDY</mat-header-cell>
+        <mat-cell *matCellDef="let row"> {{row.Y.toString(16)}} </mat-cell>
+      </ng-container>
+
+      <mat-header-row style="display:none" *matHeaderRowDef="['time','asm','A', 'X', 'Y']"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: ['time','asm','A', 'X', 'Y']"></mat-row>
+    </mat-table>
+    <mat-paginator #paginator
+                   [length]="dataLength"
+                   [pageIndex]="0"
+                   [pageSize]="64"
+                   [pageSizeOptions]="[64, 128, 256, 512, 1024]">
+    </mat-paginator>
+  </div>
+</div>

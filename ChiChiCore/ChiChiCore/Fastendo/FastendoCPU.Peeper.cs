@@ -35,28 +35,40 @@ namespace ChiChiNES
             get { return _instructionHistory; }
         }
 
+        public void ResetInstructionHistory() {
+            //_instructionHistory = new Instruction[0x100];
+            instructionHistoryPointer = 0xFF;
+
+        }
+
         public void WriteInstructionHistoryAndUsage()
         {
+
             _instructionHistory[(instructionHistoryPointer--) & 0xFF] = new Instruction() {
-                OpCode= _currentInstruction_OpCode,
+                time = clock,
+                A = _accumulator,
+                X = _indexRegisterX,
+                Y  = _indexRegisterY,
+                SR = _statusRegister,
+                OpCode = _currentInstruction_OpCode,
                 Parameters0 = _currentInstruction_Parameters0,
                 Parameters1 = _currentInstruction_Parameters1,
                 Address = _currentInstruction_Address,
                 AddressingMode = _currentInstruction_AddressingMode,
                 ExtraTiming = _currentInstruction_ExtraTiming
             };
-            if ((instructionHistoryPointer & 0xFF) == 0) {
-                FireDebugEvent();
-            }
             instructionUsage[_currentInstruction_OpCode]++;
+            if ((instructionHistoryPointer & 0xFF) == 0xFF)
+            {
+                FireDebugEvent("instructionHistoryFull");
+            }
 
-            
         }
         public event EventHandler DebugEvent;
 
-        private void FireDebugEvent()
+        private void FireDebugEvent(string s)
         {
-            DebugEvent?.Invoke(this, new EventArgs());
+            DebugEvent?.Invoke(this, new EventArgs() );
         }
 
         public Instruction PeekInstruction(int address)

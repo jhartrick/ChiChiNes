@@ -1,17 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ChiChiNES;
-using ChiChiNES;
-using System.Threading;
-using ChiChiNES;
 using ChiChiNES.BeepsBoops;
-using ChiChiNES;
-using ChiChiNES.ROMLoader;
 using ChiChiNES.Sound;
-using ChiChiNES;
-//using CPU6502.Machine;
 
 namespace ChiChiNES
 {

@@ -191,6 +191,93 @@ namespace ChiChiNES
             return result & 0xFF;
         }
 
+        public int PeekByte(int address)
+        {
+            int result = 0;
+
+
+            // check high byte, find appropriate handler
+            switch (address & 0xF000)
+            {
+                // zeropage
+                case 0x0000:
+                case 0x1000:
+                    if (address < 0x800)
+                        result = Rams[address];
+                    else
+                        result = address >> 8;
+                    break;
+                case 0x2000:
+                case 0x3000:
+                    result = _pixelWhizzler.GetByte(clock, address);
+                    break;
+                // other io ports (sound, joystick, dma sprite xfer)
+                case 0x4000:
+                    switch (address)
+                    {
+                        case 0x4016:
+                            result = 0;//  _padOne.GetByte(clock, address);
+                            break;
+                        case 0x4017:
+                            //result = _padTwo.GetByte(clock, address);
+                            break;
+                        case 0x4015:
+                            result = 0;//  soundBopper.GetByte(clock, address);
+                            break;
+                        default:
+                            // return open bus?
+                            result = address >> 8;
+                            break;
+                    }
+                    break;
+
+                case 0x5000:
+                    // ??
+                    result = address >> 8;
+                    break;
+                // cart saveram 
+                case 0x6000:
+                case 0x7000:
+                // cart 
+                case 0x8000:
+                case 0x9000:
+                case 0xA000:
+                case 0xB000:
+                case 0xC000:
+                case 0xD000:
+                case 0xE000:
+                case 0xF000:
+                    result = _cart.GetByte(clock, address);
+                    break;
+                //ppu owns this part of the map
+                default:
+                    throw new Exception("Bullshit!");
+                    // cart sram, lives here
+
+            }
+            if (_cheating && memoryPatches.ContainsKey(address))
+            {
+
+                return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
+            }
+
+            return result & 0xFF;
+        }
+
+
+        /// <summary>
+        /// gets an array of cpu memory, without affecting emulation
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="finish"></param>
+        /// <returns></returns>
+        public int[] PeekBytes(int start, int finish) {
+            int[] array = new int[finish - start];
+            for (int i = 0; i < finish - start; ++i) {
+                array[i] = PeekByte(start + i);
+            }
+            return array;
+        }
 
         public void SetByte()
         {

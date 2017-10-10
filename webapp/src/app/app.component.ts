@@ -1,5 +1,4 @@
 ﻿import { Component, ViewChild } from '@angular/core';
-import { ChiChiComponent } from './chichines.component'
 import {  MatSidenavModule, MatDrawer } from '@angular/material';
 
 import { Emulator } from './services/NESService'

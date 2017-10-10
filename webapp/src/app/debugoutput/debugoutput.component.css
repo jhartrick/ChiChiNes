@@ -3,12 +3,15 @@
   font-size: 0.75em;
   margin: 0;
 }
-.mat-expansion-panel {
-  background-color: rgba(41, 141, 39, 0.44) !important;
+
+.mat-expansion-panel, .mat-table {
+  background-color: rgba(41, 141, 39, 0.5);
 }
-.instructionhistory {
-  width : 1200px;
-  overflow:auto;
-  font-size: 0.85em;
-  columns: 120px 8;
+
+.mat-grid-tile {
+  width:320px;
+}
+
+.doodlerPanel {
+  overflow: auto;
 }

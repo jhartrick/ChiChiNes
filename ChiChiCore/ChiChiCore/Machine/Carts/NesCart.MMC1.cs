@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using ChiChiNES;
 using ChiChiNES;
+using Bridge;
 
 namespace ChiChiNES
 {
+        [Rules(Integer =IntegerRule.Managed)]
         public class NesCartMMC1 : BaseCart
         {
 

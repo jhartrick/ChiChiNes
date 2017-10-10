@@ -311,6 +311,7 @@ namespace ChiChiNES
                 ProgramCounter = jumpTo;
                 //nonOpCodeticks = 7;
             }
+
             else if (_handleIRQ)
             {
                 _handleIRQ = false;
@@ -385,8 +386,6 @@ namespace ChiChiNES
 
             clock += cpuTiming[_currentInstruction_OpCode] + _currentInstruction_ExtraTiming;
         }
-
-
 
         /// <summary>
         /// runs up to x clock cycles, then returns

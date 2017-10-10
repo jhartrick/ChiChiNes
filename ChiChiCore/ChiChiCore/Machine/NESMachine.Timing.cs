@@ -10,7 +10,6 @@ namespace ChiChiNES
     {
         int _totalCPUClocks = 0;
         int frameCount = 0;
-        int framesRendered = 0;
 
         //bool handlingNMI = false;
         /// <summary>
@@ -21,12 +20,33 @@ namespace ChiChiNES
         ///  
         /// note: this approach relies on very precise cpu timing
         /// </summary>
-        
+
+        bool frameOn = true;
+        bool frameJustEnded = false;
+
+
         public void Step()
         {
+            if (frameJustEnded)
+            {
+                _cpu.FindNextEvent();
+                frameOn = true;
+                frameJustEnded = false;
+            }
             _cpu.Step();
 
-            _totalCPUClocks = _cpu.Clock;
+            if (!frameOn) {
+                _totalCPUClocks = _cpu.Clock;
+                //lock (_sharedWave)
+                //{
+                //    soundBopper.FlushFrame(_totalCPUClocks);
+                //    soundBopper.EndFrame(_totalCPUClocks);
+                //}
+                _totalCPUClocks = 0;
+                _cpu.Clock = 0;
+                _ppu.LastcpuClock = 0;
+                frameJustEnded = true;
+            }
             //_cpu.Clock = _totalCPUClocks;
             //breakpoints: HandleBreaks();
 
@@ -36,13 +56,13 @@ namespace ChiChiNES
         {
 
             frameOn = true;
+            frameJustEnded = false;
 
             _cpu.FindNextEvent();
             do
             {
                 _cpu.Step();
             } while (frameOn);
-
             _totalCPUClocks = _cpu.Clock;
             //lock (_sharedWave)
             //{
@@ -55,16 +75,15 @@ namespace ChiChiNES
             _totalCPUClocks = 0;
             _cpu.Clock = 0;
             _ppu.LastcpuClock = 0;
-            
+
 
         }
 
-        bool frameOn =true;
 
         void FrameFinished()
         {
+            frameJustEnded = true;
             frameOn = false;
-            framesRendered++;
             Drawscreen(this, new EventArgs());
         }
     }

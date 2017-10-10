@@ -1,0 +1,11 @@
+﻿<button mat-button  (click)="look()">Refresh RAM</button>
+<input [value]="ramStart" (input)="ramStart = $event.target.value" type="number">
+
+<mat-button-toggle value="hexMode" (change)="toggleHexMode()" >
+  {{ displayType }}
+</mat-button-toggle>
+<div class="ramTable">
+  <table>
+    <tr *ngFor="let line of data" [myTr]="line" showAscii="{{displayType}}"></tr>
+  </table>
+</div>
