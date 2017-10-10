@@ -2,7 +2,7 @@
 import { NgModule } from '@angular/core';
 import { HttpModule } from '@angular/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import { MatTableModule, MatPaginatorModule, MatGridListModule } from '@angular/material';
+import { MatTableModule, MatPaginatorModule, MatGridListModule, MatTabsModule } from '@angular/material';
 import { MatButtonModule, MatCheckboxModule, MatSidenavModule, MatButtonToggleModule, MatExpansionModule } from '@angular/material';
 import * as JSZip from 'jszip';
 import { Emulator} from './services/NESService'
@@ -35,7 +35,8 @@ import { InstructionHistoryComponent } from './chichines.instructionhistory/chic
       MatExpansionModule, 
       MatTableModule, 
       MatPaginatorModule,
-      MatGridListModule
+      MatGridListModule,
+	  MatTabsModule
   ],
   providers: [HttpModule, Emulator],
   bootstrap: [AppComponent]

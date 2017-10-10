@@ -1,52 +1,49 @@
-﻿<div>
+<div class="stepper">
   <button mat-button (click)="nes.DebugStep()">Step</button>
   <button mat-button (click)="nes.DebugStepFrame()">StepFrame</button>
   <button mat-button (click)="nes.Continue()">Continue</button>
 </div>
-<mat-expansion-panel>
-  <mat-expansion-panel-header>
-    <mat-panel-title>
-      CPU
-    </mat-panel-title>
-    <!--<input type="checkbox" [checked]="nes.isDebugging" (change)="nes.isDebugging = !nes.isDebugging" name="debugcheck" />-->
-  </mat-expansion-panel-header>
-  <p>
-    PC: {{ nes.currentCpuStatus.PC.toString(16) }} A: {{ nes.currentCpuStatus.A.toString(16) }} X: {{ nes.currentCpuStatus.X.toString(16) }} Y: {{ nes.currentCpuStatus.Y.toString(16) }} SP: {{ nes.currentCpuStatus.SP.toString(16) }}
-  </p>
-  <p>
-    SR: {{ nes.currentCpuStatus.SR.toString(16) }}
-  </p>
-    <chichines-instructionhistory></chichines-instructionhistory>
-</mat-expansion-panel>
-<mat-expansion-panel>
-  <mat-expansion-panel-header>
-    <mat-panel-title>
-      Memory
-    </mat-panel-title>
-  </mat-expansion-panel-header>
-  <chichines-memviewer></chichines-memviewer>
-</mat-expansion-panel>
-<mat-expansion-panel>
-  <mat-expansion-panel-header>
-    <mat-panel-title>
-      PPU
-    </mat-panel-title>
-  </mat-expansion-panel-header>
-  <button (click)="doodle()">Doodle</button>
-  <div class="doodlerPanel">
-    <canvas #tileDoodle width="512" height="512"></canvas>
-    <!--<mat-grid-list cols="2" rowHeight="256px">
-      <mat-grid-tile>
-      </mat-grid-tile>
-      <mat-grid-tile>
-        <canvas #tileDoodle2 width="256" height="256"></canvas>
-      </mat-grid-tile>
-      <mat-grid-tile>
-        <canvas #tileDoodle3 width="256" height="256"></canvas>
-      </mat-grid-tile>
-      <mat-grid-tile>
-        <canvas #tileDoodle4 width="256" height="256"></canvas>
-      </mat-grid-tile>
-    </mat-grid-list>-->
-  </div>
-</mat-expansion-panel>
+<mat-tab-group dynamicHeight="true" [(selectedIndex)]="selectedTabIndex">
+  <mat-tab label="CPU">
+    <div class="cpuStatus">
+      <p>
+        PC: {{ nes.currentCpuStatus.PC.toString(16) }} A: {{ nes.currentCpuStatus.A.toString(16) }} X: {{ nes.currentCpuStatus.X.toString(16) }} Y: {{ nes.currentCpuStatus.Y.toString(16) }} SP: {{ nes.currentCpuStatus.SP.toString(16) }}
+      </p>
+      <p>
+        SR: {{ nes.currentCpuStatus.SR.toString(16) }}
+      </p>
+    </div>
+    <mat-expansion-panel *ngIf="selectedTabIndex == 0">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Instruction History
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <chichines-instructionhistory></chichines-instructionhistory>
+    </mat-expansion-panel>
+  </mat-tab>
+  <mat-tab label="Memory">
+    <mat-expansion-panel *ngIf="selectedTabIndex == 1">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Ram Viewer
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+        <chichines-memviewer></chichines-memviewer>
+      </mat-expansion-panel>
+  </mat-tab>
+  <mat-tab label="PPU">
+    <mat-expansion-panel *ngIf="selectedTabIndex == 2">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          NameTable Viewer
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <button (click)="doodle()">Doodle</button>
+      <div class="doodlerPanel">
+        <canvas #tileDoodle width="512" height="512"></canvas>
+      </div>
+      </mat-expansion-panel>
+</mat-tab>
+</mat-tab-group>
+
