@@ -1,4 +1,4 @@
-﻿import { Component, ViewChild } from '@angular/core';
+﻿import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import {  MatSidenavModule, MatDrawer } from '@angular/material';
 
 import { Emulator } from './services/NESService'
@@ -7,7 +7,7 @@ import { Emulator } from './services/NESService'
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
-  providers: [Emulator ]
+  providers: [Emulator]
 
 })
 export class AppComponent {

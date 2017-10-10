@@ -42,7 +42,11 @@ export class MyTrComponent {
   styleUrls: ['./chichines.memviewer.component.css']
 })
 export class MemViewerComponent implements OnInit {
-    data = [[1, 2, 3], [11, 12, 13]];
+    _data = [[1, 2, 3], [11, 12, 13]];
+
+    get data(): number[][] {
+        return this._data;
+    }
     hexMode: boolean = true;
     _ramStart: number = 0x0000;
     _ramEnd: number = 0x07FF;
@@ -77,7 +81,7 @@ export class MemViewerComponent implements OnInit {
             data.push(ram.slice(i * this.pageSize, i * this.pageSize + this.pageSize));
             
         }
-        this.data = data;
+        this._data = data;
     }
 
     ngOnInit() {

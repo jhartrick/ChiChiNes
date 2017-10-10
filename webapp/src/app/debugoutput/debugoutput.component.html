@@ -34,23 +34,19 @@
   </mat-expansion-panel-header>
   <button (click)="doodle()">Doodle</button>
   <div class="doodlerPanel">
-    <mat-grid-list cols="2" rowHeight="256px">
+    <canvas #tileDoodle width="512" height="512"></canvas>
+    <!--<mat-grid-list cols="2" rowHeight="256px">
       <mat-grid-tile>
-        <canvas #tileDoodle width="256" height="256"></canvas>
-        <div>0x000</div>
       </mat-grid-tile>
       <mat-grid-tile>
         <canvas #tileDoodle2 width="256" height="256"></canvas>
-        <div>0x400</div>
       </mat-grid-tile>
       <mat-grid-tile>
         <canvas #tileDoodle3 width="256" height="256"></canvas>
-        <div>0x800</div>
       </mat-grid-tile>
       <mat-grid-tile>
         <canvas #tileDoodle4 width="256" height="256"></canvas>
-        <span>0xC00</span>
       </mat-grid-tile>
-    </mat-grid-list>
+    </mat-grid-list>-->
   </div>
 </mat-expansion-panel>

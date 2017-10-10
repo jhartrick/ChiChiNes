@@ -893,11 +893,13 @@ declare module ChiChiNES {
             Parameters1: number;
             ExtraTiming: number;
             Length: number;
+            frame: number;
             time: number;
             A: number;
             X: number;
             Y: number;
             SR: number;
+            SP: number;
         }
         export interface InstructionFunc extends Function {
             prototype: Instruction;

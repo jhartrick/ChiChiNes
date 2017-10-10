@@ -8,20 +8,6 @@ namespace ChiChiNES
 {
     public partial class CPU2A03
     {
-        private struct smallInstruction
-        {
-
-            public static Instruction UnpackInstruction(uint instruction)
-            {
-                Instruction inst = new Instruction();
-                inst.OpCode = (int)instruction & 0xFF;
-                inst.Parameters0 = (int)(instruction >> 8) & 0xFF;
-                inst.Parameters1 = (int)(instruction >> 16) & 0xFF;
-                return inst;
-            }
-
-        }
-
 
         public class Instruction 
         {
@@ -39,15 +25,18 @@ namespace ChiChiNES
                 
             }
 
-
             public AddressingModes AddressingMode;
-            public int time;
+            public int frame;
+
+            public ulong time;
+
             public int A;
             public int X;
             public int Y;
             public int SR;
+            public int SP;
+
             // 2 bytes
-            public int Idx;
             public int Address;
             // one byte
             public int OpCode;
@@ -61,14 +50,14 @@ namespace ChiChiNES
             public int Length;
         }
 
-        public class CPUStatus
-        {
-            public int StatusRegister;
-            public int ProgramCounter;
-            public int Accumulator;
-            public int IndexRegisterX;
-            public int IndexRegisterY;
-        }
+        //public class CPUStatus
+        //{
+        //    public int StatusRegister;
+        //    public int ProgramCounter;
+        //    public int Accumulator;
+        //    public int IndexRegisterX;
+        //    public int IndexRegisterY;
+        //}
 
     }
 }

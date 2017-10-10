@@ -240,11 +240,17 @@ namespace ChiChiNES
         }
 
         int clock;
-
+        ulong systemClock = 0;
         public int Clock
         {
             get { return clock; }
-            set { clock = value; }
+            set {
+                if (value == 0)
+                {
+                    systemClock += (ulong)clock;
+                    clock = value;
+                }
+            }
         }
 
         bool _handleNMI;

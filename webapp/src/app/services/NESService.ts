@@ -78,6 +78,7 @@ export class Emulator {
     public debugger: Debugger = new Debugger();
     public controlPad: ControlPad;
     public framesPerSecond: number = 0;
+    private framesRendered: number = 0;
 
     public grabRam(start: number, finish: number): number[] {
         var length = finish - start;
@@ -187,7 +188,7 @@ export class Emulator {
 
 
     private runFunction() : void {
-        var framesRendered = 0;
+        this.framesRendered = 0;
         var startTime = new Date().getTime();
         this.machine.Cpu.Debugging = false;
 
@@ -195,9 +196,9 @@ export class Emulator {
         this.intervalId = setInterval(() => {
             this.machine.RunFrame();
             
-            if(framesRendered++ & 0x50) {
-              this.framesPerSecond = ((framesRendered / (new Date().getTime() - startTime)) * 1000) >>>0;
-              framesRendered = 0; startTime = new Date().getTime();
+            if (this.framesRendered++ & 0x50) {
+                this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - startTime)) * 1000) >>>0;
+              this.framesRendered = 0; startTime = new Date().getTime();
             } 
         }, 0);
     }

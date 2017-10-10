@@ -8,8 +8,13 @@
   background-color: rgba(41, 141, 39, 0.5);
 }
 
-.mat-column-time {
+.mat-column-frame {
   flex: 0 0 80px;
+}
+
+
+.mat-column-time {
+  flex: 0 0 100px;
 }
 
 .mat-column-asm {
@@ -17,16 +22,25 @@
 }
 
 .mat-column-A {
-  flex: 0 0 60px;
+  flex: 0 0 50px;
 }
 
 .mat-column-X {
-  flex: 0 0 60px;
+  flex: 0 0 50px;
 }
 
 .mat-column-Y {
-  flex: 0 0 60px;
+  flex: 0 0 50px;
 }
+
+.mat-column-SP {
+  flex: 0 0 50px;
+}
+
+.mat-column-SR {
+  flex: 0 0 50px;
+}
+
 
 .mat-table {
   overflow: auto;
@@ -39,4 +53,8 @@
 
 .hidden {
   display: none;
+}
+
+.mat-cell {
+font-size: 0.75em;
 }

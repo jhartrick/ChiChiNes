@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+﻿import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Emulator } from 'app/services/NESService'
 import * as JSZip from 'jszip';
 @Component({

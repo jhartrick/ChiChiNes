@@ -90,14 +90,16 @@ export class Debugger {
           this.lastInstructions.update();
         }
 
-        public setInstructions(inst : ChiChiNES.CPU2A03.Instruction[], start: number) : void {
-          var curPos: number = start + 1; 
+        public setInstructions(inst : ChiChiNES.CPU2A03.Instruction[], start: number, frameNumber?: number) : void {
+            var curPos: number = start + 1; 
+
           var newInstructions: DecodedInstruction[] = new Array<DecodedInstruction>();
 
           for(var j=0;j<inst.length;++j)
           {
             var i = (curPos + j) & 0xFF;
-            let instr = inst[i] ?             {
+            let instr = inst[i] ?
+            {
               asm : this.disassemble(inst[i]),
               AddressingMode: inst[i].AddressingMode,
               Address : inst[i].Address,
@@ -105,12 +107,14 @@ export class Debugger {
               Parameters0 : inst[i].Parameters0,
               Parameters1 : inst[i].Parameters1,
               ExtraTiming: inst[i].ExtraTiming, 
-              Length: inst[i].Length ,
+              Length: inst[i].Length,
+              frame: inst[i].frame,
               time: inst[i].time,
               A: inst[i].A ,
               X: inst[i].X ,
               Y: inst[i].Y ,
-              SR: inst[i].SR 
+              SR: inst[i].SR , 
+              SP: inst[i].SP
             } : {
               asm : 'none',
               AddressingMode: 0,
@@ -119,16 +123,19 @@ export class Debugger {
               Parameters0 : 0,
               Parameters1 : 0,
               ExtraTiming: 0, 
-              Length: 0 ,
+              Length: 0,
+              frame: 0,
               time : 0,
               A:0,
               X: 0 ,
               Y: 0 ,
-              SR: 0
+              SR: 0 ,
+              SP: 0
             };
             if (instr.asm != 'none') newInstructions.push(instr);
             //' DecodedInstruction (this.disassemble(inst[i]), inst);
           }
+            
           this.lastInstructions.addInstructions(newInstructions);
         } 
 

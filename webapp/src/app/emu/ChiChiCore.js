@@ -1660,6 +1660,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             _currentInstruction_Parameters1: 0,
             _currentInstruction_ExtraTiming: 0,
             clock: 0,
+            systemClock: System.UInt64(0),
             _handleNMI: false,
             _handleIRQ: false,
             nextEvent: 0,
@@ -1789,7 +1790,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     return this.clock;
                 },
                 set: function (value) {
-                    this.clock = value;
+                    if (value === 0) {
+                        this.systemClock = this.systemClock.add(Bridge.Int.clipu64(this.clock));
+                        this.clock = value;
+                    }
                 }
             },
             RunningHard: {
@@ -1931,6 +1935,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._currentInstruction_Parameters0 = 0;
                 this._currentInstruction_Parameters1 = 0;
                 this._currentInstruction_ExtraTiming = 0;
+                this.systemClock = System.UInt64(0);
                 this.nextEvent = -1;
                 this.clockcount = System.Array.init(256, 0, System.Int32);
                 this.instruction = System.Array.init(256, 0, System.Int32);
@@ -4190,7 +4195,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             WriteInstructionHistoryAndUsage: function () {
                 var $t;
 
-                this._instructionHistory[(Bridge.identity(this.instructionHistoryPointer, (this.instructionHistoryPointer = (this.instructionHistoryPointer - 1) | 0))) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.time = this.clock, $t.A = this._accumulator, $t.X = this._indexRegisterX, $t.Y = this._indexRegisterY, $t.SR = this._statusRegister, $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
+                this._instructionHistory[(Bridge.identity(this.instructionHistoryPointer, (this.instructionHistoryPointer = (this.instructionHistoryPointer - 1) | 0))) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.time = this.systemClock, $t.A = this._accumulator, $t.X = this._indexRegisterX, $t.Y = this._indexRegisterY, $t.SR = this._statusRegister, $t.SP = this._stackPointer, $t.frame = this.clock, $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
                 this.instructionUsage[this._currentInstruction_OpCode] = (this.instructionUsage[this._currentInstruction_OpCode] + 1) | 0;
                 if ((this.instructionHistoryPointer & 255) === 255) {
                     this.FireDebugEvent("instructionHistoryFull");
@@ -4213,25 +4218,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("ChiChiNES.CPU2A03.CPUStatus", {
-        fields: {
-            StatusRegister: 0,
-            ProgramCounter: 0,
-            Accumulator: 0,
-            IndexRegisterX: 0,
-            IndexRegisterY: 0
-        }
-    });
-
     Bridge.define("ChiChiNES.CPU2A03.Instruction", {
         fields: {
             AddressingMode: 0,
-            time: 0,
+            frame: 0,
+            time: System.UInt64(0),
             A: 0,
             X: 0,
             Y: 0,
             SR: 0,
-            Idx: 0,
+            SP: 0,
             Address: 0,
             OpCode: 0,
             Parameters0: 0,
@@ -4255,25 +4251,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
 
             }
-        }
-    });
-
-    Bridge.define("ChiChiNES.CPU2A03.smallInstruction", {
-        $kind: "struct",
-        statics: {
-            methods: {
-                UnpackInstruction: function (instruction) {
-                    var inst = new ChiChiNES.CPU2A03.Instruction.ctor();
-                    inst.OpCode = (instruction | 0) & 255;
-                    inst.Parameters0 = (((instruction >>> 8)) | 0) & 255;
-                    inst.Parameters1 = (((instruction >>> 16)) | 0) & 255;
-                    return inst;
-                },
-                getDefaultValue: function () { return new ChiChiNES.CPU2A03.smallInstruction(); }
-            }
-        },
-        methods: {
-            $clone: function (to) { return this; }
         }
     });
 
@@ -7134,8 +7111,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                                 this.spriteChanges = false;
                             }
                             break;
-                        case 7125: 
-                            break;
                         case 7161: 
                             //lockedVScroll = _vScroll;
                             this.vbufLocation = 0;
@@ -7204,9 +7179,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             }
 
                             //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
-                            var x = this._palette[(foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+                            //var x = 
 
-                            this.byteOutBuffer[this.vbufLocation * 4] = x;
+                            this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
                             //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
                             //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
                             //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];

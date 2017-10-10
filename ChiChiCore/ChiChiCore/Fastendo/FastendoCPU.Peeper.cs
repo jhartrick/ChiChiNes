@@ -45,11 +45,13 @@ namespace ChiChiNES
         {
 
             _instructionHistory[(instructionHistoryPointer--) & 0xFF] = new Instruction() {
-                time = clock,
+                time = systemClock,
                 A = _accumulator,
                 X = _indexRegisterX,
-                Y  = _indexRegisterY,
+                Y = _indexRegisterY,
                 SR = _statusRegister,
+                SP = _stackPointer,
+                frame = clock,
                 OpCode = _currentInstruction_OpCode,
                 Parameters0 = _currentInstruction_Parameters0,
                 Parameters1 = _currentInstruction_Parameters1,

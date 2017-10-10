@@ -66,10 +66,6 @@ namespace ChiChiNES
 
 
                         break;
-                    //304 pixels into pre-render scanline
-                    case 7125:
-                        break;
-
                     case 7161:
                         //lockedVScroll = _vScroll;
                         vbufLocation = 0;
@@ -148,9 +144,9 @@ namespace ChiChiNES
                         }
 
                         //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
-                        var x = _palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
+                        //var x = 
 
-                        byteOutBuffer[vbufLocation * 4] = x;
+                        byteOutBuffer[vbufLocation * 4] = _palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
                         //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
                         //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
                         //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];

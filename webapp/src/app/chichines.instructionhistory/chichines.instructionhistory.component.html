@@ -5,11 +5,14 @@
     <div class="mat-table">
       <div class="mat-header-row">
         <!---->
+        <div class="mat-header-cell mat-column-frame">Frame</div>
         <div class="mat-header-cell mat-column-time">Time</div>
         <div class="mat-header-cell mat-column-asm">Dasm</div>
         <div class="mat-header-cell mat-column-A">ACC</div>
         <div class="mat-header-cell mat-column-X">IDX</div>
         <div class="mat-header-cell mat-column-Y">IDY</div>
+        <div class="mat-header-cell mat-column-SP">SP</div>
+        <div class="mat-header-cell mat-column-SR">SR</div>
       </div>
     </div>
 
@@ -34,9 +37,21 @@
         <mat-header-cell *matHeaderCellDef>IDY</mat-header-cell>
         <mat-cell *matCellDef="let row"> {{row.Y.toString(16)}} </mat-cell>
       </ng-container>
+      <ng-container matColumnDef="SP">
+        <mat-header-cell *matHeaderCellDef>SP</mat-header-cell>
+        <mat-cell *matCellDef="let row"> {{row.SP.toString(16)}} </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="SR">
+        <mat-header-cell *matHeaderCellDef>SR</mat-header-cell>
+        <mat-cell *matCellDef="let row"> {{row.SR.toString(16)}} </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="frame">
+        <mat-header-cell *matHeaderCellDef>frame</mat-header-cell>
+        <mat-cell *matCellDef="let row"> {{row.frame}} </mat-cell>
+      </ng-container>
 
-      <mat-header-row style="display:none" *matHeaderRowDef="['time','asm','A', 'X', 'Y']"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: ['time','asm','A', 'X', 'Y']"></mat-row>
+      <mat-header-row style="display:none" *matHeaderRowDef="['frame','time','asm','A', 'X', 'Y', 'SP','SR']"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: ['frame','time','asm','A', 'X', 'Y', 'SP','SR']"></mat-row>
     </mat-table>
     <mat-paginator #paginator
                    [length]="dataLength"
