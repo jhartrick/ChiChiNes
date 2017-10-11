@@ -1,18 +1,19 @@
-<div class="stepper">
+﻿<div class="stepper">
   <button mat-button (click)="nes.DebugStep()">Step</button>
   <button mat-button (click)="nes.DebugStepFrame()">StepFrame</button>
   <button mat-button (click)="nes.Continue()">Continue</button>
 </div>
+<div class="cpuStatus">
+  <p>
+    PC: {{ nes.debugger.currentCpuStatus.PC.toString(16) }} A: {{ nes.debugger.currentCpuStatus.A.toString(16) }} X: {{ nes.debugger.currentCpuStatus.X.toString(16) }} Y: {{ nes.debugger.currentCpuStatus.Y.toString(16) }} SP: {{ nes.debugger.currentCpuStatus.SP.toString(16) }}
+  </p>
+  <p>
+    SR: {{ nes.debugger.decodedStatusRegister }}
+  </p>
+</div>
 <mat-tab-group dynamicHeight="true" [(selectedIndex)]="selectedTabIndex">
   <mat-tab label="CPU">
-    <div class="cpuStatus">
-      <p>
-        PC: {{ nes.currentCpuStatus.PC.toString(16) }} A: {{ nes.currentCpuStatus.A.toString(16) }} X: {{ nes.currentCpuStatus.X.toString(16) }} Y: {{ nes.currentCpuStatus.Y.toString(16) }} SP: {{ nes.currentCpuStatus.SP.toString(16) }}
-      </p>
-      <p>
-        SR: {{ nes.currentCpuStatus.SR.toString(16) }}
-      </p>
-    </div>
+
     <mat-expansion-panel *ngIf="selectedTabIndex == 0">
       <mat-expansion-panel-header>
         <mat-panel-title>

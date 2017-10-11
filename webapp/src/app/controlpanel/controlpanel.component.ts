@@ -1,5 +1,5 @@
 ﻿import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { Emulator } from 'app/services/NESService'
+import { Emulator, EmuState } from 'app/services/NESService'
 import * as JSZip from 'jszip';
 @Component({
   selector: 'controlpanel',
@@ -12,9 +12,12 @@ export class ControlPanelComponent {
     show: boolean = true;
     powerstate: string;
     currentFilename: string;
+    state: EmuState;
 
     constructor(public nesService: Emulator) {
         this.powerstate = 'OFF';
+        this.nesService.emuState.subscribe((data) => {
+        });
     }
 
     handleFile(e: Event) {
@@ -33,7 +36,7 @@ export class ControlPanelComponent {
                         zipEntry.async('blob').then((fileData) => {
                             zipReader.onload= (ze) =>{
                                 let zrom: number[] = Array.from(new Uint8Array(zipReader.result));
-                                this.nesService.LoadRom(zrom);
+                                this.nesService.LoadRom(zrom, zipEntry.name);
                             }
                             zipReader.readAsArrayBuffer(fileData);
                         });
@@ -44,7 +47,7 @@ export class ControlPanelComponent {
           fileReader.onload = (e) => {
               this.poweroff();
               let rom: number[] = Array.from(new Uint8Array(fileReader.result));
-              this.nesService.LoadRom(rom);
+              this.nesService.LoadRom(rom, files[0].name);
           };
           this.currentFilename = files[0].name;
         }

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+﻿import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Emulator } from 'app/services/NESService'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/catch'
@@ -147,8 +147,9 @@ void main()	{
         
         this.nesService.SetVideoBuffer(this.vbuffer);
 
-        this.nesService.SetCallbackFunction(() => {
-            this.renderScene();
+        this.nesService.SetCallbackFunction(() => this.renderScene());
+        //() => {
+        //    this.renderScene();
             //this.audioSource
            // this.sound = new THREE.Audio( this.listener );   
            // this.audioCtx = this.sound.context;
@@ -162,7 +163,7 @@ void main()	{
             
 
 
-        });
+       // });
         
 
 
@@ -171,7 +172,7 @@ void main()	{
 
     renderScene(): void
     {
-      debugger;
+        // debugger;
         this.text.needsUpdate = true;
         //this.paltext.needsUpdate = true;
         this.renderer.render(this.scene, this.camera);

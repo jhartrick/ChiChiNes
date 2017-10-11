@@ -24,7 +24,7 @@
     </div>
     <div *ngIf="currentFilename">
       <p>
-        Loaded: {{ currentFilename }}
+        Loaded: {{ state.romLoaded | async}}
       </p>
         <p>Mapper: {{ nesService.cartInfo.mapperId }}</p>
         <p>Prg Roms: {{ nesService.cartInfo.prgRomCount }}</p>

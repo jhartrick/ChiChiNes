@@ -59,6 +59,8 @@ declare module ChiChiNES {
     }
 
     export interface IPPU {
+        frameFinished(): void;
+
         ChiChiNES$IPPU$ChrRomHandler: ChiChiNES.INESCart;
         ChrRomHandler: ChiChiNES.INESCart;
         ChiChiNES$IPPU$CurrentFrame: number[];
@@ -153,7 +155,8 @@ declare module ChiChiNES {
     export interface NESMachine extends System.IDisposable {
         addSoundStatusChanged(value: {(sender: any, e: ChiChiNES.BeepsBoops.SoundStatusChangeEventArgs): void}): void;
         removeSoundStatusChanged(value: {(sender: any, e: ChiChiNES.BeepsBoops.SoundStatusChangeEventArgs): void}): void;
-        addDrawscreen(value: {(sender: any, e: System.Object): void}): void;
+        Drawscreen(): void;
+        addDrawscreen(value: { (sender: any, e: System.Object): void }): void;
         removeDrawscreen(value: {(sender: any, e: System.Object): void}): void;
         CurrentCartName: string;
         RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
@@ -442,7 +445,9 @@ declare module ChiChiNES {
     }
     var NullControlPad: NullControlPadFunc;
 
-    export interface PixelWhizzler extends ChiChiNES.IPPU,ChiChiNES.IClockedMemoryMappedIOElement {
+    export interface PixelWhizzler extends ChiChiNES.IPPU, ChiChiNES.IClockedMemoryMappedIOElement {
+
+
         frameClock: number;
         FrameEnded: boolean;
         CurrentYPosition: number;

@@ -247,7 +247,7 @@ namespace ChiChiNES
             set {
                 if (value == 0)
                 {
-                    systemClock += (ulong)clock;
+                    systemClock = (systemClock + (ulong)clock) & 0xFFFFFFFFFFFF;
                     clock = value;
                 }
             }

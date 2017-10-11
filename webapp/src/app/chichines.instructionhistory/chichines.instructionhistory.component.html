@@ -1,12 +1,10 @@
-﻿  History:
-
-<div class="instructionhistory">
+﻿<div class="instructionhistory">
   <div class="example-container mat-elevation-z8">
     <div class="mat-table">
       <div class="mat-header-row">
         <!---->
-        <div class="mat-header-cell mat-column-frame">Frame</div>
         <div class="mat-header-cell mat-column-time">Time</div>
+        <div class="mat-header-cell mat-column-frame">Frame</div>
         <div class="mat-header-cell mat-column-asm">Dasm</div>
         <div class="mat-header-cell mat-column-A">ACC</div>
         <div class="mat-header-cell mat-column-X">IDX</div>
@@ -50,8 +48,8 @@
         <mat-cell *matCellDef="let row"> {{row.frame}} </mat-cell>
       </ng-container>
 
-      <mat-header-row style="display:none" *matHeaderRowDef="['frame','time','asm','A', 'X', 'Y', 'SP','SR']"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: ['frame','time','asm','A', 'X', 'Y', 'SP','SR']"></mat-row>
+      <mat-header-row style="display:none" *matHeaderRowDef="['time','frame','asm','A', 'X', 'Y', 'SP','SR']"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: ['time','frame','asm','A', 'X', 'Y', 'SP','SR']"></mat-row>
     </mat-table>
     <mat-paginator #paginator
                    [length]="dataLength"

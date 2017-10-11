@@ -1,6 +1,7 @@
 ﻿import { Injectable, EventEmitter } from '@angular/core';
 import { Debugger, DecodedInstruction, DebugEventInfo } from './debug.interface'; 
 import { ControlPad } from './chichines.service.controlpad'; 
+import { Observable } from 'rxjs';
 
 export class CartInfo {
     mapperId: number;
@@ -24,14 +25,6 @@ export enum RunStatus {
     Stepping
 }
 
-export class CpuStatus {
-    PC: number = 0;
-    A: number = 0;
-    X: number =0;
-    Y: number =0;
-    SP: number = 0;
-    SR: number = 0;
-}
 
 export class Tiler {
 
@@ -54,31 +47,29 @@ export class Tiler {
 
         this.patternTables[1] = new Uint8ClampedArray(this.nes.Tiler.DoodlePatternTable(0x1000));
     }
+}
 
-
+export class EmuState {
+    constructor(public romLoaded: string, public powerState: boolean, public paused: boolean, public debugging: boolean) {
+    }
 }
 
 @Injectable()
 export class Emulator {
     public tileDoodler: Tiler;
-    public currentCpuStatus: CpuStatus = {
-        PC: 0,
-        A: 0,
-        X: 0,
-        Y: 0,
-        SP: 0,
-        SR: 0
-    }; 
     private ready: boolean = false;
+    
     private machine: ChiChiNES.NESMachine;
     private intervalId: NodeJS.Timer;
     private callback: () => void;
 
     public runStatus: RunStatus = RunStatus.Off;
-    public debugger: Debugger = new Debugger();
+    public debugger: Debugger ;
     public controlPad: ControlPad;
     public framesPerSecond: number = 0;
     private framesRendered: number = 0;
+
+    public emuState: Observable<EmuState>;
 
     public grabRam(start: number, finish: number): number[] {
         var length = finish - start;
@@ -100,25 +91,16 @@ export class Emulator {
           this.machine.PadOne = this.controlPad;
           this.tileDoodler = new Tiler(this.machine);
           this.machine.Cpu.Debugging = false;
-          this.machine.Cpu.FireDebugEvent = (event) => {
-              this.debugger.setInstructions(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
-              // this.DebugUpdateEvent.emit({ eventType: 'machineDebugEvent' });
-          }
+
           this.machine.Cpu.HandleBadOperation = () => {
-              this.currentCpuStatus = {
-                      PC: this.machine.Cpu.ProgramCounter,
-                      A: this.machine.Cpu.Accumulator,
-                      X: this.machine.Cpu.IndexRegisterX,
-                      Y: this.machine.Cpu.IndexRegisterY,
-                      SP: this.machine.Cpu.StackPointer,
-                      SR: this.machine.Cpu.StatusRegister
-                  };
-              debugger;
-              this.debugger.setInstructions(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
+              this.debugger.doUpdate();
+              //debugger;
+              // this.debugger.setInstructions(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
               this.DebugUpdateEvent.emit({ eventType: 'badOperation' });
           }
 
-
+          this.debugger = new Debugger(this.machine);
+          this.emuState= new Observable(observer=>observer.next(new EmuState('', false, false, false)));
       }
 
       get cartInfo() : CartInfo {
@@ -156,8 +138,8 @@ export class Emulator {
     }
 
     // platform hooks
-    SetCallbackFunction(callback: () => void ) {
-        this.machine.addDrawscreen(callback);
+    SetCallbackFunction(callback: () => void) {
+        this.machine.Drawscreen = callback;
         this.ready = true;
     }
 
@@ -172,8 +154,11 @@ export class Emulator {
     }
 
     // rom loading
-    LoadRom(rom: number[]) {
+    LoadRom(rom: number[],  romName :string) {
         this.machine.LoadCart(rom);
+        this.machine.CurrentCartName = romName;
+        this.emuState = new Observable(observer => observer.next(new EmuState(romName, false, false, false)));
+
     }
     // control
     StartEmulator(): void {
@@ -204,20 +189,11 @@ export class Emulator {
     }
 
     private runDebugFunction() : void {
-          this.machine.Cpu.Debugging = true;
           this.intervalId = setTimeout(() => {
+              this.machine.Cpu.Debugging = true;
               this.machine.RunFrame();
-              this.debugger.setInstructions(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
-              this.machine.Cpu.ResetInstructionHistory();
               this.debugger.doUpdate();
-              this.currentCpuStatus = {
-                  PC: this.machine.Cpu.ProgramCounter,
-                  A: this.machine.Cpu.Accumulator,
-                  X: this.machine.Cpu.IndexRegisterX,
-                  Y: this.machine.Cpu.IndexRegisterY,
-                  SP: this.machine.Cpu.StackPointer,
-                  SR: this.machine.Cpu.StatusRegister
-              };
+              this.machine.Cpu.ResetInstructionHistory();
               this.DebugUpdateEvent.emit({ eventType: 'debugStepFrame' });
               //this.switchDebugMode(isdebugging: boolean)
           }, 0);
@@ -227,17 +203,7 @@ export class Emulator {
           this.intervalId = setTimeout(() => {
               this.machine.Cpu.Debugging = true;
               this.machine.Step();
-
-              this.debugger.setInstructions(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
               this.debugger.doUpdate();
-              this.currentCpuStatus = {
-                  PC: this.machine.Cpu.ProgramCounter,
-                  A: this.machine.Cpu.Accumulator,
-                  X: this.machine.Cpu.IndexRegisterX,
-                  Y: this.machine.Cpu.IndexRegisterY,
-                  SP: this.machine.Cpu.StackPointer,
-                  SR: this.machine.Cpu.StatusRegister
-              };
               this.DebugUpdateEvent.emit({ eventType: 'debugStep' });
               //this.switchDebugMode(isdebugging: boolean)
           }, 0);
@@ -259,15 +225,20 @@ export class Emulator {
         switch (newStatus)
         {
             case RunStatus.Stepping:
+                this.emuState = new Observable(observer => observer.next(new EmuState(this.machine.CurrentCartName, true, false, true)));
+
               this.runDebugStepFunction();
               break;
             case RunStatus.Off:  // can move to any state safely
+                this.emuState = new Observable(observer => observer.next(new EmuState(this.machine.CurrentCartName, false, false, false)));
               this.machine.PowerOff();
               break;
             case RunStatus.Running:
+                this.emuState = new Observable(observer => observer.next(new EmuState(this.machine.CurrentCartName, true, false, false)));
               this.runFunction();
               break;
             case RunStatus.DebugRunning:
+                this.emuState = new Observable(observer => observer.next(new EmuState(this.machine.CurrentCartName, true, false, true)));
               this.runDebugFunction();
               break;
         }

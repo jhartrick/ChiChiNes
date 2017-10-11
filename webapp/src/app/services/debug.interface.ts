@@ -81,16 +81,76 @@ export class DebugInstructionDataSource extends DataSource<any> {
   disconnect() {}
 }
 
+export class CpuStatus {
+    PC: number = 0;
+    A: number = 0;
+    X: number = 0;
+    Y: number = 0;
+    SP: number = 0;
+    SR: number = 0;
+}
+
 
 export class Debugger {
-      
+
+    constructor(private machine: ChiChiNES.NESMachine) {
+        this.machine.Cpu.FireDebugEvent = (event) => {
+            this.appendInstructionPage();
+        }
+    }
+
+    public currentCpuStatus: CpuStatus = {
+        PC: 0,
+        A: 0,
+        X: 0,
+        Y: 0,
+        SP: 0,
+        SR: 0
+    }; 
+
         public lastInstructions: InstructionHistoryDatabase= new InstructionHistoryDatabase(); 
 
         public doUpdate() {
-          this.lastInstructions.update();
+            this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
+
+            this.lastInstructions.update();
+            this.decodeCpuStatusRegister(this.machine.Cpu.StatusRegister);
+            this.currentCpuStatus = {
+                PC: this.machine.Cpu.ProgramCounter,
+                A: this.machine.Cpu.Accumulator,
+                X: this.machine.Cpu.IndexRegisterX,
+                Y: this.machine.Cpu.IndexRegisterY,
+                SP: this.machine.Cpu.StackPointer,
+                SR: this.machine.Cpu.StatusRegister
+            };
         }
 
-        public setInstructions(inst : ChiChiNES.CPU2A03.Instruction[], start: number, frameNumber?: number) : void {
+        public decodedStatusRegister: string;
+
+        private decodeCpuStatusRegister(sr: number): void {
+            var result: string = '';
+            result += ' N:' + (sr & ChiChiNES.CPUStatusMasks.NegativeResultMask ? '1' : '0');
+
+            result += ' O:' + (sr & ChiChiNES.CPUStatusMasks.OverflowMask ? '1' : '0');
+
+            result += ' E:' + (sr & ChiChiNES.CPUStatusMasks.ExpansionMask ? '1' : '0');
+
+            result += ' B:' + (sr & ChiChiNES.CPUStatusMasks.BreakCommandMask ? '1' : '0');
+            result += ' D:' + (sr & ChiChiNES.CPUStatusMasks.DecimalModeMask ? '1' : '0');
+
+            result += ' I:' + (sr & ChiChiNES.CPUStatusMasks.InterruptDisableMask ? '1' : '0');
+
+            result += ' Z:' + (sr & ChiChiNES.CPUStatusMasks.ZeroResultMask ? '1' : '0');
+
+            result += ' C:' + (sr & ChiChiNES.CPUStatusMasks.CarryMask ? '1' : '0');
+            this.decodedStatusRegister = result;
+        }
+
+        public appendInstructionPage() {
+            this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
+        }
+
+        private setInstructionPage(inst : ChiChiNES.CPU2A03.Instruction[], start: number, frameNumber?: number) : void {
             var curPos: number = start + 1; 
 
           var newInstructions: DecodedInstruction[] = new Array<DecodedInstruction>();
