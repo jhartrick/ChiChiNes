@@ -5,7 +5,7 @@ import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import { MatTableModule, MatPaginatorModule, MatGridListModule, MatTabsModule } from '@angular/material';
 import { MatButtonModule, MatCheckboxModule, MatSidenavModule, MatButtonToggleModule, MatExpansionModule } from '@angular/material';
 import * as JSZip from 'jszip';
-import { Emulator} from './services/NESService'
+import { Emulator , RomLoader } from './services/NESService'
 
 import { AppComponent } from './app.component';
 import { ChiChiComponent } from './chichines/chichines.component';
@@ -39,7 +39,7 @@ import { InstructionHistoryComponent } from './chichines.instructionhistory/chic
       MatGridListModule,
 	  MatTabsModule
   ],
-  providers: [HttpModule, Emulator],
+  providers: [HttpModule, Emulator, RomLoader],
   bootstrap: [AppComponent]
 })
 

@@ -1,5 +1,5 @@
 ﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef } from '@angular/core';
-import { Emulator, EmuState } from 'app/services/NESService'
+import { Emulator, EmuState, RomLoader } from 'app/services/NESService'
 import { Observable } from 'rxjs';
 import * as JSZip from 'jszip';
 
@@ -19,6 +19,7 @@ export class PowerStatusComponent {
 }
 
 
+
 @Component({
   selector: 'controlpanel',
   templateUrl: './controlpanel.component.html',
@@ -26,14 +27,14 @@ export class PowerStatusComponent {
   changeDetection: ChangeDetectionStrategy.OnPush 
 })
 
-
 export class ControlPanelComponent {
-    show: boolean = true;
+    show = true;
     powerstate: string;
     currentFilename: string;
     state: EmuState;
     framesPerSecond: number;
-    constructor(public nesService: Emulator, private cd: ChangeDetectorRef) {
+
+    constructor(public nesService: Emulator, private cd: ChangeDetectorRef, private romLoader: RomLoader) {
         this.powerstate = 'OFF';
         this.nesService.emuState.subscribe(d => {
             this.state = new EmuState(d.romLoaded, d.powerState, d.paused, d.debugging);
@@ -41,41 +42,16 @@ export class ControlPanelComponent {
         });
     }
 
+
     handleFile(e: Event) {
-        var fileReader: FileReader = new FileReader();
-        var zipReader: FileReader = new FileReader();
-        let target: HTMLInputElement = <HTMLInputElement>e.target;
-        let files: FileList = target.files;
-        if (files[0].name.endsWith('.zip')) {
-          fileReader.onload = (e) => {
-              this.poweroff();
-              let rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                //zip file
-                JSZip.loadAsync(rom).then((zip: any) =>{
-                    zip.forEach((relativePath, zipEntry) => {  // 2) print entries
-                        zipEntry.async('blob').then((fileData) => {
-                            zipReader.onload= (ze) =>{
-                                let zrom: number[] = Array.from(new Uint8Array(zipReader.result));
-                                this.nesService.LoadRom(zrom, zipEntry.name);
-                            }
-                            zipReader.readAsArrayBuffer(fileData);
-                        });
-                    });
-                });
-          };
-        } else if (files[0].name.endsWith('.nes')) {
-          fileReader.onload = (e) => {
-              this.poweroff();
-              let rom: number[] = Array.from(new Uint8Array(fileReader.result));
-              this.nesService.LoadRom(rom, files[0].name);
-              
-          };
-        }
-        fileReader.readAsArrayBuffer(files[0]);
+        const files: FileList = (<HTMLInputElement>e.target).files;
+        this.romLoader.loadRom(files).subscribe((rom) => {
+            this.nesService.LoadRom(rom.data, rom.name);
+        });
     }
 
     poweron() {
-        this.nesService.StartEmulator();   
+        this.nesService.StartEmulator();
         this.powerstate = 'ON';
     }
 
@@ -85,8 +61,8 @@ export class ControlPanelComponent {
     }
 
     fps() {
-        //this.framesPerSecond = this.nesService.framesPerSecond;
-        //this.cd.markForCheck();
+        // this.framesPerSecond = this.nesService.framesPerSecond;
+        // this.cd.markForCheck();
     }
 
     showDebugger() : void {

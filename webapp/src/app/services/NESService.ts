@@ -3,13 +3,14 @@ import { Debugger, DecodedInstruction, DebugEventInfo } from './debug.interface'
 import { ControlPad } from './chichines.service.controlpad'; 
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
+import * as JSZip from 'jszip';
 
 export class CartInfo {
     mapperId: number;
-    name: string = '';
-    prgRomCount : number = 0; 
-    chrRomCount : number = 0; 
-    constructor(nes: ChiChiNES.NESMachine) {  
+    name = '';
+    prgRomCount = 0;
+    chrRomCount = 0;
+    constructor(nes: ChiChiNES.NESMachine) {
       if (nes && nes.Cart) {
           this.mapperId = nes.Cart.MapperID;
           this.prgRomCount = nes.Cart.NumberOfPrgRoms;
@@ -35,11 +36,11 @@ export class Tiler {
     DoodleNameTable(nametable: number, outbuf:  Uint8ClampedArray ): void
     {
         //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
-        var doodle1 = this.nes.Tiler.DoodleNameTable(nametable);
-        var pal = ChiChiNES.PixelWhizzler.pal;
+        const doodle1 = this.nes.Tiler.DoodleNameTable(nametable);
+        const pal = ChiChiNES.PixelWhizzler.pal;
 
-        for (var i = 0; i <= doodle1.length; ++i) {
-            var color = pal[doodle1[i]];
+        for (let i = 0; i <= doodle1.length; ++i) {
+            const color = pal[doodle1[i]];
             outbuf[i * 4] = (color >> 0) & 0xFF;
             outbuf[(i * 4) + 1] = (color >> 9) & 0xFF;
             outbuf[(i * 4) + 2] = (color >> 16 ) & 0xFF;
@@ -52,6 +53,56 @@ export class Tiler {
 
 export class EmuState {
     constructor(public romLoaded: string, public powerState: boolean, public paused: boolean, public debugging: boolean) {
+    }
+}
+
+export class RomFile  {
+    name: string;
+    data: number[];
+}
+
+@Injectable()
+export class RomLoader {
+
+    loadZipRom(files: FileList): Observable<RomFile> {
+        const file = files[0];
+        const romLoader = new Observable<RomFile>(observer => {
+            const fileReader: FileReader = new FileReader();
+            fileReader.onload = (e) => {
+                const rom: number[] = Array.from(new Uint8Array(fileReader.result));
+                // zip file
+                JSZip.loadAsync(rom).then((zip: any) => {
+                    zip.forEach((relativePath, zipEntry) => {  // 2) print entries
+                        zipEntry.async('blob').then((fileData) => {
+                            fileReader.onload = (ze) => {
+                                const zrom: number[] = Array.from(new Uint8Array(fileReader.result));
+                                observer.next({name: file.name, data: rom});
+                            };
+                            fileReader.readAsArrayBuffer(fileData);
+                        });
+                    });
+                });
+
+            };
+            fileReader.readAsArrayBuffer(file);
+        });
+        return romLoader;
+    }
+
+    loadRom(files: FileList): Observable<RomFile> {
+        const file = files[0];
+        if (file.name.endsWith('.zip')) {
+            return this.loadZipRom(files);
+        }
+        const romLoader = new Observable<RomFile>(observer => {
+            const fileReader: FileReader = new FileReader();
+            fileReader.onload = (e) => {
+                const rom: number[] = Array.from(new Uint8Array(fileReader.result));
+                observer.next({name: file.name, data: rom});
+            };
+            fileReader.readAsArrayBuffer(file);
+        });
+        return romLoader;
     }
 }
 
