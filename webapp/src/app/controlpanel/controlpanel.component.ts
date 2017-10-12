@@ -1,10 +1,29 @@
-﻿import { Component, ChangeDetectionStrategy } from '@angular/core';
+﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Emulator, EmuState } from 'app/services/NESService'
+import { Observable } from 'rxjs';
 import * as JSZip from 'jszip';
+
+@Component({
+    selector: 'chichi-status',
+    template: `<p>Loaded: {{ (emuState | async)?.romLoaded }}</p>`,
+    changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class PowerStatusComponent {
+
+    @Input('emuState') emuState: Observable<any>;
+
+    constructor() {
+        
+        //this.emuState.subscribe(data => this.state = data);
+    }
+}
+
+
 @Component({
   selector: 'controlpanel',
   templateUrl: './controlpanel.component.html',
-  styleUrls: ['./controlpanel.component.css']
+  styleUrls: ['./controlpanel.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush 
 })
 
 
@@ -13,10 +32,12 @@ export class ControlPanelComponent {
     powerstate: string;
     currentFilename: string;
     state: EmuState;
-
-    constructor(public nesService: Emulator) {
+    framesPerSecond: number;
+    constructor(public nesService: Emulator, private cd: ChangeDetectorRef) {
         this.powerstate = 'OFF';
-        this.nesService.emuState.subscribe((data) => {
+        this.nesService.emuState.subscribe(d => {
+            this.state = new EmuState(d.romLoaded, d.powerState, d.paused, d.debugging);
+            this.cd.markForCheck();
         });
     }
 
@@ -32,7 +53,6 @@ export class ControlPanelComponent {
                 //zip file
                 JSZip.loadAsync(rom).then((zip: any) =>{
                     zip.forEach((relativePath, zipEntry) => {  // 2) print entries
-                        this.currentFilename = zipEntry.name;
                         zipEntry.async('blob').then((fileData) => {
                             zipReader.onload= (ze) =>{
                                 let zrom: number[] = Array.from(new Uint8Array(zipReader.result));
@@ -48,8 +68,8 @@ export class ControlPanelComponent {
               this.poweroff();
               let rom: number[] = Array.from(new Uint8Array(fileReader.result));
               this.nesService.LoadRom(rom, files[0].name);
+              
           };
-          this.currentFilename = files[0].name;
         }
         fileReader.readAsArrayBuffer(files[0]);
     }
@@ -62,6 +82,11 @@ export class ControlPanelComponent {
     poweroff() {
         this.nesService.StopEmulator();
         this.powerstate = 'OFF';
+    }
+
+    fps() {
+        //this.framesPerSecond = this.nesService.framesPerSecond;
+        //this.cd.markForCheck();
     }
 
     showDebugger() : void {

@@ -22,14 +22,13 @@
         <div class="mat-button-toggle-focus-overlay"></div>
       </div>
     </div>
-    <div *ngIf="currentFilename">
-      <p>
-        Loaded: {{ state.romLoaded | async}}
-      </p>
+    <div  >
+      <p>Loaded: {{ state?.romLoaded }}</p>
+       <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
         <p>Mapper: {{ nesService.cartInfo.mapperId }}</p>
         <p>Prg Roms: {{ nesService.cartInfo.prgRomCount }}</p>
         <p>Chr Roms: {{ nesService.cartInfo.chrRomCount }}</p>
-      <p>FPS: {{ nesService.framesPerSecond }}</p>
+      <button (click)="fps()">FPS: {{ nesService.framesPerSecond  }}</button>
     </div>
   </mat-expansion-panel>
 

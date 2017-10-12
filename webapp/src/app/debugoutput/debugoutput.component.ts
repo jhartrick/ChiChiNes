@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
+﻿import { Component, OnInit, ViewChild, ElementRef, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Emulator } from '../services/NESService'
 import { DecodedInstruction, InstructionHistoryDatabase, DebugInstructionDataSource } from '../services/debug.interface'
 import {MatPaginator} from '@angular/material';
@@ -17,7 +17,8 @@ export class DebugOutputComponent implements OnInit  {
     public instructions: string[];
     public dbgDataSource:  DebugInstructionDataSource ;
     
-    constructor(public nes: Emulator) {
+    constructor(public nes: Emulator, private cd: ChangeDetectorRef) {
+        // this.cd.detach();
     }
 
     private doDoodle(ctx: CanvasRenderingContext2D, nametable: number, x: number, y: number) : void {

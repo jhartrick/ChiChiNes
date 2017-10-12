@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+﻿import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { Emulator } from 'app/services/NESService'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/catch'
@@ -38,7 +38,7 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasLeft: string = '0px';
     public canvasTop: string = '0px';
 
-     constructor(private nesService: Emulator) {
+    constructor(private nesService: Emulator, cd: ChangeDetectorRef) {
     }
 
     @HostListener('document:keydown', ['$event'])

@@ -2,6 +2,7 @@
 import { Debugger, DecodedInstruction, DebugEventInfo } from './debug.interface'; 
 import { ControlPad } from './chichines.service.controlpad'; 
 import { Observable } from 'rxjs';
+import { Subject } from 'rxjs/Subject';
 
 export class CartInfo {
     mapperId: number;
@@ -62,14 +63,21 @@ export class Emulator {
     private machine: ChiChiNES.NESMachine;
     private intervalId: NodeJS.Timer;
     private callback: () => void;
+    
 
+    private romName: string;
     public runStatus: RunStatus = RunStatus.Off;
     public debugger: Debugger ;
     public controlPad: ControlPad;
     public framesPerSecond: number = 0;
     private framesRendered: number = 0;
 
-    public emuState: Observable<EmuState>;
+    private emuStateSubject: Subject<EmuState> = new Subject<EmuState>();
+
+    public get emuState() : Observable<EmuState> {
+        return this.emuStateSubject.asObservable();
+    }
+
 
     public grabRam(start: number, finish: number): number[] {
         var length = finish - start;
@@ -100,7 +108,7 @@ export class Emulator {
           }
 
           this.debugger = new Debugger(this.machine);
-          this.emuState= new Observable(observer=>observer.next(new EmuState('', false, false, false)));
+          this.emuStateSubject.next(new EmuState('', false, false, false));
       }
 
       get cartInfo() : CartInfo {
@@ -156,8 +164,8 @@ export class Emulator {
     // rom loading
     LoadRom(rom: number[],  romName :string) {
         this.machine.LoadCart(rom);
-        this.machine.CurrentCartName = romName;
-        this.emuState = new Observable(observer => observer.next(new EmuState(romName, false, false, false)));
+        this.romName = romName;
+        this.emuStateSubject.next(new EmuState(this.romName, false, false, false));
 
     }
     // control
@@ -225,20 +233,20 @@ export class Emulator {
         switch (newStatus)
         {
             case RunStatus.Stepping:
-                this.emuState = new Observable(observer => observer.next(new EmuState(this.machine.CurrentCartName, true, false, true)));
+                this.emuStateSubject.next(new EmuState(this.romName, true, false, false));
 
               this.runDebugStepFunction();
               break;
             case RunStatus.Off:  // can move to any state safely
-                this.emuState = new Observable(observer => observer.next(new EmuState(this.machine.CurrentCartName, false, false, false)));
+                this.emuStateSubject.next(new EmuState(this.romName, false, false, false));
               this.machine.PowerOff();
               break;
             case RunStatus.Running:
-                this.emuState = new Observable(observer => observer.next(new EmuState(this.machine.CurrentCartName, true, false, false)));
+                this.emuStateSubject.next(new EmuState(this.romName, true, false, false));
               this.runFunction();
               break;
             case RunStatus.DebugRunning:
-                this.emuState = new Observable(observer => observer.next(new EmuState(this.machine.CurrentCartName, true, false, true)));
+                this.emuStateSubject.next(new EmuState(this.romName, true, false, true));
               this.runDebugFunction();
               break;
         }

@@ -9,7 +9,7 @@ import { Emulator} from './services/NESService'
 
 import { AppComponent } from './app.component';
 import { ChiChiComponent } from './chichines/chichines.component';
-import { ControlPanelComponent } from './controlpanel/controlpanel.component';
+import { ControlPanelComponent, PowerStatusComponent } from './controlpanel/controlpanel.component';
 import { DebugOutputComponent } from './debugoutput/debugoutput.component';
 import { MemViewerComponent, MyTrComponent, AsciiPipe } from './chichines.memviewer/chichines.memviewer.component';
 import { InstructionHistoryComponent } from './chichines.instructionhistory/chichines.instructionhistory.component';
@@ -23,7 +23,8 @@ import { InstructionHistoryComponent } from './chichines.instructionhistory/chic
       MemViewerComponent,
       MyTrComponent,
       InstructionHistoryComponent,
-      AsciiPipe
+      AsciiPipe,
+      PowerStatusComponent
   ],
   imports: [
       BrowserModule, 

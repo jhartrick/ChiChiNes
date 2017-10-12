@@ -46,6 +46,7 @@
     <Content Include="src\app\emu\index.min.html" />
     <Content Include="src\app\emu\pal.rgba" />
     <Content Include="src\app\emu\web.config" />
+    <Content Include="src\assets\nestest.nes" />
     <Content Include="tsconfig.json" />
     <Content Include="tslint.json" />
     <Content Include="README.md" />
@@ -106,7 +107,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin" />
-    <Folder Include="ChiChiNes" />
     <Folder Include="dist" />
     <Folder Include="dist\out-tsc" />
     <Folder Include="dist\out-tsc\e2e" />
