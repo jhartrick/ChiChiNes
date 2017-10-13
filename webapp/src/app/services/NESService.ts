@@ -110,11 +110,12 @@ export class RomLoader {
 export class Emulator {
     public tileDoodler: Tiler;
     private ready: boolean = false;
-    
+
     private machine: ChiChiNES.NESMachine;
     private intervalId: NodeJS.Timer;
     private callback: () => void;
-    
+
+
 
     private romName: string;
     public runStatus: RunStatus = RunStatus.Off;
@@ -131,8 +132,8 @@ export class Emulator {
 
 
     public grabRam(start: number, finish: number): number[] {
-        var length = finish - start;
-        var r = this.machine.Cpu.PeekBytes(start, finish + 1);
+        const length = finish - start;
+        const r = this.machine.Cpu.PeekBytes(start, finish + 1);
         return r;
     }
 
@@ -160,6 +161,7 @@ export class Emulator {
 
           this.debugger = new Debugger(this.machine);
           this.emuStateSubject.next(new EmuState('', false, false, false));
+          this.initWebWorker();
       }
 
       get cartInfo() : CartInfo {
@@ -327,5 +329,15 @@ export class Emulator {
         this.switchDebugMode(RunStatus.Running);
     }
 
+    private worker: Worker;
 
+    private initWebWorker() {
+        this.worker = new Worker('assets/workers/emulator.worker.js');
+        this.worker.onmessage = (data: MessageEvent) => {
+            alert('hi');
+            console.log(data.data);
+        };
+
+        this.worker.postMessage('hi');
+    }
 }
