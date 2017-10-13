@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ChiChiNES;
-using ChiChiNES;
-using Bridge;
+﻿using Bridge;
 
 namespace ChiChiNES
 {
-        [Rules(Integer =IntegerRule.Managed)]
+        [Rules(Integer =IntegerRule.Plain)]
         public class NesCartMMC1 : BaseCart
         {
 

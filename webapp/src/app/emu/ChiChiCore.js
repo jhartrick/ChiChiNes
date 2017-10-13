@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @version 1.0.0.0
  * @copyright Copyright ©  2017
  * @compiler Bridge.NET 16.3.2
@@ -7669,7 +7669,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var tileIndex = 0;
 
                 for (var i = 0; i < this.spritesOnThisScanline; i = (i + 1) | 0) {
-                    var currSprite = this.currentSprites[i];
+                    var currSprite = this.currentSprites[i].$clone();
                     if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < ((currSprite.XPosition + 8) | 0)) {
 
                         var spritePatternTable = 0;
@@ -7778,7 +7778,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             this.outBuffer[($t1 = (((65024) + yLine) | 0))] = this.outBuffer[$t1] | (1 << (((spId - 32) | 0)));
                         }
 
-                        this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID];
+                        this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID].$clone();
                         this.currentSprites[this.spritesOnThisScanline].IsVisible = true;
 
                         this.spritesOnThisScanline = (this.spritesOnThisScanline + 1) | 0;
@@ -8672,18 +8672,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._registers[2] = 0;
                 this._registers[3] = 0;
 
-                this.SetupBankStarts(0, 1, ((Bridge.Int.mul(this.PrgRomCount, 2) - 2) | 0), ((Bridge.Int.mul(this.PrgRomCount, 2) - 1) | 0));
+                this.SetupBankStarts(0, 1, this.PrgRomCount * 2 - 2, this.PrgRomCount * 2 - 1);
 
                 this.sequence = 0;
                 this.accumulator = 0;
             },
             MaskBankAddress$1: function (bank) {
-                if (bank >= Bridge.Int.mul(this.PrgRomCount, 2)) {
+                if (bank >= this.PrgRomCount * 2) {
                     var i;
                     i = 255;
-                    while ((bank & i) >= Bridge.Int.mul(this.PrgRomCount, 2)) {
+                    while ((bank & i) >= this.PrgRomCount * 2) {
 
-                        i = (Bridge.Int.div(i, 2)) | 0;
+                        i = i / 2;
                     }
 
                     return (bank & i);
@@ -8693,12 +8693,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             CopyBanks: function (dest, src, numberOf4kBanks) {
                 if (this.ChrRomCount > 0) {
-                    var oneKdest = Bridge.Int.mul(dest, 4);
-                    var oneKsrc = Bridge.Int.mul(src, 4);
+                    var oneKdest = dest * 4;
+                    var oneKsrc = src * 4;
                     //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
                     //  setup ppuBankStarts in 0x400 block chunks 
-                    for (var i = 0; i < (Bridge.Int.mul(numberOf4kBanks, 4)); i = (i + 1) | 0) {
-                        this.ppuBankStarts[((oneKdest + i) | 0)] = Bridge.Int.mul((((oneKsrc + i) | 0)), 1024);
+                    for (var i = 0; i < (numberOf4kBanks * 4); ++i) {
+                        this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
                     }
 
                     //Array.Copy(chrRom, src * 0x1000, whizzler.cartCopyVidRAM, dest * 0x1000, numberOf4kBanks * 0x1000);
@@ -8711,7 +8711,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 switch (address & 61440) {
                     case 24576: 
                     case 28672: 
-                        this.prgRomBank6[address & 8191] = val & 255;
+                        this.prgRomBank6[address & 8191] = val;
                         break;
                     default: 
                         this.lastwriteAddress = address;
@@ -8723,7 +8723,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             if ((val & 1) === 1) {
                                 this.accumulator = this.accumulator | (1 << this.sequence);
                             }
-                            this.sequence = (this.sequence + 1) | 0;
+                            this.sequence = this.sequence + 1;
                         }
                         if (this.sequence === 5) {
                             var regnum = (address & 32767) >> 13;
@@ -8759,7 +8759,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 } else {
                     //CopyBanks(0, _registers[1], 2);
                     this.CopyBanks(0, this._registers[1], 1);
-                    this.CopyBanks(1, ((this._registers[1] + 1) | 0), 1);
+                    this.CopyBanks(1, this._registers[1] + 1, 1);
                 }
                 this.BankSwitchesChanged = true;
 
@@ -8776,19 +8776,19 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
 
                 if ((this._registers[0] & 8) === 0) {
-                    reg = (Bridge.Int.mul(4, ((this._registers[3] >> 1) & 15)) + this.bank_select) | 0;
-                    this.SetupBankStarts(reg, ((reg + 1) | 0), ((reg + 2) | 0), ((reg + 3) | 0));
+                    reg = 4 * ((this._registers[3] >> 1) & 15) + this.bank_select;
+                    this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
                 } else {
-                    reg = (Bridge.Int.mul(2, (this._registers[3])) + this.bank_select) | 0;
+                    reg = 2 * (this._registers[3]) + this.bank_select;
                     //bit 2 - toggles between low PRGROM area switching and high
                     //PRGROM area switching
                     //0 = high PRGROM switching, 1 = low PRGROM switching
                     if ((this._registers[0] & 4) === 4) {
                         // select 16k bank in register 3 (setupbankstarts switches 8k banks)
-                        this.SetupBankStarts(reg, ((reg + 1) | 0), ((Bridge.Int.mul(this.PrgRomCount, 2) - 2) | 0), ((Bridge.Int.mul(this.PrgRomCount, 2) - 1) | 0));
+                        this.SetupBankStarts(reg, reg + 1, this.PrgRomCount * 2 - 2, this.PrgRomCount * 2 - 1);
                         //SetupBanks(reg8, reg8 + 1, 0xFE, 0xFF);
                     } else {
-                        this.SetupBankStarts(0, 1, reg, ((reg + 1) | 0));
+                        this.SetupBankStarts(0, 1, reg, reg + 1);
                     }
                 }
             },
