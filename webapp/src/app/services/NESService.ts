@@ -76,7 +76,7 @@ export class RomLoader {
                         zipEntry.async('blob').then((fileData) => {
                             fileReader.onload = (ze) => {
                                 const zrom: number[] = Array.from(new Uint8Array(fileReader.result));
-                                observer.next({name: file.name, data: rom});
+                                observer.next({ name: file.name, data: zrom});
                             };
                             fileReader.readAsArrayBuffer(fileData);
                         });
@@ -114,7 +114,16 @@ export class Emulator {
     private machine: ChiChiNES.NESMachine;
     private intervalId: NodeJS.Timer;
     private callback: () => void;
-    
+    private _soundEnabled = false;
+
+    public get soundEnabled() {
+        return this._soundEnabled;
+    }
+    public set soundEnabled(value: boolean)  {
+        this._soundEnabled = value;
+        this.machine.SoundBopper.Enabled = value;
+    }
+
 
     private romName: string;
     public runStatus: RunStatus = RunStatus.Off;
@@ -129,7 +138,6 @@ export class Emulator {
         return this.emuStateSubject.asObservable();
     }
 
-
     public grabRam(start: number, finish: number): number[] {
         var length = finish - start;
         var r = this.machine.Cpu.PeekBytes(start, finish + 1);
@@ -138,62 +146,76 @@ export class Emulator {
 
     public DebugUpdateEvent: EventEmitter<DebugEventInfo> = new EventEmitter<DebugEventInfo>();
 
-      constructor( ) {
-          var wavsharer = new ChiChiNES.BeepsBoops.WavSharer();
-          var whizzler = new ChiChiNES.PixelWhizzler();
-          whizzler.FillRGB = false;
+    constructor( ) {
+        var wavsharer = new ChiChiNES.BeepsBoops.WavSharer();
+        var whizzler = new ChiChiNES.PixelWhizzler();
+        whizzler.FillRGB = false;
           
-          var soundbop = new ChiChiNES.BeepsBoops.Bopper(wavsharer);
-          var cpu = new ChiChiNES.CPU2A03(whizzler, soundbop);
-          this.controlPad = new ControlPad();
-          this.machine = new ChiChiNES.NESMachine(cpu, whizzler, new ChiChiNES.TileDoodler(whizzler), wavsharer, soundbop, new ChiChiNES.Sound.SoundThreader(null));
-          this.machine.PadOne = this.controlPad;
-          this.tileDoodler = new Tiler(this.machine);
-          this.machine.Cpu.Debugging = false;
+        var soundbop = new ChiChiNES.BeepsBoops.Bopper(wavsharer);
+        soundbop.SampleRate = 22050;
+        soundbop.Enabled = this.soundEnabled;
 
-          this.machine.Cpu.HandleBadOperation = () => {
-              this.debugger.doUpdate();
-              //debugger;
-              // this.debugger.setInstructions(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
-              this.DebugUpdateEvent.emit({ eventType: 'badOperation' });
-          }
+        var cpu = new ChiChiNES.CPU2A03(whizzler, soundbop);
+        this.controlPad = new ControlPad();
+        this.machine = new ChiChiNES.NESMachine(cpu, whizzler, new ChiChiNES.TileDoodler(whizzler), wavsharer, soundbop, new ChiChiNES.Sound.SoundThreader(null));
+        this.machine.PadOne = this.controlPad;
+        this.tileDoodler = new Tiler(this.machine);
+        this.machine.Cpu.Debugging = false;
 
-          this.debugger = new Debugger(this.machine);
-          this.emuStateSubject.next(new EmuState('', false, false, false));
-      }
+        this.machine.Cpu.HandleBadOperation = () => {
+            this.debugger.doUpdate();
+            this.DebugUpdateEvent.emit({ eventType: 'badOperation' });
+        }
 
-      get cartInfo() : CartInfo {
-        return new CartInfo(this.machine);
-      }
+        this.debugger = new Debugger(this.machine);
+        this.emuStateSubject.next(new EmuState('', false, false, false));
+    }
 
-      get isDebugging(): boolean {
-          return this.machine.Cpu.Debugging;
-      }
+    get cartInfo() : CartInfo {
+      return new CartInfo(this.machine);
+    }
+
+    get isDebugging(): boolean {
+        return this.machine.Cpu.Debugging;
+    }
 
     IsRunning(): boolean {
         return this.machine.IsRunning;
     }
     
     public wavBuffer: any;
-    
-    public fillWavBuffer() : void {
-      // This gives us the actual ArrayBuffer that contains the data
-      var nowBuffering = this.wavBuffer.getChannelData(0);
-      for (var i = 0; i < this.machine.WaveForms.SharedBufferLength; i+=2) {
-        // Math.random() is in [0; 1.0]
-        // audio needs to be in [-1.0; 1.0]
+    private buffering = false;
+    private bufferPos: number = 0;
+    private maxBufferLength = 10000;
 
-        var buf = new ArrayBuffer(4);
-        var view = new DataView(buf);
-        view.setUint8(0,this.machine.WaveForms.SharedBuffer[i]);
-        view.setUint8(0,this.machine.WaveForms.SharedBuffer[i+1]);
-        //view.setUint8(0,this.machine.WaveForms.SharedBuffer[i+2]);
-        //view.setUint8(0,this.machine.WaveForms.SharedBuffer[i+3]);
-        nowBuffering[i/2] = view.getFloat32(0) ;
+    public fillWavBuffer(ctx: AudioContext): boolean {
+        if (!this._soundEnabled) return;
+
+        let len = this.machine.WaveForms.SharedBufferLength / 2;
+
+        if (len == 0) return;
+
+        this.maxBufferLength = len * 10;
+        if (!this.buffering) {
+            this.wavBuffer = ctx.createBuffer(1, len * 8, this.machine.SoundBopper.SampleRate);
+            this.bufferPos = 0;
+            this.buffering = true;
+        }
+      const nowBuffering = this.wavBuffer.getChannelData(0);
+
+      for (let i = 0; i < len; i++) {
+          let pos = this.bufferPos + i;
+          if (pos < this.maxBufferLength) {
+              nowBuffering[pos] = this.machine.WaveForms.SharedBuffer[i];
+          } else {
+              this.buffering = false;
+              this.machine.WaveForms.ReadWaves();
+              return true;
+          }
       }
+      this.bufferPos = this.bufferPos + this.machine.WaveForms.SharedBufferLength;
       this.machine.WaveForms.ReadWaves();
-
-       //this.machine.WaveForms.SharedBuffer
+      return false;
     }
 
     // platform hooks

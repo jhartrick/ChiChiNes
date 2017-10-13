@@ -394,7 +394,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.blip_clear();
             },
             blip_set_rates: function (clock_rate, sample_rate) {
-                this._blipBuffer.factor = Bridge.Int.clip32(ChiChiNES.BeepsBoops.Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375));
+                this._blipBuffer.factor = ChiChiNES.BeepsBoops.Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375);
 
                 /* Fails if clock_rate exceeds maximum, relative to sample_rate */
                 System.Diagnostics.Debug.assert(this._blipBuffer.factor > 0);
@@ -403,11 +403,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._blipBuffer.offset = 0;
                 this._blipBuffer.avail = 0;
                 this._blipBuffer.integrator = 0;
-                this._blipBuffer.samples = System.Array.init(((this._blipBuffer.size + ChiChiNES.BeepsBoops.Blip.buf_extra) | 0), 0, System.Int32);
+                this._blipBuffer.samples = System.Array.init(this._blipBuffer.size + ChiChiNES.BeepsBoops.Blip.buf_extra, 0, System.Int32);
                 //memset(BLIP_SAMPLES(s), 0, (s.size + buf_extra) * sizeof(buf_t));
             },
             blip_clocks_needed: function (samples) {
-                var needed = (((Bridge.Int.mul(samples, ChiChiNES.BeepsBoops.Blip.time_unit) - this._blipBuffer.offset) | 0)) >>> 0;
+                var needed = samples * ChiChiNES.BeepsBoops.Blip.time_unit - this._blipBuffer.offset;
 
                 /* Fails if buffer can't hold that many more samples */
                 //assert( s->avail + samples <= s->size );
@@ -416,16 +416,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
             },
             blip_end_frame: function (t) {
-                var off = (Bridge.Int.mul(t, this._blipBuffer.factor) + this._blipBuffer.offset) | 0;
-                this._blipBuffer.avail = (this._blipBuffer.avail + (off >> ChiChiNES.BeepsBoops.Blip.time_bits)) | 0;
-                this._blipBuffer.offset = off & (((ChiChiNES.BeepsBoops.Blip.time_unit - 1) | 0));
+                var off = t * this._blipBuffer.factor + this._blipBuffer.offset;
+                this._blipBuffer.avail += off >> ChiChiNES.BeepsBoops.Blip.time_bits;
+                this._blipBuffer.offset = off & (ChiChiNES.BeepsBoops.Blip.time_unit - 1);
 
                 /* Fails if buffer size was exceeded */
                 //assert(s->avail <= s->size);
             },
             remove_samples: function (count) {
-                var remain = (((this._blipBuffer.avail + ChiChiNES.BeepsBoops.Blip.buf_extra) | 0) - count) | 0;
-                this._blipBuffer.avail = (this._blipBuffer.avail - count) | 0;
+                var remain = this._blipBuffer.avail + ChiChiNES.BeepsBoops.Blip.buf_extra - count;
+                this._blipBuffer.avail -= count;
 
                 System.Array.copy(this._blipBuffer.samples, count, this._blipBuffer.samples, 0, remain);
                 System.Array.fill(this._blipBuffer.samples, 0, remain, count);
@@ -439,24 +439,31 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
 
                 if (count !== 0) {
-                    var step = 2;
+                    var step = 1;
                     //int inPtr  = BLIP_SAMPLES( s );
                     //buf_t const* end = in + count;
                     var inPtr = 0, outPtr = 0;
-                    var endPtr = (inPtr + count) | 0;
+                    var endPtr = inPtr + count;
                     var sum = this._blipBuffer.integrator;
 
                     do {
                         var st = sum >> ChiChiNES.BeepsBoops.Blip.delta_bits; /* assumes right shift preserves sign */
-                        sum = (sum + ($t = this._blipBuffer.samples)[inPtr]) | 0;
-                        inPtr = (inPtr + 1) | 0;
-                        if (Bridge.Int.sxs(st & 65535) !== st) {
+                        sum = sum + ($t = this._blipBuffer.samples)[inPtr];
+                        inPtr++;
+                        if (st !== st) {
                             st = (st >> 31) ^ 32767;
                         }
-                        outbuf[outPtr] = st & 255;
-                        outbuf[((outPtr + 1) | 0)] = (st >> 8) & 255;
-                        outPtr = (outPtr + step) | 0;
-                        sum = (sum - (st << (7))) | 0;
+                        var f = st / 32768; // (st/0xFFFF) * 2 - 1;
+                        if (f < -1) {
+                            f = -1;
+                        }
+                        if (f > 1) {
+                            f = 1;
+                        }
+                        outbuf[outPtr] = f;
+                        // outbuf[outPtr+ 1] = (byte)(st >> 8);
+                        outPtr += step;
+                        sum = sum - (st << (7));
                     } while (inPtr !== endPtr);
 
                     this._blipBuffer.integrator = sum;
@@ -467,51 +474,51 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 return count;
             },
             blip_add_delta: function (time, delta) {
-                var $t, $t1, $t2, $t3, $t4, $t5;
+                var $t, $t1;
                 if (delta === 0) {
                     return;
                 }
-                var fixedTime = System.Int64(((Bridge.Int.mul(time, this._blipBuffer.factor) + this._blipBuffer.offset) | 0));
+                var fixedTime = System.Int64(time * this._blipBuffer.factor + this._blipBuffer.offset);
 
                 var outPtr = System.Int64.clip32(System.Int64(this._blipBuffer.avail).add((fixedTime.shr(ChiChiNES.BeepsBoops.Blip.time_bits))));
 
                 var phase_shift = 16;
-                var phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((((ChiChiNES.BeepsBoops.Blip.phase_count - 1) | 0)))));
+                var phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((ChiChiNES.BeepsBoops.Blip.phase_count - 1))));
 
                 var inStep = phase; // bl_step[phase];
-                var rev = (ChiChiNES.BeepsBoops.Blip.phase_count - phase) | 0; // bl_step[phase_count - phase];
+                var rev = ChiChiNES.BeepsBoops.Blip.phase_count - phase; // bl_step[phase_count - phase];
 
                 var interp_bits = 15;
-                var interp = System.Int64.clip32(fixedTime.shr((((phase_shift - interp_bits) | 0))).and(System.Int64(((((1 << interp_bits) - 1) | 0)))));
-                var delta2 = (Bridge.Int.mul(delta, interp)) >> interp_bits;
-                delta = (delta - delta2) | 0;
+                var interp = System.Int64.clip32(fixedTime.shr((phase_shift - interp_bits)).and(System.Int64(((1 << interp_bits) - 1))));
+                var delta2 = (delta * interp) >> interp_bits;
+                delta -= delta2;
 
                 /* Fails if buffer size was exceeded */
                 //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
 
-                for (var i = 0; i < 8; i = (i + 1) | 0) {
-                    ($t = this._blipBuffer.samples)[($t1 = ((outPtr + i) | 0))] = (($t2 = this._blipBuffer.samples)[$t1] + (((Bridge.Int.mul(ChiChiNES.BeepsBoops.Blip.bl_step.get([inStep, i]), delta) + Bridge.Int.mul(ChiChiNES.BeepsBoops.Blip.bl_step.get([((inStep + 1) | 0), i]), delta2)) | 0))) | 0;
-                    ($t3 = this._blipBuffer.samples)[($t4 = ((outPtr + (((15 - i) | 0))) | 0))] = (($t5 = this._blipBuffer.samples)[$t4] + (((Bridge.Int.mul(ChiChiNES.BeepsBoops.Blip.bl_step.get([rev, i]), delta) + Bridge.Int.mul(ChiChiNES.BeepsBoops.Blip.bl_step.get([((rev - 1) | 0), i]), delta2)) | 0))) | 0;
+                for (var i = 0; i < 8; ++i) {
+                    ($t = this._blipBuffer.samples)[outPtr + i] += ChiChiNES.BeepsBoops.Blip.bl_step.get([inStep, i]) * delta + ChiChiNES.BeepsBoops.Blip.bl_step.get([inStep + 1, i]) * delta2;
+                    ($t1 = this._blipBuffer.samples)[outPtr + (15 - i)] += ChiChiNES.BeepsBoops.Blip.bl_step.get([rev, i]) * delta + ChiChiNES.BeepsBoops.Blip.bl_step.get([rev - 1, i]) * delta2;
                 }
 
             },
             blip_add_delta_fast: function (time, delta) {
-                var $t, $t1, $t2, $t3, $t4, $t5;
-                var fixedTime = (Bridge.Int.mul(time, this._blipBuffer.factor) + this._blipBuffer.offset) | 0;
+                var $t, $t1;
+                var fixedTime = time * this._blipBuffer.factor + this._blipBuffer.offset;
 
-                var outPtr = ((this._blipBuffer.avail + (fixedTime >> ChiChiNES.BeepsBoops.Blip.time_bits)) | 0);
+                var outPtr = this._blipBuffer.avail + (fixedTime >> ChiChiNES.BeepsBoops.Blip.time_bits);
 
                 var delta_unit = 32768;
                 var phase_shift = 6;
-                var phase = fixedTime >> phase_shift & (((delta_unit - 1) | 0));
-                var delta2 = Bridge.Int.mul(delta, phase);
+                var phase = fixedTime >> phase_shift & (delta_unit - 1);
+                var delta2 = delta * phase;
 
                 /* Fails if buffer size was exceeded */
                 //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
 
 
-                ($t = this._blipBuffer.samples)[($t1 = ((outPtr + 8) | 0))] = (($t2 = this._blipBuffer.samples)[$t1] + (((Bridge.Int.mul(delta, delta_unit) - delta2) | 0))) | 0;
-                ($t3 = this._blipBuffer.samples)[($t4 = ((outPtr + 9) | 0))] = (($t5 = this._blipBuffer.samples)[$t4] + delta2) | 0;
+                ($t = this._blipBuffer.samples)[outPtr + 8] += delta * delta_unit - delta2;
+                ($t1 = this._blipBuffer.samples)[outPtr + 9] += delta2;
                 //out [8] += delta * delta_unit - delta2;
                 //out [9] += delta2;
             }
@@ -1791,7 +1798,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     if (value === 0) {
-                        this.systemClock = this.systemClock.add(Bridge.Int.clipu64(this.clock));
+                        this.systemClock = (this.systemClock.add(Bridge.Int.clipu64(this.clock))).and(System.UInt64(System.Int64([-1,65535])));
                         this.clock = value;
                     }
                 }
@@ -4882,11 +4889,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._cpu.Step();
                 } while (this.frameOn);
                 this._totalCPUClocks = this._cpu.Clock;
-                //lock (_sharedWave)
-                //{
-                //    soundBopper.FlushFrame(_totalCPUClocks);
-                //    soundBopper.EndFrame(_totalCPUClocks);
-                //}
+                this._sharedWave;
+                {
+                    this.soundBopper.FlushFrame(this._totalCPUClocks);
+                    this.soundBopper.EndFrame(this._totalCPUClocks);
+                }
 
                 if (this.PadOne != null) {
                     this.PadOne.ChiChiNES$IControlPad$refresh();
@@ -5739,6 +5746,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             lastClock: 0
         },
         props: {
+            Enabled: false,
             SampleRate: {
                 get: function () {
                     return this._sampleRate;
@@ -5844,7 +5852,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         ctors: {
             init: function () {
                 this.registers = new ChiChiNES.PortQueueing.QueuedPort();
-                this._sampleRate = 11025;
+                this._sampleRate = 44100;
                 this.square0Gain = 873;
                 this.square1Gain = 873;
                 this.triangleGain = 1004;
@@ -5898,9 +5906,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (address === 16384) {
                     this._interruptRaised = false;
                 }
-                //DoSetByte( Clock,  address,  data);
-                // registers.Enqueue(new PortWriteEntry(Clock, (ushort)address, (byte)data));
-
+                if (this.Enabled) {
+                    this.DoSetByte(Clock, address, data);
+                    this.registers.enqueue(new ChiChiNES.PortQueueing.PortWriteEntry(Clock, address, data));
+                }
 
             },
             DoSetByte: function (Clock, address, data) {
@@ -5975,6 +5984,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 // dmc.FrameClock(time, step);
             },
             EndFrame: function (time) {
+                if (!this.Enabled) {
+                    return;
+                }
 
                 this.square0.EndFrame(time);
                 this.square1.EndFrame(time);
@@ -5992,6 +6004,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             FlushFrame: function (time) {
+                if (!this.Enabled) {
+                    return;
+                }
+
                 var currentClock = 0;
                 var frameClocker = 0;
                 var currentEntry;
@@ -6114,7 +6130,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         ctors: {
             init: function () {
                 this.Locker = { };
-                this.frequency = 22050;
+                this.frequency = 44100;
             },
             $ctor1: function (frequency) {
                 ChiChiNES.BeepsBoops.WavSharer.ctor.call(this);
@@ -6125,7 +6141,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 // should hold a frame worth
                 //pendingWaves = new Queue<byte>(1500);
 
-                this._sharedBuffer = System.Array.init(8192, 0, System.Byte);
+                this._sharedBuffer = System.Array.init(8192, 0, System.Single);
             }
         },
         methods: {

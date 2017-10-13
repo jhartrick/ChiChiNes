@@ -11,9 +11,9 @@ namespace ChiChiNES.BeepsBoops
         void StartReadWaves();
         void ReadWaves();
         //byte[] ReadWaveBytes();
-        byte[] SharedBuffer { get; set; }
+        float[] SharedBuffer { get; set; }
         
-        void SetSharedBuffer(byte[] values);
+        void SetSharedBuffer(float[] values);
         
         int SharedBufferLength { get; set; }
 		float Frequency { get; }

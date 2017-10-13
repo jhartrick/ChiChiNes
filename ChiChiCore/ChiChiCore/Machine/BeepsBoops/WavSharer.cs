@@ -30,10 +30,10 @@ namespace ChiChiNES.BeepsBoops
             // should hold a frame worth
             //pendingWaves = new Queue<byte>(1500);
 
-            _sharedBuffer = new byte[8192];
+            _sharedBuffer = new float[8192];
         }
 		
-		private float frequency = 22050;
+		private float frequency = 44100;
 		public float Frequency
 		{	
 			get { return frequency;}
@@ -43,9 +43,9 @@ namespace ChiChiNES.BeepsBoops
         #region Iwavwriter Members
         const int sample_size = 2;
 
-        byte[] _sharedBuffer;
+        float[] _sharedBuffer;
 
-        public byte[] SharedBuffer
+        public float[] SharedBuffer
         {
             get { return _sharedBuffer; }
             set { _sharedBuffer = value; }
@@ -136,7 +136,7 @@ namespace ChiChiNES.BeepsBoops
         }
 
 
-        public void SetSharedBuffer(byte[] values)
+        public void SetSharedBuffer(float[] values)
         {
             _sharedBuffer = values;
         }

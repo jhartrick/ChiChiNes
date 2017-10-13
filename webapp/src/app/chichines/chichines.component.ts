@@ -67,17 +67,17 @@ export class ChiChiComponent implements AfterViewInit {
     }
 
     private setupScene(): void {
+
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
         this.listener = new THREE.AudioListener();
         this.camera.add( this.listener );
-        
-        this.sound = new THREE.Audio( this.listener );   
+        this.sound = new THREE.Audio(this.listener);
         this.audioCtx = this.sound.context;
+        
         this.audioSource = this.audioCtx.createBufferSource();
-        this.sound.setNodeSource ( this.audioSource );
-
-        this.nesService.wavBuffer = this.audioCtx.createBuffer(2, 16, 44100);
+        this.sound.setNodeSource(this.audioSource);
+        this.nesService.wavBuffer = this.audioCtx.createBuffer(1, 16, 44100);
 
         var w = 1;
         var h = 1;
@@ -150,16 +150,7 @@ void main()	{
         this.nesService.SetCallbackFunction(() => this.renderScene());
         //() => {
         //    this.renderScene();
-            //this.audioSource
-           // this.sound = new THREE.Audio( this.listener );   
-           // this.audioCtx = this.sound.context;
-           // this.nesService.wavBuffer = this.audioCtx.createBuffer(2, 16, 22500);
-           // this.nesService.fillWavBuffer()
 
-           
-           // this.sound.setBuffer(this.nesService.wavBuffer);
-           // this.sound.setLoop(false);
-           // this.sound.play();
             
 
 
@@ -170,8 +161,28 @@ void main()	{
 
   }
 
+    soundOver = true;
+
     renderScene(): void
     {
+        
+          //this.audioSource
+          // this.nesService.wavBuffer = this.audioCtx.createBuffer(2, 32, 22050);
+        if (this.nesService.soundEnabled ) {
+            let sound = new THREE.Audio(this.listener);
+            //this.soundOver = false; 
+            if (this.nesService.fillWavBuffer(sound.context)) {
+                sound.setBuffer(this.nesService.wavBuffer);
+                //this.audioSource.onended = () => {
+                //    console.log('buffer played');
+                //    this.soundOver = true;
+                //}
+                //this.sound.setLoop(false);
+                sound.playbackRate = 1.0;//this.nesService.framesPerSecond / 60; 
+                sound.play();
+                //while (this.sound.isPlaying);
+            }
+        }
         // debugger;
         this.text.needsUpdate = true;
         //this.paltext.needsUpdate = true;

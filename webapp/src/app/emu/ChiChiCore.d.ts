@@ -1050,6 +1050,7 @@ declare module ChiChiNES.BeepsBoops {
     export interface Bopper extends ChiChiNES.IClockedMemoryMappedIOElement,ChiChiNES.BeepsBoops.IAPU {
         SampleRate: number;
         Muted: boolean;
+        Enabled: boolean;
         WriteBuffer: number[];
         InterruptRaised: boolean;
         EnableSquare0: boolean;

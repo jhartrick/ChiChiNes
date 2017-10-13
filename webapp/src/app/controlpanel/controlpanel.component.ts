@@ -46,6 +46,7 @@ export class ControlPanelComponent {
     handleFile(e: Event) {
         const files: FileList = (<HTMLInputElement>e.target).files;
         this.romLoader.loadRom(files).subscribe((rom) => {
+            this.poweroff();
             this.nesService.LoadRom(rom.data, rom.name);
         });
     }

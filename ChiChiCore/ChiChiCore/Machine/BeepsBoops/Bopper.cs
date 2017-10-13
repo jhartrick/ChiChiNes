@@ -23,6 +23,7 @@ namespace ChiChiNES.BeepsBoops
 
     public class Bopper : IClockedMemoryMappedIOElement, IAPU
     {
+        public bool Enabled { get; set; }
 
         private SquareChannel square0, square1; // = new SquareChannel();
         private TriangleChannel triangle;
@@ -39,7 +40,7 @@ namespace ChiChiNES.BeepsBoops
 
         const int master_vol = 65536 / 15;
         // 44.1 kHz sample rate
-        int _sampleRate = 11025;
+        int _sampleRate = 44100;
         // 1.78 MHz clock rate 
         const double clock_rate = 1789772.727; // 1.78 MHz clock rate 
         
@@ -111,9 +112,10 @@ namespace ChiChiNES.BeepsBoops
         public void SetByte(int Clock, int address, int data)
         {
             if (address == 0x4000) _interruptRaised = false;
-            //DoSetByte( Clock,  address,  data);
-           // registers.Enqueue(new PortWriteEntry(Clock, (ushort)address, (byte)data));
-
+            if (Enabled) { 
+                DoSetByte( Clock,  address,  data);
+                registers.Enqueue(new PortWriteEntry(Clock, (ushort)address, (byte)data));
+            }
 
         }
 
@@ -225,6 +227,7 @@ namespace ChiChiNES.BeepsBoops
 
         public void EndFrame(int time)
         {
+            if (!Enabled) return;
 
             square0.EndFrame(time);
             square1.EndFrame(time);
@@ -243,6 +246,8 @@ namespace ChiChiNES.BeepsBoops
 
         public void FlushFrame(int time)
         {
+            if (!Enabled) return;
+
             int currentClock = 0;
             int frameClocker = 0;
             PortWriteEntry currentEntry;

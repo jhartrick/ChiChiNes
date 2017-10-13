@@ -28,7 +28,11 @@
         <p>Mapper: {{ nesService.cartInfo.mapperId }}</p>
         <p>Prg Roms: {{ nesService.cartInfo.prgRomCount }}</p>
         <p>Chr Roms: {{ nesService.cartInfo.chrRomCount }}</p>
-      <button (click)="fps()">FPS: {{ nesService.framesPerSecond  }}</button>
+      <button mat-button (click)="fps()">FPS: {{ nesService.framesPerSecond  }}</button>
+      <mat-button-toggle value="nesService.soundEnabled" (change)="nesService.soundEnabled = !nesService.soundEnabled" [disabled]="!nesService.canStart">
+        {{ nesService.soundEnabled ? 'sound on' : 'sound off' }}
+      </mat-button-toggle>
+
     </div>
   </mat-expansion-panel>
 

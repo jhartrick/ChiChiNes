@@ -9,7 +9,7 @@ using System.Text;
 
 namespace ChiChiNES.BeepsBoops
 {
-    [Rules(Integer = IntegerRule.Managed)]
+    [Rules(Integer = IntegerRule.Plain)]
     public class Blip
     {
         const int bass_shift = 8; /* affects high-pass filter breakpoint frequency */
@@ -130,14 +130,14 @@ namespace ChiChiNES.BeepsBoops
             _blipBuffer.arrayLength = count;
         }
 
-        public int ReadBytes(byte[] outbuf, int count, int stereo)
+        public int ReadBytes(float[] outbuf, int count, int stereo)
         {
             if (count > _blipBuffer.avail)
                 count = _blipBuffer.avail;
 
             if (count != 0)
             {
-                const int step =  2;
+                const int step =  1;
                 //int inPtr  = BLIP_SAMPLES( s );
                 //buf_t const* end = in + count;
                 int inPtr = 0, outPtr = 0;
@@ -151,8 +151,11 @@ namespace ChiChiNES.BeepsBoops
                     inPtr++;
                     if ((short)st != st) /* assumes signed cast merely truncates */
                         st = (st >> 31) ^ 0x7FFF;
-                    outbuf[outPtr] = (byte)(st);
-                    outbuf[outPtr+ 1] = (byte)(st >> 8);
+                    float f = ((float)st) / 32768;// (st/0xFFFF) * 2 - 1;
+                    if (f < -1) f = -1;
+                    if (f > 1) f = 1;
+                    outbuf[outPtr] = f;
+                   // outbuf[outPtr+ 1] = (byte)(st >> 8);
                     outPtr += step;
                     sum = sum - (st << (delta_bits - bass_shift));
                 }
