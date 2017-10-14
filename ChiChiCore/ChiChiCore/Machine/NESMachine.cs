@@ -21,15 +21,15 @@ namespace ChiChiNES
             get { return _cart; }
         }
 
-        public void WriteWAVToFile(IWavWriter writer)
-        {
-            _sharedWave.AppendFile(writer);
-        }
+        //public void WriteWAVToFile(IWavWriter writer)
+        //{
+        //    _sharedWave.AppendFile(writer);
+        //}
 
-        public void StopWritingWAV()
-        {
-            _sharedWave.AppendFile(null);
-        }
+        //public void StopWritingWAV()
+        //{
+        //    _sharedWave.AppendFile(null);
+        //}
 
         WavSharer _sharedWave;
         Bopper soundBopper;
@@ -40,7 +40,6 @@ namespace ChiChiNES
             set { soundBopper = value; }
         }
 
-        public event EventHandler<SoundStatusChangeEventArgs> SoundStatusChanged;
 
 
         public IWavReader WaveForms
@@ -57,8 +56,6 @@ namespace ChiChiNES
 
                 if (_enableSound != value)
                 {
-                    if (SoundStatusChanged != null)
-                        SoundStatusChanged(this, new SoundStatusChangeEventArgs() { Muted = !value });
                     soundBopper.Muted = !value;
                     _enableSound = value;
                 }
@@ -100,7 +97,6 @@ namespace ChiChiNES
             _cpu.SoundBopper = soundBopper;
 
             soundThreader = soundThread;
-            this.SoundStatusChanged += soundThreader.OnSoundStatusChanged;
 
             Initialize();
         }

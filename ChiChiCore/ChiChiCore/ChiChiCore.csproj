@@ -139,7 +139,9 @@
   </Target>
   <PropertyGroup>
     <PostBuildEvent>echo $(TargetDir)bridge\*  $(ProjectDir)\..\..\..\webapp\src\app\emu /s /e /h
-xcopy $(TargetDir)bridge\*.js  $(ProjectDir)\..\..\webapp\src\app\emu /s /e /h /y /r</PostBuildEvent>
+xcopy $(TargetDir)bridge\*.js  $(ProjectDir)\..\..\webapp\src\app\emu /s /e /h /y /r
+echo $(TargetDir)bridge\*  $(ProjectDir)\..\..\..\webapp\workers /s /e /h
+xcopy $(TargetDir)bridge\*.js  $(ProjectDir)\..\..\webapp\workers /s /e /h /y /r</PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\..\packages\Bridge.Min.16.3.2\build\Bridge.Min.targets" Condition="Exists('..\..\packages\Bridge.Min.16.3.2\build\Bridge.Min.targets')" />
 </Project>

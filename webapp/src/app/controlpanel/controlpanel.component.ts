@@ -5,8 +5,7 @@ import * as JSZip from 'jszip';
 
 @Component({
     selector: 'chichi-status',
-    template: `<p>Loaded: {{ (emuState | async)?.romLoaded }}</p>`,
-    changeDetection: ChangeDetectionStrategy.OnPush
+    template: `<p>Loaded: {{ (emuState | async)?.romLoaded }}</p>`
 })
 export class PowerStatusComponent {
 
@@ -59,11 +58,6 @@ export class ControlPanelComponent {
     poweroff() {
         this.nesService.StopEmulator();
         this.powerstate = 'OFF';
-    }
-
-    fps() {
-        // this.framesPerSecond = this.nesService.framesPerSecond;
-        // this.cd.markForCheck();
     }
 
     showDebugger() : void {

@@ -19,7 +19,8 @@ export class ChiChiComponent implements AfterViewInit {
     private renderer: THREE.WebGLRenderer;
     private dkrom: number[];
     private canvasCtx: CanvasRenderingContext2D;
-    private vbuffer: Uint8Array = new Uint8Array(256 * 256 * 4);
+    private sharedBuffer: SharedArrayBuffer = new SharedArrayBuffer(256 * 256 * 4);
+    private vbuffer: Uint8Array = new Uint8Array(<any>this.sharedBuffer);
     private pal: Uint8Array = new Uint8Array(256 * 4);
 
     private text: THREE.DataTexture;
@@ -38,17 +39,21 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasLeft: string = '0px';
     public canvasTop: string = '0px';
 
+
+    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(3820 * Float32Array.BYTES_PER_ELEMENT);
+    private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
+
     constructor(private nesService: Emulator, cd: ChangeDetectorRef) {
     }
 
     @HostListener('document:keydown', ['$event'])
     handleKeyDownEvent(event: KeyboardEvent) {
-        this.nesService.controlPad.handleKeyDownEvent(event);
+        this.nesService.handleKeyDownEvent(event);
     }
 
     @HostListener('document:keyup', ['$event'])
     handleKeyUpEvent(event: KeyboardEvent) {
-        this.nesService.controlPad.handleKeyUpEvent(event);
+        this.nesService.handleKeyUpEvent(event);
     }
 
     @HostListener('window:resize', ['$event'])
@@ -72,12 +77,49 @@ export class ChiChiComponent implements AfterViewInit {
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
         this.listener = new THREE.AudioListener();
         this.camera.add( this.listener );
+
         this.sound = new THREE.Audio(this.listener);
         this.audioCtx = this.sound.context;
         
         this.audioSource = this.audioCtx.createBufferSource();
+        
         this.sound.setNodeSource(this.audioSource);
-        this.nesService.wavBuffer = this.audioCtx.createBuffer(1, 16, 44100);
+        this.audioSource.buffer = this.audioCtx.createBuffer(1, 4096, 44100);
+        var scriptNode = this.audioCtx.createScriptProcessor(4096, 1, 1);
+
+        this.audioSource.connect(scriptNode);
+        scriptNode.onaudioprocess = (audioProcessingEvent) => {
+            if (this.nesService.soundEnabled) {
+                // The input buffer is the song we loaded earlier
+                var inputBuffer = audioProcessingEvent.inputBuffer;
+
+                // The output buffer contains the samples that will be modified and played
+                var outputBuffer = audioProcessingEvent.outputBuffer;
+                // Loop through the output channels (in this case there is only one)
+                for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
+                    var inputData = inputBuffer.getChannelData(channel);
+                    var outputData = outputBuffer.getChannelData(channel);
+
+                    // Loop through the 4096 samples
+                    for (var sample = 0; sample < inputBuffer.length; sample++) {
+                        // make output equal to the same as the input
+                        outputData[sample] = this.nesAudio[sample];
+
+                        // add noise to each output sample
+                        //outputData[sample] += ((Math.random() * 2) - 1) * 0.2;
+                    }
+                }
+            }
+        }
+
+        scriptNode.connect(this.audioCtx.destination);
+        this.audioSource.loop = true;
+        this.audioSource.start();
+        //this.sound.setLoop(true);
+        //this.sound.play();
+        this.nesService.SetAudioBuffer(this.nesAudio);
+
+        //console.log(scriptNode.bufferSize);
 
         var w = 1;
         var h = 1;
@@ -142,51 +184,45 @@ void main()	{
     }
 
     ngAfterViewInit(): void {
-        // this.canvasCtx = this.canvasRef.nativeElement.getContext('2d');
         this.setupScene();
-        
         this.nesService.SetVideoBuffer(this.vbuffer);
-
         this.nesService.SetCallbackFunction(() => this.renderScene());
-        //() => {
-        //    this.renderScene();
+        this.drawFrame();
+    }
 
-            
-
-
-       // });
-        
-
-
-
-  }
+    drawFrame(): void {
+      requestAnimationFrame(() => {
+        this.renderer.render(this.scene, this.camera);
+        this.text.needsUpdate = true;
+        this.drawFrame();
+      });
+    }
 
     soundOver = true;
 
     renderScene(): void
     {
         
-          //this.audioSource
-          // this.nesService.wavBuffer = this.audioCtx.createBuffer(2, 32, 22050);
-        if (this.nesService.soundEnabled ) {
-            let sound = new THREE.Audio(this.listener);
-            //this.soundOver = false; 
-            if (this.nesService.fillWavBuffer(sound.context)) {
-                sound.setBuffer(this.nesService.wavBuffer);
-                //this.audioSource.onended = () => {
-                //    console.log('buffer played');
-                //    this.soundOver = true;
-                //}
-                //this.sound.setLoop(false);
-                sound.playbackRate = 1.0;//this.nesService.framesPerSecond / 60; 
-                sound.play();
-                //while (this.sound.isPlaying);
-            }
-        }
+        //this.audioSource
+        // this.nesService.wavBuffer = this.audioCtx.createBuffer(2, 32, 22050);
+        //if (this.nesService.soundEnabled ) {
+        //    let sound = new THREE.Audio(this.listener);
+        //    //this.soundOver = false; 
+        //    if (this.nesService.fillWavBuffer(sound.context)) {
+        //        sound.setBuffer(this.nesService.wavBuffer);
+        //        //this.audioSource.onended = () => {
+        //        //    console.log('buffer played');
+        //        //    this.soundOver = true;
+        //        //}
+        //        //this.sound.setLoop(false);
+        //        sound.playbackRate = 1.0;//this.nesService.framesPerSecond / 60; 
+        //        sound.play();
+        //        //while (this.sound.isPlaying);
+        //    }
+        //}
         // debugger;
         this.text.needsUpdate = true;
         //this.paltext.needsUpdate = true;
-        this.renderer.render(this.scene, this.camera);
     }
 
 }

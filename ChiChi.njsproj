@@ -20,6 +20,8 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <ItemGroup>
+    <Compile Include="config\helper.js" />
+    <Compile Include="config\webpack.worker.js" />
     <Compile Include="src\app\emu\bridge.js" />
     <Compile Include="src\app\emu\bridge.meta.js" />
     <Compile Include="src\app\emu\bridge.meta.min.js" />
@@ -28,6 +30,11 @@
     <Compile Include="src\app\emu\ChiChiCore.meta.js" />
     <Compile Include="src\app\emu\ChiChiCore.meta.min.js" />
     <Compile Include="src\app\emu\ChiChiCore.min.js" />
+    <Compile Include="src\assets\workers\emulator.worker.ff" />
+    <Compile Include="workers\bridge.js" />
+    <Compile Include="workers\ChiChiCore.js" />
+    <Compile Include="workers\emulator.jsworker.js" />
+    <Compile Include="workers\worker.js" />
     <Content Include=".angular-cli.json" />
     <Content Include="package.json" />
     <Content Include="src\app\chichines.instructionhistory\chichines.instructionhistory.component.css" />
@@ -53,6 +60,8 @@
     <Compile Include="karma.conf.js" />
     <Compile Include="protractor.conf.js" />
     <Content Include="e2e\tsconfig.e2e.json" />
+    <Content Include="workers\tsconfig.json" />
+    <Content Include="workers\worker.map" />
     <TypeScriptCompile Include="e2e\app.e2e-spec.ts" />
     <TypeScriptCompile Include="e2e\app.po.ts" />
     <Content Include="src\index.html" />
@@ -107,6 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin" />
+    <Folder Include="config\" />
     <Folder Include="dist" />
     <Folder Include="dist\out-tsc" />
     <Folder Include="dist\out-tsc\e2e" />
@@ -125,9 +135,11 @@
     <Folder Include="src\app\chichines\" />
     <Folder Include="src\app\controlpanel\" />
     <Folder Include="src\assets" />
+    <Folder Include="src\assets\workers\" />
     <Folder Include="src\environments" />
     <Folder Include="src\app\services\" />
     <Folder Include="src\app-typings\" />
+    <Folder Include="workers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <!--Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them.-->

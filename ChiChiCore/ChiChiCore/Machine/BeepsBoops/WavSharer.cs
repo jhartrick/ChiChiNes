@@ -85,13 +85,13 @@ namespace ChiChiNES.BeepsBoops
             WroteBytes();
         }
 
-        private IWavWriter appendToFile;
+        //private IWavWriter appendToFile;
 
-        public void AppendFile(IWavWriter writer)
-        {
-            appendToFile = writer;
-            fileWriting = (appendToFile != null);
-        }
+        //public void AppendFile(IWavWriter writer)
+        //{
+        //    appendToFile = writer;
+        //    fileWriting = (appendToFile != null);
+        //}
 
         private bool fileWriting;
 
@@ -103,8 +103,8 @@ namespace ChiChiNES.BeepsBoops
 
         public void Dispose()
         {
-            if (null != appendToFile)
-                appendToFile.Dispose();
+            //if (null != appendToFile)
+            //    appendToFile.Dispose();
         }
 
         #endregion
