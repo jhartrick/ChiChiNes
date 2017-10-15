@@ -64,9 +64,9 @@ namespace ChiChiNES
         internal byte[] iNesHeader = new byte[16];
         internal byte[] romControlBytes = new byte[2];
         internal byte[] nesCart;
-        private byte[] chrRom;
+        private int[] chrRom;
 
-        public byte[] ChrRom
+        public int[] ChrRom
         {
             get { return chrRom; }
             set { chrRom = value; }
@@ -97,7 +97,7 @@ namespace ChiChiNES
         internal int mapperId;
 
         internal int bank8start, bankAstart, bankCstart, bankEstart;
-        internal byte[] prgRomBank6 = new byte[0x2000];
+        internal int[] prgRomBank6 = new int[0x2000];
 
         private ROMHashFunctionDelegate _ROMHashfunction;
 
@@ -153,7 +153,7 @@ namespace ChiChiNES
             }
 
             
-            chrRom = new byte[chrRomData.Length + 0x1000];
+            chrRom = new int[chrRomData.Length + 0x1000];
 
             chrRamStart = chrRomData.Length;
 
@@ -377,7 +377,7 @@ namespace ChiChiNES
             }
         }
 
-        public byte[] SRAM
+        public int[] SRAM
         {
             get
             {
@@ -498,7 +498,7 @@ namespace ChiChiNES
             set { bankSwitchesChanged = value; }
         }
 
-        public byte GetPPUByte(int clock, int address)
+        public int GetPPUByte(int clock, int address)
         {
             int bank = address / 0x400;
             int newAddress = ppuBankStarts[bank] + (address & 0x3FF);

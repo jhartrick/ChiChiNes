@@ -26,7 +26,7 @@ export class InstructionHistoryDatabase {
   /** Stream that emits whenever the data has been modified. */
   dataChange: BehaviorSubject<DecodedInstruction[]> = new BehaviorSubject<DecodedInstruction[]>([]);
   get data(): DecodedInstruction[] { return this.dataChange.value; }
-  length: number;
+  length: number=0;
 
   constructor() {
   }
@@ -44,8 +44,8 @@ export class InstructionHistoryDatabase {
   update() {
       const copiedData = this.bufData;
       this.length = copiedData.length;
-    this.dataChange.next(copiedData);
-    this.bufData  = new Array<DecodedInstruction>() ;
+      this.dataChange.next(copiedData);
+      this.bufData  = new Array<DecodedInstruction>();
   }
 }
 
@@ -90,39 +90,53 @@ export class CpuStatus {
     SR: number = 0;
 }
 
-
 export class Debugger {
+        private machine : Observable<any>;
+        constructor(machine: Observable<any>) {
+            this.machine = machine;
+            this.machine.filter((d, i) =>
+            {
+              return d.debug ? true : false;
+            }).subscribe((data) => {
+                const debug = data.debug;
+                this.currentCpuStatus = debug.currentCpuStatus;
+                if (debug.InstructionHistory) {
+                    this.setInstructionPage(debug.InstructionHistory.Buffer, debug.InstructionHistory.Index);
+                    if (debug.InstructionHistory.Finish) {
+                        this.lastInstructions.update();
+                    }
+                }
 
-    constructor(private machine: ChiChiNES.NESMachine) {
-        this.machine.Cpu.FireDebugEvent = (event) => {
-            this.appendInstructionPage();
+            });
+            //this.machine.Cpu.FireDebugEvent = (event) => {
+            //    this.appendInstructionPage();
+            //}
         }
-    }
 
-    public currentCpuStatus: CpuStatus = {
-        PC: 0,
-        A: 0,
-        X: 0,
-        Y: 0,
-        SP: 0,
-        SR: 0
-    }; 
+        public currentCpuStatus: CpuStatus = {
+            PC: 0,
+            A: 0,
+            X: 0,
+            Y: 0,
+            SP: 0,
+            SR: 0
+        }; 
 
         public lastInstructions: InstructionHistoryDatabase= new InstructionHistoryDatabase(); 
 
         public doUpdate() {
-            this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
+            //this.setInstructionPage(this.machine.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
 
-            this.lastInstructions.update();
-            this.decodeCpuStatusRegister(this.machine.Cpu.StatusRegister);
-            this.currentCpuStatus = {
-                PC: this.machine.Cpu.ProgramCounter,
-                A: this.machine.Cpu.Accumulator,
-                X: this.machine.Cpu.IndexRegisterX,
-                Y: this.machine.Cpu.IndexRegisterY,
-                SP: this.machine.Cpu.StackPointer,
-                SR: this.machine.Cpu.StatusRegister
-            };
+            //this.lastInstructions.update();
+            //this.decodeCpuStatusRegister(this.machine.Cpu.StatusRegister);
+            //this.currentCpuStatus = {
+            //    PC: this.machine.Cpu.ProgramCounter,
+            //    A: this.machine.Cpu.Accumulator,
+            //    X: this.machine.Cpu.IndexRegisterX,
+            //    Y: this.machine.Cpu.IndexRegisterY,
+            //    SP: this.machine.Cpu.StackPointer,
+            //    SR: this.machine.Cpu.StatusRegister
+            //};
         }
 
         public decodedStatusRegister: string;
@@ -147,7 +161,7 @@ export class Debugger {
         }
 
         public appendInstructionPage() {
-            this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
+        //    this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
         }
 
         private setInstructionPage(inst : ChiChiNES.CPU2A03.Instruction[], start: number, frameNumber?: number) : void {

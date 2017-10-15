@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bridge;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,7 +41,7 @@ namespace ChiChiNES
             instructionHistoryPointer = 0xFF;
 
         }
-
+        [Rules(Integer=IntegerRule.Plain)]
         public void WriteInstructionHistoryAndUsage()
         {
 
@@ -56,7 +57,7 @@ namespace ChiChiNES
                 Parameters0 = _currentInstruction_Parameters0,
                 Parameters1 = _currentInstruction_Parameters1,
                 Address = _currentInstruction_Address,
-                AddressingMode = _currentInstruction_AddressingMode,
+                AddressingMode = (int)_currentInstruction_AddressingMode,
                 ExtraTiming = _currentInstruction_ExtraTiming
             };
             instructionUsage[_currentInstruction_OpCode]++;

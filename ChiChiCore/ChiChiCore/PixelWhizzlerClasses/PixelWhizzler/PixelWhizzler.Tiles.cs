@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Bridge;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace ChiChiNES
 {
-
-
     public partial class PixelWhizzler
     {
 
@@ -29,7 +28,8 @@ namespace ChiChiNES
         /// <param name="xPosition">X position of pixel (0 to 255)</param>
         /// <param name="yPosition">Y position of pixel (0 to 239)</param>
         /// <returns></returns>
-        public byte GetNameTablePixel()
+        [Rules(Integer =IntegerRule.Plain)]
+        public int GetNameTablePixel()
         {
             int result = ((patternEntry & 0x80) >> 7) | ((patternEntryByte2 & 0x80) >> 6);
             patternEntry <<= 1;            
@@ -38,7 +38,7 @@ namespace ChiChiNES
             {
                 result |= currentAttributeByte; 
             }
-            return (byte)result;
+            return result & 0xFF;
         }
 
         private void FetchNextTile()

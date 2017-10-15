@@ -54,8 +54,7 @@ namespace ChiChiNES
                         ClearVINT();
 
                         frameOn = true;
-                        //
-                        ClearNESPalette();
+
                         chrRomHandler.ResetBankStartCache();
                         // setFrameOn();
                         if (spriteChanges)
@@ -133,10 +132,10 @@ namespace ChiChiNES
                         }
 
                         /* draw pixel */
-                        byte tilePixel = _tilesAreVisible ? GetNameTablePixel() : (byte)0;
-                        bool foregroundPixel = false;
-                        byte spritePixel = _spritesAreVisible ? GetSpritePixel(out foregroundPixel) : (byte)0;
-
+                        int tilePixel = _tilesAreVisible ? GetNameTablePixel() : 0;
+                       // bool foregroundPixel = isForegroundPixel;
+                        int spritePixel = _spritesAreVisible ? GetSpritePixel() : 0;
+                        
                         if (!hitSprite && spriteZeroHit && tilePixel != 0)
                         {
                             hitSprite = true;
@@ -146,7 +145,7 @@ namespace ChiChiNES
                         //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
                         //var x = 
 
-                        byteOutBuffer[vbufLocation * 4] = _palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
+                        byteOutBuffer[vbufLocation * 4] = _palette[(isForegroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel];
                         //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
                         //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
                         //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
@@ -184,21 +183,8 @@ namespace ChiChiNES
             lastcpuClock = cpuClockNum;
         }
 
-        protected virtual void BumpScanline()
-        {
 
-
-        }
-
-        protected virtual void UpdateXPosition()
-        {
-
-        }
-
-        protected int[] rgb32OutBuffer = new int[256*256];
-        private byte[] byteOutBuffer = new byte[256 * 256 * 4];
-
-
+        private int[] byteOutBuffer = new int[256 * 256 * 4];
 
         protected int[] outBuffer = new int[256 * 256];
 
@@ -207,51 +193,8 @@ namespace ChiChiNES
             get { return outBuffer; }
         }
 
-        public virtual void FillBuffer()
-        {
-
-            //int i = 0;
-            //while (i < 256 * 240 )
-            //{
-            //    int tile = (outBuffer[i] & 0x0F);
-            //    int sprite = ((outBuffer[i] >> 4) & 0x0F) + 16;
-            //    int isSprite = (outBuffer[i] >> 8) & 64;
-            //    int curPal = (outBuffer[i] >> 24) & 0xFF;
-
-            //    uint pixel;
-            //    if (isSprite > 0)
-            //    {
-            //        pixel = palCache[curPal][sprite];
-            //    }
-            //    else
-            //    {
-            //        pixel = palCache[curPal][tile];
-            //    }
-            //    rgb32OutBuffer[i] = pal[pixel];
-            //    i++;
-            //}
-        }
-
-        public int[] VideoBuffer
-        {
-            get
-            {
-                return rgb32OutBuffer;
-            }
-        }
-
-        public void SetVideoBuffer(int[] inBuffer)
-        {
-            rgb32OutBuffer = inBuffer;
-        }
 
         protected int vbufLocation;
-
-
-        protected void DrawPixel()
-        {
-
-        }
 
         public virtual void UpdatePixelInfo()
         {
@@ -269,19 +212,10 @@ namespace ChiChiNES
             set { pixelDevices = value; }
         }
 
-        public byte[] ByteOutBuffer { get { return byteOutBuffer; } set { byteOutBuffer = value; } }
+        public int[] ByteOutBuffer { get { return byteOutBuffer; } set { byteOutBuffer = value; } }
 
         private bool _clipTiles;
         private bool _clipSprites;
 
-        private bool ClippingTilePixels()
-        {
-            return _clipTiles ;
-        }
-
-        private bool ClippingSpritePixels()
-        {
-            return _clipSprites ;
-        }
     }
 }

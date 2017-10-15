@@ -5,7 +5,8 @@ import * as JSZip from 'jszip';
 
 @Component({
     selector: 'chichi-status',
-    template: `<p>Loaded: {{ (emuState | async)?.romLoaded }}</p>`
+    template: `<p>Loaded: {{ (emuState | async)?.romLoaded }}</p>`,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PowerStatusComponent {
 

@@ -130,7 +130,7 @@ namespace ChiChiNES
         {
             get { return _cpu.PadTwo.ControlPad; }
             set { _cpu.PadTwo.ControlPad = value;
-                    PPU.PixelAwareDevice = value as IPixelAwareDevice;
+                  //  PPU.PixelAwareDevice = value as IPixelAwareDevice;
             }
         }
         

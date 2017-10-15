@@ -12,16 +12,6 @@ namespace ChiChiNES
     public partial class NESMachine : IDisposable
     {
 
-        private bool isDebugging;
- 
-
-
-        public void Runtendo()
-        {
-            isDebugging = false;
-            RunFrame();
-        }
-
         #region IDisposable Members
 
         public void Dispose()

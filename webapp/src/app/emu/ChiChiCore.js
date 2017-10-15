@@ -1662,7 +1662,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             _currentInstruction_Parameters1: 0,
             _currentInstruction_ExtraTiming: 0,
             clock: 0,
-            systemClock: System.UInt64(0),
+            systemClock: 0,
             _handleNMI: false,
             _handleIRQ: false,
             nextEvent: 0,
@@ -1793,7 +1793,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     if (value === 0) {
-                        this.systemClock = (this.systemClock.add(Bridge.Int.clipu64(this.clock))).and(System.UInt64(System.Int64([-1,65535])));
+                        this.systemClock = (this.systemClock + this.clock) & 268435455;
                         this.clock = value;
                     }
                 }
@@ -1937,7 +1937,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._currentInstruction_Parameters0 = 0;
                 this._currentInstruction_Parameters1 = 0;
                 this._currentInstruction_ExtraTiming = 0;
-                this.systemClock = System.UInt64(0);
+                this.systemClock = 0;
                 this.nextEvent = -1;
                 this.clockcount = System.Array.init(256, 0, System.Int32);
                 this.instruction = System.Array.init(256, 0, System.Int32);
@@ -1945,7 +1945,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.memoryPatches = new (System.Collections.Generic.Dictionary$2(System.Int32,ChiChiNES.Hacking.IMemoryPatch))();
                 this.genieCodes = new (System.Collections.Generic.Dictionary$2(System.Int32,System.Int32))();
                 this._cheating = false;
-                this.Rams = System.Array.init(8192, 0, System.Byte);
+                this.Rams = System.Array.init(8192, 0, System.Int32);
                 this._stackPointer = 255;
                 this.instructionUsage = System.Array.init(256, 0, System.Int32);
                 this._debugging = false;
@@ -1993,7 +1993,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetFlag: function (Flag, value) {
                 this._statusRegister = (value ? (this._statusRegister | Flag) : (this._statusRegister & ~Flag));
 
-                this._statusRegister = this._statusRegister | (ChiChiNES.CPUStatusMasks.ExpansionMask);
+                this._statusRegister |= ChiChiNES.CPUStatusMasks.ExpansionMask;
             },
             GetFlag: function (Flag) {
                 var flag = Flag;
@@ -2013,14 +2013,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 // if enabled
 
                 // push pc onto stack (high byte first)
-                this.PushStack(((Bridge.Int.div(this.ProgramCounter, 256)) | 0));
+                this.PushStack(this.ProgramCounter / 256);
                 this.PushStack(this.ProgramCounter);
                 // push sr onto stack
                 this.PushStack(this.StatusRegister);
 
                 // point pc to interrupt service routine
 
-                this.ProgramCounter = (this.GetByte$1(65534) + (this.GetByte$1(65535) << 8)) | 0;
+                this.ProgramCounter = this.GetByte$1(65534) + (this.GetByte$1(65535) << 8);
 
                 // nonOpCodeticks = 7;
             },
@@ -2038,8 +2038,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 // push sr onto stack
                 this.PushStack(newStatusReg);
                 // point pc to interrupt service routine
-                var lowByte = (this.GetByte$1(65530)) & 255;
-                var highByte = (this.GetByte$1(65531)) & 255;
+                var lowByte = this.GetByte$1(65530);
+                var highByte = this.GetByte$1(65531);
                 var jumpTo = lowByte | (highByte << 8);
                 this.ProgramCounter = jumpTo;
                 //nonOpCodeticks = 7;
@@ -2065,7 +2065,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 if (this._handleNMI) {
                     this._handleNMI = false;
-                    this.clock = (this.clock + 7) | 0;
+                    this.clock += 7;
                     //NonMaskableInterrupt();
 
                     //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
@@ -2080,14 +2080,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     // push sr onto stack
                     this.PushStack(newStatusReg);
                     // point pc to interrupt service routine
-                    var lowByte = (this.GetByte$1(65530)) & 255;
-                    var highByte = (this.GetByte$1(65531)) & 255;
+                    var lowByte = this.GetByte$1(65530);
+                    var highByte = this.GetByte$1(65531);
                     var jumpTo = lowByte | (highByte << 8);
                     this.ProgramCounter = jumpTo;
                     //nonOpCodeticks = 7;
                 } else if (this._handleIRQ) {
                     this._handleIRQ = false;
-                    this.clock = (this.clock + 7) | 0;
+                    this.clock += 7;
                     //InterruptRequest();
                     //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
                     //  set is pushed on the stack, then the I flag is set. 
@@ -2101,14 +2101,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     // if enabled
 
                     // push pc onto stack (high byte first)
-                    this.PushStack(((Bridge.Int.div(this.ProgramCounter, 256)) | 0));
+                    this.PushStack(this.ProgramCounter / 256);
                     this.PushStack(this.ProgramCounter);
                     // push sr onto stack
                     this.PushStack(this.StatusRegister);
 
                     // point pc to interrupt service routine
 
-                    this.ProgramCounter = (this.GetByte$1(65534) + (this.GetByte$1(65535) << 8)) | 0;
+                    this.ProgramCounter = this.GetByte$1(65534) + (this.GetByte$1(65535) << 8);
 
                     // nonOpCodeticks = 7;
 
@@ -2116,7 +2116,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 //FetchNextInstruction();
                 this._currentInstruction_Address = this._programCounter;
-                this._currentInstruction_OpCode = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
+                this._currentInstruction_OpCode = this.GetByte$1(this._programCounter++);
                 this._currentInstruction_AddressingMode = this.addressmode[this._currentInstruction_OpCode];
 
                 //FetchInstructionParameters();
@@ -2126,8 +2126,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case ChiChiNES.AddressingModes.AbsoluteY: 
                     case ChiChiNES.AddressingModes.Indirect: 
                         // case AddressingModes.IndirectAbsoluteX:
-                        this._currentInstruction_Parameters0 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
-                        this._currentInstruction_Parameters1 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
+                        this._currentInstruction_Parameters0 = this.GetByte$1(this._programCounter++);
+                        this._currentInstruction_Parameters1 = this.GetByte$1(this._programCounter++);
                         break;
                     case ChiChiNES.AddressingModes.ZeroPage: 
                     case ChiChiNES.AddressingModes.ZeroPageX: 
@@ -2137,7 +2137,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case ChiChiNES.AddressingModes.IndirectIndexed: 
                     case ChiChiNES.AddressingModes.IndirectZeroPage: 
                     case ChiChiNES.AddressingModes.Immediate: 
-                        this._currentInstruction_Parameters0 = this.GetByte$1(Bridge.identity(this._programCounter, (this._programCounter = (this._programCounter + 1) | 0)));
+                        this._currentInstruction_Parameters0 = this.GetByte$1(this._programCounter++);
                         break;
                     case ChiChiNES.AddressingModes.Accumulator: 
                     case ChiChiNES.AddressingModes.Implicit: 
@@ -2152,10 +2152,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
                 if (this._debugging) {
                     this.WriteInstructionHistoryAndUsage();
-                    this._operationCounter = (this._operationCounter + 1) | 0;
+                    this._operationCounter++;
                 }
 
-                this.clock = (this.clock + (((ChiChiNES.CPU2A03.cpuTiming[this._currentInstruction_OpCode] + this._currentInstruction_ExtraTiming) | 0))) | 0;
+                this.clock += ChiChiNES.CPU2A03.cpuTiming[this._currentInstruction_OpCode] + this._currentInstruction_ExtraTiming;
             },
             /**
              * runs up to x clock cycles, then returns
@@ -2170,7 +2170,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             RunCycles: function (count) {
                 var startCycles = this._ticks;
 
-                while (((this._ticks - startCycles) | 0) < count) {
+                while (this._ticks - startCycles < count) {
                     this.Step();
                 }
 
@@ -2971,7 +2971,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._stackPointer = 253;
                 this.setupticks();
                 this.Ticks = 4;
-                this.ProgramCounter = (this.GetByte$1(65532) + Bridge.Int.mul(this.GetByte$1(65533), 256)) | 0;
+                this.ProgramCounter = this.GetByte$1(65532) + this.GetByte$1(65533) * 256;
             },
             PowerOn: function () {
                 // powers up with this state
@@ -2983,7 +2983,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 // wram initialized to 0xFF, with some exceptions
                 // probably doesn't affect games, but why not?
-                for (var i = 0; i < 2048; i = (i + 1) | 0) {
+                for (var i = 0; i < 2048; ++i) {
                     this.Rams[i] = 255;
                 }
                 this.Rams[8] = 247;
@@ -2991,7 +2991,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.Rams[10] = 223;
                 this.Rams[15] = 191;
 
-                this.ProgramCounter = (this.GetByte$1(65532) + Bridge.Int.mul(this.GetByte$1(65533), 256)) | 0;
+                this.ProgramCounter = this.GetByte$1(65532) + this.GetByte$1(65533) * 256;
             },
             GetState: function (outStream) {
                 outStream.enqueue(this._programCounter);
@@ -3000,8 +3000,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 outStream.enqueue(this._indexRegisterY);
                 outStream.enqueue(this._statusRegister);
                 outStream.enqueue(this._stackPointer);
-                for (var i = 0; i < 2048; i = (i + 4) | 0) {
-                    outStream.enqueue((this.Rams[i] << 24) | (this.Rams[((i + 1) | 0)] << 16) | (this.Rams[((i + 2) | 0)] << 8) | (this.Rams[((i + 3) | 0)]));
+                for (var i = 0; i < 2048; i += 4) {
+                    outStream.enqueue((this.Rams[i] << 24) | (this.Rams[i + 1] << 16) | (this.Rams[i + 2] << 8) | (this.Rams[i + 3]));
                 }
             },
             SetState: function (inStream) {
@@ -3012,12 +3012,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._statusRegister = inStream.dequeue();
                 this._stackPointer = inStream.dequeue();
                 var packedByte = 0;
-                for (var i = 0; i < 2048; i = (i + 4) | 0) {
+                for (var i = 0; i < 2048; i += 4) {
                     packedByte = inStream.dequeue();
-                    this.Rams[i] = (packedByte >> 24) & 255;
-                    this.Rams[((i + 1) | 0)] = (packedByte >> 16) & 255;
-                    this.Rams[((i + 2) | 0)] = (packedByte >> 8) & 255;
-                    this.Rams[((i + 3) | 0)] = packedByte & 255;
+                    this.Rams[i] = packedByte >> 24;
+                    this.Rams[i + 1] = packedByte >> 16;
+                    this.Rams[i + 2] = packedByte >> 8;
+                    this.Rams[i + 3] = packedByte;
 
                 }
             },
@@ -3104,7 +3104,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         return this.DataBus;
                 }
             },
-            StoreOperand: function (address) { },
             Execute: function () {
                 switch (this._currentInstruction_OpCode) {
                     case 128: 
@@ -3441,15 +3440,15 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //negativeResult = (data & 0x80) == 0x80;
 
                 if ((data & 255) === 0) {
-                    this._statusRegister = this._statusRegister | 2;
+                    this._statusRegister |= 2;
                 } else {
-                    this._statusRegister = this._statusRegister & (-3);
+                    this._statusRegister &= -3;
                 } // ((int)CPUStatusMasks.ZeroResultMask);
 
                 if ((data & 128) === 128) {
-                    this._statusRegister = this._statusRegister | 128;
+                    this._statusRegister |= 128;
                 } else {
-                    this._statusRegister = this._statusRegister & (-129);
+                    this._statusRegister &= -129;
                 } // ((int)CPUStatusMasks.NegativeResultMask);
                 //SetFlag(CPUStatusBits.ZeroResult, (data & 0xFF) == 0);
                 //SetFlag(CPUStatusBits.NegativeResult, (data & 0x80) == 0x80);
@@ -3496,13 +3495,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             DEC: function () {
-                var val = (this.DecodeOperand()) & 255;
+                var val = this.DecodeOperand();
                 val = (val - 1) & 255;
                 this.SetByte$1(this.DecodeAddress(), val);
                 this.SetZNFlags(val);
             },
             INC: function () {
-                var val = (this.DecodeOperand()) & 255;
+                var val = this.DecodeOperand();
                 val = (val + 1) & 255;
                 this.SetByte$1(this.DecodeAddress(), val);
                 this.SetZNFlags(val);
@@ -3511,7 +3510,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 // start the read process
                 var data = this.DecodeOperand();
                 var carryFlag = (this._statusRegister & 1);
-                var result = (((((this._accumulator + data) | 0) + carryFlag) | 0));
+                var result = (this._accumulator + data + carryFlag);
 
                 // carry flag
 
@@ -3548,18 +3547,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SBC: function () {
                 // start the read process
 
-                var data = (this.DecodeOperand()) >>> 0;
+                var data = this.DecodeOperand() & 4095;
 
                 var carryFlag = ((this._statusRegister ^ 1) & 1);
 
-                var result = System.Int64.clipu32(System.Int64(this._accumulator).sub(System.Int64(data)).sub(System.Int64(carryFlag)));
+                var result = (((this._accumulator - data) & 4095) - carryFlag) & 4095;
 
                 // set overflow flag if sign bit of accumulator changed
-                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, ((System.Int64(this._accumulator).xor(System.Int64(result))).and(System.Int64(128))).equals(System.Int64(128)) && ((System.Int64(this._accumulator).xor(System.Int64(data))).and(System.Int64(128))).equals(System.Int64(128)));
+                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, ((this._accumulator ^ result) & 128) === 128 && ((this._accumulator ^ data) & 128) === 128);
 
                 this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (result < 256));
 
-                this._accumulator = result | 0;
+                this._accumulator = (result) & 255;
                 this.SetZNFlags(this._accumulator);
 
 
@@ -3646,15 +3645,15 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.SetZNFlags(data & 255);
             },
             CMP: function () {
-                var data = (((((this.Accumulator + 256) | 0) - this.DecodeOperand()) | 0));
+                var data = (this.Accumulator + 256 - this.DecodeOperand());
                 this.Compare(data);
             },
             CPX: function () {
-                var data = (((((this._indexRegisterX + 256) | 0) - this.DecodeOperand()) | 0));
+                var data = (this._indexRegisterX + 256 - this.DecodeOperand());
                 this.Compare(data);
             },
             CPY: function () {
-                var data = (((((this._indexRegisterY + 256) | 0) - this.DecodeOperand()) | 0));
+                var data = (this._indexRegisterY + 256 - this.DecodeOperand());
                 this.Compare(data);
             },
             NOP: function () {
@@ -3668,10 +3667,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._currentInstruction_ExtraTiming = 1;
                 var addr = this._currentInstruction_Parameters0 & 255;
                 if ((addr & 128) === 128) {
-                    addr = (addr - 256) | 0;
-                    this._programCounter = (this._programCounter + addr) | 0;
+                    addr = addr - 256;
+                    this._programCounter += addr;
                 } else {
-                    this._programCounter = (this._programCounter + addr) | 0;
+                    this._programCounter += addr;
                 }
 
                 if ((this._programCounter & 255) < addr) {
@@ -3721,22 +3720,22 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             DEX: function () {
-                this._indexRegisterX = (this._indexRegisterX - 1) | 0;
+                this._indexRegisterX = this._indexRegisterX - 1;
                 this._indexRegisterX = this._indexRegisterX & 255;
                 this.SetZNFlags(this._indexRegisterX);
             },
             DEY: function () {
-                this._indexRegisterY = (this._indexRegisterY - 1) | 0;
+                this._indexRegisterY = this._indexRegisterY - 1;
                 this._indexRegisterY = this._indexRegisterY & 255;
                 this.SetZNFlags(this._indexRegisterY);
             },
             INX: function () {
-                this._indexRegisterX = (this._indexRegisterX + 1) | 0;
+                this._indexRegisterX = this._indexRegisterX + 1;
                 this._indexRegisterX = this._indexRegisterX & 255;
                 this.SetZNFlags(this._indexRegisterX);
             },
             INY: function () {
-                this._indexRegisterY = (this._indexRegisterY + 1) | 0;
+                this._indexRegisterY = this._indexRegisterY + 1;
                 this._indexRegisterY = this._indexRegisterY & 255;
                 this.SetZNFlags(this._indexRegisterY);
             },
@@ -3782,7 +3781,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             JSR: function () {
                 this.PushStack((this._programCounter >> 8) & 255);
-                this.PushStack((((this._programCounter - 1) | 0)) & 255);
+                this.PushStack((this._programCounter - 1) & 255);
 
                 this._programCounter = this.DecodeAddress();
             },
@@ -3832,7 +3831,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             RTS: function () {
                 var high, low;
-                low = (((this.PopStack() + 1) | 0)) & 255;
+                low = (this.PopStack() + 1) & 255;
                 high = this.PopStack();
                 this._programCounter = ((high << 8) | low);
             },
@@ -3840,14 +3839,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._statusRegister = this.PopStack(); // | 0x20;
                 var low = this.PopStack();
                 var high = this.PopStack();
-                this._programCounter = ((((Bridge.Int.mul(256, high)) + low) | 0));
+                this._programCounter = ((256 * high) + low);
             },
             BRK: function () {
                 //BRK causes a non-maskable interrupt and increments the program counter by one. 
                 //Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to replace a two-byte instruction 
                 // for debugging and the subsequent RTI will be correct. 
                 // push pc onto stack (high byte first)
-                this._programCounter = (this._programCounter + 1) | 0;
+                this._programCounter = this._programCounter + 1;
                 this.PushStack(this._programCounter >> 8 & 255);
                 this.PushStack(this._programCounter & 255);
                 // push sr onto stack
@@ -3868,7 +3867,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.AddressBus = 65535;
                 var highByte = this.GetByte();
 
-                this._programCounter = (lowByte + Bridge.Int.mul(highByte, 256)) | 0;
+                this._programCounter = lowByte + highByte * 256;
             },
             AAC: function () {
                 //AND byte with accumulator. If result is negative then carry is set.
@@ -3951,18 +3950,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 System.Array.copy(bytes, 0, this.Rams, offset, length);
             },
             PushStack: function (data) {
-                this.Rams[((this._stackPointer + 256) | 0)] = data & 255;
-                this._stackPointer = (this._stackPointer - 1) | 0;
+                this.Rams[this._stackPointer + 256] = data;
+                this._stackPointer--;
                 if (this._stackPointer < 0) {
                     this._stackPointer = 255;
                 }
             },
             PopStack: function () {
-                this._stackPointer = (this._stackPointer + 1) | 0;
+                this._stackPointer++;
                 if (this._stackPointer > 255) {
                     this._stackPointer = 0;
                 }
-                return this.Rams[((this._stackPointer + 256) | 0)] & 255;
+                return this.Rams[this._stackPointer + 256] & 255;
             },
             GetByte: function () {
                 this.DataBus = this.GetByte$1(this.AddressBus);
@@ -4104,9 +4103,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              * @return  {Array.<number>}
              */
             PeekBytes: function (start, finish) {
-                var array = System.Array.init(((finish - start) | 0), 0, System.Int32);
-                for (var i = 0; i < ((finish - start) | 0); i = (i + 1) | 0) {
-                    array[i] = this.PeekByte(((start + i) | 0));
+                var array = System.Array.init(finish - start, 0, System.Int32);
+                for (var i = 0; i < finish - start; ++i) {
+                    array[i] = this.PeekByte(start + i);
                 }
                 return array;
             },
@@ -4117,14 +4116,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetByte$1: function (address, data) {
                 // check high byte, find appropriate handler
                 if (address < 2048) {
-                    this.Rams[address & 2047] = data & 255;
+                    this.Rams[address & 2047] = data;
                     return;
                 }
                 switch (address & 61440) {
                     case 0: 
                     case 4096: 
                         // nes sram
-                        this.Rams[address & 2047] = data & 255;
+                        this.Rams[address & 2047] = data;
                         break;
                     case 20480: 
                         this.Cart.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
@@ -4169,8 +4168,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                                 this.soundBopper.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
                                 break;
                             case 16404: 
-                                this._pixelWhizzler.ChiChiNES$IPPU$CopySprites(Bridge.ref(this, "Rams"), Bridge.Int.mul(data, 256));
-                                this._currentInstruction_ExtraTiming = (this._currentInstruction_ExtraTiming + 512) | 0;
+                                this._pixelWhizzler.ChiChiNES$IPPU$CopySprites(Bridge.ref(this, "Rams"), data * 256);
+                                this._currentInstruction_ExtraTiming = this._currentInstruction_ExtraTiming + 512;
                                 break;
                             case 16406: 
                                 this._padOne.SetByte(this.clock, address, data & 1);
@@ -4182,7 +4181,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             FindNextEvent: function () {
                 // it'll either be the ppu's NMI, or an irq from either the apu or the cart
-                this.nextEvent = (this.clock + this._pixelWhizzler.ChiChiNES$IPPU$NextEventAt) | 0;
+                this.nextEvent = this.clock + this._pixelWhizzler.ChiChiNES$IPPU$NextEventAt;
 
             },
             HandleNextEvent: function () {
@@ -4197,8 +4196,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             WriteInstructionHistoryAndUsage: function () {
                 var $t;
 
-                this._instructionHistory[(Bridge.identity(this.instructionHistoryPointer, (this.instructionHistoryPointer = (this.instructionHistoryPointer - 1) | 0))) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.time = this.systemClock, $t.A = this._accumulator, $t.X = this._indexRegisterX, $t.Y = this._indexRegisterY, $t.SR = this._statusRegister, $t.SP = this._stackPointer, $t.frame = this.clock, $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
-                this.instructionUsage[this._currentInstruction_OpCode] = (this.instructionUsage[this._currentInstruction_OpCode] + 1) | 0;
+                this._instructionHistory[(this.instructionHistoryPointer--) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.time = this.systemClock, $t.A = this._accumulator, $t.X = this._indexRegisterX, $t.Y = this._indexRegisterY, $t.SR = this._statusRegister, $t.SP = this._stackPointer, $t.frame = this.clock, $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
+                this.instructionUsage[this._currentInstruction_OpCode]++;
                 if ((this.instructionHistoryPointer & 255) === 255) {
                     this.FireDebugEvent("instructionHistoryFull");
                 }
@@ -4224,7 +4223,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         fields: {
             AddressingMode: 0,
             frame: 0,
-            time: System.UInt64(0),
+            time: 0,
             A: 0,
             X: 0,
             Y: 0,
@@ -4405,7 +4404,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             tiler: null,
             soundThreader: null,
             doDraw: false,
-            isDebugging: false,
             _totalCPUClocks: 0,
             frameCount: 0,
             /**
@@ -4528,7 +4526,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     this._cpu.PadTwo.ControlPad = value;
-                    this.PPU.ChiChiNES$IPPU$PixelAwareDevice = Bridge.as(value, ChiChiNES.IPixelAwareDevice);
+                    //  PPU.PixelAwareDevice = value as IPixelAwareDevice;
                 }
             },
             SRAMReader: null,
@@ -4821,10 +4819,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._sharedWave = new ChiChiNES.BeepsBoops.WavSharer.ctor();
                 //writer = new wavwriter(44100, "d:\\nesout.wav");
                 this.soundBopper = new ChiChiNES.BeepsBoops.Bopper(this._sharedWave);
-            },
-            Runtendo: function () {
-                this.isDebugging = false;
-                this.RunFrame();
             },
             dispose: function () {
 
@@ -5648,7 +5642,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     for (var j = 0; j < 30; j = (j + 1) | 0) {
 
                         var address = (((((8192 + NameTable) | 0) + i) | 0) + (Bridge.Int.mul(j, 32))) | 0;
-                        var TileIndex = this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address);
+                        var TileIndex = (this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address)) & 255;
 
                         var addToCol = this.GetAttributeTableEntry(NameTable, i, j);
                         var tile = this.GetPatternTableEntry(this._ppu.ChiChiNES$IPPU$PatternTableIndex, TileIndex, addToCol, Bridge.ref(($t = this.currentNameTableEntries[i]), j));
@@ -6449,7 +6443,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              */
             p32: null,
             _backgroundPatternTableIndex: 0,
-            needToDraw: false,
             isRendering: false,
             frameClock: 0,
             FrameEnded: false,
@@ -6457,7 +6450,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             framePalette: null,
             nameTableMemoryStart: 0,
             lastcpuClock: 0,
-            rgb32OutBuffer: null,
             byteOutBuffer: null,
             outBuffer: null,
             vbufLocation: 0,
@@ -6469,7 +6461,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             vidRamIsRam: false,
             _palette: null,
             _openBus: 0,
-            currentPalette: 0,
             nmiHandler: null,
             frameFinished: null,
             NMIHasBeenThrownThisFrame: false,
@@ -6540,11 +6531,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this.shouldRender = value;
                 }
             },
-            Frames: {
-                get: function () {
-                    return this._frames;
-                }
-            },
             HandleVBlankIRQ: false,
             VROM: null,
             PPUControlByte0: {
@@ -6602,11 +6588,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     return this._backgroundPatternTableIndex;
                 }
             },
-            NeedToDraw: {
-                get: function () {
-                    return this.needToDraw;
-                }
-            },
             IsRendering: {
                 get: function () {
                     return this.isRendering;
@@ -6646,11 +6627,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     return this.outBuffer;
                 }
             },
-            VideoBuffer: {
-                get: function () {
-                    return this.rgb32OutBuffer;
-                }
-            },
             PixelAwareDevice: {
                 get: function () {
                     return this.pixelDevices;
@@ -6665,19 +6641,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     this.byteOutBuffer = value;
-                }
-            },
-            Palette: {
-                get: function () {
-                    return this._palette;
-                },
-                set: function (value) {
-                    this._palette = value;
-                }
-            },
-            CurrentPalette: {
-                get: function () {
-                    return this.currentPalette;
                 }
             },
             NMIHandler: {
@@ -6708,9 +6671,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             NextEventAt: {
                 get: function () {
                     if (this.frameClock < 6820) {
-                        return ((Bridge.Int.div((((6820 - this.frameClock) | 0)), 3)) | 0);
+                        return (6820 - this.frameClock) / 3;
                     } else {
-                        return (((Bridge.Int.div((((Bridge.Int.div((((89345 - this.frameClock) | 0)), 341)) | 0)), 3)) | 0));
+                        return (((89345 - this.frameClock) / 341) / 3);
                     }
                     //}
                     //else
@@ -6792,19 +6755,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             "PPUControlByte0", "ChiChiNES$IPPU$PPUControlByte0",
             "PPUControlByte1", "ChiChiNES$IPPU$PPUControlByte1",
             "SpritesAreVisible", "ChiChiNES$IPPU$SpritesAreVisible",
-            "SetupBufferForDisplay", "ChiChiNES$IPPU$SetupBufferForDisplay",
             "PatternTableIndex", "ChiChiNES$IPPU$PatternTableIndex",
             "NameTableMemoryStart", "ChiChiNES$IPPU$NameTableMemoryStart",
             "CurrentFrame", "ChiChiNES$IPPU$CurrentFrame",
             "RenderScanline", "ChiChiNES$IPPU$RenderScanline",
             "LastcpuClock", "ChiChiNES$IPPU$LastcpuClock",
             "DrawTo", "ChiChiNES$IPPU$DrawTo",
-            "VideoBuffer", "ChiChiNES$IPPU$VideoBuffer",
-            "SetVideoBuffer", "ChiChiNES$IPPU$SetVideoBuffer",
             "UpdatePixelInfo", "ChiChiNES$IPPU$UpdatePixelInfo",
-            "PixelAwareDevice", "ChiChiNES$IPPU$PixelAwareDevice",
-            "ByteOutBuffer", "ChiChiNES$IPPU$ByteOutBuffer",
-            "Palette", "ChiChiNES$IPPU$Palette",
             "SetByte", "ChiChiNES$IClockedMemoryMappedIOElement$SetByte",
             "SetByte", "ChiChiNES$IPPU$SetByte",
             "GetByte", "ChiChiNES$IClockedMemoryMappedIOElement$GetByte",
@@ -6839,21 +6796,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.hitSprite = false;
                 this.PPUAddressLatchIsHigh = true;
                 this.p32 = System.Array.init(256, 0, System.Int32);
-                this.needToDraw = true;
                 this.isRendering = true;
                 this.frameClock = 0;
                 this.FrameEnded = false;
                 this.frameOn = false;
                 this.framePalette = System.Array.init(256, 0, System.Int32);
-                this.rgb32OutBuffer = System.Array.init(65536, 0, System.Int32);
-                this.byteOutBuffer = System.Array.init(262144, 0, System.Byte);
+                this.byteOutBuffer = System.Array.init(262144, 0, System.Int32);
                 this.outBuffer = System.Array.init(65536, 0, System.Int32);
                 this.drawInfo = System.Array.init(65536, 0, System.Int32);
                 this.nameTableBits = 0;
                 this.vidRamIsRam = true;
-                this._palette = System.Array.init(32, 0, System.Byte);
+                this._palette = System.Array.init(32, 0, System.Int32);
                 this._openBus = 0;
-                this.currentPalette = 0;
                 this.NMIHasBeenThrownThisFrame = false;
                 this._hScroll = 0;
                 this._vScroll = 0;
@@ -6862,7 +6816,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.sprite0scanline = -1;
                 this.sprite0x = -1;
                 this._maxSpritesPerScanline = 64;
-                this.spriteRAM = System.Array.init(256, 0, System.Byte);
+                this.spriteRAM = System.Array.init(256, 0, System.Int32);
                 this.spritesOnLine = System.Array.init(512, 0, System.Int32);
                 this.patternEntry = 0;
                 this.patternEntryByte2 = 0;
@@ -7029,28 +6983,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._backgroundPatternTableIndex = 0;
                 }
             },
-            /**
-             * Fills an external buffer with rgb color values, relative to current state of PPU's pallete ram
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.PixelWhizzler
-             * @memberof ChiChiNES.PixelWhizzler
-             * @param   {System.Int32}    buffer
-             * @return  {void}
-             */
-            SetupBufferForDisplay: function (buffer) {
-                for (var i = 0; i < 30; i = (i + 1) | 0) {
-                    this.p32[i] = ChiChiNES.PixelWhizzler.pal[i]; // pal[_vidRAM[i + 0x3F00]];
-                }
-
-                for (var i1 = 0; i1 < buffer.v.length; i1 = (i1 + 4) | 0) {
-                    buffer.v[i1] = this.p32[buffer.v[i1]];
-                    buffer.v[((i1 + 1) | 0)] = this.p32[buffer.v[((i1 + 1) | 0)] & 255];
-                    buffer.v[((i1 + 2) | 0)] = this.p32[buffer.v[((i1 + 2) | 0)] & 255];
-                    buffer.v[((i1 + 3) | 0)] = this.p32[buffer.v[((i1 + 3) | 0)] & 255];
-                }
-            },
             RenderScanline: function (scanlineNum) {
                 throw new System.NotImplementedException();
             },
@@ -7086,8 +7018,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         case 6820: 
                             this.ClearVINT();
                             this.frameOn = true;
-                            //
-                            this.ClearNESPalette();
                             this.chrRomHandler.ChiChiNES$INESCart$ResetBankStartCache();
                             // setFrameOn();
                             if (this.spriteChanges) {
@@ -7154,8 +7084,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                             /* draw pixel */
                             var tilePixel = this._tilesAreVisible ? this.GetNameTablePixel() : 0;
-                            var foregroundPixel = { v : false };
-                            var spritePixel = this._spritesAreVisible ? this.GetSpritePixel(foregroundPixel) : 0;
+                            // bool foregroundPixel = isForegroundPixel;
+                            var spritePixel = this._spritesAreVisible ? this.GetSpritePixel() : 0;
 
                             if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
                                 this.hitSprite = true;
@@ -7165,7 +7095,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
                             //var x = 
 
-                            this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(foregroundPixel.v || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+                            this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
                             //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
                             //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
                             //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
@@ -7199,50 +7129,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
                 this.lastcpuClock = cpuClockNum;
             },
-            BumpScanline: function () {
-
-
-            },
-            UpdateXPosition: function () {
-
-            },
-            FillBuffer: function () {
-
-                //int i = 0;
-                //while (i < 256 * 240 )
-                //{
-                //    int tile = (outBuffer[i] & 0x0F);
-                //    int sprite = ((outBuffer[i] >> 4) & 0x0F) + 16;
-                //    int isSprite = (outBuffer[i] >> 8) & 64;
-                //    int curPal = (outBuffer[i] >> 24) & 0xFF;
-
-                //    uint pixel;
-                //    if (isSprite > 0)
-                //    {
-                //        pixel = palCache[curPal][sprite];
-                //    }
-                //    else
-                //    {
-                //        pixel = palCache[curPal][tile];
-                //    }
-                //    rgb32OutBuffer[i] = pal[pixel];
-                //    i++;
-                //}
-            },
-            SetVideoBuffer: function (inBuffer) {
-                this.rgb32OutBuffer = inBuffer;
-            },
-            DrawPixel: function () {
-
-            },
             UpdatePixelInfo: function () {
                 this.nameTableMemoryStart = Bridge.Int.mul(this.nameTableBits, 1024);
-            },
-            ClippingTilePixels: function () {
-                return this._clipTiles;
-            },
-            ClippingSpritePixels: function () {
-                return this._clipSprites;
             },
             SetByte: function (Clock, address, data) {
                 var $t;
@@ -7250,7 +7138,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (this._isDebugging) {
                     this.Events.enqueue(($t = new ChiChiNES.PPUWriteEvent(), $t.IsWrite = true, $t.DataWritten = data, $t.FrameClock = this.frameClock, $t.RegisterAffected = address, $t.ScanlineNum = ((Bridge.Int.div(this.frameClock, 341)) | 0), $t.ScanlinePos = this.frameClock % 341, $t));
                 }
-                this.needToDraw = true;
                 //Writable 2C02 registers
                 //-----------------------
 
@@ -7399,7 +7286,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         // ppuLatch = data;
                         if ((this._PPUAddress & 65280) === 16128) {
                             this.DrawTo(Clock);
-                            this.WriteToNESPalette(this._PPUAddress, (data & 255));
+                            //WriteToNESPalette(_PPUAddress, (byte)data);
+                            var palAddress = (this._PPUAddress) & 31;
+                            this._palette[palAddress] = data;
+                            // rgb32OutBuffer[255 * 256 + palAddress] = data;
+                            if ((this._PPUAddress & 65519) === 16128) {
+                                this._palette[(palAddress ^ 16) & 31] = data;
+                                // rgb32OutBuffer[255 * 256 + palAddress ^ 0x10] = data;
+                            }
                             // these palettes are all mirrored every 0x10 bytes
                             this.UpdatePixelInfo();
 
@@ -7510,20 +7404,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //throw new NotImplementedException(string.Format("PPU.GetByte() recieved invalid address {0,4:x}", address));
                 return 0;
             },
-            ClearNESPalette: function () {
-                //currentPalette = 0;
-                //palCache[currentPalette] = new byte[32];
-                //Array.Copy(_palette, 0, palCache[currentPalette], 0, 32);
-            },
-            WriteToNESPalette: function (address, data) {
-                var palAddress = (address) & 31;
-                this._palette[palAddress] = data;
-                // rgb32OutBuffer[255 * 256 + palAddress] = data;
-                if ((this._PPUAddress & 65519) === 16128) {
-                    this._palette[(palAddress ^ 16) & 31] = data;
-                    // rgb32OutBuffer[255 * 256 + palAddress ^ 0x10] = data;
-                }
-            },
             HandleEvent: function (Clock) {
                 this.DrawTo(Clock);
             },
@@ -7536,7 +7416,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 // HandleVBlankIRQ = true;
                 this._frames = (this._frames + 1) | 0;
                 //isRendering = false;
-                this.needToDraw = false;
 
                 if (this.NMIIsThrown) {
                     this.nmiHandler();
@@ -7628,8 +7507,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
 
             },
-            GetSpritePixel: function (isForegroundPixel) {
-                isForegroundPixel.v = false;
+            GetSpritePixel: function () {
+                this.isForegroundPixel = false;
                 this.spriteZeroHit = false;
                 var result = 0;
                 var yLine = 0;
@@ -7682,8 +7561,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             if (currSprite.SpriteNumber === 0) {
                                 this.spriteZeroHit = true;
                             }
-                            isForegroundPixel.v = currSprite.Foreground;
-                            return ((result | currSprite.AttributeByte) & 255);
+                            this.isForegroundPixel = currSprite.Foreground;
+                            return (result | currSprite.AttributeByte);
                         }
                     }
                 }
@@ -7705,7 +7584,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((patternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + y) | 0));
                 patternEntryBit2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((patternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + y) | 0) + 8) | 0));
 
-                return ((sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> ((7 - x) | 0)) & 1) | (((patternEntryBit2 >> ((7 - x) | 0)) << 1) & 2)) & 255);
+                return (sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> ((7 - x) | 0)) & 1) | (((patternEntryBit2 >> ((7 - x) | 0)) << 1) & 2));
             },
             /**
              * populates the currentSpritesXXX arrays with the first 8 visible sprites on the 
@@ -7798,12 +7677,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
              */
             GetNameTablePixel: function () {
                 var result = ((this.patternEntry & 128) >> 7) | ((this.patternEntryByte2 & 128) >> 6);
-                this.patternEntry = this.patternEntry << 1;
-                this.patternEntryByte2 = this.patternEntryByte2 << 1;
+                this.patternEntry <<= 1;
+                this.patternEntryByte2 <<= 1;
                 if (result > 0) {
-                    result = result | this.currentAttributeByte;
+                    result |= this.currentAttributeByte;
                 }
-                return (result & 255);
+                return result & 255;
             },
             FetchNextTile: function () {
                 var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
@@ -8170,7 +8049,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.currentA = -1;
                 this.currentC = -1;
                 this.currentE = -1;
-                this.prgRomBank6 = System.Array.init(8192, 0, System.Byte);
+                this.prgRomBank6 = System.Array.init(8192, 0, System.Int32);
                 this.chrRomOffset = 0;
                 this.chrRamStart = 0;
                 this.mirroring = -1;
@@ -8240,7 +8119,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
 
 
-                this.chrRom = System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Byte);
+                this.chrRom = System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
 
                 this.chrRamStart = chrRomData.length;
 

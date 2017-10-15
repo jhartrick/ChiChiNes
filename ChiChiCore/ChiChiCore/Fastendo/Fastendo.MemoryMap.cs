@@ -12,7 +12,7 @@ namespace ChiChiNES
     public partial class CPU2A03
     {
         // full ram map
-        byte[] Rams = new byte[0x2000];
+        int[] Rams = new int[0x2000];
 
         // custom ram handlers
         private IPPU _pixelWhizzler;

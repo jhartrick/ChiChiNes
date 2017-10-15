@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ChiChiNES;
+using Bridge;
 
 namespace ChiChiNES
 {
@@ -12,13 +13,9 @@ namespace ChiChiNES
         protected int nameTableBits = 0; 
         private bool vidRamIsRam = true;
 
-        protected byte[] _palette = new byte[0x20];
+        private int[] _palette = new int[0x20];
 
-        public byte[] Palette
-        {
-            get { return _palette; }
-            set { _palette = value; }
-        }
+
         private int _openBus=0;
         public void SetByte(int Clock, int address, int data)
         {
@@ -27,7 +24,6 @@ namespace ChiChiNES
             {
                 Events.Enqueue(new PPUWriteEvent { IsWrite = true, DataWritten = data, FrameClock = frameClock, RegisterAffected = address, ScanlineNum = frameClock / 341, ScanlinePos = frameClock % 341 });
             }
-            needToDraw = true;
             //Writable 2C02 registers
             //-----------------------
 
@@ -209,7 +205,15 @@ namespace ChiChiNES
                     if ((_PPUAddress & 0xFF00) == 0x3F00)
                     {
                         DrawTo(Clock);
-                        WriteToNESPalette(_PPUAddress, (byte)data);
+                        //WriteToNESPalette(_PPUAddress, (byte)data);
+                        int palAddress = (_PPUAddress) & 0x1F;
+                        _palette[palAddress] = data;
+                        // rgb32OutBuffer[255 * 256 + palAddress] = data;
+                        if ((_PPUAddress & 0xFFEF) == 0x3F00)
+                        {
+                            _palette[(palAddress ^ 0x10) & 0x1F] = data;
+                            // rgb32OutBuffer[255 * 256 + palAddress ^ 0x10] = data;
+                        }
                         // these palettes are all mirrored every 0x10 bytes
                         UpdatePixelInfo();
 
@@ -354,39 +358,6 @@ namespace ChiChiNES
         }
 
 
-        //protected byte[][] palCache = new byte[256][];
-
-        //public byte[][] PalCache
-        //{
-        //    get { return palCache; }
-        //    set { palCache = value; }
-        //}
-        protected int currentPalette = 0;
-
-        public int CurrentPalette
-        {
-            get { return currentPalette; }
-        }
-
-        protected virtual void ClearNESPalette()
-        {
-            //currentPalette = 0;
-            //palCache[currentPalette] = new byte[32];
-            //Array.Copy(_palette, 0, palCache[currentPalette], 0, 32);
-        }
-
-        protected virtual void WriteToNESPalette(int address, byte data)
-        {
-            int palAddress = (address) & 0x1F;
-            _palette[palAddress] = data;
-            // rgb32OutBuffer[255 * 256 + palAddress] = data;
-            if ((_PPUAddress & 0xFFEF) == 0x3F00)
-            {
-                _palette[(palAddress ^ 0x10) & 0x1F] = data;
-                // rgb32OutBuffer[255 * 256 + palAddress ^ 0x10] = data;
-            }
-        }
-
         #region IClockedMemoryMappedIOElement Members
 
 
@@ -419,6 +390,7 @@ namespace ChiChiNES
             }
         }
 
+        [Rules(Integer = IntegerRule.Plain)]
         public int NextEventAt
         {
             get

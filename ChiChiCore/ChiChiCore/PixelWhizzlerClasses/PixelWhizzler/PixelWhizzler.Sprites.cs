@@ -34,18 +34,18 @@ namespace ChiChiNES
             set { _maxSpritesPerScanline = value; }
         }
 
-        private byte[] spriteRAM = new byte[256];
+        private int[] spriteRAM = new int[256];
 
         private int _spriteAddress;
 
-        public byte[] SpriteRam
+        public int[] SpriteRam
         {
             get { return spriteRAM; }
             // allow a setter to implement spriteRAM DMA xfers
         }
 
         
-        public void CopySprites(ref byte[] source, int copyFrom)
+        public void CopySprites(ref int[] source, int copyFrom)
         {
             // should copy 0x100 items from source to spriteRAM, 
             // starting at SpriteAddress, and wrapping around
@@ -84,11 +84,12 @@ namespace ChiChiNES
 
         //well, this is somethin
         // which is better than nothin
-        protected byte GetSpritePixel(out bool isForegroundPixel)
+
+        protected int GetSpritePixel()
         {
             isForegroundPixel = false;
             spriteZeroHit = false;
-            byte result = 0;
+            int result = 0;
             int yLine = 0;
             int xPos = 0;
             int tileIndex = 0;
@@ -145,10 +146,10 @@ namespace ChiChiNES
                     patternEntry = chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine);
                     patternEntryBit2 = chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine + 8);
 
-                    result = (byte)
+                    result = 
                         (currSprite.FlipX ?
                         ((patternEntry >> xPos) & 0x1) | (((patternEntryBit2 >> xPos) << 1) & 0x2)
-                        : ((patternEntry >> 7 - xPos) & 0x1) | (((patternEntryBit2 >> 7 - xPos) << 1) & 0x2));
+                        : ((patternEntry >> 7 - xPos) & 0x1) | (((patternEntryBit2 >> 7 - xPos) << 1) & 0x2)) & 0xFF;
 
                     if (result != 0)
                     {
@@ -157,7 +158,7 @@ namespace ChiChiNES
                             spriteZeroHit = true;
                         }
                         isForegroundPixel = currSprite.Foreground;
-                        return (byte)(result | currSprite.AttributeByte);
+                        return (result | currSprite.AttributeByte) ;
                     }
                 }
             }
@@ -165,7 +166,7 @@ namespace ChiChiNES
         }
 
         
-        protected byte WhissaSpritePixel(int patternTableIndex, int x, int y, ref NESSprite sprite, int tileIndex)
+        protected int WhissaSpritePixel(int patternTableIndex, int x, int y, ref NESSprite sprite, int tileIndex)
         {
             // 8x8 tile
             int patternEntry;
@@ -184,7 +185,7 @@ namespace ChiChiNES
             patternEntry = chrRomHandler.GetPPUByte(0, patternTableIndex + tileIndex * 16 + y);
             patternEntryBit2 = chrRomHandler.GetPPUByte(0, patternTableIndex + tileIndex * 16 + y + 8);
 
-            return (byte)
+            return 
                 (sprite.FlipX ?
                 ((patternEntry >> x) & 0x1) | (((patternEntryBit2 >> x) << 1) & 0x2)
                 : ((patternEntry >> 7 - x) & 0x1) | (((patternEntryBit2 >> 7 - x) << 1) & 0x2));
@@ -271,7 +272,7 @@ namespace ChiChiNES
 
         private void UnpackSprite(int currSprite)
         {
-            byte attrByte = spriteRAM[currSprite * 4 + 2];
+            int attrByte = spriteRAM[currSprite * 4 + 2];
             unpackedSprites[currSprite].IsVisible = true;
             unpackedSprites[currSprite].AttributeByte = ((attrByte & 0x03) << 2) | 0x10;
             unpackedSprites[currSprite].YPosition = spriteRAM[currSprite * 4];

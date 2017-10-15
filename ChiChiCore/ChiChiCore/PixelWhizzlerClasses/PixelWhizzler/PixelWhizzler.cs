@@ -88,11 +88,6 @@ namespace ChiChiNES
         private int _frames = 0;
 
 
-        public int Frames
-        {
-            get { return _frames; }
-        }
-
 
 
         public int VidRAM_GetNTByte(int address)
@@ -303,26 +298,6 @@ namespace ChiChiNES
         int[] p32 = new int[256];
         public static int[] pal = new int[256] { 7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        /// <summary>
-        /// Fills an external buffer with rgb color values, relative to current state of PPU's pallete ram
-        /// </summary>
-        /// <param name="buffer"></param>
-        public void SetupBufferForDisplay(ref int[] buffer)
-        {
-            for (int i = 0; i < 30; ++i)
-            {
-                p32[i] = pal[i]; // pal[_vidRAM[i + 0x3F00]];
-            }
-
-            for (int i = 0; i < buffer.Length; i += 4)
-            {
-                buffer[i] = p32[buffer[i]];
-                buffer[i + 1] = p32[buffer[i + 1] & 0xFF];
-                buffer[i + 2] = p32[buffer[i + 2] & 0xFF];
-                buffer[i + 3] = p32[buffer[i + 3] & 0xFF];
-            }
-        }
-
         protected int _backgroundPatternTableIndex;
         public int PatternTableIndex 
         {
@@ -331,18 +306,6 @@ namespace ChiChiNES
                 return _backgroundPatternTableIndex; 
             }
         }
-
-        #region IMemoryMappable Members
-
-        bool needToDraw = true;
-
-        public bool NeedToDraw
-        {
-            get { return needToDraw; }
-        }
-
-
-        #endregion
 
         #region IPPU Members
 

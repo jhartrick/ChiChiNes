@@ -21,7 +21,6 @@ namespace ChiChiNES
             // HandleVBlankIRQ = true;
             _frames = _frames + 1;
             //isRendering = false;
-            needToDraw = false;
 
             if (NMIIsThrown)
             {

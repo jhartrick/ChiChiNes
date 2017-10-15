@@ -1,4 +1,6 @@
-﻿importScripts('http://localhost:802/workers/bridge.min.js');
+﻿//require('bridge.min.js');
+//require('ChiChiCore.min.js');
+importScripts('http://localhost:802/workers/bridge.min.js');
 importScripts('http://localhost:802/workers/ChiChiCore.js');
 
 (function (globals, tendo) {
@@ -87,7 +89,9 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
           // globals.postMessage({ frame: true, fps: framesPerSecond });
         };
         this.ready = true;
-
+        tendo.machine.Cpu.FireDebugEvent = () => {
+            updateState();
+        };
         tendo.machine.Cpu.Debugging = false;
         //
     }
@@ -99,17 +103,24 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
         clearInterval(intervalId);
         tendo.machine.PowerOff();
     }
+
     function flushAudio() {
-        if (!tendo.soundEnabled) return;
       //  debugger;
         const len = tendo.machine.WaveForms.SharedBufferLength / 2;
         for (let i = 0; i < len; ++i) {
             if (tendo.sharedAudioBufferPos + i > tendo.sharedAudioBuffer.length) {
-                break;
+                tendo.sharedAudioBufferPos = 0;
+                this.iops[0] = 0;
+                Atomics.wait(this.iops, 0, 0);
+                return;
             }
             tendo.sharedAudioBuffer[tendo.sharedAudioBufferPos + i] = tendo.machine.WaveForms.SharedBuffer[i];
         }
+        tendo.sharedAudioBufferPos += len;
+
+
     }
+
     function run(reset) {
         var framesRendered = 0;
         var startTime = new Date().getTime();
@@ -121,21 +132,47 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
         runStatus = runStatuses.Running;
 
         machine.Cpu.Debugging = false;
-        //clearInterval(intervalId);
+        clearInterval(tendo.interval);
         // intervalId = setInterval(() => 
         tendo.interval = this.setInterval(() => {
             tendo.controlPad1.padOneState = this.iops[2];
             machine.RunFrame();
             framesPerSecond = 0;
 
-            flushAudio();
+            if (!tendo.soundEnabled) flushAudio();
             if ((framesRendered++ & 0x2F) === 0x2F) {
-                framesPerSecond = ((framesRendered / (new Date().getTime() - startTime)) * 1000) >>> 0;
+                framesPerSecond = ((framesRendered / (new Date().getTime() - startTime)) * 1000);
                 framesRendered = 0; startTime = new Date().getTime();
                 this.iops[1] = framesPerSecond;
                 //globals.postMessage({ frame: true, fps: framesPerSecond });
             }
         }, 0);
+    }
+
+    function runFrame() {
+        clearInterval(tendo.interval);
+        tendo.frameFinished = false;
+        const machine = tendo.machine;
+        machine.Cpu.Debugging = tendo.Debugging;
+        runStatus = runStatuses.DebugRunning;
+        // intervalId = setInterval(() => 
+        machine.RunFrame();
+        framesPerSecond = 0;
+        tendo.frameFinished = true;
+
+    }
+
+    function step() {
+        clearInterval(tendo.interval);
+        tendo.frameFinished = false;
+        const machine = tendo.machine;
+        machine.Cpu.Debugging = tendo.Debugging;
+        runStatus = runStatuses.DebugRunning;
+        // intervalId = setInterval(() => 
+        machine.Step();
+        framesPerSecond = 0;
+        tendo.frameFinished = true;
+
     }
 
     function reset() {
@@ -163,7 +200,25 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
             info.sound = {
                 soundEnabled: machine.EnableSound
             };
+            if (tendo.Debugging) {
+                info.debug = {
+                    currentCpuStatus: {
+                        PC: tendo.machine.Cpu.ProgramCounter,
+                        A: tendo.machine.Cpu.Accumulator,
+                        X: tendo.machine.Cpu.IndexRegisterX,
+                        Y: tendo.machine.Cpu.IndexRegisterY,
+                        SP: tendo.machine.Cpu.StackPointer,
+                        SR: tendo.machine.Cpu.StatusRegister
+                    }, InstructionHistory: {
+                        Buffer: tendo.machine.Cpu.InstructionHistory.slice(0),
+                        Index: tendo.machine.Cpu.InstructionHistoryPointer,
+                        Finish : tendo.frameFinished
+                    }
+
+                };
+            }
         }
+        
         postMessage(info);
     }
 
@@ -171,6 +226,8 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
 
     this.onmessage = (event) => {
         let machine = tendo.machine;    
+        tendo.Debugging = false;
+        tendo.frameFinished = false;
 
         switch (event.data.command) {
           case 'create':
@@ -188,7 +245,6 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
                 tendo.machine.PPU.ByteOutBuffer = event.data.vbuffer;
               break;
           case 'setaudiobuffer':
-                
                 tendo.sharedAudioBuffer = event.data.audiobuffer;
                 tendo.sharedAudioBufferPos = 0;
                 break;
@@ -199,16 +255,22 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
               break;
           case 'unmute':
              //   debugger;
-                tendo.soundEnabled = true;
+              tendo.soundEnabled = true;
               tendo.machine.EnableSound = true;
               break;
 
           case 'run':
-                this.iops[0] = 1;
                 run(true);
                 break;
+          case 'runframe':
+              tendo.Debugging = true;
+              runFrame(true);
+              break;
+          case 'step':
+              tendo.Debugging = true;
+              step(true);
+              break;
           case 'continue':
-              this.iops[0] = 1;
               run(false);
               break;
           case 'stop':
@@ -216,15 +278,10 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
               break;
           case 'reset':
               reset();
-              if (event.data.setiop0) {
-                  
-                  iops[0] = event.data.setiop0;
-                  run();
-              }
               break;
           case 'setpad':
-                controlPad1.padOneState = event.data.padOneState;
-                break;
+              controlPad1.padOneState = event.data.padOneState;
+              break;
           default:
               postMessage('unknown command: ' + event.data.command);
               return;

@@ -6,9 +6,14 @@ using System.Text;
 
 namespace ChiChiNES
 {
+    [Bridge.Rules(Integer = Bridge.IntegerRule.Plain)]
+
     public partial class CPU2A03
     {
         int lowByte, highByte;
+
+        [Bridge.Rules(Integer = Bridge.IntegerRule.Managed)]
+
         int DecodeAddress()
         {
             _currentInstruction_ExtraTiming = 0;
@@ -104,10 +109,6 @@ namespace ChiChiNES
                     DataBus = GetByte(DecodeAddress());
                     return DataBus;
             }
-        }
-
-        void StoreOperand(int address)
-        {
         }
 
 

@@ -40,7 +40,7 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasTop: string = '0px';
 
 
-    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(3820 * Float32Array.BYTES_PER_ELEMENT);
+    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(4096 * Float32Array.BYTES_PER_ELEMENT);
     private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
 
     constructor(private nesService: Emulator, cd: ChangeDetectorRef) {
@@ -85,7 +85,7 @@ export class ChiChiComponent implements AfterViewInit {
         
         this.sound.setNodeSource(this.audioSource);
         this.audioSource.buffer = this.audioCtx.createBuffer(1, 4096, 44100);
-        var scriptNode = this.audioCtx.createScriptProcessor(4096, 1, 1);
+        var scriptNode = this.audioCtx.createScriptProcessor(2048, 1, 1);
 
         this.audioSource.connect(scriptNode);
         scriptNode.onaudioprocess = (audioProcessingEvent) => {
@@ -102,14 +102,27 @@ export class ChiChiComponent implements AfterViewInit {
 
                     // Loop through the 4096 samples
                     for (var sample = 0; sample < inputBuffer.length; sample++) {
+                        let pos = ((sample / inputBuffer.length) * this.nesAudio.length) >>> 0;
                         // make output equal to the same as the input
-                        outputData[sample] = this.nesAudio[sample];
+                        outputData[sample] = this.nesAudio[pos];
 
                         // add noise to each output sample
                         //outputData[sample] += ((Math.random() * 2) - 1) * 0.2;
                     }
                 }
+            } else {
+                var outputBuffer = audioProcessingEvent.outputBuffer;
+                for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
+                    var outputData = outputBuffer.getChannelData(channel);
+
+                    // Loop through the 4096 samples
+                    for (var sample = 0; sample < outputBuffer.length; sample++) {
+                        outputData[sample] = 0;
+                    }
+                }
+
             }
+            this.nesService.clearAudio();
         }
 
         scriptNode.connect(this.audioCtx.destination);

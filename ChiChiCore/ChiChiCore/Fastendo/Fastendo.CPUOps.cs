@@ -1,14 +1,8 @@
-﻿using Bridge;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿
 namespace ChiChiNES
 {
     public partial class CPU2A03
     {
-
         void SetZNFlags(int data)
         {
 
@@ -97,16 +91,16 @@ namespace ChiChiNES
 
         private void DEC()
         {
-            byte val = (byte)DecodeOperand();
-            val--;
+            int val = DecodeOperand();
+            val = (val-1) & 0xFF;
             SetByte(DecodeAddress(), val);
             SetZNFlags( val);
         }
 
         private void INC()
         {
-            byte val = (byte)DecodeOperand();
-            val++;
+            int val = DecodeOperand();
+            val = (val + 1 ) & 0xFF;
             SetByte(DecodeAddress(), val );
             SetZNFlags(val);
         }
@@ -159,15 +153,16 @@ namespace ChiChiNES
             // _programCounter++;
         }
 
+
         private void SBC()
         {
             // start the read process
 
-            uint data = (uint)DecodeOperand() ;
+            int data = DecodeOperand() & 0xFFF ;
 
             int carryFlag = ((_statusRegister ^ 0x01) & 0x1);
 
-            uint result = (uint)(_accumulator - data - carryFlag) ;
+            int result = (((_accumulator - data) & 0xFFF) - carryFlag) & 0xFFF;
 
             // set overflow flag if sign bit of accumulator changed
             SetFlag(CPUStatusMasks.OverflowMask,
@@ -176,7 +171,7 @@ namespace ChiChiNES
 
             SetFlag(CPUStatusMasks.CarryMask, (result  < 0x100));
 
-            _accumulator = (int)(result );
+            _accumulator = (int)(result ) & 0xFF;
             SetZNFlags(_accumulator);
 
 

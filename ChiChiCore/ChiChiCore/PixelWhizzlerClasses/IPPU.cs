@@ -10,7 +10,7 @@ namespace ChiChiNES
         //void CheckVBlank();
         ChiChiNES.INESCart ChrRomHandler { get; set; }
         //void ClearVINT();
-        void CopySprites(ref byte[] source, int copyFrom);
+        void CopySprites(ref int[] source, int copyFrom);
         byte[] CurrentFrame { get; }
         //int CurrentPalette { get; }
         //int CurrentXPosition { get; }
@@ -40,7 +40,6 @@ namespace ChiChiNES
         //bool NMIIsThrown { get; }
         //int[] OutBuffer { get; }
         //byte[][] PalCache { get; set; }
-        byte[] Palette { get; set; }
         int PatternTableIndex { get; }
 
         //int PixelWidth { get; set; }
@@ -55,20 +54,19 @@ namespace ChiChiNES
         int ScanlineNum { get; }
         int ScanlinePos { get; }
         void SetByte(int Clock, int address, int data);
-        void SetupBufferForDisplay(ref int[] buffer);
         void SetupVINT();
-        void SetVideoBuffer(int[] inBuffer);
+        //void SetVideoBuffer(int[] inBuffer);
         //bool ShouldRender { get; set; }
         //bool SpriteCopyHasHappened { get; set; }
-        byte[] SpriteRam { get; }
+        int[] SpriteRam { get; }
         bool SpritesAreVisible { get; }
         int[] SpritesOnLine { get; }
         //void UnpackSprites();
-        int[] VideoBuffer { get; }
-        byte[] ByteOutBuffer { get; }
+        //int[] VideoBuffer { get; }
+        //int[] ByteOutBuffer { get; }
         int VidRAM_GetNTByte(int address);
         int VScroll { get; }
         void WriteState(System.Collections.Generic.Queue<int> writer);
-        IPixelAwareDevice PixelAwareDevice { get; set; }
+       // IPixelAwareDevice PixelAwareDevice { get; set; }
     }
 }

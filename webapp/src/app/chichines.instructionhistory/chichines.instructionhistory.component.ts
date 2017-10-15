@@ -19,7 +19,8 @@ export class InstructionHistoryComponent  {
     constructor(public nes: Emulator) { }
 
 
-  ngOnInit(): void {
+    ngOnInit(): void {
+     //   debugger;
       this.dbgDataSource = new DebugInstructionDataSource(this.nes.debugger.lastInstructions, this.paginator);
   }
 

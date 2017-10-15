@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
+using Bridge;
 
 namespace ChiChiNES
 {
     public partial class CPU2A03
     {
-
+        [Rules(Integer =IntegerRule.Plain)]
         public class Instruction 
         {
             public Instruction(){}
@@ -25,10 +26,10 @@ namespace ChiChiNES
                 
             }
 
-            public AddressingModes AddressingMode;
+            public int AddressingMode;
             public int frame;
 
-            public ulong time;
+            public int time;
 
             public int A;
             public int X;

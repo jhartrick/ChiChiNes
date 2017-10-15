@@ -5,8 +5,8 @@ using System.Text;
 
 namespace ChiChiNES
 {
-    public delegate void SRAMWriterDelegate(string RomID, byte[] SRAM);
-    public delegate byte[] SRAMReaderDelegate(string RomID);
+    public delegate void SRAMWriterDelegate(string RomID, int[] SRAM);
+    public delegate int[] SRAMReaderDelegate(string RomID);
     
     public partial class NESMachine
     {

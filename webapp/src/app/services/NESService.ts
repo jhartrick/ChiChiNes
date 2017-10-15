@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import * as JSZip from 'jszip';
 
+
 export class CartInfo {
     mapperId: number;
     name = '';
@@ -283,18 +284,13 @@ export class Emulator {
         this.postNesMessage({ command: "run" });
     }
 
-
+    Continue(): void {
+        this.postNesMessage({ command: "continue" });
+    }
     private runFunction(): void {
         this.postNesMessage({ command: "run", debug: false });
     }
 
-    private runDebugFunction() : void {
-        this.postNesMessage({ command: "runframe", debug: true });
-    }
-
-    private runDebugStepFunction() : void {
-        this.postNesMessage({ command: "runstep", debug: true });
-    }
 
     get canStart(): boolean {
         return true;
@@ -303,7 +299,7 @@ export class Emulator {
 
     StopEmulator(): void {
         this.nesInterop[0] = 0;
-        this.postNesMessageAndStop({ command: "stop" });
+        this.postNesMessage({ command: "stop" });
     }
 
     ResetEmulator(): void {
@@ -312,11 +308,19 @@ export class Emulator {
         //this.machine.Reset();
     }
 
+    DebugStepFrame(): void {
+        this.postNesMessage({ command: "runframe", debug: true });
+    }
+
+    DebugStep(): void {
+        this.postNesMessage({ command: "step", debug: true });
+
+    }
 
     private worker: Worker;
 
-    private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(3 * Uint32Array.BYTES_PER_ELEMENT);
-    private nesInterop: Uint32Array = new Uint32Array(<any>this.nesControlBuf);
+    private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(3 * Int32Array .BYTES_PER_ELEMENT);
+    private nesInterop: Int32Array = new Int32Array (<any>this.nesControlBuf);
 
 
 
@@ -340,6 +344,11 @@ export class Emulator {
         this.worker.postMessage(message);
     }
 
+    public clearAudio(): void {
+        
+        (<any>Atomics).store(this.nesInterop, 0, 1);
+        (<any>Atomics).wake(this.nesInterop, 0, 1);
+    }
 
     private initWebWorker() {
 
@@ -377,6 +386,7 @@ export class Emulator {
             }
             //console.log(data.data);
         };
+        this.debugger = new Debugger(this.nesStateSubject.asObservable());
 
         this.postNesMessage({ command: "create" });
     }

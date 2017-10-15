@@ -15,14 +15,14 @@ namespace ChiChiNES
         void WriteState(Queue<int> state);
         void ReadState(Queue<int> state);
 
-        byte[] ChrRom { get; set; }
+        int[] ChrRom { get; set; }
         int ChrRamStart { get; }
         int[] PPUBankStarts { get; set; }
 
         ROMHashFunctionDelegate ROMHashFunction { get; set; }
         string CheckSum { get;  }
 
-        byte[] SRAM { get; set; }
+        int[] SRAM { get; set; }
 
         NameTableMirroring Mirroring { get;  }
         string CartName { get;  }
@@ -30,7 +30,7 @@ namespace ChiChiNES
         int NumberOfChrRoms { get;  }
         int MapperID { get;  }
 
-        byte GetPPUByte(int clock, int address);
+        int GetPPUByte(int clock, int address);
         void SetPPUByte(int clock, int address, byte data);
 
         byte[] FetchPixelEffect(int vramAddress);

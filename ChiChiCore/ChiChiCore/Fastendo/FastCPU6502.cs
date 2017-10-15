@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Collections;
-using ChiChiNES;
-using ChiChiNES;
-
+﻿
 namespace ChiChiNES
 {
 
@@ -240,14 +233,14 @@ namespace ChiChiNES
         }
 
         int clock;
-        ulong systemClock = 0;
+        int systemClock = 0;
         public int Clock
         {
             get { return clock; }
             set {
                 if (value == 0)
                 {
-                    systemClock = (systemClock + (ulong)clock) & 0xFFFFFFFFFFFF;
+                    systemClock = (systemClock + (int)clock) & 0xFFFFFFF;
                     clock = value;
                 }
             }
