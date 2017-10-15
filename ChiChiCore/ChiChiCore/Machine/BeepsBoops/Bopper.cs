@@ -213,14 +213,6 @@ namespace ChiChiNES.BeepsBoops
             // dmc.FrameClock(time, step);
         }
 
-        short[] _writeBuffer = new short[1024];
-
-        public short[] WriteBuffer
-        {
-            get { return _writeBuffer; }
-            set { _writeBuffer = value; }
-        }
-
         public void EndFrame(int time)
         {
 

@@ -1637,11 +1637,62 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
     Bridge.define("ChiChiNES.CPU2A03", {
         statics: {
             fields: {
-                cpuTiming: null
+                cpuTiming: null,
+                ScanlinePreRenderDummyScanline: 0,
+                ScanlineRenderingStartsOn: 0,
+                ScanlineRenderingEndsOn: 0,
+                ScanlineLastRenderedPixel: 0,
+                ScanlineTotalLength: 0,
+                ScanlineEventPPUXIncremented: 0,
+                ScanlineEventPPUXReset: 0,
+                ScanlineEventPPUYIncremented: 0,
+                vBufferWidth: 0,
+                _powersOfTwo: null,
+                pal: null,
+                frameClockEnd: 0
+            },
+            props: {
+                PPU_PowersOfTwo: {
+                    get: function () {
+                        return ChiChiNES.CPU2A03._powersOfTwo;
+                    }
+                }
             },
             ctors: {
                 init: function () {
                     this.cpuTiming = System.Array.init([7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0], System.Int32);
+                    this.ScanlinePreRenderDummyScanline = 20;
+                    this.ScanlineRenderingStartsOn = 21;
+                    this.ScanlineRenderingEndsOn = 260;
+                    this.ScanlineLastRenderedPixel = 255;
+                    this.ScanlineTotalLength = 340;
+                    this.ScanlineEventPPUXIncremented = 3;
+                    this.ScanlineEventPPUXReset = 257;
+                    this.ScanlineEventPPUYIncremented = 251;
+                    this.vBufferWidth = 256;
+                    this._powersOfTwo = System.Array.init(32, 0, System.Int32);
+                    this.pal = System.Array.init([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], System.Int32);
+                    this.frameClockEnd = 89342;
+                }
+            },
+            methods: {
+                PPU_PixelWhizzler: function () {
+
+
+
+                    for (var i = 0; i < 32; ++i) {
+                        ChiChiNES.CPU2A03._powersOfTwo[i] = Math.pow(2.0, i);
+                    }
+                },
+                
+                GetPalRGBA: function () {
+                    //Open App.Path & "\" + file For Binary As #FileNum
+                    for (var n = 0; n < 64; ++n) {
+                        ChiChiNES.CPU2A03.pal[n + 64] = ChiChiNES.CPU2A03.pal[n];
+                        ChiChiNES.CPU2A03.pal[n + 128] = ChiChiNES.CPU2A03.pal[n];
+                        ChiChiNES.CPU2A03.pal[n + 192] = ChiChiNES.CPU2A03.pal[n];
+                    }
+                    return ChiChiNES.CPU2A03.pal;
                 }
             }
         },
@@ -1673,10 +1724,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             memoryPatches: null,
             genieCodes: null,
             _cheating: false,
+            __frameFinished: false,
             lowByte: 0,
             highByte: 0,
             Rams: null,
-            _pixelWhizzler: null,
             _cart: null,
             _padOne: null,
             _padTwo: null,
@@ -1687,7 +1738,83 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             instructionUsage: null,
             _debugging: false,
             instructionHistoryPointer: 0,
-            _instructionHistory: null
+            _instructionHistory: null,
+            currentXPosition: 0,
+            currentYPosition: 0,
+            _hScroll: 0,
+            _vScroll: 0,
+            lockedHScroll: 0,
+            lockedVScroll: 0,
+            scanlineNum: 0,
+            scanlinePos: 0,
+            _isDebugging: false,
+            NMIHasBeenThrownThisFrame: false,
+            shouldRender: false,
+            vBuffer: null,
+            nameTableIndex: 0,
+            _frames: 0,
+            hitSprite: false,
+            _PPUControlByte0: 0,
+            _PPUControlByte1: 0,
+            _spritesAreVisible: false,
+            _tilesAreVisible: false,
+            _PPUStatus: 0,
+            _PPUAddress: 0,
+            ppuReadBuffer: 0,
+            PPUAddressLatchIsHigh: false,
+            /**
+             * Initializes the rendering pallette with the bytes in a BGR format, instead of the default RGB format
+             *
+             * @instance
+             * @private
+             * @memberof ChiChiNES.CPU2A03
+             * @type Array.<number>
+             */
+            p32: null,
+            _backgroundPatternTableIndex: 0,
+            isRendering: false,
+            frameClock: 0,
+            FrameEnded: false,
+            frameOn: false,
+            framePalette: null,
+            nameTableMemoryStart: 0,
+            nameTableBits: 0,
+            vidRamIsRam: false,
+            _palette: null,
+            _openBus: 0,
+            chrRomHandler: null,
+            frameFinished: null,
+            spriteChanges: false,
+            _spriteCopyHasHappened: false,
+            sprite0scanline: 0,
+            sprite0x: 0,
+            spriteZeroHit: false,
+            isForegroundPixel: false,
+            currentSprites: null,
+            unpackedSprites: null,
+            _maxSpritesPerScanline: 0,
+            spriteRAM: null,
+            _spriteAddress: 0,
+            spritesOnThisScanline: 0,
+            spriteSize: 0,
+            spritesOnLine: null,
+            patternEntry: 0,
+            patternEntryByte2: 0,
+            currentAttributeByte: 0,
+            currentTileIndex: 0,
+            xNTXor: 0,
+            yNTXor: 0,
+            fetchTile: false,
+            xPosition: 0,
+            yPosition: 0,
+            lastcpuClock: 0,
+            byteOutBuffer: null,
+            outBuffer: null,
+            vbufLocation: 0,
+            drawInfo: null,
+            pixelDevices: null,
+            _clipTiles: false,
+            _clipSprites: false
         },
         events: {
             DebugEvent: null
@@ -1885,15 +2012,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._cart.ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler = this.irqUpdater;
                 }
             },
-            PixelWhizzler: {
-                get: function () {
-                    return this._pixelWhizzler;
-                },
-                set: function (value) {
-                    this._pixelWhizzler = value;
-                    this._pixelWhizzler.ChiChiNES$IPPU$NMIHandler = this.nmiHandler;
-                }
-            },
             StackPointer: {
                 get: function () {
                     return this._stackPointer;
@@ -1921,6 +2039,242 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 get: function () {
                     return this._instructionHistory;
                 }
+            },
+            PPU_HScroll: {
+                get: function () {
+                    return this.lockedHScroll;
+                }
+            },
+            PPU_VScroll: {
+                get: function () {
+                    return this.lockedVScroll;
+                }
+            },
+            PPU_CurrentYPosition: {
+                get: function () {
+                    return this.currentYPosition;
+                }
+            },
+            PPU_CurrentXPosition: {
+                get: function () {
+                    return this.currentXPosition;
+                }
+            },
+            PPU_ScanlinePos: {
+                get: function () {
+                    return this.scanlinePos;
+                }
+            },
+            PPU_ScanlineNum: {
+                get: function () {
+                    return this.scanlineNum;
+                }
+            },
+            PPU_IsDebugging: {
+                get: function () {
+                    return this._isDebugging;
+                },
+                set: function (value) {
+                    this._isDebugging = value;
+                }
+            },
+            NMIOccurred: {
+                get: function () {
+                    return (this._PPUStatus & 128) === 128;
+                }
+            },
+            PPU_ShouldRender: {
+                get: function () {
+                    return this.shouldRender;
+                },
+                set: function (value) {
+                    this.shouldRender = value;
+                }
+            },
+            PPU_HandleVBlankIRQ: false,
+            VROM: null,
+            PPU_PPUControlByte0: {
+                get: function () {
+                    return this._PPUControlByte0;
+                },
+                set: function (value) {
+                    if (this._PPUControlByte0 !== value) {
+                        this._PPUControlByte0 = value;
+                        this.UpdatePPUControlByte0();
+                    }
+                }
+            },
+            PPU_NMIIsThrown: {
+                get: function () {
+                    return (this._PPUControlByte0 & 128) === 128;
+                }
+            },
+            PPU_PPUControlByte1: {
+                get: function () {
+                    return this._PPUControlByte1;
+                },
+                set: function (value) {
+                    this._PPUControlByte1 = value;
+                }
+            },
+            PPU_BackgroundVisible: {
+                get: function () {
+                    return this._tilesAreVisible;
+                }
+            },
+            PPU_SpritesAreVisible: {
+                get: function () {
+                    return this._spritesAreVisible;
+                }
+            },
+            PPU_PPUStatus: {
+                get: function () {
+                    return this._PPUStatus;
+                },
+                set: function (value) {
+                    this._PPUStatus = value;
+                }
+            },
+            PPU_PPUAddress: {
+                get: function () {
+                    return this._PPUAddress;
+                },
+                set: function (value) {
+                    this._PPUAddress = value;
+                }
+            },
+            PPU_PatternTableIndex: {
+                get: function () {
+                    return this._backgroundPatternTableIndex;
+                }
+            },
+            PPU_IsRendering: {
+                get: function () {
+                    return this.isRendering;
+                }
+            },
+            FrameOn: {
+                get: function () {
+                    return this.frameOn;
+                },
+                set: function (value) {
+                    this.frameOn = value;
+                }
+            },
+            PPU_NameTableMemoryStart: {
+                get: function () {
+                    return this.nameTableMemoryStart;
+                },
+                set: function (value) {
+                    this.nameTableMemoryStart = value;
+                }
+            },
+            CurrentFrame: {
+                get: function () {
+                    return this.vBuffer;
+                }
+            },
+            ChrRomHandler: {
+                get: function () {
+                    return this.chrRomHandler;
+                },
+                set: function (value) {
+                    this.chrRomHandler = value;
+                }
+            },
+            /**
+             * ppu doesnt throw irq's
+             *
+             * @instance
+             * @public
+             * @memberof ChiChiNES.CPU2A03
+             * @function PPU_IRQAsserted
+             * @type boolean
+             */
+            PPU_IRQAsserted: {
+                get: function () {
+                    throw new System.NotImplementedException();
+                },
+                set: function (value) {
+                    throw new System.NotImplementedException();
+                }
+            },
+            PPU_NextEventAt: {
+                get: function () {
+                    if (this.frameClock < 6820) {
+                        return (6820 - this.frameClock) / 3;
+                    } else {
+                        return (((89345 - this.frameClock) / 341) / 3);
+                    }
+                    //}
+                    //else
+                    //{
+                    //    return (6823 - frameClock) / 3;
+                    //}
+                }
+            },
+            PPU_FrameFinishHandler: {
+                get: function () {
+                    return this.frameFinished;
+                },
+                set: function (value) {
+                    this.frameFinished = value;
+                }
+            },
+            PPU_SpriteCopyHasHappened: {
+                get: function () {
+                    return this._spriteCopyHasHappened;
+                },
+                set: function (value) {
+                    this._spriteCopyHasHappened = value;
+                }
+            },
+            PPU_MaxSpritesPerScanline: {
+                get: function () {
+                    return this._maxSpritesPerScanline;
+                },
+                set: function (value) {
+                    this._maxSpritesPerScanline = value;
+                }
+            },
+            PPU_SpriteRam: {
+                get: function () {
+                    return this.spriteRAM;
+                }
+            },
+            SpritesOnLine: {
+                get: function () {
+                    return this.spritesOnLine;
+                }
+            },
+            LastcpuClock: {
+                get: function () {
+                    return this.lastcpuClock;
+                },
+                set: function (value) {
+                    this.lastcpuClock = value;
+                }
+            },
+            OutBuffer: {
+                get: function () {
+                    return this.outBuffer;
+                }
+            },
+            PixelAwareDevice: {
+                get: function () {
+                    return this.pixelDevices;
+                },
+                set: function (value) {
+                    this.pixelDevices = value;
+                }
+            },
+            ByteOutBuffer: {
+                get: function () {
+                    return this.byteOutBuffer;
+                },
+                set: function (value) {
+                    this.byteOutBuffer = value;
+                }
             }
         },
         ctors: {
@@ -1945,27 +2299,69 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.memoryPatches = new (System.Collections.Generic.Dictionary$2(System.Int32,ChiChiNES.Hacking.IMemoryPatch))();
                 this.genieCodes = new (System.Collections.Generic.Dictionary$2(System.Int32,System.Int32))();
                 this._cheating = false;
+                this.__frameFinished = true;
                 this.Rams = System.Array.init(8192, 0, System.Int32);
                 this._stackPointer = 255;
                 this.instructionUsage = System.Array.init(256, 0, System.Int32);
                 this._debugging = false;
                 this.instructionHistoryPointer = 255;
                 this._instructionHistory = System.Array.init(256, null, ChiChiNES.CPU2A03.Instruction);
+                this.currentXPosition = 0;
+                this.currentYPosition = 0;
+                this._hScroll = 0;
+                this._vScroll = 0;
+                this.lockedHScroll = 0;
+                this.lockedVScroll = 0;
+                this.scanlineNum = 0;
+                this.scanlinePos = 0;
+                this.NMIHasBeenThrownThisFrame = false;
+                this.shouldRender = false;
+                this._frames = 0;
+                this.hitSprite = false;
+                this.PPUAddressLatchIsHigh = true;
+                this.p32 = System.Array.init(256, 0, System.Int32);
+                this.isRendering = true;
+                this.frameClock = 0;
+                this.FrameEnded = false;
+                this.frameOn = false;
+                this.framePalette = System.Array.init(256, 0, System.Int32);
+                this.nameTableBits = 0;
+                this.vidRamIsRam = true;
+                this._palette = System.Array.init(32, 0, System.Int32);
+                this._openBus = 0;
+                this.sprite0scanline = -1;
+                this.sprite0x = -1;
+                this._maxSpritesPerScanline = 64;
+                this.spriteRAM = System.Array.init(256, 0, System.Int32);
+                this.spritesOnLine = System.Array.init(512, 0, System.Int32);
+                this.patternEntry = 0;
+                this.patternEntryByte2 = 0;
+                this.currentTileIndex = 0;
+                this.xNTXor = 0;
+                this.yNTXor = 0;
+                this.fetchTile = true;
+                this.byteOutBuffer = System.Array.init(262144, 0, System.Int32);
+                this.outBuffer = System.Array.init(65536, 0, System.Int32);
+                this.drawInfo = System.Array.init(65536, 0, System.Int32);
             },
-            ctor: function (whizzler, bopper) {
+            ctor: function (bopper) {
                 this.$initialize();
                 // BuildOpArray();
 
                 this._padOne = new ChiChiNES.InputHandler.ctor();
                 this._padTwo = new ChiChiNES.InputHandler.ctor();
-                this._pixelWhizzler = whizzler;
 
                 this.SoundBopper = bopper;
                 this.nmiHandler = Bridge.fn.cacheBind(this, this.NMIHandler);
                 this.irqUpdater = Bridge.fn.cacheBind(this, this.IRQUpdater);
                 bopper.NMIHandler = Bridge.fn.cacheBind(this, this.IRQUpdater);
 
-                this._pixelWhizzler.ChiChiNES$IPPU$NMIHandler = this.nmiHandler;
+                // init PPU
+                this.PPU_InitSprites();
+
+                this.vBuffer = System.Array.init(61440, 0, System.Byte);
+
+                ChiChiNES.CPU2A03.GetPalRGBA();
             }
         },
         methods: {
@@ -1993,7 +2389,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetFlag: function (Flag, value) {
                 this._statusRegister = (value ? (this._statusRegister | Flag) : (this._statusRegister & ~Flag));
 
-                this._statusRegister |= ChiChiNES.CPUStatusMasks.ExpansionMask;
+                this._statusRegister |= 32; // (int)CPUStatusMasks.ExpansionMask;
             },
             GetFlag: function (Flag) {
                 var flag = Flag;
@@ -3021,6 +3417,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 }
             },
+            RunFrame: function () {
+                this.__frameFinished = false;
+                this.FindNextEvent();
+
+                do {
+                    this.Step();
+                } while (!this.__frameFinished);
+                this.PadOne.ControlPad.ChiChiNES$IControlPad$refresh();
+
+            },
             DecodeAddress: function () {
                 this._currentInstruction_ExtraTiming = 0;
                 var result = 0;
@@ -3031,14 +3437,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case ChiChiNES.AddressingModes.AbsoluteX: 
                         // absolute, x indexed - two paramaters + Index register x
-                        result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterX) | 0));
+                        result = (((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterX);
                         if ((result & 255) < this._indexRegisterX) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
                         break;
                     case ChiChiNES.AddressingModes.AbsoluteY: 
                         // absolute, y indexed - two paramaters + Index register y
-                        result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterY) | 0));
+                        result = (((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterY);
                         if ((result & 255) < this._indexRegisterY) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
@@ -3048,46 +3454,46 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         result = this._currentInstruction_Parameters0 & 255;
                         break;
                     case ChiChiNES.AddressingModes.ZeroPageX: 
-                        result = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 255;
+                        result = (this._currentInstruction_Parameters0 + this._indexRegisterX) & 255;
                         break;
                     case ChiChiNES.AddressingModes.ZeroPageY: 
-                        result = ((((this._currentInstruction_Parameters0 & 255) + (this._indexRegisterY & 255)) | 0)) & 255;
+                        result = ((this._currentInstruction_Parameters0 & 255) + (this._indexRegisterY & 255)) & 255;
                         break;
                     case ChiChiNES.AddressingModes.Indirect: 
                         this.lowByte = this._currentInstruction_Parameters0;
                         this.highByte = this._currentInstruction_Parameters1 << 8;
                         var indAddr = (this.highByte | this.lowByte) & 65535;
                         var indirectAddr = (this.GetByte$1(indAddr));
-                        this.lowByte = (((this.lowByte + 1) | 0)) & 255;
+                        this.lowByte = (this.lowByte + 1) & 255;
                         indAddr = (this.highByte | this.lowByte) & 65535;
-                        indirectAddr = indirectAddr | (this.GetByte$1(indAddr) << 8);
+                        indirectAddr |= (this.GetByte$1(indAddr) << 8);
                         result = indirectAddr;
                         break;
                     case ChiChiNES.AddressingModes.IndexedIndirect: 
-                        var addr = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 255;
+                        var addr = (this._currentInstruction_Parameters0 + this._indexRegisterX) & 255;
                         this.lowByte = this.GetByte$1(addr);
-                        addr = (addr + 1) | 0;
+                        addr = addr + 1;
                         this.highByte = this.GetByte$1(addr & 255);
                         this.highByte = this.highByte << 8;
                         result = this.highByte | this.lowByte;
                         break;
                     case ChiChiNES.AddressingModes.IndirectIndexed: 
                         this.lowByte = this.GetByte$1(this._currentInstruction_Parameters0 & 255);
-                        this.highByte = this.GetByte$1((((this._currentInstruction_Parameters0 + 1) | 0)) & 255) << 8;
+                        this.highByte = this.GetByte$1((this._currentInstruction_Parameters0 + 1) & 255) << 8;
                         addr = (this.lowByte | this.highByte);
-                        result = (addr + this._indexRegisterY) | 0;
+                        result = addr + this._indexRegisterY;
                         if ((result & 255) > this._indexRegisterY) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
                         break;
                     case ChiChiNES.AddressingModes.Relative: 
-                        result = (((this._programCounter + this._currentInstruction_Parameters0) | 0));
+                        result = (this._programCounter + this._currentInstruction_Parameters0);
                         break;
                     default: 
                         this.HandleBadOperation();
                         break;
                 }
-                return (result & 65535);
+                return result;
             },
             HandleBadOperation: function () {
                 throw new System.NotImplementedException("Executors.DecodeAddress() recieved an invalid addressmode");
@@ -3105,6 +3511,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             Execute: function () {
+                var data = 0;
+                var lowByte = 0;
+                var highByte = 0;
+                var carryFlag = 0;
+                var result = 0;
+                var oldbit = 0;
+
                 switch (this._currentInstruction_OpCode) {
                     case 128: 
                     case 130: 
@@ -3138,7 +3551,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 121: 
                     case 97: 
                     case 113: 
-                        this.ADC();
+                        //ADC();
+                        // start the read process
+                        data = this.DecodeOperand();
+                        carryFlag = (this._statusRegister & 1);
+                        result = (this._accumulator + data + carryFlag);
+                        // carry flag
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, result > 255);
+                        // overflow flag
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, ((this._accumulator ^ data) & 128) !== 128 && ((this._accumulator ^ result) & 128) === 128);
+                        // occurs when bit 7 is set
+                        this._accumulator = result & 255;
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 41: 
                     case 37: 
@@ -3148,7 +3572,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 57: 
                     case 33: 
                     case 49: 
-                        this.AND();
+                        //AND();
+                        this._accumulator = (this._accumulator & this.DecodeOperand());
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 10: 
                     case 6: 
@@ -3168,7 +3594,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case 36: 
                     case 44: 
-                        this.BIT();
+                        //BIT();
+                        data = this.DecodeOperand();
+                        // overflow is bit 6
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, (data & 64) === 64);
+                        // negative is bit 7
+                        this._statusRegister = ((data & 128) === 128) ? this._statusRegister | 128 : this._statusRegister & 127;
+                        this._statusRegister |= ((data & this.Accumulator) === 0) ? 2 : 253;
                         break;
                     case 48: 
                         this.BMI();
@@ -3180,7 +3612,27 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.BPL();
                         break;
                     case 0: 
-                        this.BRK();
+                        //BRK();
+                        //BRK causes a non-maskable interrupt and increments the program counter by one. 
+                        //Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to replace a two-byte instruction 
+                        // for debugging and the subsequent RTI will be correct. 
+                        // push pc onto stack (high byte first)
+                        this._programCounter = this._programCounter + 1;
+                        this.PushStack(this._programCounter >> 8 & 255);
+                        this.PushStack(this._programCounter & 255);
+                        // push sr onto stack
+                        //PHP and BRK push the current status with bits 4 and 5 set on the stack; 
+                        data = this._statusRegister | 16 | 32;
+                        this.PushStack(data);
+                        // set interrupt disable, and break flags
+                        // BRK then sets the I flag.
+                        this._statusRegister = this._statusRegister | 20;
+                        // point pc to interrupt service routine
+                        this._addressBus = 65534;
+                        lowByte = this.GetByte();
+                        this._addressBus = 65535;
+                        highByte = this.GetByte();
+                        this._programCounter = lowByte + highByte * 256;
                         break;
                     case 80: 
                         this.BVC();
@@ -3224,7 +3676,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 214: 
                     case 206: 
                     case 222: 
-                        this.DEC();
+                        //DEC();
+                        data = this.DecodeOperand();
+                        data = (data - 1) & 255;
+                        this.SetByte$1(this.DecodeAddress(), data);
+                        this.SetZNFlags(data);
                         break;
                     case 202: 
                         this.DEX();
@@ -3240,13 +3696,19 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 89: 
                     case 65: 
                     case 81: 
-                        this.EOR();
+                        //EOR();
+                        this._accumulator = (this._accumulator ^ this.DecodeOperand());
+                        this.SetZNFlags(this.Accumulator);
                         break;
                     case 230: 
                     case 246: 
                     case 238: 
                     case 254: 
-                        this.INC();
+                        //INC();
+                        data = this.DecodeOperand();
+                        data = (data + 1) & 255;
+                        this.SetByte$1(this.DecodeAddress(), data);
+                        this.SetZNFlags(data);
                         break;
                     case 232: 
                         this.INX();
@@ -3256,7 +3718,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case 76: 
                     case 108: 
-                        this.JMP();
+                        // JMP();
+                        // 6052 indirect jmp bug
+                        if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Indirect && this._currentInstruction_Parameters0 === 255) {
+                            this._programCounter = 255 | this._currentInstruction_Parameters1 << 8;
+                        } else {
+                            this._programCounter = this.DecodeAddress();
+                        }
                         break;
                     case 32: 
                         this.JSR();
@@ -3328,7 +3796,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 25: 
                     case 1: 
                     case 17: 
-                        this.ORA();
+                        //ORA();
+                        this._accumulator = (this._accumulator | this.DecodeOperand());
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 72: 
                         this.PHA();
@@ -3347,14 +3817,39 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 54: 
                     case 46: 
                     case 62: 
-                        this.ROL();
+                        //ROL();
+                        data = this.DecodeOperand();
+                        // old carry bit shifted into bit 1
+                        oldbit = (this._statusRegister & 1) === 1 ? 1 : 0;
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (data & 128) === 128);
+                        data = ((data << 1) | oldbit) & 255;
+                        //data = data & 0xFF;
+                        //data = data | oldbit;
+                        this.SetZNFlags(data);
+                        if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
+                            this._accumulator = data;
+                        } else {
+                            this.SetByte$1(this.DecodeAddress(), data);
+                        }
                         break;
                     case 106: 
                     case 102: 
                     case 118: 
                     case 110: 
                     case 126: 
-                        this.ROR();
+                        //ROR();
+                        data = this.DecodeOperand();
+                        // old carry bit shifted into bit 7
+                        oldbit = (this._statusRegister & 1) === 1 ? 128 : 0;
+                        // original bit 0 shifted to carry
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (data & 1) === 1);
+                        data = (data >> 1) | oldbit;
+                        this.SetZNFlags(data);
+                        if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
+                            this._accumulator = data;
+                        } else {
+                            this.SetByte$1(this.DecodeAddress(), data);
+                        }
                         break;
                     case 64: 
                         this.RTI();
@@ -3371,7 +3866,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 249: 
                     case 225: 
                     case 241:  // undocumented sbc immediate
-                        this.SBC();
+                        //SBC();
+                        // start the read process
+                        data = this.DecodeOperand() & 4095;
+                        carryFlag = ((this._statusRegister ^ 1) & 1);
+                        result = (((this._accumulator - data) & 4095) - carryFlag) & 4095;
+                        // set overflow flag if sign bit of accumulator changed
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, ((this._accumulator ^ result) & 128) === 128 && ((this._accumulator ^ data) & 128) === 128);
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (result < 256));
+                        this._accumulator = (result) & 255;
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 56: 
                         this.SEC();
@@ -3450,8 +3954,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 } else {
                     this._statusRegister &= -129;
                 } // ((int)CPUStatusMasks.NegativeResultMask);
-                //SetFlag(CPUStatusBits.ZeroResult, (data & 0xFF) == 0);
-                //SetFlag(CPUStatusBits.NegativeResult, (data & 0x80) == 0x80);
+
             },
             LDA: function () {
 
@@ -3486,45 +3989,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.SetFlag(ChiChiNES.CPUStatusMasks.DecimalModeMask, false);
                 //            StatusRegister = StatusRegister & 0xF7;
             },
-            JMP: function () {
-                // 6052 indirect jmp bug
-                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Indirect && this._currentInstruction_Parameters0 === 255) {
-                    this._programCounter = 255 | this._currentInstruction_Parameters1 << 8;
-                } else {
-                    this._programCounter = this.DecodeAddress();
-                }
-            },
-            DEC: function () {
-                var val = this.DecodeOperand();
-                val = (val - 1) & 255;
-                this.SetByte$1(this.DecodeAddress(), val);
-                this.SetZNFlags(val);
-            },
-            INC: function () {
-                var val = this.DecodeOperand();
-                val = (val + 1) & 255;
-                this.SetByte$1(this.DecodeAddress(), val);
-                this.SetZNFlags(val);
-            },
-            ADC: function () {
-                // start the read process
-                var data = this.DecodeOperand();
-                var carryFlag = (this._statusRegister & 1);
-                var result = (this._accumulator + data + carryFlag);
-
-                // carry flag
-
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, result > 255);
-
-                // overflow flag
-                // SetFlag(CPUStatusBits.Overflow, (result > 0x7f || ~result > 0x7f));
-                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, ((this._accumulator ^ data) & 128) !== 128 && ((this._accumulator ^ result) & 128) === 128);
-
-                // occurs when bit 7 is set
-                this._accumulator = result & 255;
-                this.SetZNFlags(this._accumulator);
-
-            },
             LSR: function () {
                 var rst = this.DecodeOperand();
                 //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
@@ -3544,38 +4008,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SKB: function () {
                 // _programCounter++;
             },
-            SBC: function () {
-                // start the read process
-
-                var data = this.DecodeOperand() & 4095;
-
-                var carryFlag = ((this._statusRegister ^ 1) & 1);
-
-                var result = (((this._accumulator - data) & 4095) - carryFlag) & 4095;
-
-                // set overflow flag if sign bit of accumulator changed
-                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, ((this._accumulator ^ result) & 128) === 128 && ((this._accumulator ^ data) & 128) === 128);
-
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (result < 256));
-
-                this._accumulator = (result) & 255;
-                this.SetZNFlags(this._accumulator);
-
-
-            },
-            AND: function () {
-                this._accumulator = (this._accumulator & this.DecodeOperand());
-                this.SetZNFlags(this._accumulator);
-            },
-            ORA: function () {
-
-                this._accumulator = (this._accumulator | this.DecodeOperand());
-                this.SetZNFlags(this._accumulator);
-            },
-            EOR: function () {
-                this._accumulator = (this._accumulator ^ this.DecodeOperand());
-                this.SetZNFlags(this.Accumulator);
-            },
             ASL: function () {
                 var data = this.DecodeOperand();
                 // set carry flag
@@ -3592,34 +4024,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
 
                 this.SetZNFlags(data);
-            },
-            BIT: function () {
-
-                var operand = this.DecodeOperand();
-                // overflow is bit 6
-                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, (operand & 64) === 64);
-                //if ((operand & 64) == 64)
-                //{
-                //    _statusRegister = _statusRegister | 0x40;
-                //}
-                //else
-                //{
-                //    _statusRegister = _statusRegister & 0xBF;
-                //}
-
-                // negative is bit 7
-                if ((operand & 128) === 128) {
-                    this._statusRegister = this._statusRegister | 128;
-                } else {
-                    this._statusRegister = this._statusRegister & 127;
-                }
-
-                if ((operand & this.Accumulator) === 0) {
-                    this._statusRegister = this._statusRegister | 2;
-                } else {
-                    this._statusRegister = this._statusRegister & 253;
-                }
-
             },
             SEC: function () {
                 // carry flag bit 0
@@ -3662,7 +4066,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
             },
             Branch: function () {
-                System.Diagnostics.Debug.assert(ChiChiNES.CPU2A03.cpuTiming[this._currentInstruction_OpCode] === 2);
+                //System.Diagnostics.Debug.Assert(cpuTiming[_currentInstruction_OpCode] == 2);
 
                 this._currentInstruction_ExtraTiming = 1;
                 var addr = this._currentInstruction_Parameters0 & 255;
@@ -3785,50 +4189,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 this._programCounter = this.DecodeAddress();
             },
-            ROR: function () {
-                var data = this.DecodeOperand();
-
-                // old carry bit shifted into bit 7
-                var oldbit = 0;
-                if (this.GetFlag(ChiChiNES.CPUStatusMasks.CarryMask)) {
-                    oldbit = 128;
-                }
-
-                // original bit 0 shifted to carry
-                //            target.SetFlag(CPUStatusBits.Carry, (); 
-
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (data & 1) === 1);
-
-                data = (data >> 1) | oldbit;
-
-                this.SetZNFlags(data);
-
-                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
-                    this._accumulator = data;
-                } else {
-                    this.SetByte$1(this.DecodeAddress(), data);
-                }
-            },
-            ROL: function () {
-                var data = this.DecodeOperand();
-
-                var oldbit = 0;
-                if (this.GetFlag(ChiChiNES.CPUStatusMasks.CarryMask)) {
-                    oldbit = 1;
-                }
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (data & 128) === 128);
-
-                data = data << 1;
-                data = data & 255;
-                data = data | oldbit;
-                this.SetZNFlags(data);
-
-                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
-                    this._accumulator = data;
-                } else {
-                    this.SetByte$1(this.DecodeAddress(), data);
-                }
-            },
             RTS: function () {
                 var high, low;
                 low = (this.PopStack() + 1) & 255;
@@ -3840,34 +4200,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var low = this.PopStack();
                 var high = this.PopStack();
                 this._programCounter = ((256 * high) + low);
-            },
-            BRK: function () {
-                //BRK causes a non-maskable interrupt and increments the program counter by one. 
-                //Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to replace a two-byte instruction 
-                // for debugging and the subsequent RTI will be correct. 
-                // push pc onto stack (high byte first)
-                this._programCounter = this._programCounter + 1;
-                this.PushStack(this._programCounter >> 8 & 255);
-                this.PushStack(this._programCounter & 255);
-                // push sr onto stack
-
-                //PHP and BRK push the current status with bits 4 and 5 set on the stack; 
-
-                var newStatus = this._statusRegister | 16 | 32;
-
-                this.PushStack(newStatus);
-
-                // set interrupt disable, and break flags
-                // BRK then sets the I flag.
-                this._statusRegister = this._statusRegister | 20;
-
-                // point pc to interrupt service routine
-                this.AddressBus = 65534;
-                var lowByte = this.GetByte();
-                this.AddressBus = 65535;
-                var highByte = this.GetByte();
-
-                this._programCounter = lowByte + highByte * 256;
             },
             AAC: function () {
                 //AND byte with accumulator. If result is negative then carry is set.
@@ -3983,7 +4315,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case 8192: 
                     case 12288: 
-                        result = this._pixelWhizzler.ChiChiNES$IPPU$GetByte(this.clock, address);
+                        result = this.PPU_GetByte(this.clock, address);
                         break;
                     case 16384: 
                         switch (address) {
@@ -4045,7 +4377,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case 8192: 
                     case 12288: 
-                        result = this._pixelWhizzler.ChiChiNES$IPPU$GetByte(this.clock, address);
+                        result = this.PPU_GetByte(this.clock, address);
                         break;
                     case 16384: 
                         switch (address) {
@@ -4116,14 +4448,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetByte$1: function (address, data) {
                 // check high byte, find appropriate handler
                 if (address < 2048) {
-                    this.Rams[address & 2047] = data;
+                    this.Rams[address & 2047] = data & 255;
                     return;
                 }
                 switch (address & 61440) {
                     case 0: 
                     case 4096: 
                         // nes sram
-                        this.Rams[address & 2047] = data;
+                        this.Rams[address & 2047] = data & 255;
                         break;
                     case 20480: 
                         this.Cart.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
@@ -4143,7 +4475,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case 8192: 
                     case 12288: 
-                        this._pixelWhizzler.ChiChiNES$IPPU$SetByte(this.clock, address, data);
+                        this.PPU_SetByte(this.clock, address, data);
                         break;
                     case 16384: 
                         switch (address) {
@@ -4168,7 +4500,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                                 this.soundBopper.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
                                 break;
                             case 16404: 
-                                this._pixelWhizzler.ChiChiNES$IPPU$CopySprites(Bridge.ref(this, "Rams"), data * 256);
+                                this.PPU_CopySprites(data * 256);
                                 this._currentInstruction_ExtraTiming = this._currentInstruction_ExtraTiming + 512;
                                 break;
                             case 16406: 
@@ -4181,11 +4513,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             FindNextEvent: function () {
                 // it'll either be the ppu's NMI, or an irq from either the apu or the cart
-                this.nextEvent = this.clock + this._pixelWhizzler.ChiChiNES$IPPU$NextEventAt;
+                this.nextEvent = this.clock + this.PPU_NextEventAt;
 
             },
             HandleNextEvent: function () {
-                this._pixelWhizzler.ChiChiNES$IPPU$HandleEvent(this.Clock);
+                this.PPU_HandleEvent(this.Clock);
                 this.FindNextEvent();
             },
             ResetInstructionHistory: function () {
@@ -4215,6 +4547,899 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 //inst.Length = 1;
                 //FetchInstructionParameters(ref inst, address);
                 return inst;
+            },
+            PPU_Initialize: function () {
+                this._PPUAddress = 0;
+                this._PPUStatus = 0;
+                this._PPUControlByte0 = 0;
+                this._PPUControlByte1 = 0;
+                this._hScroll = 0;
+                this.scanlineNum = 0;
+                this.scanlinePos = 0;
+                this._spriteAddress = 0;
+            },
+            PPU_WriteState: function (writer) {
+
+                writer.enqueue(this._PPUStatus);
+                writer.enqueue(this._PPUControlByte0);
+                writer.enqueue(this._hScroll);
+                writer.enqueue(this._vScroll);
+                writer.enqueue(this.scanlineNum);
+                writer.enqueue(this.scanlinePos);
+                writer.enqueue(this.currentYPosition);
+                writer.enqueue(this.currentXPosition);
+                writer.enqueue(this.nameTableIndex);
+                writer.enqueue(this._backgroundPatternTableIndex);
+
+
+                writer.enqueue(this.patternEntry);
+                writer.enqueue(this.patternEntryByte2);
+                writer.enqueue(this.currentAttributeByte);
+                writer.enqueue(this.xNTXor);
+                writer.enqueue(this.yNTXor);
+                writer.enqueue(this.fetchTile ? 0 : 1);
+                writer.enqueue(this.xPosition);
+                writer.enqueue(this.yPosition);
+
+
+                writer.enqueue(this.lastcpuClock);
+                writer.enqueue(this.vbufLocation);
+
+
+                for (var i = 0; i < 16384; i += 4) {
+
+                    writer.enqueue(this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, i) << 24 | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, i + 1) << 16) | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, i + 2) << 8) | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, i + 3) << 0));
+                }
+                writer.enqueue(this._spriteAddress);
+
+                for (var i1 = 0; i1 < 256; i1 += 4) {
+
+                    writer.enqueue((this.spriteRAM[i1] << 24) | (this.spriteRAM[i1 + 1] << 16) | (this.spriteRAM[i1 + 2] << 8) | (this.spriteRAM[i1 + 3]));
+                }
+
+                for (var i2 = 0; i2 < ChiChiNES.CPU2A03.pal.length; i2 += 4) {
+
+                    writer.enqueue((ChiChiNES.CPU2A03.pal[i2] << 24) | (ChiChiNES.CPU2A03.pal[i2 + 1] << 16) | (ChiChiNES.CPU2A03.pal[i2 + 2] << 8) | (ChiChiNES.CPU2A03.pal[i2 + 3]));
+                }
+
+                for (var i3 = 0; i3 < this._palette.length; i3 += 4) {
+
+                    writer.enqueue((this._palette[i3] << 24) | (this._palette[i3 + 1] << 16) | (this._palette[i3 + 2] << 8) | (this._palette[i3 + 3]));
+                }
+
+            },
+            PPU_ReadState: function (state) {
+                this._PPUStatus = state.dequeue();
+                this._PPUControlByte0 = state.dequeue();
+                this._hScroll = state.dequeue();
+                this._vScroll = state.dequeue();
+                this.scanlineNum = state.dequeue();
+                this.scanlinePos = state.dequeue();
+                this.currentYPosition = state.dequeue();
+                this.currentXPosition = state.dequeue();
+                this.nameTableIndex = state.dequeue();
+                this._backgroundPatternTableIndex = state.dequeue();
+                //_mirroring= state.Dequeue();
+                //oneScreenMirrorOffset= state.Dequeue();
+                //currentMirrorMask= state.Dequeue();
+
+                this.patternEntry = state.dequeue();
+                this.patternEntryByte2 = state.dequeue();
+                this.currentAttributeByte = state.dequeue();
+                this.xNTXor = state.dequeue();
+                this.yNTXor = state.dequeue();
+                this.fetchTile = (state.dequeue() === 1);
+                this.xPosition = state.dequeue();
+                this.yPosition = state.dequeue();
+
+                this.lastcpuClock = state.dequeue();
+                this.vbufLocation = state.dequeue();
+
+                var packedByte = 0;
+                for (var i = 0; i < 16384; i += 4) {
+                    packedByte = state.dequeue();
+                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, i, packedByte >> 24);
+                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, i + 1, packedByte >> 16);
+                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, i + 2, packedByte >> 8);
+                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, i + 3, packedByte);
+                }
+
+                this._spriteAddress = state.dequeue();
+
+                for (var i1 = 0; i1 < 256; i1 += 4) {
+                    packedByte = state.dequeue();
+                    this.spriteRAM[i1] = packedByte >> 24;
+                    this.spriteRAM[i1 + 1] = packedByte >> 16;
+                    this.spriteRAM[i1 + 2] = packedByte >> 8;
+                    this.spriteRAM[i1 + 3] = packedByte;
+                }
+
+                for (var i2 = 0; i2 < ChiChiNES.CPU2A03.pal.length; i2 += 4) {
+                    packedByte = state.dequeue();
+                    ChiChiNES.CPU2A03.pal[i2] = packedByte >> 24;
+                    ChiChiNES.CPU2A03.pal[i2 + 1] = packedByte >> 16;
+                    ChiChiNES.CPU2A03.pal[i2 + 2] = packedByte >> 8;
+                    ChiChiNES.CPU2A03.pal[i2 + 3] = packedByte;
+                }
+
+                for (var i3 = 0; i3 < this._palette.length; i3 += 4) {
+                    packedByte = state.dequeue();
+                    this._palette[i3] = packedByte >> 24;
+                    this._palette[i3 + 1] = packedByte >> 16;
+                    this._palette[i3 + 2] = packedByte >> 8;
+                    this._palette[i3 + 3] = packedByte;
+                }
+
+                this.PPU_UnpackSprites();
+                this.PPU_PreloadSprites(this.scanlineNum);
+
+            },
+            PPU_SetupVINT: function () {
+                this._PPUStatus = this._PPUStatus | 128;
+                this.NMIHasBeenThrownThisFrame = false;
+                // HandleVBlankIRQ = true;
+                this._frames = this._frames + 1;
+                //isRendering = false;
+
+                if (this.PPU_NMIIsThrown) {
+                    this.nmiHandler();
+                    this.PPU_HandleVBlankIRQ = true;
+                    this.NMIHasBeenThrownThisFrame = true;
+                }
+
+            },
+            PPU_VidRAM_GetNTByte: function (address) {
+                var result = 0;
+                if (address >= 8192 && address < 12288) {
+
+                    result = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address);
+
+                } else {
+                    result = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address);
+                }
+                return result;
+            },
+            UpdatePPUControlByte0: function () {
+                if ((this._PPUControlByte0 & 16) === 16) {
+                    this._backgroundPatternTableIndex = 4096;
+                } else {
+                    this._backgroundPatternTableIndex = 0;
+                }
+            },
+            PPU_SetByte: function (Clock, address, data) {
+                // DrawTo(Clock);
+                //if (_isDebugging)
+                //{
+                //    Events.Enqueue(new PPUWriteEvent { IsWrite = true, DataWritten = data, FrameClock = frameClock, RegisterAffected = address, ScanlineNum = frameClock / 341, ScanlinePos = frameClock % 341 });
+                //}
+                //Writable 2C02 registers
+                //-----------------------
+
+                //4 	-	returns object attribute memory 
+                //      location indexed by port 3, then increments port 3.
+
+                //6	    -	PPU address port to access with port 7.
+
+                //7	    -	PPU memory write port.
+
+
+                switch (address & 7) {
+                    case 0: 
+                        this.DrawTo(Clock);
+                        this._PPUControlByte0 = data;
+                        this._openBus = data;
+                        this.nameTableBits = this._PPUControlByte0 & 3;
+                        this._backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 4096;
+                        // if we toggle /vbl we can throw multiple NMIs in a vblank period
+                        //if ((data & 0x80) == 0x80 && NMIHasBeenThrownThisFrame)
+                        //{
+                        //     NMIHasBeenThrownThisFrame = false;
+                        //}
+                        //UpdatePixelInfo();
+                        this.nameTableMemoryStart = this.nameTableBits * 1024;
+                        break;
+                    case 1: 
+                        //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
+                        //      1	left side screen column (8 pixels wide) playfield clipping (when 0).
+                        //      2	left side screen column (8 pixels wide) object clipping (when 0).
+                        //      3	enable playfield display (on 1).
+                        //      4	enable objects display (on 1).
+                        //      5	R (to be documented)
+                        //      6	G (to be documented)
+                        //      7	B (to be documented)
+                        this.DrawTo(Clock);
+                        this.isRendering = (data & 24) !== 0;
+                        this._PPUControlByte1 = data;
+                        this._spritesAreVisible = (this._PPUControlByte1 & 16) === 16;
+                        this._tilesAreVisible = (this._PPUControlByte1 & 8) === 8;
+                        this._clipTiles = (this._PPUControlByte1 & 2) !== 2;
+                        this._clipSprites = (this._PPUControlByte1 & 4) !== 4;
+                        //UpdatePixelInfo();
+                        this.nameTableMemoryStart = this.nameTableBits * 1024;
+                        break;
+                    case 2: 
+                        this.ppuReadBuffer = data;
+                        this._openBus = data;
+                        break;
+                    case 3: 
+                        //3	    -	internal object attribute memory index pointer 
+                        //          (64 attributes, 32 bits each, byte granular access). 
+                        //          stored value post-increments on access to port 4.
+                        this._spriteAddress = data & 255;
+                        this._openBus = this._spriteAddress;
+                        break;
+                    case 4: 
+                        this.spriteRAM[this._spriteAddress] = data;
+                        // UnpackSprite(_spriteAddress / 4);
+                        this._spriteAddress = (this._spriteAddress + 1) & 255;
+                        this.unpackedSprites[this._spriteAddress / 4].Changed = true;
+                        this.spriteChanges = true;
+                        break;
+                    case 5: 
+                        //5	    -	scroll offset port.
+                        // on 1st read (high), bits 0,1,2 go to fine horizonal scroll, rest to select tile
+                        // on 2nd read, bits 0,1,2 go to fine vertical scroll, rest to select tile
+                        // during render, writes to FH are applied immediately
+                        if (this.PPUAddressLatchIsHigh) {
+                            //if (isRendering)
+                            //{
+                            //    fineHorizontalScroll = data & 0x7;
+                            //    horizontalTileIndex = data >> 3;
+                            //}  
+                            this.DrawTo(Clock);
+                            this._hScroll = data;
+
+                            this.lockedHScroll = this._hScroll & 7;
+                            this.UpdatePixelInfo();
+
+                            this.PPUAddressLatchIsHigh = false;
+                        } else {
+                            // during rendering, a write here will not post to the rendering counter
+                            this.DrawTo(Clock);
+                            this._vScroll = data;
+                            if (data > 240) {
+                                this._vScroll = data - 256;
+                            }
+
+                            if (!this.frameOn || (this.frameOn && !this.isRendering)) {
+                                this.lockedVScroll = this._vScroll;
+                            }
+
+                            this.PPUAddressLatchIsHigh = true;
+                            this.UpdatePixelInfo();
+
+                        }
+                        break;
+                    case 6: 
+                        //Since the PPU's external address bus is only 14 bits in width, 
+                        //the top two bits of the value written are ignored. 
+                        if (this.PPUAddressLatchIsHigh) {
+                            //            //a) Write upper address byte into $2006
+                            this._PPUAddress = (this._PPUAddress & 255) | ((data & 63) << 8);
+                            this.PPUAddressLatchIsHigh = false;
+                        } else {
+                            //            //b) Write lower address byte into $2006
+                            this._PPUAddress = (this._PPUAddress & 32512) | data & 255;
+                            this.PPUAddressLatchIsHigh = true;
+
+                            // writes here during rendering directly affect the scroll counter
+                            // from Marat Fazulamans doc
+
+                            //Address Written into $2006
+                            //xxYYSSYYYYYXXXXX
+                            //   | |  |     |
+                            //   | |  |     +---- Horizontal scroll in tiles (i.e. 1 = 8 pixels)
+                            //   | |  +--------- Vertical scroll in tiles (i.e. 1 = 8 pixels)
+                            //   | +------------ Number of Name Table ($2000,$2400,$2800,$2C00)
+                            //   +-------------- Additional vertical scroll in pixels (0..3)
+
+                            // on second write during frame, loopy t (_hscroll, _vscroll) is copied to loopy_v (lockedHscroll, lockedVScroll)
+
+                            this.DrawTo(Clock);
+                            this._hScroll = ((this._PPUAddress & 31) << 3); // +(currentXPosition & 7);
+                            this._vScroll = (((this._PPUAddress >> 5) & 31) << 3);
+                            this._vScroll |= ((this._PPUAddress >> 12) & 3);
+
+                            this.nameTableBits = ((this._PPUAddress >> 10) & 3);
+                            if (this.frameOn) {
+
+                                this.lockedHScroll = this._hScroll;
+                                this.lockedVScroll = this._vScroll;
+                                this.lockedVScroll -= this.currentYPosition;
+
+                            }
+                            this.UpdatePixelInfo();
+                            // relock vscroll during render when this happens
+                        }
+                        break;
+                    case 7: 
+                        //            //Writing to PPU memory:
+                        //            //c) Write data into $2007. After each write, the
+                        //            //   address will increment either by 1 (bit 2 of
+                        //            //   $2000 is 0) or by 32 (bit 2 of $2000 is 1).
+                        // ppuLatch = data;
+                        if ((this._PPUAddress & 65280) === 16128) {
+                            this.DrawTo(Clock);
+                            //WriteToNESPalette(_PPUAddress, (byte)data);
+                            var palAddress = (this._PPUAddress) & 31;
+                            this._palette[palAddress] = data;
+                            // rgb32OutBuffer[255 * 256 + palAddress] = data;
+                            if ((this._PPUAddress & 65519) === 16128) {
+                                this._palette[(palAddress ^ 16) & 31] = data;
+                                // rgb32OutBuffer[255 * 256 + palAddress ^ 0x10] = data;
+                            }
+                            // these palettes are all mirrored every 0x10 bytes
+                            this.UpdatePixelInfo();
+
+                            // _vidRAM[_PPUAddress ^ 0x1000] = (byte)data;
+                        } else {
+                            // if its a nametable byte, mask it according to current mirroring
+                            if ((this._PPUAddress & 61440) === 8192) {
+                                this.chrRomHandler.ChiChiNES$INESCart$SetPPUByte(Clock, this._PPUAddress, data);
+                            } else {
+                                if (this.vidRamIsRam) {
+                                    this.chrRomHandler.ChiChiNES$INESCart$SetPPUByte(Clock, this._PPUAddress, data);
+                                }
+                            }
+                        }
+                        // if controlbyte0.4, set ppuaddress + 32, else inc
+                        if ((this._PPUControlByte0 & 4) === 4) {
+                            this._PPUAddress = (this._PPUAddress + 32);
+                        } else {
+                            this._PPUAddress = (this._PPUAddress + 1);
+                        }
+                        // reset the flag which makex xxx6 set the high byte of address
+                        this.PPUAddressLatchIsHigh = true;
+                        this._PPUAddress = (this._PPUAddress & 16383);
+                        break;
+                }
+            },
+            PPU_GetByte: function (Clock, address) {
+                //if (_isDebugging)
+                //{
+                //    Events.Enqueue(new PPUWriteEvent { IsWrite = false, DataWritten = 0, FrameClock = frameClock, RegisterAffected = address, ScanlineNum = frameClock / 341, ScanlinePos = frameClock % 341 });
+                //}
+
+                switch (address & 7) {
+                    case 3: 
+                    case 0: 
+                    case 1: 
+                    case 5: 
+                    case 6: 
+                        return this._openBus;
+                    case 2: 
+                        var ret;
+                        this.PPUAddressLatchIsHigh = true;
+                        // bit 7 is set to 0 after a read occurs
+                        // return lower 5 latched bits, and the status
+                        ret = (this.ppuReadBuffer & 31) | this._PPUStatus;
+                        //ret = _PPUStatus;
+                        //{
+                        //If read during HBlank and Bit #7 of $2000 is set to 0, then switch to Name Table #0
+                        //if ((PPUControlByte0 & 0x80) == 0 && scanlinePos > 0xFF)
+                        //{
+                        //    nameTableMemoryStart = 0;
+                        //}
+                        // clear vblank flag if read
+                        this.DrawTo(Clock);
+                        if ((ret & 128) === 128) {
+
+
+                            this._PPUStatus = this._PPUStatus & -129;
+
+                        }
+                        this.UpdatePixelInfo();
+                        //}
+                        this._openBus = ret;
+                        return ret;
+                    case 4: 
+                        var tmp = this.spriteRAM[this._spriteAddress];
+                        //ppuLatch = spriteRAM[SpriteAddress];
+                        // should not increment on read ?
+                        //SpriteAddress = (SpriteAddress + 1) & 0xFF;
+                        this._openBus = tmp;
+                        return tmp;
+                    case 7: 
+                        //        If Mapper = 9 Then
+                        //            If PPUAddress < &H2000& Then
+                        //                map9_latch tmp, (PPUAddress And &H1000&)
+                        //            End If
+                        //        End If
+                        // palette reads shouldn't be buffered like regular vram reads, they re internal
+                        if ((this._PPUAddress & 65280) === 16128) {
+                            // these palettes are all mirrored every 0x10 bytes
+                            tmp = this._palette[this._PPUAddress & 31];
+                            // palette read should also read vram into read buffer
+
+                            // info i found on the nesdev forums
+
+                            // When you read PPU $3F00-$3FFF, you get immediate data from Palette RAM 
+                            // (without the 1-read delay usually present when reading from VRAM) and the PPU 
+                            // will also fetch nametable data from the corresponding address (which is mirrored from PPU $2F00-$2FFF). 
+
+                            // note: writes do not work this way 
+                            this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress - 4096);
+                        } else {
+                            tmp = this.ppuReadBuffer;
+                            if (!!(this._PPUAddress >= 8192 & this._PPUAddress <= 12287)) {
+                                this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress);
+                            } else {
+                                this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress & 16383);
+                            }
+                        }
+                        if ((this._PPUControlByte0 & 4) === 4) {
+                            this._PPUAddress = this._PPUAddress + 32;
+                        } else {
+                            this._PPUAddress = this._PPUAddress + 1;
+                        }
+                        this._PPUAddress = (this._PPUAddress & 16383);
+                        return tmp;
+                }
+                //throw new NotImplementedException(string.Format("PPU.GetByte() recieved invalid address {0,4:x}", address));
+                return 0;
+            },
+            PPU_HandleEvent: function (Clock) {
+                this.DrawTo(Clock);
+            },
+            PPU_ResetClock: function (Clock) {
+                this.lastcpuClock = Clock;
+            },
+            PPU_CopySprites: function (copyFrom) {
+
+                // should copy 0x100 items from source to spriteRAM, 
+                // starting at SpriteAddress, and wrapping around
+                // should set spriteDMA flag
+                for (var i = 0; i < 256; ++i) {
+                    var spriteLocation = (this._spriteAddress + i) & 255;
+                    if (this.spriteRAM[spriteLocation] !== this.Rams[copyFrom + i]) {
+                        this.spriteRAM[spriteLocation] = this.Rams[copyFrom + i];
+                        this.unpackedSprites[(spriteLocation / 4) & 255].Changed = true;
+                    }
+                }
+                this._spriteCopyHasHappened = true;
+                this.spriteChanges = true;
+
+            },
+            PPU_InitSprites: function () {
+                this.currentSprites = System.Array.init(this._maxSpritesPerScanline, null, ChiChiNES.NESSprite);
+                for (var i = 0; i < this._maxSpritesPerScanline; ++i) {
+                    this.currentSprites[i] = new ChiChiNES.NESSprite();
+                }
+
+                this.unpackedSprites = System.Array.init(64, null, ChiChiNES.NESSprite);
+
+                for (var i1 = 0; i1 < 64; ++i1) {
+                    this.unpackedSprites[i1] = new ChiChiNES.NESSprite();
+                }
+
+            },
+            PPU_GetSpritePixel: function () {
+                this.isForegroundPixel = false;
+                this.spriteZeroHit = false;
+                var result = 0;
+                var yLine = 0;
+                var xPos = 0;
+                var tileIndex = 0;
+
+                for (var i = 0; i < this.spritesOnThisScanline; ++i) {
+                    var currSprite = this.currentSprites[i];
+                    if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < currSprite.XPosition + 8) {
+
+                        var spritePatternTable = 0;
+                        if ((this._PPUControlByte0 & 8) === 8) {
+                            spritePatternTable = 4096;
+                        }
+                        xPos = this.currentXPosition - currSprite.XPosition;
+                        yLine = this.currentYPosition - currSprite.YPosition - 1;
+
+                        yLine = yLine & (this.spriteSize - 1);
+
+                        tileIndex = currSprite.TileIndex;
+
+                        if ((this._PPUControlByte0 & 32) === 32) {
+                            if ((tileIndex & 1) === 1) {
+                                spritePatternTable = 4096;
+                                tileIndex = tileIndex ^ 1;
+                            } else {
+                                spritePatternTable = 0;
+                            }
+                        }
+
+                        //result = WhissaSpritePixel(spritePatternTable, xPos, yLine, ref currSprite, tileIndex);
+                        // 8x8 tile
+                        var patternEntry;
+                        var patternEntryBit2;
+
+                        if (currSprite.FlipY) {
+                            yLine = this.spriteSize - yLine - 1;
+                        }
+
+                        if (yLine >= 8) {
+                            yLine += 8;
+                        }
+
+                        patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine);
+                        patternEntryBit2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine + 8);
+
+                        result = (currSprite.FlipX ? ((patternEntry >> xPos) & 1) | (((patternEntryBit2 >> xPos) << 1) & 2) : ((patternEntry >> 7 - xPos) & 1) | (((patternEntryBit2 >> 7 - xPos) << 1) & 2)) & 255;
+
+                        if (result !== 0) {
+                            if (currSprite.SpriteNumber === 0) {
+                                this.spriteZeroHit = true;
+                            }
+                            this.isForegroundPixel = currSprite.Foreground;
+                            return (result | currSprite.AttributeByte);
+                        }
+                    }
+                }
+                return 0;
+            },
+            PPU_WhissaSpritePixel: function (patternTableIndex, x, y, sprite, tileIndex) {
+                // 8x8 tile
+                var patternEntry;
+                var patternEntryBit2;
+
+                if (sprite.v.FlipY) {
+                    y = this.spriteSize - y - 1;
+                }
+
+                if (y >= 8) {
+                    y += 8;
+                }
+
+                patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternTableIndex + tileIndex * 16 + y);
+                patternEntryBit2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternTableIndex + tileIndex * 16 + y + 8);
+
+                return (sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> 7 - x) & 1) | (((patternEntryBit2 >> 7 - x) << 1) & 2));
+            },
+            /**
+             * populates the currentSpritesXXX arrays with the first 8 visible sprites on the 
+             denoted scanline.
+             *
+             * @instance
+             * @public
+             * @this ChiChiNES.CPU2A03
+             * @memberof ChiChiNES.CPU2A03
+             * @param   {number}    scanline    the scanline to preload sprites for
+             * @return  {void}
+             */
+            PPU_PreloadSprites: function (scanline) {
+                this.spritesOnThisScanline = 0;
+                this.sprite0scanline = -1;
+
+                var yLine = this.currentYPosition - 1;
+                this.outBuffer[(64768) + yLine] = 0;
+                this.outBuffer[(65024) + yLine] = 0;
+                //spritesOnLine[2 * yLine] = 0;
+                //spritesOnLine[2 * yLine + 1] = 0;
+                for (var spriteNum = 0; spriteNum < 256; spriteNum += 4) {
+                    var spriteID = ((spriteNum + this._spriteAddress) & 255) >> 2;
+
+                    var y = this.unpackedSprites[spriteID].YPosition + 1;
+
+                    if (scanline >= y && scanline < y + this.spriteSize) {
+                        if (spriteID === 0) {
+                            this.sprite0scanline = scanline;
+                            this.sprite0x = this.unpackedSprites[spriteID].XPosition;
+                        }
+
+                        var spId = spriteNum / 4;
+                        if (spId < 32) {
+                            this.outBuffer[(64768) + yLine] |= 1 << spId;
+                        } else {
+                            this.outBuffer[(65024) + yLine] |= 1 << (spId - 32);
+                        }
+
+                        this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID];
+                        this.currentSprites[this.spritesOnThisScanline].IsVisible = true;
+
+                        this.spritesOnThisScanline++;
+                        if (this.spritesOnThisScanline === this._maxSpritesPerScanline) {
+                            break;
+                        }
+                    }
+                }
+                if (this.spritesOnThisScanline > 7) {
+                    this._PPUStatus = this._PPUStatus | 32;
+                }
+
+            },
+            PPU_UnpackSprites: function () {
+                //Buffer.BlockCopy
+                var outBufferloc = 65280;
+                for (var i = 0; i < 256; i += 4) {
+                    this.outBuffer[outBufferloc] = (this.spriteRAM[i] << 24) | (this.spriteRAM[i + 1] << 16) | (this.spriteRAM[i + 2] << 8) | (this.spriteRAM[i + 3] << 0);
+                    outBufferloc++;
+                }
+                // Array.Copy(spriteRAM, 0, outBuffer, 255 * 256 * 4, 256);
+                for (var currSprite = 0; currSprite < this.unpackedSprites.length; ++currSprite) {
+                    if (this.unpackedSprites[currSprite].Changed) {
+                        this.UnpackSprite(currSprite);
+                    }
+                }
+            },
+            UnpackSprite: function (currSprite) {
+                var attrByte = this.spriteRAM[currSprite * 4 + 2];
+                this.unpackedSprites[currSprite].IsVisible = true;
+                this.unpackedSprites[currSprite].AttributeByte = ((attrByte & 3) << 2) | 16;
+                this.unpackedSprites[currSprite].YPosition = this.spriteRAM[currSprite * 4];
+                this.unpackedSprites[currSprite].XPosition = this.spriteRAM[currSprite * 4 + 3];
+                this.unpackedSprites[currSprite].SpriteNumber = currSprite;
+                this.unpackedSprites[currSprite].Foreground = (attrByte & 32) !== 32;
+                this.unpackedSprites[currSprite].FlipX = (attrByte & 64) === 64;
+                this.unpackedSprites[currSprite].FlipY = (attrByte & 128) === 128;
+                this.unpackedSprites[currSprite].TileIndex = this.spriteRAM[currSprite * 4 + 1];
+                this.unpackedSprites[currSprite].Changed = false;
+            },
+            /**
+             * Returns a pixel
+             *
+             * @instance
+             * @public
+             * @this ChiChiNES.CPU2A03
+             * @memberof ChiChiNES.CPU2A03
+             * @return  {number}
+             */
+            PPU_GetNameTablePixel: function () {
+                var result = ((this.patternEntry & 128) >> 7) | ((this.patternEntryByte2 & 128) >> 6);
+                this.patternEntry <<= 1;
+                this.patternEntryByte2 <<= 1;
+                if (result > 0) {
+                    result |= this.currentAttributeByte;
+                }
+                return result & 255;
+            },
+            FetchNextTile: function () {
+                var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
+
+                var xTilePosition = this.xPosition >> 3;
+
+                var tileRow = (this.yPosition >> 3) % 30 << 5;
+
+                var tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+
+                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, tileNametablePosition);
+
+                var patternTableYOffset = this.yPosition & 7;
+
+                var patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+
+                this.patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID);
+                this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID + 8);
+
+                this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
+            },
+            GetNameTablePixelOld: function () {
+                var xPosition = this.currentXPosition, yPosition = this.currentYPosition;
+                // int patternTableIndex = PatternTableIndex;
+
+                var ppuNameTableMemoryStart = this.nameTableMemoryStart;
+                //yPosition = 1;
+                xPosition += this.lockedHScroll;
+
+                if (xPosition > 255) {
+                    xPosition -= 256;
+                    // from loopy's doc
+                    // you can think of bits 0,1,2,3,4 of the vram address as the "x scroll"(*8)
+                    //that the ppu increments as it draws.  as it wraps from 31 to 0, bit 10 is
+                    //switched.  you should see how this causes horizontal wrapping between name
+                    //tables (0,1) and (2,3).
+
+                    ppuNameTableMemoryStart = ppuNameTableMemoryStart ^ 1024;
+                }
+                // index of this pixels bit in pattern table
+                var patternTableEntryIndex = 7 - (xPosition & 7);
+
+
+                yPosition += this.lockedVScroll;
+                if (yPosition < 0) {
+                    yPosition += 240;
+                }
+                if (yPosition >= 240) {
+                    yPosition -= 240;
+                    ppuNameTableMemoryStart = ppuNameTableMemoryStart ^ 2048;
+                }
+
+                var tileRow = (yPosition / 8) % 30;
+
+                var tileNametablePosition = 8192 + ppuNameTableMemoryStart + (xPosition / 8) + (tileRow * 32);
+
+                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, tileNametablePosition);
+
+
+                var patternTableYOffset = yPosition & 7;
+
+
+                var patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset);
+                var patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, this._backgroundPatternTableIndex + (TileIndex * 16) + 8 + patternTableYOffset);
+
+
+                // i want the patternTableEntryIndex'th bit of patternEntry in the 1st bit of pixel
+                var result = ((patternEntry >> patternTableEntryIndex) & 1) | (((patternEntryByte2 >> patternTableEntryIndex) & 1) * 2);
+
+                if (result > 0) {
+                    result |= this.GetAttributeTableEntry(ppuNameTableMemoryStart, xPosition / 8, yPosition / 8);
+                }
+                return result;
+            },
+            GetAttributeTableEntry: function (ppuNameTableMemoryStart, i, j) {
+                var LookUp = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((((8192 + ppuNameTableMemoryStart) | 0) + 960) | 0) + (((Bridge.Int.div(i, 4)) | 0))) | 0) + (Bridge.Int.mul((((Bridge.Int.div(j, 4)) | 0)), 8))) | 0));
+
+                switch ((i & 2) | Bridge.Int.mul((j & 2), 2)) {
+                    case 0: 
+                        return (LookUp << 2) & 12;
+                    case 2: 
+                        return LookUp & 12;
+                    case 4: 
+                        return (LookUp >> 2) & 12;
+                    case 6: 
+                        return (LookUp >> 4) & 12;
+                }
+                return 0;
+            },
+            /**
+             * draws from the lastcpuClock to the current one
+             *
+             * @instance
+             * @public
+             * @this ChiChiNES.CPU2A03
+             * @memberof ChiChiNES.CPU2A03
+             * @param   {number}    cpuClockNum
+             * @return  {void}
+             */
+            DrawTo: function (cpuClockNum) {
+                var frClock = (cpuClockNum - this.lastcpuClock) * 3;
+
+                if (this.frameClock < 6820) {
+                    // if the frameclock +frClock is in vblank (< 6820) dont do nothing, just update it
+                    if (this.frameClock + frClock < 6820) {
+                        this.frameClock += frClock;
+                        frClock = 0;
+                    } else {
+                        //find number of pixels to draw since frame start
+                        frClock += this.frameClock - 6820;
+                        this.frameClock = 6820;
+                    }
+                }
+                for (var i = 0; i < frClock; ++i) {
+                    switch (this.frameClock++) {
+                        case 0: 
+                            //frameFinished();
+                            break;
+                        case 6820: 
+                            //PPU_ClearVINT();
+                            this._PPUStatus = 0;
+                            this.hitSprite = false;
+                            this.spriteSize = ((this._PPUControlByte0 & 32) === 32) ? 16 : 8;
+                            if ((this._PPUControlByte1 & 24) !== 0) {
+                                this.isRendering = true;
+                            }
+                            this.frameOn = true;
+                            this.chrRomHandler.ChiChiNES$INESCart$ResetBankStartCache();
+                            // setFrameOn();
+                            if (this.spriteChanges) {
+                                this.PPU_UnpackSprites();
+                                this.spriteChanges = false;
+                            }
+                            break;
+                        case 7161: 
+                            //lockedVScroll = _vScroll;
+                            this.vbufLocation = 0;
+                            //curBufPos = bufStart;
+                            this.xNTXor = 0;
+                            this.yNTXor = 0;
+                            this.currentXPosition = 0;
+                            this.currentYPosition = 0;
+                            break;
+                        case ChiChiNES.CPU2A03.frameClockEnd: 
+                            //if (fillRGB) FillBuffer();
+                            this.shouldRender = true;
+                            this.__frameFinished = true;
+                            this.frameFinished();
+                            this.PPU_SetupVINT();
+                            this.frameOn = false;
+                            this.frameClock = 0;
+                            //if (_isDebugging)
+                            //    events.Clear();
+                            break;
+                    }
+
+                    if (this.frameClock >= 7161 && this.frameClock <= 89342) {
+
+
+                        if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
+                            /* update x position */
+                            this.xPosition = this.currentXPosition + this.lockedHScroll;
+
+
+                            if ((this.xPosition & 7) === 0) {
+                                this.xNTXor = ((this.xPosition & 256) === 256) ? 1024 : 0;
+                                this.xPosition &= 255;
+
+                                /* fetch next tile */
+                                var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
+
+                                var xTilePosition = this.xPosition >> 3;
+
+                                //int tileRow = (yPosition >> 3) % 30 << 5;
+
+                                //int tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+
+                                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + xTilePosition + ((this.yPosition >> 3) % 30 << 5));
+
+                                var patternTableYOffset = this.yPosition & 7;
+
+                                var patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+
+                                this.patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID);
+                                this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID + 8);
+
+                                this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
+                                /* end fetch next tile */
+
+                            }
+
+                            /* draw pixel */
+                            var tilePixel = this._tilesAreVisible ? this.PPU_GetNameTablePixel() : 0;
+                            // bool foregroundPixel = isForegroundPixel;
+                            var spritePixel = this._spritesAreVisible ? this.PPU_GetSpritePixel() : 0;
+
+                            if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
+                                this.hitSprite = true;
+                                this._PPUStatus = this._PPUStatus | 64;
+                            }
+
+                            //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
+                            //var x = 
+
+                            this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+                            //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
+                            //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
+                            //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
+
+                            this.vbufLocation++;
+                        }
+                        if (this.currentXPosition === 256) {
+                            this.chrRomHandler.ChiChiNES$INESCart$UpdateScanlineCounter();
+                        }
+                        this.currentXPosition++;
+
+                        if (this.currentXPosition > 340) {
+
+                            this.currentXPosition = 0;
+                            this.currentYPosition++;
+
+                            this.PPU_PreloadSprites(this.currentYPosition);
+                            if (this.spritesOnThisScanline >= 7) {
+                                this._PPUStatus = this._PPUStatus | 32;
+                            }
+
+                            this.lockedHScroll = this._hScroll;
+
+                            this.UpdatePixelInfo();
+
+                            //PPU_RunNewScanlineEvents 
+                            this.yPosition = this.currentYPosition + this.lockedVScroll;
+
+                            if (this.yPosition < 0) {
+                                this.yPosition += 240;
+                            }
+                            if (this.yPosition >= 240) {
+                                this.yPosition -= 240;
+                                this.yNTXor = 2048;
+                            } else {
+                                this.yNTXor = 0;
+                            }
+
+                        }
+
+                    }
+
+                }
+                this.lastcpuClock = cpuClockNum;
+            },
+            UpdatePixelInfo: function () {
+                this.nameTableMemoryStart = this.nameTableBits * 1024;
             }
         }
     });
@@ -4358,10 +5583,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         $kind: "interface"
     });
 
-    Bridge.define("ChiChiNES.IPPU", {
-        $kind: "interface"
-    });
-
     Bridge.define("ChiChiNES.Machine.ControlPanel.RunningStatuses", {
         $kind: "enum",
         statics: {
@@ -4401,8 +5622,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             soundBopper: null,
             _enableSound: false,
             breakpointHit: false,
-            tiler: null,
-            soundThreader: null,
+            /**
+             * @instance
+             * @private
+             * @memberof ChiChiNES.NESMachine
+             * @default false
+             * @type boolean
+             */
             doDraw: false,
             _totalCPUClocks: 0,
             frameCount: 0,
@@ -4489,11 +5715,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     }
                 }
             },
-            Tiler: {
-                get: function () {
-                    return this.tiler;
-                }
-            },
             FrameCount: {
                 get: function () {
                     return this.frameCount;
@@ -4505,11 +5726,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             IsRunning: {
                 get: function () {
                     return true;
-                }
-            },
-            PPU: {
-                get: function () {
-                    return this._ppu;
                 }
             },
             PadOne: {
@@ -4546,21 +5762,22 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.frameOn = true;
                 this.frameJustEnded = false;
             },
-            ctor: function (cpu, ppu, tiler, wavSharer, soundBopper, soundThread) {
+            ctor: function (cpu, wavSharer, soundBopper) {
                 this.$initialize();
 
                 //machineWorkQueue = new MachineQueue(UpdateQueue);
 
                 this._cpu = cpu;
-                this._ppu = ppu;
-                this._ppu.ChiChiNES$IPPU$FrameFinishHandler = Bridge.fn.cacheBind(this, this.FrameFinished);
-                this.tiler = tiler;
+                this._ppu = cpu;
+
+                this._ppu.PPU_FrameFinishHandler = Bridge.fn.cacheBind(this, this.FrameFinished);
+                //this.tiler = tiler;
 
                 this._sharedWave = wavSharer;
                 this.soundBopper = soundBopper;
                 this._cpu.SoundBopper = soundBopper;
 
-                this.soundThreader = soundThread;
+                // soundThreader = soundThread;
 
                 this.Initialize();
             }
@@ -4575,7 +5792,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (this._cpu != null && this._cart != null) {
                     // ForceStop();
                     this.soundBopper.RebuildSound();
-                    this._ppu.ChiChiNES$IPPU$Initialize();
+                    this._ppu.PPU_Initialize();
                     this._cart.ChiChiNES$INESCart$InitializeCart();
                     this._cpu.ResetCPU();
                     this.ClearGenieCodes();
@@ -4587,7 +5804,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (this._cpu != null && this._cart != null) {
 
                     this.soundBopper.RebuildSound();
-                    this._ppu.ChiChiNES$IPPU$Initialize();
+                    this._ppu.PPU_Initialize();
                     this._cart.ChiChiNES$INESCart$InitializeCart();
                     if (!Bridge.staticEquals(this.SRAMReader, null) && this._cart.ChiChiNES$INESCart$UsesSRAM) {
                         this._cart.ChiChiNES$INESCart$SRAM = this.SRAMReader(this._cart.ChiChiNES$INESCart$CheckSum);
@@ -4631,7 +5848,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                     this._cpu.Cart = Bridge.cast(this._cart, ChiChiNES.IClockedMemoryMappedIOElement);
                     this._cpu.Cart.ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler = Bridge.fn.cacheBind(this._cpu, this._cpu.InterruptRequest);
-                    this._ppu.ChiChiNES$IPPU$ChrRomHandler = this._cart;
+                    this._ppu.ChrRomHandler = this._cart;
 
 
                 } else {
@@ -4698,7 +5915,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var state = new (System.Collections.Generic.Queue$1(System.Int32)).ctor();
                 state = new (System.Collections.Generic.Queue$1(System.Int32)).ctor();
                 this._cpu.GetState(state);
-                this._ppu.ChiChiNES$IPPU$WriteState(state);
+                //_ppu.WriteState(state);
                 this._cart.ChiChiNES$INESCart$WriteState(state);
                 this.lastSaveState[index] = System.Array.init(state.Count, 0, System.Int32);
                 state.copyTo$1(this.lastSaveState[index], 0);
@@ -4707,7 +5924,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (this.lastSaveState != null) {
                     var cloneState = new (System.Collections.Generic.Queue$1(System.Int32)).$ctor1(this.lastSaveState[index]);
                     this._cpu.SetState(cloneState);
-                    this._ppu.ChiChiNES$IPPU$ReadState(cloneState);
+                    // _ppu.ReadState(cloneState);
                     this._cart.ChiChiNES$INESCart$ReadState(cloneState);
                 }
             },
@@ -4830,7 +6047,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 Bridge.sleep(100);
                 this._sharedWave.Dispose();
-                this.soundThreader.dispose();
+                //soundThreader.Dispose();
             },
             Step: function () {
                 if (this.frameJustEnded) {
@@ -4849,7 +6066,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     //}
                     this._totalCPUClocks = 0;
                     this._cpu.Clock = 0;
-                    this._ppu.ChiChiNES$IPPU$LastcpuClock = 0;
+                    this._ppu.LastcpuClock = 0;
                     this.frameJustEnded = true;
                 }
                 //_cpu.Clock = _totalCPUClocks;
@@ -4861,24 +6078,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.frameOn = true;
                 this.frameJustEnded = false;
 
-                this._cpu.FindNextEvent();
-                do {
-                    this._cpu.Step();
-                } while (this.frameOn);
+                this._cpu.RunFrame();
+
                 this._totalCPUClocks = this._cpu.Clock;
-                this._sharedWave;
-                {
+
+                if (this._enableSound) {
                     this.soundBopper.FlushFrame(this._totalCPUClocks);
                     this.soundBopper.EndFrame(this._totalCPUClocks);
                 }
 
-                if (this.PadOne != null) {
-                    this.PadOne.ChiChiNES$IControlPad$refresh();
-                }
-
                 this._totalCPUClocks = 0;
                 this._cpu.Clock = 0;
-                this._ppu.ChiChiNES$IPPU$LastcpuClock = 0;
+                this._ppu.LastcpuClock = 0;
 
 
             },
@@ -4891,12 +6102,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
     });
 
     Bridge.define("ChiChiNES.NESSprite", {
-        $kind: "struct",
-        statics: {
-            methods: {
-                getDefaultValue: function () { return new ChiChiNES.NESSprite(); }
-            }
-        },
         fields: {
             YPosition: 0,
             XPosition: 0,
@@ -4908,37 +6113,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             FlipX: false,
             FlipY: false,
             Changed: false
-        },
-        ctors: {
-            ctor: function () {
-                this.$initialize();
-            }
-        },
-        methods: {
-            getHashCode: function () {
-                var h = Bridge.addHash([3351033891, this.YPosition, this.XPosition, this.SpriteNumber, this.Foreground, this.IsVisible, this.TileIndex, this.AttributeByte, this.FlipX, this.FlipY, this.Changed]);
-                return h;
-            },
-            equals: function (o) {
-                if (!Bridge.is(o, ChiChiNES.NESSprite)) {
-                    return false;
-                }
-                return Bridge.equals(this.YPosition, o.YPosition) && Bridge.equals(this.XPosition, o.XPosition) && Bridge.equals(this.SpriteNumber, o.SpriteNumber) && Bridge.equals(this.Foreground, o.Foreground) && Bridge.equals(this.IsVisible, o.IsVisible) && Bridge.equals(this.TileIndex, o.TileIndex) && Bridge.equals(this.AttributeByte, o.AttributeByte) && Bridge.equals(this.FlipX, o.FlipX) && Bridge.equals(this.FlipY, o.FlipY) && Bridge.equals(this.Changed, o.Changed);
-            },
-            $clone: function (to) {
-                var s = to || new ChiChiNES.NESSprite();
-                s.YPosition = this.YPosition;
-                s.XPosition = this.XPosition;
-                s.SpriteNumber = this.SpriteNumber;
-                s.Foreground = this.Foreground;
-                s.IsVisible = this.IsVisible;
-                s.TileIndex = this.TileIndex;
-                s.AttributeByte = this.AttributeByte;
-                s.FlipX = this.FlipX;
-                s.FlipY = this.FlipY;
-                s.Changed = this.Changed;
-                return s;
-            }
         }
     });
 
@@ -4954,83 +6128,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.time = time;
                 this.address = address;
                 this.data = data;
-            }
-        }
-    });
-
-    Bridge.define("ChiChiNES.PPUWriteEvent", {
-        inherits: [System.ComponentModel.INotifyPropertyChanged],
-        fields: {
-            isWrite: false,
-            scanlineNum: 0,
-            scanlinePos: 0,
-            frameClock: 0,
-            registerAffected: 0,
-            dataWritten: 0
-        },
-        events: {
-            PropertyChanged: null
-        },
-        props: {
-            IsWrite: {
-                get: function () {
-                    return this.isWrite;
-                },
-                set: function (value) {
-                    this.isWrite = value;
-                }
-            },
-            ScanlineNum: {
-                get: function () {
-                    return this.scanlineNum;
-                },
-                set: function (value) {
-                    this.scanlineNum = value;
-                }
-            },
-            ScanlinePos: {
-                get: function () {
-                    return this.scanlinePos;
-                },
-                set: function (value) {
-                    this.scanlinePos = value;
-                }
-            },
-            FrameClock: {
-                get: function () {
-                    return this.frameClock;
-                },
-                set: function (value) {
-                    this.frameClock = value;
-                }
-            },
-            RegisterAffected: {
-                get: function () {
-                    return this.registerAffected;
-                },
-                set: function (value) {
-                    this.registerAffected = value;
-                }
-            },
-            DataWritten: {
-                get: function () {
-                    return this.dataWritten;
-                },
-                set: function (value) {
-                    this.dataWritten = value;
-                }
-            },
-            Text: {
-                get: function () {
-                    return this.toString();
-                }
-            }
-        },
-        alias: ["addPropertyChanged", "System$ComponentModel$INotifyPropertyChanged$addPropertyChanged",
-        "removePropertyChanged", "System$ComponentModel$INotifyPropertyChanged$removePropertyChanged"],
-        methods: {
-            toString: function () {
-                return System.String.format(" {0:x2} written to {1:x4} at {2}, {3}", this.registerAffected, this.dataWritten, this.scanlineNum, this.scanlinePos);
             }
         }
     });
@@ -5114,7 +6211,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                     if (_cart != null) {
                         _cart.ChiChiNES$INESCart$Whizzler = ppu;
-                        ppu.ChiChiNES$IPPU$ChrRomHandler = _cart;
+                        ppu.ChrRomHandler = _cart;
                         _cart.ChiChiNES$INESCart$ROMHashFunction = null; //Hashers.HashFunction;
                         _cart.ChiChiNES$INESCart$LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
                     }
@@ -5122,561 +6219,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     return _cart;
 
                 }
-            }
-        }
-    });
-
-    Bridge.define("ChiChiNES.Sound.IWavStreamer", {
-        inherits: [System.IDisposable],
-        $kind: "interface"
-    });
-
-    Bridge.define("ChiChiNES.Sound.SoundThreader", {
-        inherits: [System.IDisposable],
-        fields: {
-            _wavePlayer: null
-        },
-        props: {
-            WavePlayer: {
-                get: function () {
-                    return this._wavePlayer;
-                },
-                set: function (value) {
-                    this._wavePlayer = value;
-                }
-            }
-        },
-        alias: ["dispose", "System$IDisposable$dispose"],
-        ctors: {
-            ctor: function (streamer) {
-                this.$initialize();
-
-                this._wavePlayer = streamer;
-
-                //ThreadPool.QueueUserWorkItem(PlaySound, null);
-
-            }
-        },
-        methods: {
-            OnSoundStatusChanged: function (sender, e) {
-                this._wavePlayer.ChiChiNES$Sound$IWavStreamer$Muted = e.Muted;
-            },
-            PlaySound: function (o) {
-                this._wavePlayer.ChiChiNES$Sound$IWavStreamer$playPCM();
-            },
-            dispose: function () {
-                this._wavePlayer.System$IDisposable$dispose();
-            }
-        }
-    });
-
-    Bridge.define("ChiChiNES.TileDoodler", {
-        fields: {
-            _ppu: null,
-            currentNameTableEntries: null,
-            currentPatternTableEntries: null
-        },
-        props: {
-            XOffset: 0,
-            YOffset: 0
-        },
-        ctors: {
-            init: function () {
-                this.currentNameTableEntries = System.Array.init(32, null, System.Array.type(System.Array.type(System.Int32)));
-                this.currentPatternTableEntries = System.Array.init(2, null, System.Array.type(System.Array.type(System.Array.type(System.Int32))));
-            },
-            ctor: function (ppu) {
-                var $t, $t1, $t2, $t3;
-                this.$initialize();
-                this._ppu = ppu;
-
-                this.currentPatternTableEntries = System.Array.init(2, null, System.Array.type(System.Array.type(System.Array.type(System.Int32))));
-                for (var pt = 0; pt < 2; pt = (pt + 1) | 0) {
-                    this.currentPatternTableEntries[pt] = System.Array.init(32, null, System.Array.type(System.Array.type(System.Int32)));
-                    for (var x = 0; x < 32; x = (x + 1) | 0) {
-                        ($t = this.currentPatternTableEntries[pt])[x] = System.Array.init(30, null, System.Array.type(System.Int32));
-                        for (var y = 0; y < 30; y = (y + 1) | 0) {
-                            ($t1 = ($t2 = this.currentPatternTableEntries[pt])[x])[y] = System.Array.init(8, 0, System.Int32);
-                        }
-
-                    }
-                }
-
-                this.currentNameTableEntries = System.Array.init(32, null, System.Array.type(System.Array.type(System.Int32)));
-                for (var i = 0; i < 32; i = (i + 1) | 0) {
-                    this.currentNameTableEntries[i] = System.Array.init(30, null, System.Array.type(System.Int32));
-                    for (var j = 0; j < 30; j = (j + 1) | 0) {
-                        ($t3 = this.currentNameTableEntries[i])[j] = System.Array.init(8, 0, System.Int32);
-                    }
-                }
-
-            }
-        },
-        methods: {
-            GetPatternTableEntry: function (PatternTable, TileIndex, attributeByte, actualAddress) {
-                var $t, $t1, $t2;
-                // 8x8 tile
-                var result = System.Array.init(64, 0, System.Int32);
-
-                actualAddress.v = System.Array.init(8, 0, System.Int32);
-
-                for (var i = 0; i < 8; i = (i + 1) | 0) {
-                    var patternEntry = this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
-
-                    actualAddress.v[i] = this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$ActualChrRomOffset(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
-
-                    var patternEntryBit2 = this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
-
-                    for (var bit = 0; bit < 8; bit = (bit + 1) | 0) {
-                        if ((patternEntry & ($t = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
-                            result[(((Bridge.Int.mul(i, 8)) + bit) | 0)] = 1 | attributeByte;
-                        }
-                        if ((patternEntryBit2 & ($t1 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
-                            result[($t2 = (((Bridge.Int.mul(i, 8)) + bit) | 0))] = result[$t2] | (2 | attributeByte);
-                        }
-                    }
-
-                }
-
-                return result;
-            },
-            GetSprite: function (PatternTable, TileIndex, attributeByte, flipX, flipY) {
-                var $t, $t1, $t2, $t3, $t4, $t5;
-                // 8x8 tile
-                var result = System.Array.init(64, 0, System.Int32);
-                var yMultiplyer = 8;
-
-
-                for (var i = 0; i < 8; i = (i + 1) | 0) {
-                    var patternEntry;
-                    var patternEntryBit2;
-                    if (flipY) {
-                        patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0));
-                        patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0) + 8) | 0));
-                    } else {
-
-                        patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
-                        patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
-                    }
-                    if (flipX) {
-                        for (var bit = 7; bit >= 0; bit = (bit - 1) | 0) {
-                            if ((patternEntry & ($t = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
-                                result[(((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0)] = 1 | attributeByte;
-                            }
-                            if ((patternEntryBit2 & ($t1 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
-                                result[($t2 = (((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0))] = result[$t2] | (2 | attributeByte);
-                            }
-                        }
-                    } else {
-                        for (var bit1 = 0; bit1 < 8; bit1 = (bit1 + 1) | 0) {
-                            if ((patternEntry & ($t3 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
-                                result[(((Bridge.Int.mul(i, 8)) + bit1) | 0)] = 1 | attributeByte;
-                            }
-                            if ((patternEntryBit2 & ($t4 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
-                                result[($t5 = (((Bridge.Int.mul(i, 8)) + bit1) | 0))] = result[$t5] | (2 | attributeByte);
-                            }
-                        }
-                    }
-
-                }
-                return result;
-            },
-            TryGetSprite: function (result, PatternTable, TileIndex, attributeByte, flipX, flipY) {
-                var $t, $t1, $t2, $t3, $t4, $t5;
-                // 8x8 tile
-                var yMultiplyer = 8;
-                var hasData = false;
-
-                for (var i = 0; i < 8; i = (i + 1) | 0) {
-                    var patternEntry;
-                    var patternEntryBit2;
-                    if (flipY) {
-                        patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0));
-                        patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + 7) | 0) - i) | 0) + 8) | 0));
-                    } else {
-                        patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0));
-                        patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + i) | 0) + 8) | 0));
-                    }
-
-                    if (flipX) {
-                        for (var bit = 7; bit >= 0; bit = (bit - 1) | 0) {
-                            result[(((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0)] = 0;
-                            if ((patternEntry & ($t = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
-                                result[(((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0)] = 1 | attributeByte;
-                                hasData = true;
-                            }
-                            if ((patternEntryBit2 & ($t1 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
-                                result[($t2 = (((((Bridge.Int.mul(i, yMultiplyer)) + 7) | 0) - bit) | 0))] = result[$t2] | (2 | attributeByte);
-                                hasData = true;
-                            }
-                        }
-                    } else {
-                        for (var bit1 = 0; bit1 < 8; bit1 = (bit1 + 1) | 0) {
-                            result[(((Bridge.Int.mul(i, 8)) + bit1) | 0)] = 0;
-                            if ((patternEntry & ($t3 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
-                                result[(((Bridge.Int.mul(i, 8)) + bit1) | 0)] = 1 | attributeByte;
-                                hasData = true;
-                            }
-                            if ((patternEntryBit2 & ($t4 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit1]) !== 0) {
-                                result[($t5 = (((Bridge.Int.mul(i, 8)) + bit1) | 0))] = result[$t5] | (2 | attributeByte);
-                                hasData = true;
-                            }
-                        }
-                    }
-                }
-                return hasData;
-            },
-            /**
-             * Gets a 1x8 line from a particular pattern table
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.TileDoodler
-             * @memberof ChiChiNES.TileDoodler
-             * @param   {System.Int32}    result           
-             * @param   {number}          startPosition    
-             * @param   {number}          LineNumber       
-             * @param   {number}          PatternTable     
-             * @param   {number}          TileIndex        
-             * @param   {number}          attributeByte
-             * @return  {void}
-             */
-            GetPatternTableLine: function (result, startPosition, LineNumber, PatternTable, TileIndex, attributeByte) {
-                var $t, $t1, $t2;
-                // 8x8 tile
-
-                var patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + LineNumber) | 0));
-                var patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((PatternTable + Bridge.Int.mul(TileIndex, 16)) | 0) + LineNumber) | 0) + 8) | 0));
-
-                for (var bit = 0; bit < 8; bit = (bit + 1) | 0) {
-                    if ((patternEntry & ($t = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
-                        result.v[(((Bridge.Int.mul(LineNumber, 8)) + bit) | 0)] = 1 | attributeByte;
-                    }
-                    if ((patternEntryBit2 & ($t1 = ChiChiNES.PixelWhizzler.PowersOfTwo)[bit]) !== 0) {
-                        result.v[($t2 = (((Bridge.Int.mul(LineNumber, 8)) + bit) | 0))] = result.v[$t2] | (2 | attributeByte);
-                    }
-                }
-            },
-            DrawRect: function (newData, width, height, xPos, yPos) {
-                var $t;
-
-                for (var j = 0; j < height; j = (j + 1) | 0) {
-                    for (var i = 0; i < width; i = (i + 1) | 0) {
-
-                        var xPosition = (((xPos + 8) | 0) - i) | 0;
-                        var yPosition = (yPos + j) | 0;
-
-                        if (xPosition >= 256 || yPosition >= 240) {
-                            return;
-                        }
-                        ($t = this._ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) & 255;
-                    }
-                }
-            },
-            MergeRect: function (newData, width, height, xPos, yPos, inFront) {
-                var $t;
-
-                if (inFront) {
-                    this.MergeRectBehind(newData, width, height, xPos, yPos);
-                    return;
-                }
-
-                for (var j = 0; j < height; j = (j + 1) | 0) {
-                    for (var i = 0; i < width; i = (i + 1) | 0) {
-
-                        var xPosition = (((xPos + 8) | 0) - i) | 0;
-                        var yPosition = (yPos + j) | 0;
-
-                        if (xPosition >= 256 || yPosition >= 240) {
-                            return;
-                        }
-                        if (newData[(((Bridge.Int.mul(j, width)) + i) | 0)] !== 0) {
-                            ($t = this._ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte((((newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) + 16128) | 0))) & 255;
-                        }
-                    }
-                }
-            },
-            MergeRectBehind: function (newData, width, height, xPos, yPos) {
-                var $t, $t1;
-
-                for (var j = 0; j < height; j = (j + 1) | 0) {
-                    for (var i = 0; i < width; i = (i + 1) | 0) {
-
-                        var xPosition = (((xPos + 8) | 0) - i) | 0;
-                        var yPosition = (yPos + j) | 0;
-
-                        if (xPosition >= 256 || yPosition >= 240) {
-                            return;
-                        }
-                        if (($t = this._ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] === this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(16128)) {
-                            ($t1 = this._ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte((((newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) + 16128) | 0))) & 255;
-                        }
-                    }
-                }
-            },
-            DrawAllTiles: function () {
-                var $t;
-                if (this.YOffset > 256) {
-                    this.YOffset = this.YOffset & 255;
-                }
-                if (this.XOffset > 256) {
-                    this.XOffset = this.XOffset & 255;
-                }
-
-                //_ppu.RawBuffer = new byte[_ppu.RawBuffer.Length + 1];
-
-                var NameTable = (8192 + (Bridge.Int.mul(1024, (this._ppu.ChiChiNES$IPPU$PPUControlByte0 & 3)))) | 0;
-                var nt2 = (Bridge.Int.div((NameTable & 3072), 1024)) | 0;
-
-                //int PatternTable;
-                //if ((_ppu.PPUControlByte0 & 0x10) != 0)
-                //    PatternTable = 0x1000;
-                //else
-                //    PatternTable = 0;
-
-                for (var i = 0; i < 32; i = (i + 1) | 0) {
-                    for (var j = 0; j < 30; j = (j + 1) | 0) {
-                        //int TileIndex = (byte)_ppu.NameTable[_ppu.Mirror[nt2], i + (j * 32)];
-                        var TileIndex = (this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((8192 + this._ppu.ChiChiNES$IPPU$NameTableMemoryStart) | 0) + i) | 0) + (Bridge.Int.mul(j, 32))) | 0))) & 255;
-
-                        var addToCol = this.GetAttributeTableEntry(this._ppu.ChiChiNES$IPPU$NameTableMemoryStart, i, j);
-                        this.DrawRect(this.GetPatternTableEntry(this._ppu.ChiChiNES$IPPU$PatternTableIndex, TileIndex, addToCol, Bridge.ref(($t = this.currentNameTableEntries[i]), j)), 8, 8, (((Bridge.Int.mul(i, 8)) + this.XOffset) | 0), (((Bridge.Int.mul(j, 8)) + this.YOffset) | 0));
-
-                    }
-                }
-            },
-            GetAttributeTableEntry: function (ppuNameTableMemoryStart, i, j) {
-                //int LookUp = _ppu.NameTable[_ppu.Mirror[nameTableIndex],
-                //    0x3C0 + (i / 4) + ((j / 4) * 0x8)];
-
-                var LookUp = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((((8192 + ppuNameTableMemoryStart) | 0) + 960) | 0) + (((Bridge.Int.div(i, 4)) | 0))) | 0) + (Bridge.Int.mul((((Bridge.Int.div(j, 4)) | 0)), 8))) | 0));
-
-                var AttribByte = 0;
-                switch ((i & 2) | Bridge.Int.mul((j & 2), 2)) {
-                    case 0: 
-                        AttribByte = (LookUp << 2) & 12;
-                        break;
-                    case 2: 
-                        AttribByte = LookUp & 12;
-                        break;
-                    case 4: 
-                        AttribByte = (LookUp >> 2) & 12;
-                        break;
-                    case 6: 
-                        AttribByte = (LookUp >> 4) & 12;
-                        break;
-                }
-                return AttribByte;
-            },
-            /**
-             * Returns a pixel
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.TileDoodler
-             * @memberof ChiChiNES.TileDoodler
-             * @param   {number}    xPosition    X position of pixel (0 to 255)
-             * @param   {number}    yPosition    Y position of pixel (0 to 239)
-             * @return  {number}
-             */
-            GetNameTablePixel: function (xPosition, yPosition) {
-                var ppuNameTableMemoryStart = this._ppu.ChiChiNES$IPPU$NameTableMemoryStart;
-                //yPosition += 1;
-                xPosition = (xPosition + this._ppu.ChiChiNES$IPPU$HScroll) | 0;
-
-                if (xPosition > 255) {
-                    xPosition = (xPosition - 256) | 0;
-                    // from loopy's doc
-                    // you can think of bits 0,1,2,3,4 of the vram address as the "x scroll"(*8)
-                    //that the ppu increments as it draws.  as it wraps from 31 to 0, bit 10 is
-                    //switched.  you should see how this causes horizontal wrapping between name
-                    //tables (0,1) and (2,3).
-
-                    ppuNameTableMemoryStart = ppuNameTableMemoryStart ^ 1024;
-
-
-                }
-                var xTilePosition = (Bridge.Int.div(xPosition, 8)) | 0;
-                // index of this pixels bit in pattern table
-                var patternTableEntryIndex = (7 - (xPosition & 7)) | 0;
-
-                yPosition = (yPosition + this._ppu.ChiChiNES$IPPU$VScroll) | 0;
-                if (yPosition > 240) {
-                    yPosition = (yPosition - 241) | 0;
-                    ppuNameTableMemoryStart = ppuNameTableMemoryStart ^ 2048;
-                }
-
-                var yTilePosition = (Bridge.Int.div(yPosition, 8)) | 0;
-
-                var patternTableYOffset = yPosition & 7;
-
-
-                //int mirrorIndexLookup = (nameTableMemoryStart & 0xC00) / 0x400;
-                //int TileIndex = (byte)_ppu.NameTable[_ppu.CurrentNameTable, xTilePosition + (yTilePosition * 32)];
-
-                var TileIndex = (this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((8192 + ppuNameTableMemoryStart) | 0) + xTilePosition) | 0) + ((Bridge.Int.mul(yTilePosition, 32)))) | 0))) & 255;
-
-                var patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((this._ppu.ChiChiNES$IPPU$PatternTableIndex + Bridge.Int.mul(TileIndex, 16)) | 0) + patternTableYOffset) | 0));
-                var patternEntryByte2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((this._ppu.ChiChiNES$IPPU$PatternTableIndex + Bridge.Int.mul(TileIndex, 16)) | 0) + 8) | 0) + patternTableYOffset) | 0));
-
-                var attributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, yTilePosition);
-
-                // i want the patternTableEntryIndex'th bit of patternEntry in the 1st bit of pixel
-                return ((((patternEntry >> patternTableEntryIndex) & 1) | (Bridge.Int.mul(((patternEntryByte2 >> patternTableEntryIndex) & 1), 2)) | attributeByte) & 255);
-            },
-            SpriteZeroHit: function (xPosition, yPosition) {
-                var $t, $t1, $t2, $t3;
-                var y = ($t = this._ppu.ChiChiNES$IPPU$SpriteRam)[0];
-                var yLine = yPosition % 8;
-                var xPos = xPosition % 8;
-                if (yPosition > y && yPosition <= ((y + 9) | 0)) {
-                    var tileIndex = ($t1 = this._ppu.ChiChiNES$IPPU$SpriteRam)[1];
-                    var patternEntry = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((this._ppu.ChiChiNES$IPPU$PatternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + 7) | 0) - yLine) | 0));
-                    var patternEntryBit2 = this._ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((((this._ppu.ChiChiNES$IPPU$PatternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + 7) | 0) - yLine) | 0) + 8) | 0));
-
-                    if (((patternEntry & ($t2 = ChiChiNES.PixelWhizzler.PowersOfTwo)[xPos]) !== 0) || ((patternEntryBit2 & ($t3 = ChiChiNES.PixelWhizzler.PowersOfTwo)[xPos]) !== 0)) {
-                        return true;
-                    }
-                }
-                return false;
-            },
-            DrawSprite: function (spriteNum) {
-                var $t, $t1, $t2, $t3;
-                var spriteAddress = Bridge.Int.mul(4, spriteNum);
-                var y = ($t = this._ppu.ChiChiNES$IPPU$SpriteRam)[spriteAddress];
-                var attributeByte = ($t1 = this._ppu.ChiChiNES$IPPU$SpriteRam)[((spriteAddress + 2) | 0)];
-                var x = ($t2 = this._ppu.ChiChiNES$IPPU$SpriteRam)[((spriteAddress + 3) | 0)];
-                var tileIndex = ($t3 = this._ppu.ChiChiNES$IPPU$SpriteRam)[((spriteAddress + 1) | 0)];
-
-                var attrColor = ((attributeByte & 3) << 2) | 16;
-                var isInFront = (attributeByte & 32) === 32;
-                var flipX = (attributeByte & 64) === 64;
-                var flipY = (attributeByte & 128) === 128;
-
-                var spritePatternTable = 0;
-                // if these are 8x16 sprites, read high and low, draw
-                if ((this._ppu.ChiChiNES$IPPU$PPUControlByte0 & 32) === 32) {
-                    if ((tileIndex & 1) === 1) {
-                        spritePatternTable = 4096;
-                    }
-                    var getPatternTableEntry = this.GetSprite(spritePatternTable, tileIndex, attrColor, flipX, flipY);
-                    // spritePatternTable = spritePatternTable ^ 0x1000;
-                    tileIndex = (tileIndex + 1) | 0;
-                    var getPatternTableEntryBottom = this.GetSprite(spritePatternTable, tileIndex, attrColor, flipX, flipY);
-
-                    if (flipY) {
-                        this.MergeRect(getPatternTableEntryBottom, 8, 8, ((x - 1) | 0), ((y + 1) | 0), isInFront);
-                        this.MergeRect(getPatternTableEntry, 8, 8, ((x - 1) | 0), ((y + 9) | 0), isInFront);
-                    } else {
-                        this.MergeRect(getPatternTableEntry, 8, 8, ((x - 1) | 0), ((y + 1) | 0), isInFront);
-                        this.MergeRect(getPatternTableEntryBottom, 8, 8, ((x - 1) | 0), ((y + 9) | 0), isInFront);
-                    }
-                } else {
-                    // 8x8 sprites
-                    if ((this._ppu.ChiChiNES$IPPU$PPUControlByte0 & 8) === 8) {
-                        spritePatternTable = 4096;
-                    }
-                    var getPatternTableEntry1 = this.GetSprite(spritePatternTable, tileIndex, attrColor, flipX, flipY);
-
-                    this.MergeRect(getPatternTableEntry1, 8, 8, ((x - 1) | 0), ((y + 1) | 0), isInFront);
-                }
-
-                return;
-            },
-            DrawAllSprites: function () {
-                for (var i = 63; i >= 0; i = (i - 1) | 0) {
-
-                    this.DrawSprite(i);
-                }
-            },
-            /**
-             * returns a 128x128 buffer for the tiles
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.TileDoodler
-             * @memberof ChiChiNES.TileDoodler
-             * @param   {number}            PatternTable
-             * @return  {Array.<number>}
-             */
-            DoodlePatternTable: function (PatternTable) {
-                var $t, $t1;
-                var patTable = 0;
-                switch (PatternTable) {
-                    case 4096: 
-                        patTable = 1;
-                        break;
-                    case 0: 
-                        patTable = 0;
-                        break;
-                }
-
-                // return a 16x16 x 64 per tile pattern table for display
-                var patterns = { v : System.Array.init(16384, 0, System.Int32) };
-                var tile;
-                for (var j = 0; j < 16; j = (j + 1) | 0) {
-                    for (var i = 0; i < 16; i = (i + 1) | 0) {
-                        tile = this.GetPatternTableEntry(PatternTable, (((i) + Bridge.Int.mul(j, 16)) | 0), 0, Bridge.ref(($t = ($t1 = this.currentPatternTableEntries[patTable])[i]), j));
-                        this.DrawTile(patterns, 128, 128, tile, Bridge.Int.mul(i, 8), Bridge.Int.mul(j, 8));
-                    }
-                }
-                return patterns.v;
-            },
-            /**
-             * returns a pixel array representing a current nametable in memory
-             nametable will be 0,0x400, 0x800, 0xC00, mapped to 0x200 + Nametable
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.TileDoodler
-             * @memberof ChiChiNES.TileDoodler
-             * @param   {number}            NameTable
-             * @return  {Array.<number>}
-             */
-            DoodleNameTable: function (NameTable) {
-                var $t;
-
-                var result = { v : System.Array.init(61440, 0, System.Int32) };
-
-                for (var i = 0; i < 32; i = (i + 1) | 0) {
-                    for (var j = 0; j < 30; j = (j + 1) | 0) {
-
-                        var address = (((((8192 + NameTable) | 0) + i) | 0) + (Bridge.Int.mul(j, 32))) | 0;
-                        var TileIndex = (this._ppu.ChiChiNES$IPPU$ChrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address)) & 255;
-
-                        var addToCol = this.GetAttributeTableEntry(NameTable, i, j);
-                        var tile = this.GetPatternTableEntry(this._ppu.ChiChiNES$IPPU$PatternTableIndex, TileIndex, addToCol, Bridge.ref(($t = this.currentNameTableEntries[i]), j));
-                        this.DrawTile(result, 256, 240, tile, Bridge.Int.mul(i, 8), Bridge.Int.mul(j, 8));
-                    }
-                }
-                return result.v;
-            },
-            DrawTile: function (destBuffer, width, height, tile, xPos, yPos) {
-
-                for (var j = 0; j < 8; j = (j + 1) | 0) {
-                    for (var i = 0; i < 8; i = (i + 1) | 0) {
-
-                        var xPosition = (((xPos + 8) | 0) - i) | 0;
-                        var yPosition = Bridge.Int.mul((((yPos + j) | 0)), width);
-
-                        if (xPos > height) {
-                            break;
-                        }
-                        if (((yPosition + xPosition) | 0) >= destBuffer.v.length) {
-                            break;
-                        }
-
-                        destBuffer.v[((yPosition + xPosition) | 0)] = (tile[(((Bridge.Int.mul(j, 8)) + i) | 0)]) & 255;
-                    }
-                }
-            },
-            GetNameTableEntryLocation: function (x, y) {
-                var $t, $t1;
-                return ($t = ($t1 = this.currentNameTableEntries[((Bridge.Int.div(x, 32)) | 0)])[((Bridge.Int.div(y, 30)) | 0)])[y & 7];
-            },
-            GetPatternEntryLocation: function (table, x, y) {
-                var $t, $t1, $t2;
-                return ($t = ($t1 = ($t2 = this.currentPatternTableEntries[table])[((Bridge.Int.div(x, 32)) | 0)])[((Bridge.Int.div(y, 30)) | 0)])[y & 7];
             }
         }
     });
@@ -5718,7 +6260,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             reg15: 0,
             muted: false,
             lastFrameHit: 0,
-            _writeBuffer: null,
             _interruptRaised: false,
             lastClock: 0
         },
@@ -5738,14 +6279,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 },
                 set: function (value) {
                     this.muted = value;
-                }
-            },
-            WriteBuffer: {
-                get: function () {
-                    return this._writeBuffer;
-                },
-                set: function (value) {
-                    this._writeBuffer = value;
                 }
             },
             InterruptRaised: {
@@ -5835,7 +6368,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.noiseGain = 567;
                 this.muted = false;
                 this.lastFrameHit = 0;
-                this._writeBuffer = System.Array.init(1024, 0, System.Int16);
             },
             ctor: function (output) {
                 this.$initialize();
@@ -6356,1425 +6888,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
         }
     });
 
-    Bridge.define("ChiChiNES.PixelWhizzler", {
-        inherits: [ChiChiNES.IPPU,ChiChiNES.IClockedMemoryMappedIOElement],
-        statics: {
-            fields: {
-                ScanlinePreRenderDummyScanline: 0,
-                ScanlineRenderingStartsOn: 0,
-                ScanlineRenderingEndsOn: 0,
-                ScanlineLastRenderedPixel: 0,
-                ScanlineTotalLength: 0,
-                ScanlineEventPPUXIncremented: 0,
-                ScanlineEventPPUXReset: 0,
-                ScanlineEventPPUYIncremented: 0,
-                vBufferWidth: 0,
-                _powersOfTwo: null,
-                pal: null,
-                frameClockEnd: 0
-            },
-            props: {
-                PowersOfTwo: {
-                    get: function () {
-                        return ChiChiNES.PixelWhizzler._powersOfTwo;
-                    }
-                }
-            },
-            ctors: {
-                init: function () {
-                    this.ScanlinePreRenderDummyScanline = 20;
-                    this.ScanlineRenderingStartsOn = 21;
-                    this.ScanlineRenderingEndsOn = 260;
-                    this.ScanlineLastRenderedPixel = 255;
-                    this.ScanlineTotalLength = 340;
-                    this.ScanlineEventPPUXIncremented = 3;
-                    this.ScanlineEventPPUXReset = 257;
-                    this.ScanlineEventPPUYIncremented = 251;
-                    this.vBufferWidth = 256;
-                    this._powersOfTwo = System.Array.init(32, 0, System.Int32);
-                    this.pal = System.Array.init([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], System.Int32);
-                    this.frameClockEnd = 89342;
-                },
-                ctor: function () {
-                    for (var i = 0; i < 32; i = (i + 1) | 0) {
-                        ChiChiNES.PixelWhizzler._powersOfTwo[i] = Bridge.Int.clip32(Math.pow(2.0, i));
-                    }
-                }
-            },
-            methods: {
-                
-                GetPalRGBA: function () {
-                    //Open App.Path & "\" + file For Binary As #FileNum
-                    for (var n = 0; n < 64; n = (n + 1) | 0) {
-                        ChiChiNES.PixelWhizzler.pal[((n + 64) | 0)] = ChiChiNES.PixelWhizzler.pal[n];
-                        ChiChiNES.PixelWhizzler.pal[((n + 128) | 0)] = ChiChiNES.PixelWhizzler.pal[n];
-                        ChiChiNES.PixelWhizzler.pal[((n + 192) | 0)] = ChiChiNES.PixelWhizzler.pal[n];
-                    }
-                    return ChiChiNES.PixelWhizzler.pal;
-                }
-            }
-        },
-        fields: {
-            currentXPosition: 0,
-            currentYPosition: 0,
-            scanlineNum: 0,
-            scanlinePos: 0,
-            _isDebugging: false,
-            shouldRender: false,
-            vBuffer: null,
-            nameTableIndex: 0,
-            _frames: 0,
-            hitSprite: false,
-            _PPUControlByte0: 0,
-            _PPUControlByte1: 0,
-            _spritesAreVisible: false,
-            _tilesAreVisible: false,
-            _PPUStatus: 0,
-            _PPUAddress: 0,
-            ppuReadBuffer: 0,
-            PPUAddressLatchIsHigh: false,
-            /**
-             * Initializes the rendering pallette with the bytes in a BGR format, instead of the default RGB format
-             *
-             * @instance
-             * @private
-             * @memberof ChiChiNES.PixelWhizzler
-             * @type Array.<number>
-             */
-            p32: null,
-            _backgroundPatternTableIndex: 0,
-            isRendering: false,
-            frameClock: 0,
-            FrameEnded: false,
-            frameOn: false,
-            framePalette: null,
-            nameTableMemoryStart: 0,
-            lastcpuClock: 0,
-            byteOutBuffer: null,
-            outBuffer: null,
-            vbufLocation: 0,
-            drawInfo: null,
-            pixelDevices: null,
-            _clipTiles: false,
-            _clipSprites: false,
-            nameTableBits: 0,
-            vidRamIsRam: false,
-            _palette: null,
-            _openBus: 0,
-            nmiHandler: null,
-            frameFinished: null,
-            NMIHasBeenThrownThisFrame: false,
-            _hScroll: 0,
-            _vScroll: 0,
-            lockedHScroll: 0,
-            lockedVScroll: 0,
-            spriteChanges: false,
-            _spriteCopyHasHappened: false,
-            sprite0scanline: 0,
-            sprite0x: 0,
-            spriteZeroHit: false,
-            isForegroundPixel: false,
-            currentSprites: null,
-            unpackedSprites: null,
-            _maxSpritesPerScanline: 0,
-            spriteRAM: null,
-            _spriteAddress: 0,
-            spritesOnThisScanline: 0,
-            spriteSize: 0,
-            spritesOnLine: null,
-            patternEntry: 0,
-            patternEntryByte2: 0,
-            currentAttributeByte: 0,
-            currentTileIndex: 0,
-            xNTXor: 0,
-            yNTXor: 0,
-            fetchTile: false,
-            xPosition: 0,
-            yPosition: 0,
-            chrRomHandler: null,
-            events: null
-        },
-        props: {
-            CurrentYPosition: {
-                get: function () {
-                    return this.currentYPosition;
-                }
-            },
-            CurrentXPosition: {
-                get: function () {
-                    return this.currentXPosition;
-                }
-            },
-            ScanlinePos: {
-                get: function () {
-                    return this.scanlinePos;
-                }
-            },
-            ScanlineNum: {
-                get: function () {
-                    return this.scanlineNum;
-                }
-            },
-            IsDebugging: {
-                get: function () {
-                    return this._isDebugging;
-                },
-                set: function (value) {
-                    this._isDebugging = value;
-                }
-            },
-            ShouldRender: {
-                get: function () {
-                    return this.shouldRender;
-                },
-                set: function (value) {
-                    this.shouldRender = value;
-                }
-            },
-            HandleVBlankIRQ: false,
-            VROM: null,
-            PPUControlByte0: {
-                get: function () {
-                    return this._PPUControlByte0;
-                },
-                set: function (value) {
-                    if (this._PPUControlByte0 !== value) {
-                        this._PPUControlByte0 = value;
-                        this.UpdatePPUControlByte0();
-                    }
-                }
-            },
-            NMIIsThrown: {
-                get: function () {
-                    return (this._PPUControlByte0 & 128) === 128;
-                }
-            },
-            PPUControlByte1: {
-                get: function () {
-                    return this._PPUControlByte1;
-                },
-                set: function (value) {
-                    this._PPUControlByte1 = value;
-                }
-            },
-            BackgroundVisible: {
-                get: function () {
-                    return this._tilesAreVisible;
-                }
-            },
-            SpritesAreVisible: {
-                get: function () {
-                    return this._spritesAreVisible;
-                }
-            },
-            PPUStatus: {
-                get: function () {
-                    return this._PPUStatus;
-                },
-                set: function (value) {
-                    this._PPUStatus = value;
-                }
-            },
-            PPUAddress: {
-                get: function () {
-                    return this._PPUAddress;
-                },
-                set: function (value) {
-                    this._PPUAddress = value;
-                }
-            },
-            PatternTableIndex: {
-                get: function () {
-                    return this._backgroundPatternTableIndex;
-                }
-            },
-            IsRendering: {
-                get: function () {
-                    return this.isRendering;
-                }
-            },
-            FrameOn: {
-                get: function () {
-                    return this.frameOn;
-                },
-                set: function (value) {
-                    this.frameOn = value;
-                }
-            },
-            NameTableMemoryStart: {
-                get: function () {
-                    return this.nameTableMemoryStart;
-                },
-                set: function (value) {
-                    this.nameTableMemoryStart = value;
-                }
-            },
-            CurrentFrame: {
-                get: function () {
-                    return this.vBuffer;
-                }
-            },
-            LastcpuClock: {
-                get: function () {
-                    return this.lastcpuClock;
-                },
-                set: function (value) {
-                    this.lastcpuClock = value;
-                }
-            },
-            OutBuffer: {
-                get: function () {
-                    return this.outBuffer;
-                }
-            },
-            PixelAwareDevice: {
-                get: function () {
-                    return this.pixelDevices;
-                },
-                set: function (value) {
-                    this.pixelDevices = value;
-                }
-            },
-            ByteOutBuffer: {
-                get: function () {
-                    return this.byteOutBuffer;
-                },
-                set: function (value) {
-                    this.byteOutBuffer = value;
-                }
-            },
-            NMIHandler: {
-                get: function () {
-                    return this.nmiHandler;
-                },
-                set: function (value) {
-                    this.nmiHandler = value;
-                }
-            },
-            /**
-             * ppu doesnt throw irq's
-             *
-             * @instance
-             * @public
-             * @memberof ChiChiNES.PixelWhizzler
-             * @function IRQAsserted
-             * @type boolean
-             */
-            IRQAsserted: {
-                get: function () {
-                    throw new System.NotImplementedException();
-                },
-                set: function (value) {
-                    throw new System.NotImplementedException();
-                }
-            },
-            NextEventAt: {
-                get: function () {
-                    if (this.frameClock < 6820) {
-                        return (6820 - this.frameClock) / 3;
-                    } else {
-                        return (((89345 - this.frameClock) / 341) / 3);
-                    }
-                    //}
-                    //else
-                    //{
-                    //    return (6823 - frameClock) / 3;
-                    //}
-                }
-            },
-            FrameFinishHandler: {
-                get: function () {
-                    return this.frameFinished;
-                },
-                set: function (value) {
-                    this.frameFinished = value;
-                }
-            },
-            NMIOccurred: {
-                get: function () {
-                    return (this._PPUStatus & 128) === 128;
-                }
-            },
-            HScroll: {
-                get: function () {
-                    return this.lockedHScroll;
-                }
-            },
-            VScroll: {
-                get: function () {
-                    return this.lockedVScroll;
-                }
-            },
-            SpriteCopyHasHappened: {
-                get: function () {
-                    return this._spriteCopyHasHappened;
-                },
-                set: function (value) {
-                    this._spriteCopyHasHappened = value;
-                }
-            },
-            MaxSpritesPerScanline: {
-                get: function () {
-                    return this._maxSpritesPerScanline;
-                },
-                set: function (value) {
-                    this._maxSpritesPerScanline = value;
-                }
-            },
-            SpriteRam: {
-                get: function () {
-                    return this.spriteRAM;
-                }
-            },
-            SpritesOnLine: {
-                get: function () {
-                    return this.spritesOnLine;
-                }
-            },
-            ChrRomHandler: {
-                get: function () {
-                    return this.chrRomHandler;
-                },
-                set: function (value) {
-                    this.chrRomHandler = value;
-                }
-            },
-            Events: {
-                get: function () {
-                    return this.events;
-                }
-            }
-        },
-        alias: [
-            "ScanlinePos", "ChiChiNES$IPPU$ScanlinePos",
-            "ScanlineNum", "ChiChiNES$IPPU$ScanlineNum",
-            "Initialize", "ChiChiNES$IPPU$Initialize",
-            "WriteState", "ChiChiNES$IPPU$WriteState",
-            "ReadState", "ChiChiNES$IPPU$ReadState",
-            "VidRAM_GetNTByte", "ChiChiNES$IPPU$VidRAM_GetNTByte",
-            "PPUControlByte0", "ChiChiNES$IPPU$PPUControlByte0",
-            "PPUControlByte1", "ChiChiNES$IPPU$PPUControlByte1",
-            "SpritesAreVisible", "ChiChiNES$IPPU$SpritesAreVisible",
-            "PatternTableIndex", "ChiChiNES$IPPU$PatternTableIndex",
-            "NameTableMemoryStart", "ChiChiNES$IPPU$NameTableMemoryStart",
-            "CurrentFrame", "ChiChiNES$IPPU$CurrentFrame",
-            "RenderScanline", "ChiChiNES$IPPU$RenderScanline",
-            "LastcpuClock", "ChiChiNES$IPPU$LastcpuClock",
-            "DrawTo", "ChiChiNES$IPPU$DrawTo",
-            "UpdatePixelInfo", "ChiChiNES$IPPU$UpdatePixelInfo",
-            "SetByte", "ChiChiNES$IClockedMemoryMappedIOElement$SetByte",
-            "SetByte", "ChiChiNES$IPPU$SetByte",
-            "GetByte", "ChiChiNES$IClockedMemoryMappedIOElement$GetByte",
-            "GetByte", "ChiChiNES$IPPU$GetByte",
-            "NMIHandler", "ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler",
-            "NMIHandler", "ChiChiNES$IPPU$NMIHandler",
-            "IRQAsserted", "ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted",
-            "NextEventAt", "ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt",
-            "NextEventAt", "ChiChiNES$IPPU$NextEventAt",
-            "HandleEvent", "ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent",
-            "HandleEvent", "ChiChiNES$IPPU$HandleEvent",
-            "ResetClock", "ChiChiNES$IClockedMemoryMappedIOElement$ResetClock",
-            "ResetClock", "ChiChiNES$IPPU$ResetClock",
-            "FrameFinishHandler", "ChiChiNES$IPPU$FrameFinishHandler",
-            "SetupVINT", "ChiChiNES$IPPU$SetupVINT",
-            "HScroll", "ChiChiNES$IPPU$HScroll",
-            "VScroll", "ChiChiNES$IPPU$VScroll",
-            "SpriteRam", "ChiChiNES$IPPU$SpriteRam",
-            "CopySprites", "ChiChiNES$IPPU$CopySprites",
-            "SpritesOnLine", "ChiChiNES$IPPU$SpritesOnLine",
-            "PreloadSprites", "ChiChiNES$IPPU$PreloadSprites",
-            "ChrRomHandler", "ChiChiNES$IPPU$ChrRomHandler"
-        ],
-        ctors: {
-            init: function () {
-                this.currentXPosition = 0;
-                this.currentYPosition = 0;
-                this.scanlineNum = 0;
-                this.scanlinePos = 0;
-                this.shouldRender = false;
-                this._frames = 0;
-                this.hitSprite = false;
-                this.PPUAddressLatchIsHigh = true;
-                this.p32 = System.Array.init(256, 0, System.Int32);
-                this.isRendering = true;
-                this.frameClock = 0;
-                this.FrameEnded = false;
-                this.frameOn = false;
-                this.framePalette = System.Array.init(256, 0, System.Int32);
-                this.byteOutBuffer = System.Array.init(262144, 0, System.Int32);
-                this.outBuffer = System.Array.init(65536, 0, System.Int32);
-                this.drawInfo = System.Array.init(65536, 0, System.Int32);
-                this.nameTableBits = 0;
-                this.vidRamIsRam = true;
-                this._palette = System.Array.init(32, 0, System.Int32);
-                this._openBus = 0;
-                this.NMIHasBeenThrownThisFrame = false;
-                this._hScroll = 0;
-                this._vScroll = 0;
-                this.lockedHScroll = 0;
-                this.lockedVScroll = 0;
-                this.sprite0scanline = -1;
-                this.sprite0x = -1;
-                this._maxSpritesPerScanline = 64;
-                this.spriteRAM = System.Array.init(256, 0, System.Int32);
-                this.spritesOnLine = System.Array.init(512, 0, System.Int32);
-                this.patternEntry = 0;
-                this.patternEntryByte2 = 0;
-                this.currentTileIndex = 0;
-                this.xNTXor = 0;
-                this.yNTXor = 0;
-                this.fetchTile = true;
-                this.events = new (System.Collections.Generic.Queue$1(ChiChiNES.PPUWriteEvent)).ctor();
-            },
-            ctor: function () {
-                this.$initialize();
-                this.InitSprites();
-
-                this.vBuffer = System.Array.init(61440, 0, System.Byte);
-
-                ChiChiNES.PixelWhizzler.GetPalRGBA();
-
-                //for (int i = 0; i < 256; ++i)
-                //    palCache[i] = new byte[32];
-            }
-        },
-        methods: {
-            Initialize: function () {
-                this._PPUAddress = 0;
-                this._PPUStatus = 0;
-                this._PPUControlByte0 = 0;
-                this._PPUControlByte1 = 0;
-                this._hScroll = 0;
-                this.scanlineNum = 0;
-                this.scanlinePos = 0;
-                this._spriteAddress = 0;
-            },
-            WriteState: function (writer) {
-
-                writer.enqueue(this._PPUStatus);
-                writer.enqueue(this._PPUControlByte0);
-                writer.enqueue(this._hScroll);
-                writer.enqueue(this._vScroll);
-                writer.enqueue(this.scanlineNum);
-                writer.enqueue(this.scanlinePos);
-                writer.enqueue(this.currentYPosition);
-                writer.enqueue(this.currentXPosition);
-                writer.enqueue(this.nameTableIndex);
-                writer.enqueue(this._backgroundPatternTableIndex);
-
-
-                writer.enqueue(this.patternEntry);
-                writer.enqueue(this.patternEntryByte2);
-                writer.enqueue(this.currentAttributeByte);
-                writer.enqueue(this.xNTXor);
-                writer.enqueue(this.yNTXor);
-                writer.enqueue(this.fetchTile ? 0 : 1);
-                writer.enqueue(this.xPosition);
-                writer.enqueue(this.yPosition);
-
-
-                writer.enqueue(this.lastcpuClock);
-                writer.enqueue(this.vbufLocation);
-
-
-                for (var i = 0; i < 16384; i = (i + 4) | 0) {
-
-                    writer.enqueue(this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, i) << 24 | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((i + 1) | 0)) << 16) | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((i + 2) | 0)) << 8) | (this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((i + 3) | 0)) << 0));
-                }
-                writer.enqueue(this._spriteAddress);
-
-                for (var i1 = 0; i1 < 256; i1 = (i1 + 4) | 0) {
-
-                    writer.enqueue((this.spriteRAM[i1] << 24) | (this.spriteRAM[((i1 + 1) | 0)] << 16) | (this.spriteRAM[((i1 + 2) | 0)] << 8) | (this.spriteRAM[((i1 + 3) | 0)]));
-                }
-
-                for (var i2 = 0; i2 < ChiChiNES.PixelWhizzler.pal.length; i2 = (i2 + 4) | 0) {
-
-                    writer.enqueue((ChiChiNES.PixelWhizzler.pal[i2] << 24) | (ChiChiNES.PixelWhizzler.pal[((i2 + 1) | 0)] << 16) | (ChiChiNES.PixelWhizzler.pal[((i2 + 2) | 0)] << 8) | (ChiChiNES.PixelWhizzler.pal[((i2 + 3) | 0)]));
-                }
-
-                for (var i3 = 0; i3 < this._palette.length; i3 = (i3 + 4) | 0) {
-
-                    writer.enqueue((this._palette[i3] << 24) | (this._palette[((i3 + 1) | 0)] << 16) | (this._palette[((i3 + 2) | 0)] << 8) | (this._palette[((i3 + 3) | 0)]));
-                }
-
-            },
-            ReadState: function (state) {
-                this._PPUStatus = state.dequeue();
-                this._PPUControlByte0 = state.dequeue();
-                this._hScroll = state.dequeue();
-                this._vScroll = state.dequeue();
-                this.scanlineNum = state.dequeue();
-                this.scanlinePos = state.dequeue();
-                this.currentYPosition = state.dequeue();
-                this.currentXPosition = state.dequeue();
-                this.nameTableIndex = state.dequeue();
-                this._backgroundPatternTableIndex = state.dequeue();
-                //_mirroring= state.Dequeue();
-                //oneScreenMirrorOffset= state.Dequeue();
-                //currentMirrorMask= state.Dequeue();
-
-                this.patternEntry = state.dequeue();
-                this.patternEntryByte2 = state.dequeue();
-                this.currentAttributeByte = state.dequeue();
-                this.xNTXor = state.dequeue();
-                this.yNTXor = state.dequeue();
-                this.fetchTile = (state.dequeue() === 1);
-                this.xPosition = state.dequeue();
-                this.yPosition = state.dequeue();
-
-                this.lastcpuClock = state.dequeue();
-                this.vbufLocation = state.dequeue();
-
-                var packedByte = 0;
-                for (var i = 0; i < 16384; i = (i + 4) | 0) {
-                    packedByte = state.dequeue();
-                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, i, ((packedByte >> 24) & 255));
-                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, ((i + 1) | 0), ((packedByte >> 16) & 255));
-                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, ((i + 2) | 0), ((packedByte >> 8) & 255));
-                    this.chrRomHandler.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(0, ((i + 3) | 0), (packedByte & 255));
-                }
-
-                this._spriteAddress = state.dequeue();
-
-                for (var i1 = 0; i1 < 256; i1 = (i1 + 4) | 0) {
-                    packedByte = state.dequeue();
-                    this.spriteRAM[i1] = (packedByte >> 24) & 255;
-                    this.spriteRAM[((i1 + 1) | 0)] = (packedByte >> 16) & 255;
-                    this.spriteRAM[((i1 + 2) | 0)] = (packedByte >> 8) & 255;
-                    this.spriteRAM[((i1 + 3) | 0)] = packedByte & 255;
-                }
-
-                for (var i2 = 0; i2 < ChiChiNES.PixelWhizzler.pal.length; i2 = (i2 + 4) | 0) {
-                    packedByte = state.dequeue();
-                    ChiChiNES.PixelWhizzler.pal[i2] = (packedByte >> 24) & 255;
-                    ChiChiNES.PixelWhizzler.pal[((i2 + 1) | 0)] = (packedByte >> 16) & 255;
-                    ChiChiNES.PixelWhizzler.pal[((i2 + 2) | 0)] = (packedByte >> 8) & 255;
-                    ChiChiNES.PixelWhizzler.pal[((i2 + 3) | 0)] = packedByte & 255;
-                }
-
-                for (var i3 = 0; i3 < this._palette.length; i3 = (i3 + 4) | 0) {
-                    packedByte = state.dequeue();
-                    this._palette[i3] = (packedByte >> 24) & 255;
-                    this._palette[((i3 + 1) | 0)] = (packedByte >> 16) & 255;
-                    this._palette[((i3 + 2) | 0)] = (packedByte >> 8) & 255;
-                    this._palette[((i3 + 3) | 0)] = packedByte & 255;
-                }
-
-                this.UnpackSprites();
-                this.PreloadSprites(this.scanlineNum);
-
-            },
-            VidRAM_GetNTByte: function (address) {
-                var result = 0;
-                if (address >= 8192 && address < 12288) {
-
-                    result = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address);
-
-                } else {
-                    result = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, address);
-                }
-                return result;
-            },
-            UpdatePPUControlByte0: function () {
-                if ((this._PPUControlByte0 & 16) === 16) {
-                    this._backgroundPatternTableIndex = 4096;
-                } else {
-                    this._backgroundPatternTableIndex = 0;
-                }
-            },
-            RenderScanline: function (scanlineNum) {
-                throw new System.NotImplementedException();
-            },
-            /**
-             * draws from the lastcpuClock to the current one
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.PixelWhizzler
-             * @memberof ChiChiNES.PixelWhizzler
-             * @param   {number}    cpuClockNum
-             * @return  {void}
-             */
-            DrawTo: function (cpuClockNum) {
-                var frClock = (cpuClockNum - this.lastcpuClock) * 3;
-
-                if (this.frameClock < 6820) {
-                    // if the frameclock +frClock is in vblank (< 6820) dont do nothing, just update it
-                    if (this.frameClock + frClock < 6820) {
-                        this.frameClock += frClock;
-                        frClock = 0;
-                    } else {
-                        //find number of pixels to draw since frame start
-                        frClock += this.frameClock - 6820;
-                        this.frameClock = 6820;
-                    }
-                }
-                for (var i = 0; i < frClock; ++i) {
-                    switch (this.frameClock++) {
-                        case 0: 
-                            //frameFinished();
-                            break;
-                        case 6820: 
-                            this.ClearVINT();
-                            this.frameOn = true;
-                            this.chrRomHandler.ChiChiNES$INESCart$ResetBankStartCache();
-                            // setFrameOn();
-                            if (this.spriteChanges) {
-                                this.UnpackSprites();
-                                this.spriteChanges = false;
-                            }
-                            break;
-                        case 7161: 
-                            //lockedVScroll = _vScroll;
-                            this.vbufLocation = 0;
-                            //curBufPos = bufStart;
-                            this.xNTXor = 0;
-                            this.yNTXor = 0;
-                            this.currentXPosition = 0;
-                            this.currentYPosition = 0;
-                            break;
-                        case ChiChiNES.PixelWhizzler.frameClockEnd: 
-                            //if (fillRGB) FillBuffer();
-                            this.shouldRender = true;
-                            this.frameFinished();
-                            this.SetupVINT();
-                            this.frameOn = false;
-                            this.frameClock = 0;
-                            if (this._isDebugging) {
-                                this.events.clear();
-                            }
-                            break;
-                    }
-
-                    if (this.frameClock >= 7161 && this.frameClock <= 89342) {
-
-
-                        if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
-                            /* update x position */
-                            this.xPosition = this.currentXPosition + this.lockedHScroll;
-
-
-                            if ((this.xPosition & 7) === 0) {
-                                this.xNTXor = ((this.xPosition & 256) === 256) ? 1024 : 0;
-                                this.xPosition &= 255;
-
-                                /* fetch next tile */
-                                var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
-
-                                var xTilePosition = this.xPosition >> 3;
-
-                                //int tileRow = (yPosition >> 3) % 30 << 5;
-
-                                //int tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
-
-                                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + xTilePosition + ((this.yPosition >> 3) % 30 << 5));
-
-                                var patternTableYOffset = this.yPosition & 7;
-
-                                var patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
-
-                                this.patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID);
-                                this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID + 8);
-
-                                this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
-                                /* end fetch next tile */
-
-                            }
-
-                            /* draw pixel */
-                            var tilePixel = this._tilesAreVisible ? this.GetNameTablePixel() : 0;
-                            // bool foregroundPixel = isForegroundPixel;
-                            var spritePixel = this._spritesAreVisible ? this.GetSpritePixel() : 0;
-
-                            if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
-                                this.hitSprite = true;
-                                this._PPUStatus = this._PPUStatus | 64;
-                            }
-
-                            //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
-                            //var x = 
-
-                            this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
-                            //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
-                            //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
-                            //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
-
-                            this.vbufLocation++;
-                        }
-                        if (this.currentXPosition === 256) {
-                            this.chrRomHandler.ChiChiNES$INESCart$UpdateScanlineCounter();
-                        }
-                        this.currentXPosition++;
-
-                        if (this.currentXPosition > 340) {
-
-                            this.currentXPosition = 0;
-                            this.currentYPosition++;
-
-                            this.PreloadSprites(this.currentYPosition);
-                            if (this.spritesOnThisScanline >= 7) {
-                                this._PPUStatus = this._PPUStatus | 32;
-                            }
-
-                            this.lockedHScroll = this._hScroll;
-
-                            this.UpdatePixelInfo();
-                            this.RunNewScanlineEvents();
-
-                        }
-
-                    }
-
-                }
-                this.lastcpuClock = cpuClockNum;
-            },
-            UpdatePixelInfo: function () {
-                this.nameTableMemoryStart = Bridge.Int.mul(this.nameTableBits, 1024);
-            },
-            SetByte: function (Clock, address, data) {
-                var $t;
-                // DrawTo(Clock);
-                if (this._isDebugging) {
-                    this.Events.enqueue(($t = new ChiChiNES.PPUWriteEvent(), $t.IsWrite = true, $t.DataWritten = data, $t.FrameClock = this.frameClock, $t.RegisterAffected = address, $t.ScanlineNum = ((Bridge.Int.div(this.frameClock, 341)) | 0), $t.ScanlinePos = this.frameClock % 341, $t));
-                }
-                //Writable 2C02 registers
-                //-----------------------
-
-                //4 	-	returns object attribute memory 
-                //      location indexed by port 3, then increments port 3.
-
-                //6	    -	PPU address port to access with port 7.
-
-                //7	    -	PPU memory write port.
-
-
-                switch (address & 7) {
-                    case 0: 
-                        this.DrawTo(Clock);
-                        this._PPUControlByte0 = data;
-                        this._openBus = data;
-                        this.nameTableBits = this._PPUControlByte0 & 3;
-                        this._backgroundPatternTableIndex = Bridge.Int.mul(((this._PPUControlByte0 & 16) >> 4), 4096);
-                        // if we toggle /vbl we can throw multiple NMIs in a vblank period
-                        //if ((data & 0x80) == 0x80 && NMIHasBeenThrownThisFrame)
-                        //{
-                        //     NMIHasBeenThrownThisFrame = false;
-                        //}
-                        //UpdatePixelInfo();
-                        this.nameTableMemoryStart = Bridge.Int.mul(this.nameTableBits, 1024);
-                        break;
-                    case 1: 
-                        //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
-                        //      1	left side screen column (8 pixels wide) playfield clipping (when 0).
-                        //      2	left side screen column (8 pixels wide) object clipping (when 0).
-                        //      3	enable playfield display (on 1).
-                        //      4	enable objects display (on 1).
-                        //      5	R (to be documented)
-                        //      6	G (to be documented)
-                        //      7	B (to be documented)
-                        this.DrawTo(Clock);
-                        this.isRendering = (data & 24) !== 0;
-                        this._PPUControlByte1 = data;
-                        this._spritesAreVisible = (this._PPUControlByte1 & 16) === 16;
-                        this._tilesAreVisible = (this._PPUControlByte1 & 8) === 8;
-                        this._clipTiles = (this._PPUControlByte1 & 2) !== 2;
-                        this._clipSprites = (this._PPUControlByte1 & 4) !== 4;
-                        //UpdatePixelInfo();
-                        this.nameTableMemoryStart = Bridge.Int.mul(this.nameTableBits, 1024);
-                        break;
-                    case 2: 
-                        this.ppuReadBuffer = data;
-                        this._openBus = data;
-                        break;
-                    case 3: 
-                        //3	    -	internal object attribute memory index pointer 
-                        //          (64 attributes, 32 bits each, byte granular access). 
-                        //          stored value post-increments on access to port 4.
-                        this._spriteAddress = data & 255;
-                        this._openBus = this._spriteAddress;
-                        break;
-                    case 4: 
-                        this.spriteRAM[this._spriteAddress] = data & 255;
-                        // UnpackSprite(_spriteAddress / 4);
-                        this._spriteAddress = (((this._spriteAddress + 1) | 0)) & 255;
-                        this.unpackedSprites[((Bridge.Int.div(this._spriteAddress, 4)) | 0)].Changed = true;
-                        this.spriteChanges = true;
-                        break;
-                    case 5: 
-                        //5	    -	scroll offset port.
-                        // on 1st read (high), bits 0,1,2 go to fine horizonal scroll, rest to select tile
-                        // on 2nd read, bits 0,1,2 go to fine vertical scroll, rest to select tile
-                        // during render, writes to FH are applied immediately
-                        if (this.PPUAddressLatchIsHigh) {
-                            //if (isRendering)
-                            //{
-                            //    fineHorizontalScroll = data & 0x7;
-                            //    horizontalTileIndex = data >> 3;
-                            //}  
-                            this.DrawTo(Clock);
-                            this._hScroll = data;
-
-                            this.lockedHScroll = this._hScroll & 7;
-                            this.UpdatePixelInfo();
-
-                            this.PPUAddressLatchIsHigh = false;
-                        } else {
-                            // during rendering, a write here will not post to the rendering counter
-                            this.DrawTo(Clock);
-                            this._vScroll = data;
-                            if (data > 240) {
-                                this._vScroll = (data - 256) | 0;
-                            }
-
-                            if (!this.frameOn || (this.frameOn && !this.isRendering)) {
-                                this.lockedVScroll = this._vScroll;
-                            }
-
-                            this.PPUAddressLatchIsHigh = true;
-                            this.UpdatePixelInfo();
-
-                        }
-                        break;
-                    case 6: 
-                        //Since the PPU's external address bus is only 14 bits in width, 
-                        //the top two bits of the value written are ignored. 
-                        if (this.PPUAddressLatchIsHigh) {
-                            //            //a) Write upper address byte into $2006
-                            this._PPUAddress = (this._PPUAddress & 255) | ((data & 63) << 8);
-                            this.PPUAddressLatchIsHigh = false;
-                        } else {
-                            //            //b) Write lower address byte into $2006
-                            this._PPUAddress = (this._PPUAddress & 32512) | data & 255;
-                            this.PPUAddressLatchIsHigh = true;
-
-                            // writes here during rendering directly affect the scroll counter
-                            // from Marat Fazulamans doc
-
-                            //Address Written into $2006
-                            //xxYYSSYYYYYXXXXX
-                            //   | |  |     |
-                            //   | |  |     +---- Horizontal scroll in tiles (i.e. 1 = 8 pixels)
-                            //   | |  +--------- Vertical scroll in tiles (i.e. 1 = 8 pixels)
-                            //   | +------------ Number of Name Table ($2000,$2400,$2800,$2C00)
-                            //   +-------------- Additional vertical scroll in pixels (0..3)
-
-                            // on second write during frame, loopy t (_hscroll, _vscroll) is copied to loopy_v (lockedHscroll, lockedVScroll)
-
-                            this.DrawTo(Clock);
-                            this._hScroll = ((this._PPUAddress & 31) << 3); // +(currentXPosition & 7);
-                            this._vScroll = (((this._PPUAddress >> 5) & 31) << 3);
-                            this._vScroll = this._vScroll | ((this._PPUAddress >> 12) & 3);
-
-                            this.nameTableBits = ((this._PPUAddress >> 10) & 3);
-                            if (this.frameOn) {
-
-                                this.lockedHScroll = this._hScroll;
-                                this.lockedVScroll = this._vScroll;
-                                this.lockedVScroll = (this.lockedVScroll - this.currentYPosition) | 0;
-
-                            }
-                            this.UpdatePixelInfo();
-                            // relock vscroll during render when this happens
-                        }
-                        break;
-                    case 7: 
-                        //            //Writing to PPU memory:
-                        //            //c) Write data into $2007. After each write, the
-                        //            //   address will increment either by 1 (bit 2 of
-                        //            //   $2000 is 0) or by 32 (bit 2 of $2000 is 1).
-                        // ppuLatch = data;
-                        if ((this._PPUAddress & 65280) === 16128) {
-                            this.DrawTo(Clock);
-                            //WriteToNESPalette(_PPUAddress, (byte)data);
-                            var palAddress = (this._PPUAddress) & 31;
-                            this._palette[palAddress] = data;
-                            // rgb32OutBuffer[255 * 256 + palAddress] = data;
-                            if ((this._PPUAddress & 65519) === 16128) {
-                                this._palette[(palAddress ^ 16) & 31] = data;
-                                // rgb32OutBuffer[255 * 256 + palAddress ^ 0x10] = data;
-                            }
-                            // these palettes are all mirrored every 0x10 bytes
-                            this.UpdatePixelInfo();
-
-                            // _vidRAM[_PPUAddress ^ 0x1000] = (byte)data;
-                        } else {
-                            // if its a nametable byte, mask it according to current mirroring
-                            if ((this._PPUAddress & 61440) === 8192) {
-                                this.chrRomHandler.ChiChiNES$INESCart$SetPPUByte(Clock, this._PPUAddress, (data & 255));
-                            } else {
-                                if (this.vidRamIsRam) {
-                                    this.chrRomHandler.ChiChiNES$INESCart$SetPPUByte(Clock, this._PPUAddress, (data & 255));
-                                }
-                            }
-                        }
-                        // if controlbyte0.4, set ppuaddress + 32, else inc
-                        if ((this.PPUControlByte0 & 4) === 4) {
-                            this._PPUAddress = (((this._PPUAddress + 32) | 0));
-                        } else {
-                            this._PPUAddress = (((this._PPUAddress + 1) | 0));
-                        }
-                        // reset the flag which makex xxx6 set the high byte of address
-                        this.PPUAddressLatchIsHigh = true;
-                        this.PPUAddress = (this.PPUAddress & 16383);
-                        break;
-                }
-            },
-            GetByte: function (Clock, address) {
-                var $t;
-                if (this._isDebugging) {
-                    this.Events.enqueue(($t = new ChiChiNES.PPUWriteEvent(), $t.IsWrite = false, $t.DataWritten = 0, $t.FrameClock = this.frameClock, $t.RegisterAffected = address, $t.ScanlineNum = ((Bridge.Int.div(this.frameClock, 341)) | 0), $t.ScanlinePos = this.frameClock % 341, $t));
-                }
-
-                switch (address & 7) {
-                    case 3: 
-                    case 0: 
-                    case 1: 
-                    case 5: 
-                    case 6: 
-                        return this._openBus;
-                    case 2: 
-                        var ret;
-                        this.PPUAddressLatchIsHigh = true;
-                        // bit 7 is set to 0 after a read occurs
-                        // return lower 5 latched bits, and the status
-                        ret = (this.ppuReadBuffer & 31) | this._PPUStatus;
-                        //ret = _PPUStatus;
-                        //{
-                        //If read during HBlank and Bit #7 of $2000 is set to 0, then switch to Name Table #0
-                        //if ((PPUControlByte0 & 0x80) == 0 && scanlinePos > 0xFF)
-                        //{
-                        //    nameTableMemoryStart = 0;
-                        //}
-                        // clear vblank flag if read
-                        this.DrawTo(Clock);
-                        if ((ret & 128) === 128) {
-
-
-                            this._PPUStatus = this._PPUStatus & -129;
-
-                        }
-                        this.UpdatePixelInfo();
-                        //}
-                        this._openBus = ret;
-                        return ret;
-                    case 4: 
-                        var tmp = this.spriteRAM[this._spriteAddress];
-                        //ppuLatch = spriteRAM[SpriteAddress];
-                        // should not increment on read ?
-                        //SpriteAddress = (SpriteAddress + 1) & 0xFF;
-                        this._openBus = tmp;
-                        return tmp;
-                    case 7: 
-                        //        If Mapper = 9 Then
-                        //            If PPUAddress < &H2000& Then
-                        //                map9_latch tmp, (PPUAddress And &H1000&)
-                        //            End If
-                        //        End If
-                        // palette reads shouldn't be buffered like regular vram reads, they re internal
-                        if ((this.PPUAddress & 65280) === 16128) {
-                            // these palettes are all mirrored every 0x10 bytes
-                            tmp = this._palette[this.PPUAddress & 31];
-                            // palette read should also read vram into read buffer
-
-                            // info i found on the nesdev forums
-
-                            // When you read PPU $3F00-$3FFF, you get immediate data from Palette RAM 
-                            // (without the 1-read delay usually present when reading from VRAM) and the PPU 
-                            // will also fetch nametable data from the corresponding address (which is mirrored from PPU $2F00-$2FFF). 
-
-                            // note: writes do not work this way 
-                            this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, ((this._PPUAddress - 4096) | 0));
-                        } else {
-                            tmp = this.ppuReadBuffer;
-                            if (!!(this._PPUAddress >= 8192 & this._PPUAddress <= 12287)) {
-                                this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress);
-                            } else {
-                                this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress & 16383);
-                            }
-                        }
-                        if ((this._PPUControlByte0 & 4) === 4) {
-                            this._PPUAddress = (this._PPUAddress + 32) | 0;
-                        } else {
-                            this._PPUAddress = (this._PPUAddress + 1) | 0;
-                        }
-                        this._PPUAddress = (this._PPUAddress & 16383);
-                        return tmp;
-                }
-                //throw new NotImplementedException(string.Format("PPU.GetByte() recieved invalid address {0,4:x}", address));
-                return 0;
-            },
-            HandleEvent: function (Clock) {
-                this.DrawTo(Clock);
-            },
-            ResetClock: function (Clock) {
-                this.lastcpuClock = Clock;
-            },
-            SetupVINT: function () {
-                this._PPUStatus = this._PPUStatus | 128;
-                this.NMIHasBeenThrownThisFrame = false;
-                // HandleVBlankIRQ = true;
-                this._frames = (this._frames + 1) | 0;
-                //isRendering = false;
-
-                if (this.NMIIsThrown) {
-                    this.nmiHandler();
-                    this.HandleVBlankIRQ = true;
-                    this.NMIHasBeenThrownThisFrame = true;
-                }
-
-            },
-            ClearVINT: function () {
-                this._PPUStatus = 0;
-                this.hitSprite = false;
-                this.spriteSize = ((this._PPUControlByte0 & 32) === 32) ? 16 : 8;
-                if ((this._PPUControlByte1 & 24) !== 0) {
-                    this.isRendering = true;
-                }
-                //scanlineNum = ScanlinePreRenderDummyScanline;
-                //scanlinePos = 0;
-
-                //RunNewScanlineEvents();
-
-            },
-            RunEndOfScanlineRenderEvents: function () {
-
-            },
-            RunNewScanlineEvents: function () {
-
-
-
-
-                this.yPosition = (this.currentYPosition + this.lockedVScroll) | 0;
-
-                if (this.yPosition < 0) {
-                    this.yPosition = (this.yPosition + 240) | 0;
-                }
-                if (this.yPosition >= 240) {
-                    this.yPosition = (this.yPosition - 240) | 0;
-                    this.yNTXor = 2048;
-                } else {
-                    this.yNTXor = 0;
-                }
-
-
-            },
-            UpdateSprites: function () {
-                // sprite enable
-                // left col object clipping
-                // active object pattern table
-                // color bits
-                // b/w color
-            },
-            UpdateTiles: function () {
-                // color bits
-                // b/w color
-                // background enable
-                // left col bg clipping
-                // scroll regs
-                // x/y nametable 
-                // pattern table
-            },
-            CopySprites: function (source, copyFrom) {
-                // should copy 0x100 items from source to spriteRAM, 
-                // starting at SpriteAddress, and wrapping around
-                // should set spriteDMA flag
-                for (var i = 0; i < 256; i = (i + 1) | 0) {
-                    var spriteLocation = (((this._spriteAddress + i) | 0)) & 255;
-                    if (this.spriteRAM[spriteLocation] !== source.v[((copyFrom + i) | 0)]) {
-                        this.spriteRAM[spriteLocation] = source.v[((copyFrom + i) | 0)];
-                        this.unpackedSprites[((Bridge.Int.div(spriteLocation, 4)) | 0)].Changed = true;
-                    }
-                }
-                this._spriteCopyHasHappened = true;
-                this.spriteChanges = true;
-
-            },
-            InitSprites: function () {
-                this.currentSprites = System.Array.init(this._maxSpritesPerScanline, function (){
-                    return new ChiChiNES.NESSprite();
-                }, ChiChiNES.NESSprite);
-                for (var i = 0; i < this._maxSpritesPerScanline; i = (i + 1) | 0) {
-                    this.currentSprites[i] = new ChiChiNES.NESSprite();
-                }
-
-                this.unpackedSprites = System.Array.init(64, function (){
-                    return new ChiChiNES.NESSprite();
-                }, ChiChiNES.NESSprite);
-
-                for (var i1 = 0; i1 < 64; i1 = (i1 + 1) | 0) {
-                    this.unpackedSprites[i1] = new ChiChiNES.NESSprite();
-                }
-
-            },
-            GetSpritePixel: function () {
-                this.isForegroundPixel = false;
-                this.spriteZeroHit = false;
-                var result = 0;
-                var yLine = 0;
-                var xPos = 0;
-                var tileIndex = 0;
-
-                for (var i = 0; i < this.spritesOnThisScanline; i = (i + 1) | 0) {
-                    var currSprite = this.currentSprites[i].$clone();
-                    if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < ((currSprite.XPosition + 8) | 0)) {
-
-                        var spritePatternTable = 0;
-                        if ((this._PPUControlByte0 & 8) === 8) {
-                            spritePatternTable = 4096;
-                        }
-                        xPos = (this.currentXPosition - currSprite.XPosition) | 0;
-                        yLine = (((this.currentYPosition - currSprite.YPosition) | 0) - 1) | 0;
-
-                        yLine = yLine & (((this.spriteSize - 1) | 0));
-
-                        tileIndex = currSprite.TileIndex;
-
-                        if ((this._PPUControlByte0 & 32) === 32) {
-                            if ((tileIndex & 1) === 1) {
-                                spritePatternTable = 4096;
-                                tileIndex = tileIndex ^ 1;
-                            } else {
-                                spritePatternTable = 0;
-                            }
-                        }
-
-                        //result = WhissaSpritePixel(spritePatternTable, xPos, yLine, ref currSprite, tileIndex);
-                        // 8x8 tile
-                        var patternEntry;
-                        var patternEntryBit2;
-
-                        if (currSprite.FlipY) {
-                            yLine = (((this.spriteSize - yLine) | 0) - 1) | 0;
-                        }
-
-                        if (yLine >= 8) {
-                            yLine = (yLine + 8) | 0;
-                        }
-
-                        patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((spritePatternTable + Bridge.Int.mul(tileIndex, 16)) | 0) + yLine) | 0));
-                        patternEntryBit2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((spritePatternTable + Bridge.Int.mul(tileIndex, 16)) | 0) + yLine) | 0) + 8) | 0));
-
-                        result = (currSprite.FlipX ? ((patternEntry >> xPos) & 1) | (((patternEntryBit2 >> xPos) << 1) & 2) : ((patternEntry >> ((7 - xPos) | 0)) & 1) | (((patternEntryBit2 >> ((7 - xPos) | 0)) << 1) & 2)) & 255;
-
-                        if (result !== 0) {
-                            if (currSprite.SpriteNumber === 0) {
-                                this.spriteZeroHit = true;
-                            }
-                            this.isForegroundPixel = currSprite.Foreground;
-                            return (result | currSprite.AttributeByte);
-                        }
-                    }
-                }
-                return 0;
-            },
-            WhissaSpritePixel: function (patternTableIndex, x, y, sprite, tileIndex) {
-                // 8x8 tile
-                var patternEntry;
-                var patternEntryBit2;
-
-                if (sprite.v.FlipY) {
-                    y = (((this.spriteSize - y) | 0) - 1) | 0;
-                }
-
-                if (y >= 8) {
-                    y = (y + 8) | 0;
-                }
-
-                patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((patternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + y) | 0));
-                patternEntryBit2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((patternTableIndex + Bridge.Int.mul(tileIndex, 16)) | 0) + y) | 0) + 8) | 0));
-
-                return (sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> ((7 - x) | 0)) & 1) | (((patternEntryBit2 >> ((7 - x) | 0)) << 1) & 2));
-            },
-            /**
-             * populates the currentSpritesXXX arrays with the first 8 visible sprites on the 
-             denoted scanline.
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.PixelWhizzler
-             * @memberof ChiChiNES.PixelWhizzler
-             * @param   {number}    scanline    the scanline to preload sprites for
-             * @return  {void}
-             */
-            PreloadSprites: function (scanline) {
-                var $t, $t1;
-                this.spritesOnThisScanline = 0;
-                this.sprite0scanline = -1;
-
-                var yLine = (this.currentYPosition - 1) | 0;
-                this.outBuffer[(((64768) + yLine) | 0)] = 0;
-                this.outBuffer[(((65024) + yLine) | 0)] = 0;
-                //spritesOnLine[2 * yLine] = 0;
-                //spritesOnLine[2 * yLine + 1] = 0;
-                for (var spriteNum = 0; spriteNum < 256; spriteNum = (spriteNum + 4) | 0) {
-                    var spriteID = ((((spriteNum + this._spriteAddress) | 0)) & 255) >> 2;
-
-                    var y = (this.unpackedSprites[spriteID].YPosition + 1) | 0;
-
-                    if (scanline >= y && scanline < ((y + this.spriteSize) | 0)) {
-                        if (spriteID === 0) {
-                            this.sprite0scanline = scanline;
-                            this.sprite0x = this.unpackedSprites[spriteID].XPosition;
-                        }
-
-                        var spId = (Bridge.Int.div(spriteNum, 4)) | 0;
-                        if (spId < 32) {
-                            this.outBuffer[($t = (((64768) + yLine) | 0))] = this.outBuffer[$t] | (1 << spId);
-                        } else {
-                            this.outBuffer[($t1 = (((65024) + yLine) | 0))] = this.outBuffer[$t1] | (1 << (((spId - 32) | 0)));
-                        }
-
-                        this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID].$clone();
-                        this.currentSprites[this.spritesOnThisScanline].IsVisible = true;
-
-                        this.spritesOnThisScanline = (this.spritesOnThisScanline + 1) | 0;
-                        if (this.spritesOnThisScanline === this._maxSpritesPerScanline) {
-                            break;
-                        }
-                    }
-                }
-                if (this.spritesOnThisScanline > 7) {
-                    this._PPUStatus = this._PPUStatus | 32;
-                }
-
-            },
-            UnpackSprites: function () {
-                //Buffer.BlockCopy
-                var outBufferloc = 65280;
-                for (var i = 0; i < 256; i = (i + 4) | 0) {
-                    this.outBuffer[outBufferloc] = (this.spriteRAM[i] << 24) | (this.spriteRAM[((i + 1) | 0)] << 16) | (this.spriteRAM[((i + 2) | 0)] << 8) | (this.spriteRAM[((i + 3) | 0)] << 0);
-                    outBufferloc = (outBufferloc + 1) | 0;
-                }
-                // Array.Copy(spriteRAM, 0, outBuffer, 255 * 256 * 4, 256);
-                for (var currSprite = 0; currSprite < this.unpackedSprites.length; currSprite = (currSprite + 1) | 0) {
-                    if (this.unpackedSprites[currSprite].Changed) {
-                        this.UnpackSprite(currSprite);
-                    }
-                }
-            },
-            UnpackSprite: function (currSprite) {
-                var attrByte = this.spriteRAM[((Bridge.Int.mul(currSprite, 4) + 2) | 0)];
-                this.unpackedSprites[currSprite].IsVisible = true;
-                this.unpackedSprites[currSprite].AttributeByte = ((attrByte & 3) << 2) | 16;
-                this.unpackedSprites[currSprite].YPosition = this.spriteRAM[Bridge.Int.mul(currSprite, 4)];
-                this.unpackedSprites[currSprite].XPosition = this.spriteRAM[((Bridge.Int.mul(currSprite, 4) + 3) | 0)];
-                this.unpackedSprites[currSprite].SpriteNumber = currSprite;
-                this.unpackedSprites[currSprite].Foreground = (attrByte & 32) !== 32;
-                this.unpackedSprites[currSprite].FlipX = (attrByte & 64) === 64;
-                this.unpackedSprites[currSprite].FlipY = (attrByte & 128) === 128;
-                this.unpackedSprites[currSprite].TileIndex = this.spriteRAM[((Bridge.Int.mul(currSprite, 4) + 1) | 0)];
-                this.unpackedSprites[currSprite].Changed = false;
-            },
-            /**
-             * Returns a pixel
-             *
-             * @instance
-             * @public
-             * @this ChiChiNES.PixelWhizzler
-             * @memberof ChiChiNES.PixelWhizzler
-             * @return  {number}
-             */
-            GetNameTablePixel: function () {
-                var result = ((this.patternEntry & 128) >> 7) | ((this.patternEntryByte2 & 128) >> 6);
-                this.patternEntry <<= 1;
-                this.patternEntryByte2 <<= 1;
-                if (result > 0) {
-                    result |= this.currentAttributeByte;
-                }
-                return result & 255;
-            },
-            FetchNextTile: function () {
-                var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
-
-                var xTilePosition = this.xPosition >> 3;
-
-                var tileRow = (this.yPosition >> 3) % 30 << 5;
-
-                var tileNametablePosition = (((((8192 + ppuNameTableMemoryStart) | 0) + xTilePosition) | 0) + tileRow) | 0;
-
-                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, tileNametablePosition);
-
-                var patternTableYOffset = this.yPosition & 7;
-
-                var patternID = (((this._backgroundPatternTableIndex + (Bridge.Int.mul(TileIndex, 16))) | 0) + patternTableYOffset) | 0;
-
-                this.patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID);
-                this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((patternID + 8) | 0));
-
-                this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
-            },
-            GetNameTablePixelOld: function () {
-                var xPosition = this.currentXPosition, yPosition = this.currentYPosition;
-                // int patternTableIndex = PatternTableIndex;
-
-                var ppuNameTableMemoryStart = this.nameTableMemoryStart;
-                //yPosition = 1;
-                xPosition = (xPosition + this.lockedHScroll) | 0;
-
-                if (xPosition > 255) {
-                    xPosition = (xPosition - 256) | 0;
-                    // from loopy's doc
-                    // you can think of bits 0,1,2,3,4 of the vram address as the "x scroll"(*8)
-                    //that the ppu increments as it draws.  as it wraps from 31 to 0, bit 10 is
-                    //switched.  you should see how this causes horizontal wrapping between name
-                    //tables (0,1) and (2,3).
-
-                    ppuNameTableMemoryStart = ppuNameTableMemoryStart ^ 1024;
-                }
-                // index of this pixels bit in pattern table
-                var patternTableEntryIndex = (7 - (xPosition & 7)) | 0;
-
-
-                yPosition = (yPosition + this.lockedVScroll) | 0;
-                if (yPosition < 0) {
-                    yPosition = (yPosition + 240) | 0;
-                }
-                if (yPosition >= 240) {
-                    yPosition = (yPosition - 240) | 0;
-                    ppuNameTableMemoryStart = ppuNameTableMemoryStart ^ 2048;
-                }
-
-                var tileRow = (((Bridge.Int.div(yPosition, 8)) | 0)) % 30;
-
-                var tileNametablePosition = (((((8192 + ppuNameTableMemoryStart) | 0) + (((Bridge.Int.div(xPosition, 8)) | 0))) | 0) + (Bridge.Int.mul(tileRow, 32))) | 0;
-
-                var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, tileNametablePosition);
-
-
-                var patternTableYOffset = yPosition & 7;
-
-
-                var patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((this._backgroundPatternTableIndex + (Bridge.Int.mul(TileIndex, 16))) | 0) + patternTableYOffset) | 0));
-                var patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((this._backgroundPatternTableIndex + (Bridge.Int.mul(TileIndex, 16))) | 0) + 8) | 0) + patternTableYOffset) | 0));
-
-
-                // i want the patternTableEntryIndex'th bit of patternEntry in the 1st bit of pixel
-                var result = (((patternEntry >> patternTableEntryIndex) & 1) | (Bridge.Int.mul(((patternEntryByte2 >> patternTableEntryIndex) & 1), 2))) & 255;
-
-                if (result > 0) {
-                    result = (result | ((this.GetAttributeTableEntry(ppuNameTableMemoryStart, ((Bridge.Int.div(xPosition, 8)) | 0), ((Bridge.Int.div(yPosition, 8)) | 0))) & 255)) & 255;
-                }
-                return result;
-            },
-            GetAttributeTableEntry: function (ppuNameTableMemoryStart, i, j) {
-                var LookUp = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((((8192 + ppuNameTableMemoryStart) | 0) + 960) | 0) + (((Bridge.Int.div(i, 4)) | 0))) | 0) + (Bridge.Int.mul((((Bridge.Int.div(j, 4)) | 0)), 8))) | 0));
-
-                switch ((i & 2) | Bridge.Int.mul((j & 2), 2)) {
-                    case 0: 
-                        return (LookUp << 2) & 12;
-                    case 2: 
-                        return LookUp & 12;
-                    case 4: 
-                        return (LookUp >> 2) & 12;
-                    case 6: 
-                        return (LookUp >> 4) & 12;
-                }
-                return 0;
-            }
-        }
-    });
-
     Bridge.define("ChiChiNES.PortQueueing.QueuedPort", {
         inherits: [System.Collections.Generic.Queue$1(ChiChiNES.PortQueueing.PortWriteEntry)],
         ctors: {
@@ -7788,7 +6901,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
     Bridge.define("ChiChiNES.BaseCart", {
         inherits: [ChiChiNES.INESCart],
         fields: {
-            pixelEffects: null,
             debugging: false,
             debugEvents: null,
             iNesHeader: null,
@@ -7827,7 +6939,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             bankStartCache: null,
             currentBank: 0,
             bankSwitchesChanged: false,
-            nullEffect: null,
             oneScreenOffset: 0
         },
         props: {
@@ -8033,14 +7144,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             "GetPPUByte", "ChiChiNES$INESCart$GetPPUByte",
             "ActualChrRomOffset", "ChiChiNES$INESCart$ActualChrRomOffset",
             "SetPPUByte", "ChiChiNES$INESCart$SetPPUByte",
-            "FetchPixelEffect", "ChiChiNES$INESCart$FetchPixelEffect",
             "UsesSRAM", "ChiChiNES$INESCart$UsesSRAM",
             "ChrRamStart", "ChiChiNES$INESCart$ChrRamStart",
             "PPUBankStarts", "ChiChiNES$INESCart$PPUBankStarts"
         ],
         ctors: {
             init: function () {
-                this.pixelEffects = new (System.Collections.Generic.Dictionary$2(System.Int32,System.Array.type(System.Byte)))();
                 this.debugging = false;
                 this.debugEvents = new (System.Collections.Generic.List$1(ChiChiNES.CartDebugEvent)).ctor();
                 this.iNesHeader = System.Array.init(16, 0, System.Byte);
@@ -8057,21 +7166,21 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.bankStartCache = System.Array.init(4096, 0, System.Int32);
                 this.currentBank = 0;
                 this.bankSwitchesChanged = false;
-                this.nullEffect = System.Array.init([0, 0, 0, 0, 0, 0, 0, 0], System.Byte);
             },
             ctor: function () {
                 this.$initialize();
 
-                var effect = System.Array.init([1, 1, 1, 1, 1, 1, 1, 1], System.Byte);
-                this.pixelEffects.add(3408, effect);
-                this.pixelEffects.add(0, effect);
+                //byte[] effect = new byte[8] { 1, 1, 1, 1, 1, 1, 1, 1};
+                //pixelEffects.Add(0xD50, effect);
+                //pixelEffects.Add(0x0, effect);
 
-                for (var i = 21264; i < 21696; i = (i + 1) | 0) {
-                    this.pixelEffects.add(((i - 16400) | 0), effect);
-                }
+                //for (int i = 21264; i < 21696; i++)
+                //{
+                //    pixelEffects.Add(i - 16400, effect);
+                //}
 
-                for (var i1 = 0; i1 < 16; i1 = (i1 + 1) | 0) {
-                    this.ppuBankStarts[i1] = Bridge.Int.mul(i1, 1024);
+                for (var i = 0; i < 16; i = (i + 1) | 0) {
+                    this.ppuBankStarts[i] = Bridge.Int.mul(i, 1024);
                 }
             }
         },
@@ -8273,7 +7382,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             UpdateBankStartCache: function () {
                 this.currentBank = (this.currentBank + 1) | 0;
                 System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, Bridge.Int.mul(this.currentBank, 16), 16);
-                this.whizzler.ChiChiNES$IPPU$UpdatePixelInfo();
+                this.whizzler.UpdatePixelInfo();
                 return this.currentBank;
 
             },
@@ -8298,17 +7407,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 var bank = (Bridge.Int.div(address, 1024)) | 0;
                 var newAddress = (this.bankStartCache[(((Bridge.Int.mul(this.currentBank, 16)) + bank) | 0)] + (address & 1023)) | 0; // ppuBankStarts[bank] + (address & 0x3FF);
                 this.chrRom[newAddress] = data;
-            },
-            FetchPixelEffect: function (vramAddress) {
-                var bank = (Bridge.Int.div(vramAddress, 1024)) | 0;
-                var newAddress = (this.ppuBankStarts[bank] + (vramAddress & 1023)) | 0;
-
-                if (this.pixelEffects.containsKey(newAddress)) {
-                    return this.pixelEffects.get(newAddress);
-                } else {
-                    return this.nullEffect;
-                }
-
             },
             Mirror: function (clockNum, mirroring) {
                 var $t;
@@ -8340,7 +7438,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.mirroring = mirroring;
 
                 if (clockNum > -1) {
-                    this.whizzler.ChiChiNES$IPPU$DrawTo(clockNum);
+                    this.whizzler.DrawTo(clockNum);
                 }
 
                 //Console.WriteLine("Mirroring set to {0}", mirroring);
@@ -8372,7 +7470,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                 }
                 this.UpdateBankStartCache();
-                this.whizzler.ChiChiNES$IPPU$UpdatePixelInfo();
+                this.whizzler.UpdatePixelInfo();
 
             }
         }
@@ -8599,7 +7697,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetMMC1ChrBanking: function (clock) {
                 //	bit 4 - sets 8KB or 4KB CHRROM switching mode
                 // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
-                this.whizzler.ChiChiNES$IPPU$DrawTo(clock);
+                this.whizzler.DrawTo(clock);
                 if ((this._registers[0] & 16) === 16) {
                     this.CopyBanks(0, this._registers[1], 1);
                     this.CopyBanks(1, this._registers[2], 1);
@@ -8610,7 +7708,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 }
                 this.BankSwitchesChanged = true;
 
-                this.whizzler.ChiChiNES$IPPU$UpdatePixelInfo();
+                this.whizzler.UpdatePixelInfo();
             },
             SetMMC1PrgBanking: function () {
                 var reg;
@@ -8642,7 +7740,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             SetMMC1Mirroring: function (clock) {
                 //bit 1 - toggles between H/V and "one-screen" mirroring
                 //0 = one-screen mirroring, 1 = H/V mirroring
-                this.whizzler.ChiChiNES$IPPU$DrawTo(clock);
+                this.whizzler.DrawTo(clock);
                 switch (this._registers[0] & 3) {
                     case 0: 
                         this.OneScreenOffset = 0;
@@ -8660,7 +7758,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                 }
                 this.BankSwitchesChanged = true;
-                this.whizzler.ChiChiNES$IPPU$UpdatePixelInfo();
+                this.whizzler.UpdatePixelInfo();
             }
         }
     });

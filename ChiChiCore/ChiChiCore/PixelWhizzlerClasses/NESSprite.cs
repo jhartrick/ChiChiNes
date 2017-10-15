@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ChiChiNES
 {
-    public struct NESSprite
+    public class NESSprite
     {
 
         public int YPosition;

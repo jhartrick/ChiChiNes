@@ -22,14 +22,6 @@
   <ItemGroup>
     <Compile Include="config\helper.js" />
     <Compile Include="config\webpack.worker.js" />
-    <Compile Include="src\app\emu\bridge.js" />
-    <Compile Include="src\app\emu\bridge.meta.js" />
-    <Compile Include="src\app\emu\bridge.meta.min.js" />
-    <Compile Include="src\app\emu\bridge.min.js" />
-    <Compile Include="src\app\emu\ChiChiCore.js" />
-    <Compile Include="src\app\emu\ChiChiCore.meta.js" />
-    <Compile Include="src\app\emu\ChiChiCore.meta.min.js" />
-    <Compile Include="src\app\emu\ChiChiCore.min.js" />
     <Compile Include="src\assets\workers\emulator.worker.ff" />
     <Compile Include="workers\bridge.js" />
     <Compile Include="workers\ChiChiCore.js" />
@@ -45,14 +37,6 @@
     <Content Include="src\app\controlpanel\controlpanel.component.html" />
     <Content Include="src\app\debugoutput\debugoutput.component.css" />
     <Content Include="src\app\debugoutput\debugoutput.component.html" />
-    <Content Include="src\app\emu\bridge.log" />
-    <Content Include="src\app\emu\bridge.report.log" />
-    <Content Include="src\app\emu\bridge1.log" />
-    <Content Include="src\app\emu\dk.nes" />
-    <Content Include="src\app\emu\index.html" />
-    <Content Include="src\app\emu\index.min.html" />
-    <Content Include="src\app\emu\pal.rgba" />
-    <Content Include="src\app\emu\web.config" />
     <Content Include="src\assets\nestest.nes" />
     <Content Include="tsconfig.json" />
     <Content Include="tslint.json" />
@@ -75,8 +59,8 @@
     <TypeScriptCompile Include="src\app\controlpanel\controlpanel.component.ts" />
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.spec.ts" />
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.ts" />
-    <TypeScriptCompile Include="src\app\emu\bridge.d.ts" />
-    <TypeScriptCompile Include="src\app\emu\ChiChiCore.d.ts" />
+    <TypeScriptCompile Include="src\app-typings\bridge.d.ts" />
+    <TypeScriptCompile Include="src\app-typings\ChiChiCore.d.ts" />
     <TypeScriptCompile Include="src\app\services\chichines.service.controlpad.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
@@ -131,9 +115,9 @@
     <Folder Include="src\app\chichines.instructionhistory\" />
     <Folder Include="src\app\chichines.memviewer\" />
     <Folder Include="src\app\debugoutput\" />
-    <Folder Include="src\app\emu\" />
     <Folder Include="src\app\chichines\" />
     <Folder Include="src\app\controlpanel\" />
+    <Folder Include="src\app\emu\" />
     <Folder Include="src\assets" />
     <Folder Include="src\assets\workers\" />
     <Folder Include="src\environments" />

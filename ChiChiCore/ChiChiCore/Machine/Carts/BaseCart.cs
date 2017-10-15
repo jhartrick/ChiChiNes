@@ -18,8 +18,6 @@ namespace ChiChiNES
     public abstract class BaseCart : INESCart
     {
 
-        private Dictionary<int, byte[]> pixelEffects = new Dictionary<int, byte[]>();
-
         bool debugging = false;
 
         public bool Debugging
@@ -44,14 +42,14 @@ namespace ChiChiNES
         public BaseCart()
         {
 
-            byte[] effect = new byte[8] { 1, 1, 1, 1, 1, 1, 1, 1};
-            pixelEffects.Add(0xD50, effect);
-            pixelEffects.Add(0x0, effect);
+            //byte[] effect = new byte[8] { 1, 1, 1, 1, 1, 1, 1, 1};
+            //pixelEffects.Add(0xD50, effect);
+            //pixelEffects.Add(0x0, effect);
 
-            for (int i = 21264; i < 21696; i++)
-            {
-                pixelEffects.Add(i - 16400, effect);
-            }
+            //for (int i = 21264; i < 21696; i++)
+            //{
+            //    pixelEffects.Add(i - 16400, effect);
+            //}
 
             for (int i = 0; i < 16; ++i)
             {
@@ -198,9 +196,9 @@ namespace ChiChiNES
 
         public abstract void InitializeCart();
 
-        protected IPPU whizzler;
+        protected CPU2A03 whizzler;
 
-        public IPPU Whizzler
+        public CPU2A03 Whizzler
         {
             get { return whizzler; }
             set { whizzler = value; }
@@ -525,20 +523,6 @@ namespace ChiChiNES
             int bank = address / 0x400;
             int newAddress = bankStartCache[(currentBank * 16) + bank] + (address & 0x3FF);// ppuBankStarts[bank] + (address & 0x3FF);
             chrRom[newAddress] = data;
-        }
-
-        byte[] nullEffect = new byte[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-        public byte[] FetchPixelEffect(int vramAddress)
-        {
-            int bank = vramAddress / 0x400;
-            int newAddress = ppuBankStarts[bank] + (vramAddress & 0x3FF);
-
-            if (pixelEffects.ContainsKey(newAddress))
-                return pixelEffects[newAddress];
-            else
-                return nullEffect;
-
         }
 
         int oneScreenOffset;

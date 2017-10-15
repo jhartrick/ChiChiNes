@@ -4,7 +4,7 @@ namespace ChiChiNES.ROMLoader
 {
     public static class iNESFileHandler
     {
-        public static INESCart LoadROM(IPPU ppu, byte[] thefile)
+        public static INESCart LoadROM(CPU2A03 ppu, byte[] thefile)
         {
             INESCart _cart = null;
             byte[] iNesHeader = new byte[16];

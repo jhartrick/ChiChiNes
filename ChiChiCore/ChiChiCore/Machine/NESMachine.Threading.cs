@@ -26,7 +26,7 @@ namespace ChiChiNES
 
             Thread.Sleep(100);
             _sharedWave.Dispose();
-            soundThreader.Dispose();
+            //soundThreader.Dispose();
         }
 
         #endregion

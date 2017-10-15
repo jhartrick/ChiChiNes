@@ -47,7 +47,12 @@
     <Compile Include="Fastendo\Fastendo.CPUTiming.cs" />
     <Compile Include="Fastendo\Fastendo.Enums.cs" />
     <Compile Include="Fastendo\Fastendo.MemoryMap.cs" />
-    <Compile Include="Fastendo\FastendoCPU.Peeper.cs" />
+    <Compile Include="Fastendo\Fastendo.CPU.Peeper.cs" />
+    <Compile Include="Fastendo\Fastendo.PPU.Control.cs" />
+    <Compile Include="Fastendo\Fastendo.PPU.cs" />
+    <Compile Include="Fastendo\Fastendo.PPU.Memory.cs" />
+    <Compile Include="Fastendo\Fastendo.PPU.Sprites.cs" />
+    <Compile Include="Fastendo\Fastendo.PPU.Tiles.cs" />
     <Compile Include="Fastendo\Hacking\MemoryPatch.cs" />
     <Compile Include="Fastendo\Interfaces.cs" />
     <Compile Include="Interaction\IDisplayContext.cs" />
@@ -83,31 +88,16 @@
     <Compile Include="Machine\ROMLoader\CartLoadException.cs" />
     <Compile Include="Machine\ROMLoader\Hashers.cs" />
     <Compile Include="Machine\ROMLoader\iNESFileHandler.cs" />
-    <Compile Include="PixelWhizzlerClasses\IPPU.cs" />
     <Compile Include="PixelWhizzlerClasses\NESSprite.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.Constants.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.Control.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.Drawing.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.MemoryMappedIOElement.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.ScanlineEvents.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.Scrolling.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.Sprites.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.Tiles.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.VidRAMHandler.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\PixelWhizzler.WriteLog.cs" />
-    <Compile Include="PixelWhizzlerClasses\PixelWhizzler\TileDoodler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Sound\IWavStreamer.cs" />
-    <Compile Include="Sound\SoundThread.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="bridge.json" />
+    <Compile Include="Fastendo\Fastendo.PPU.Drawing.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="PixelWhizzlerClasses\HardWhizzler\" />
-    <Folder Include="PixelWhizzlerClasses\SoftWhizzler\" />
+    <Folder Include="Sound\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="test.html">

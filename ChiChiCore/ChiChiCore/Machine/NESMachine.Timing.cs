@@ -58,19 +58,14 @@ namespace ChiChiNES
             frameOn = true;
             frameJustEnded = false;
 
-            _cpu.FindNextEvent();
-            do
-            {
-                _cpu.Step();
-            } while (frameOn);
+            _cpu.RunFrame();
+
             _totalCPUClocks = _cpu.Clock;
-            lock (_sharedWave)
-            {
+
+            if (_enableSound) { 
                 soundBopper.FlushFrame(_totalCPUClocks);
                 soundBopper.EndFrame(_totalCPUClocks);
             }
-
-            if (PadOne != null) PadOne.Refresh();
 
             _totalCPUClocks = 0;
             _cpu.Clock = 0;

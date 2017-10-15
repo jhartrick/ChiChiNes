@@ -1,6 +1,7 @@
 ﻿
 namespace ChiChiNES
 {
+    [Bridge.Rules(Integer = Bridge.IntegerRule.Plain)]
 
     public partial class CPU2A03
     {
@@ -9,20 +10,24 @@ namespace ChiChiNES
         private int _accumulator = 0, _indexRegisterX = 0, _indexRegisterY = 0;
 
 
-        public CPU2A03(IPPU whizzler, ChiChiNES.BeepsBoops.Bopper bopper)
+        public CPU2A03(ChiChiNES.BeepsBoops.Bopper bopper)
         {
             // BuildOpArray();
 
             _padOne = new InputHandler();
             _padTwo = new InputHandler();
-            _pixelWhizzler = whizzler;
 
             SoundBopper = bopper;
             nmiHandler = NMIHandler;
             irqUpdater = IRQUpdater;
             bopper.NMIHandler = IRQUpdater;
 
-            _pixelWhizzler.NMIHandler = nmiHandler;
+            // init PPU
+            PPU_InitSprites();
+
+            vBuffer = new byte[240 * 256];
+
+            GetPalRGBA();
         }
 
  
@@ -119,7 +124,7 @@ namespace ChiChiNES
                 (_statusRegister | (int)Flag) :
                 (_statusRegister & ~(int)Flag));
 
-            _statusRegister |= (int)CPUStatusMasks.ExpansionMask;
+            _statusRegister |= 0x20;// (int)CPUStatusMasks.ExpansionMask;
         }
 
         public bool GetFlag(CPUStatusMasks Flag)

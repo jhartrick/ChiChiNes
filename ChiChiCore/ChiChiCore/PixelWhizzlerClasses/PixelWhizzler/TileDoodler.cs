@@ -8,12 +8,12 @@ namespace ChiChiNES
 {
     public class TileDoodler
     {
-        private IPPU _ppu;
+        private CPU2A03 _ppu;
 
         public int XOffset { get; set; }
         public int YOffset { get; set; }
 
-        public TileDoodler(IPPU ppu)
+        public TileDoodler(CPU2A03 ppu)
         {
             _ppu = ppu;
 
@@ -63,11 +63,11 @@ namespace ChiChiNES
 
                 for (int bit = 0; bit < 8; ++bit)
                 {
-                    if ((patternEntry & PixelWhizzler.PowersOfTwo[bit]) != 0)
+                    if ((patternEntry & CPU2A03.PPU_PowersOfTwo[bit]) != 0)
                     {
                         result[(i * 8) + bit] = 1 | attributeByte;
                     }
-                    if ((patternEntryBit2 & PixelWhizzler.PowersOfTwo[bit]) != 0)
+                    if ((patternEntryBit2 & CPU2A03.PPU_PowersOfTwo[bit]) != 0)
                     {
                         result[(i * 8) + bit] |= 2 | attributeByte;
                     }

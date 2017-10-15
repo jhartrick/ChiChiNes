@@ -1,7 +1,7 @@
 ﻿//require('bridge.min.js');
 //require('ChiChiCore.min.js');
 importScripts('http://localhost:802/workers/bridge.min.js');
-importScripts('http://localhost:802/workers/ChiChiCore.js');
+importScripts('http://localhost:802/workers/ChiChiCore.min.js');
 
 (function (globals, tendo) {
     var cartName = '';
@@ -72,17 +72,13 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
 
     function createMachine() {
         const wavsharer = new ChiChiNES.BeepsBoops.WavSharer();
-        const whizzler = new ChiChiNES.PixelWhizzler();
-        whizzler.FillRGB = false;
 
         const soundbop = new ChiChiNES.BeepsBoops.Bopper(wavsharer);
-        const cpu = new ChiChiNES.CPU2A03(whizzler, soundbop);
+        const cpu = new ChiChiNES.CPU2A03(soundbop);
+        cpu.PPU_FillRGB = false;
         tendo.machine = new ChiChiNES.NESMachine(cpu,
-            whizzler,
-            new ChiChiNES.TileDoodler(whizzler),
             wavsharer,
-            soundbop,
-            new ChiChiNES.Sound.SoundThreader(null));
+            soundbop);
         tendo.machine.PadOne = tendo.controlPad1;//this.controlPad;
         //this.tileDoodler = new Tiler(this.machine);
         tendo.machine.Drawscreen = () => {
@@ -242,7 +238,7 @@ importScripts('http://localhost:802/workers/ChiChiCore.js');
                 cartName = event.data.name;
               break;
           case 'setvbuffer':
-                tendo.machine.PPU.ByteOutBuffer = event.data.vbuffer;
+                tendo.machine.Cpu.ByteOutBuffer = event.data.vbuffer;
               break;
           case 'setaudiobuffer':
                 tendo.sharedAudioBuffer = event.data.audiobuffer;

@@ -74,6 +74,20 @@ namespace ChiChiNES
 
             }
         }
+        private bool __frameFinished = true;
+
+        public void RunFrame()
+        {
+            __frameFinished = false;
+            FindNextEvent();
+
+            do
+            {
+                Step();
+            } while (!__frameFinished);
+            PadOne.ControlPad.Refresh();
+
+        }
 
     }
 }

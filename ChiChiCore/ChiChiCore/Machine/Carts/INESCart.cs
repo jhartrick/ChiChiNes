@@ -5,7 +5,7 @@ namespace ChiChiNES
     {
         void LoadiNESCart(byte[] header, int prgRoms, int chrRoms, byte[] prgRomData, byte[] chrRomData, int chrRomOffset);
 
-        IPPU Whizzler { get; set; }
+        CPU2A03 Whizzler { get; set; }
         CPU2A03 CPU { get; set; }
 
         void InitializeCart();
@@ -33,7 +33,7 @@ namespace ChiChiNES
         int GetPPUByte(int clock, int address);
         void SetPPUByte(int clock, int address, byte data);
 
-        byte[] FetchPixelEffect(int vramAddress);
+
         int ActualChrRomOffset(int address);
 
         /// <summary>

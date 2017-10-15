@@ -22,8 +22,6 @@
         "styles.css"
       ],
       "scripts": [
-        "./app/emu/bridge.min.js",
-        "./app/emu/ChiChiCore.js",
         "../node_modules/jszip/dist/jszip.min.js"
       ],
       "environmentSource": "environments/environment.ts",

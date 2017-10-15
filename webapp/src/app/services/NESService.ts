@@ -29,28 +29,28 @@ export enum RunStatus {
 }
 
 
-export class Tiler {
+//export class Tiler {
 
-    constructor(private nes: ChiChiNES.NESMachine) { }
-    patternTables: Uint8ClampedArray[] = new Array<Uint8ClampedArray>(2);
+//    constructor(private nes: ChiChiNES.NESMachine) { }
+//    patternTables: Uint8ClampedArray[] = new Array<Uint8ClampedArray>(2);
 
-    DoodleNameTable(nametable: number, outbuf:  Uint8ClampedArray ): void
-    {
-        //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
-        const doodle1 = this.nes.Tiler.DoodleNameTable(nametable);
-        const pal = ChiChiNES.PixelWhizzler.pal;
+//    DoodleNameTable(nametable: number, outbuf:  Uint8ClampedArray ): void
+//    {
+//        //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
+//        const doodle1 = this.nes.Tiler.DoodleNameTable(nametable);
+//        const pal = ChiChiNES.PixelWhizzler.pal;
 
-        for (let i = 0; i <= doodle1.length; ++i) {
-            const color = pal[doodle1[i]];
-            outbuf[i * 4] = (color >> 0) & 0xFF;
-            outbuf[(i * 4) + 1] = (color >> 9) & 0xFF;
-            outbuf[(i * 4) + 2] = (color >> 16 ) & 0xFF;
-            outbuf[(i * 4) + 3] =  0xFF;
-        }
+//        for (let i = 0; i <= doodle1.length; ++i) {
+//            const color = pal[doodle1[i]];
+//            outbuf[i * 4] = (color >> 0) & 0xFF;
+//            outbuf[(i * 4) + 1] = (color >> 9) & 0xFF;
+//            outbuf[(i * 4) + 2] = (color >> 16 ) & 0xFF;
+//            outbuf[(i * 4) + 3] =  0xFF;
+//        }
 
-        this.patternTables[1] = new Uint8ClampedArray(this.nes.Tiler.DoodlePatternTable(0x1000));
-    }
-}
+//        this.patternTables[1] = new Uint8ClampedArray(this.nes.Tiler.DoodlePatternTable(0x1000));
+//    }
+//}
 
 export class EmuState {
     constructor(public romLoaded: string, public powerState: boolean, public paused: boolean, public debugging: boolean) {
@@ -109,8 +109,7 @@ export class RomLoader {
 
 @Injectable()
 export class Emulator {
-    public tileDoodler: Tiler;
-    private ready: boolean = false;
+   // private ready: boolean = false;
     
     private callback: () => void;
     private _soundEnabled = false;
@@ -247,7 +246,7 @@ export class Emulator {
     SetCallbackFunction(callback: () => void) {
         this.callback = callback;
         //this.machine.Drawscreen = callback;
-        this.ready = true;
+      //  this.ready = true;
     }
 
     SetVideoBuffer(array: Uint8Array): void {

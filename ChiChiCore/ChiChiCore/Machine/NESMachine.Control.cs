@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using ChiChiNES.Machine.ControlPanel;
 using ChiChiNES.ROMLoader;
-
-using ChiChiNES;
-using ChiChiNES;
 using ChiChiNES.Hacking;
 
 namespace ChiChiNES
@@ -28,7 +22,7 @@ namespace ChiChiNES
             {
                 // ForceStop();
                 soundBopper.RebuildSound();
-                _ppu.Initialize();
+                _ppu.PPU_Initialize();
                 _cart.InitializeCart();
                 _cpu.ResetCPU();
                 ClearGenieCodes();
@@ -43,7 +37,7 @@ namespace ChiChiNES
             {
 
                 soundBopper.RebuildSound();
-                _ppu.Initialize();
+                _ppu.PPU_Initialize();
                 _cart.InitializeCart();
                 if (SRAMReader != null && _cart.UsesSRAM)
                     _cart.SRAM = SRAMReader(_cart.CheckSum);
@@ -215,7 +209,7 @@ namespace ChiChiNES
             Queue<int> state = new Queue<int>();
             state = new Queue<int>();
             _cpu.GetState(state);
-            _ppu.WriteState(state);
+            //_ppu.WriteState(state);
             _cart.WriteState(state);
             lastSaveState[index] = new int[state.Count];
             state.CopyTo(lastSaveState[index], 0);
@@ -227,7 +221,7 @@ namespace ChiChiNES
             {
                 Queue<int> cloneState = new Queue<int>(lastSaveState[index]);
                 _cpu.SetState(cloneState);
-                _ppu.ReadState(cloneState);
+               // _ppu.ReadState(cloneState);
                 _cart.ReadState(cloneState);
             }
         }

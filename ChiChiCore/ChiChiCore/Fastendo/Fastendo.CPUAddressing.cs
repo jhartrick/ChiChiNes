@@ -1,18 +1,12 @@
 ﻿using Bridge;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace ChiChiNES
 {
-    [Bridge.Rules(Integer = Bridge.IntegerRule.Plain)]
 
     public partial class CPU2A03
     {
         int lowByte, highByte;
-
-        [Bridge.Rules(Integer = Bridge.IntegerRule.Managed)]
 
         int DecodeAddress()
         {

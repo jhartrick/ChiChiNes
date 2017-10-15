@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace ChiChiNES
+﻿namespace ChiChiNES
 {
     public partial class CPU2A03
     {
 
         public void Execute()
         {
+            int data = 0;
+            int lowByte = 0;
+            int highByte = 0;
+            int carryFlag = 0;
+            int result= 0;
+            int oldbit = 0;
+
             switch (_currentInstruction_OpCode)
             {
                 case 0x80:
@@ -44,7 +46,23 @@ namespace ChiChiNES
                 case 0x79:
                 case 0x61:
                 case 0x71:
-                    ADC();
+                    //ADC();
+                    // start the read process
+                    data = DecodeOperand();
+                    carryFlag = (_statusRegister & 0x01);
+                    result = (_accumulator + data + carryFlag);
+
+                    // carry flag
+                    SetFlag(CPUStatusMasks.CarryMask, result > 0xFF);
+
+                    // overflow flag
+                    SetFlag(CPUStatusMasks.OverflowMask,
+                            ((_accumulator ^ data) & 0x80) != 0x80 &&
+                            ((_accumulator ^ result) & 0x80) == 0x80);
+
+                    // occurs when bit 7 is set
+                    _accumulator = (int)(result & 0xFF);
+                    SetZNFlags(_accumulator);
                     break;
 
                 case 0x29:
@@ -55,7 +73,9 @@ namespace ChiChiNES
                 case 0x39:
                 case 0x21:
                 case 0x31:
-                    AND();
+                    //AND();
+                    _accumulator = (_accumulator & DecodeOperand());
+                    SetZNFlags(_accumulator);
                     break;
 
                 case 0x0a:
@@ -80,7 +100,15 @@ namespace ChiChiNES
 
                 case 0x24:
                 case 0x2c:
-                    BIT();
+                    //BIT();
+                    data = DecodeOperand();
+                    // overflow is bit 6
+                    SetFlag(CPUStatusMasks.OverflowMask, (data & 64) == 64);
+
+                    // negative is bit 7
+                    _statusRegister = ((data & 128) == 128) ? _statusRegister | 128 : _statusRegister & 127;
+                    _statusRegister |= ((data & Accumulator) == 0) ? 0x2 :  0xFD;
+
                     break;
 
                 case 0x30:
@@ -96,7 +124,33 @@ namespace ChiChiNES
                     break;
 
                 case 0x00:
-                    BRK();
+                    //BRK();
+                    //BRK causes a non-maskable interrupt and increments the program counter by one. 
+                    //Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to replace a two-byte instruction 
+                    // for debugging and the subsequent RTI will be correct. 
+                    // push pc onto stack (high byte first)
+                    _programCounter = _programCounter + 1;
+                    PushStack(_programCounter >> 8 & 0xFF);
+                    PushStack(_programCounter & 0xFF);
+                    // push sr onto stack
+
+                    //PHP and BRK push the current status with bits 4 and 5 set on the stack; 
+
+                    data = _statusRegister | 0x10 | 0x20;
+
+                    PushStack(data);
+
+                    // set interrupt disable, and break flags
+                    // BRK then sets the I flag.
+                    _statusRegister = _statusRegister | 0x14;
+
+                    // point pc to interrupt service routine
+                    _addressBus = 0xFFFE;
+                    lowByte = GetByte();
+                    _addressBus = 0xFFFF;
+                    highByte = GetByte();
+
+                    _programCounter = lowByte + highByte * 0x100;
                     break;
 
                 case 0x50:
@@ -150,7 +204,11 @@ namespace ChiChiNES
                 case 0xd6:
                 case 0xce:
                 case 0xde:
-                    DEC();
+                    //DEC();
+                    data = DecodeOperand();
+                    data = (data - 1) & 0xFF;
+                    SetByte(DecodeAddress(), data);
+                    SetZNFlags(data);
                     break;
 
                 case 0xca:
@@ -169,14 +227,21 @@ namespace ChiChiNES
                 case 0x59:
                 case 0x41:
                 case 0x51:
-                    EOR();
+                    //EOR();
+                    _accumulator = (_accumulator ^ DecodeOperand());
+                    SetZNFlags(Accumulator);
+
                     break;
 
                 case 0xe6:
                 case 0xf6:
                 case 0xee:
                 case 0xfe:
-                    INC();
+                    //INC();
+                    data = DecodeOperand();
+                    data = (data + 1) & 0xFF;
+                    SetByte(DecodeAddress(), data);
+                    SetZNFlags(data);
                     break;
 
                 case 0xe8:
@@ -189,7 +254,17 @@ namespace ChiChiNES
 
                 case 0x4c:
                 case 0x6c:
-                    JMP();
+                    // JMP();
+                    // 6052 indirect jmp bug
+                    if (_currentInstruction_AddressingMode == AddressingModes.Indirect
+                        && _currentInstruction_Parameters0 == 0xFF)
+                    {
+                        _programCounter = 0xFF | _currentInstruction_Parameters1 << 8;
+                    }
+                    else
+                    {
+                        _programCounter = DecodeAddress();
+                    }
                     break;
 
                 case 0x20:
@@ -268,7 +343,10 @@ namespace ChiChiNES
                 case 0x19:
                 case 0x01:
                 case 0x11:
-                    ORA();
+                    //ORA();
+
+                    _accumulator = (_accumulator | DecodeOperand());
+                    SetZNFlags(_accumulator);
                     break;
 
                 case 0x48:
@@ -292,7 +370,27 @@ namespace ChiChiNES
                 case 0x36:
                 case 0x2e:
                 case 0x3e:
-                    ROL();
+                    //ROL();
+                    data = DecodeOperand();
+
+                    // old carry bit shifted into bit 1
+                    oldbit = (_statusRegister & 1) == 1 ? 0x1 : 0;
+
+                    SetFlag(CPUStatusMasks.CarryMask, (data & 128) == 128);
+
+                    data = ((data << 1) | oldbit) & 0xFF;
+                    //data = data & 0xFF;
+                    //data = data | oldbit;
+                    SetZNFlags(data);
+
+                    if (_currentInstruction_AddressingMode == AddressingModes.Accumulator)
+                    {
+                        _accumulator = data;
+                    }
+                    else
+                    {
+                        SetByte(DecodeAddress(), data);
+                    }
                     break;
 
                 case 0x6a:
@@ -300,7 +398,27 @@ namespace ChiChiNES
                 case 0x76:
                 case 0x6e:
                 case 0x7e:
-                    ROR();
+                    //ROR();
+                    data = DecodeOperand();
+
+                    // old carry bit shifted into bit 7
+                    oldbit = (_statusRegister & 1) == 1 ? 0x80 : 0;
+
+                    // original bit 0 shifted to carry
+                    SetFlag(CPUStatusMasks.CarryMask, (data & 0x01) == 0x01);
+
+                    data = (data >> 1) | oldbit;
+
+                    SetZNFlags(data);
+
+                    if (_currentInstruction_AddressingMode == AddressingModes.Accumulator)
+                    {
+                        _accumulator = data;
+                    }
+                    else
+                    {
+                        SetByte(DecodeAddress(), data);
+                    }
                     break;
 
                 case 0x40:
@@ -320,7 +438,26 @@ namespace ChiChiNES
                 case 0xf9:
                 case 0xe1:
                 case 0xf1:
-                    SBC();
+                    //SBC();
+                    // start the read process
+
+                    data = DecodeOperand() & 0xFFF;
+
+                    carryFlag = ((_statusRegister ^ 0x01) & 0x1);
+
+                    result = (((_accumulator - data) & 0xFFF) - carryFlag) & 0xFFF;
+
+                    // set overflow flag if sign bit of accumulator changed
+                    SetFlag(CPUStatusMasks.OverflowMask,
+                            ((_accumulator ^ result) & 0x80) == 0x80 &&
+                            ((_accumulator ^ data) & 0x80) == 0x80);
+
+                    SetFlag(CPUStatusMasks.CarryMask, (result < 0x100));
+
+                    _accumulator = (int)(result) & 0xFF;
+                    SetZNFlags(_accumulator);
+
+
                     break;
 
                 case 0x38:

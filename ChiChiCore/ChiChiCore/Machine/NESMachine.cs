@@ -1,6 +1,5 @@
 ﻿using System;
 using ChiChiNES.BeepsBoops;
-using ChiChiNES.Sound;
 
 namespace ChiChiNES
 {
@@ -13,7 +12,7 @@ namespace ChiChiNES
             get { return _cpu; }
             set { _cpu = value; }
         }
-        private IPPU _ppu;
+        private CPU2A03 _ppu;
         private INESCart _cart;
 
         public INESCart Cart
@@ -72,31 +71,32 @@ namespace ChiChiNES
 
         bool breakpointHit = false;
 
-        TileDoodler tiler;
+        //TileDoodler tiler;
 
-        public TileDoodler Tiler
-        {
-            get { return tiler; }
-        }
+        //public TileDoodler Tiler
+        //{
+        //    get { return tiler; }
+        //}
         
-        SoundThreader soundThreader;
+        ///SoundThreader soundThreader;
         bool doDraw = false;
         //zzzz bloop;
-        public NESMachine(CPU2A03 cpu, IPPU ppu, TileDoodler tiler, WavSharer wavSharer, Bopper soundBopper, SoundThreader soundThread)
+        public NESMachine(CPU2A03 cpu, WavSharer wavSharer, Bopper soundBopper)
         {
 
             //machineWorkQueue = new MachineQueue(UpdateQueue);
 
             _cpu = cpu;
-            _ppu = ppu;
-            _ppu.FrameFinishHandler = new MachineEvent(FrameFinished);
-            this.tiler = tiler;
+            _ppu = cpu;
+            
+            _ppu.PPU_FrameFinishHandler = new MachineEvent(FrameFinished);
+            //this.tiler = tiler;
 
             _sharedWave = wavSharer;
             this.soundBopper = soundBopper;
             _cpu.SoundBopper = soundBopper;
 
-            soundThreader = soundThread;
+           // soundThreader = soundThread;
 
             Initialize();
         }
@@ -113,11 +113,6 @@ namespace ChiChiNES
         public bool IsRunning
         {
             get { return true; }
-        }
-
-        public IPPU PPU
-        {
-            get { return _ppu; }
         }
 
         public IControlPad PadOne

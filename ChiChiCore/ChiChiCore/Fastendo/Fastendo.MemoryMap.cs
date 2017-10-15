@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ChiChiNES;
-using ChiChiNES;
-using ChiChiNES.BeepsBoops;
-using ChiChiNES;
+
 
 namespace ChiChiNES
 {
@@ -15,7 +9,6 @@ namespace ChiChiNES
         int[] Rams = new int[0x2000];
 
         // custom ram handlers
-        private IPPU _pixelWhizzler;
         private IClockedMemoryMappedIOElement _cart;
         private InputHandler _padOne ;
         private InputHandler _padTwo;
@@ -63,14 +56,6 @@ namespace ChiChiNES
             get { return _cart; }
             set { _cart = value;
                 _cart.NMIHandler = irqUpdater;
-            }
-        }
-
-        public IPPU PixelWhizzler
-        {
-            get { return _pixelWhizzler; }
-            set { _pixelWhizzler = value;
-            _pixelWhizzler.NMIHandler = nmiHandler;
             }
         }
 
@@ -136,7 +121,7 @@ namespace ChiChiNES
                     break;
                 case 0x2000:
                 case 0x3000:
-                    result = _pixelWhizzler.GetByte(clock, address);
+                    result =  PPU_GetByte(clock, address);
                     break;
                 // other io ports (sound, joystick, dma sprite xfer)
                 case 0x4000:
@@ -209,7 +194,7 @@ namespace ChiChiNES
                     break;
                 case 0x2000:
                 case 0x3000:
-                    result = _pixelWhizzler.GetByte(clock, address);
+                    result = PPU_GetByte(clock, address);
                     break;
                 // other io ports (sound, joystick, dma sprite xfer)
                 case 0x4000:
@@ -290,7 +275,7 @@ namespace ChiChiNES
             // check high byte, find appropriate handler
             if (address < 0x800)
             {
-                Rams[address & 0x7FF] = (byte)data;
+                Rams[address & 0x7FF] = data & 0xFF;
                 return;
             }
             switch (address & 0xF000)
@@ -299,7 +284,7 @@ namespace ChiChiNES
                 case 0x0000:
                 // nes sram
                 case 0x01000:
-                    Rams[address & 0x7FF] = (byte)data;
+                    Rams[address & 0x7FF] = data & 0xFF;
                     break;
                 // cart saveram 
                 case 0x05000:
@@ -321,7 +306,7 @@ namespace ChiChiNES
                 //ppu owns this part of the map
                 case 0x02000:
                 case 0x03000:
-                    _pixelWhizzler.SetByte(clock, address, data);
+                    PPU_SetByte(clock, address, data);
                     break;
                 // other io ports (sound, joystick, dma sprite xfer)
                 case 0x04000:
@@ -349,7 +334,7 @@ namespace ChiChiNES
                             soundBopper.SetByte(clock, address, data);
                             break;
                         case 0x4014:
-                            _pixelWhizzler.CopySprites(ref Rams, data * 0x100);
+                            PPU_CopySprites(data * 0x100);
                             _currentInstruction_ExtraTiming = _currentInstruction_ExtraTiming + 512;
                             break;
                         case 0x4016:
@@ -365,13 +350,13 @@ namespace ChiChiNES
         public void FindNextEvent()
         {
             // it'll either be the ppu's NMI, or an irq from either the apu or the cart
-            nextEvent =  clock + _pixelWhizzler.NextEventAt;
+            nextEvent =  clock + PPU_NextEventAt;
             
         }
 
         private void HandleNextEvent()
         {
-            _pixelWhizzler.HandleEvent(Clock);
+            PPU_HandleEvent(Clock);
             FindNextEvent();
         }
     }
