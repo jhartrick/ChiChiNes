@@ -5,12 +5,12 @@
 
         public void Execute()
         {
-            int data = 0;
-            int lowByte = 0;
-            int highByte = 0;
-            int carryFlag = 0;
-            int result= 0;
-            int oldbit = 0;
+            int data = 0 | 0;
+            int lowByte = 0 | 0;
+            int highByte = 0 | 0;
+            int carryFlag = 0 | 0;
+            int result= 0 | 0;
+            int oldbit = 0 | 0;
 
             switch (_currentInstruction_OpCode)
             {
@@ -50,7 +50,7 @@
                     // start the read process
                     data = DecodeOperand();
                     carryFlag = (_statusRegister & 0x01);
-                    result = (_accumulator + data + carryFlag);
+                    result = (_accumulator + data + carryFlag) | 0;
 
                     // carry flag
                     SetFlag(CPUStatusMasks.CarryMask, result > 0xFF);
@@ -61,7 +61,7 @@
                             ((_accumulator ^ result) & 0x80) == 0x80);
 
                     // occurs when bit 7 is set
-                    _accumulator = (int)(result & 0xFF);
+                    _accumulator = result & 0xFF;
                     SetZNFlags(_accumulator);
                     break;
 
@@ -83,46 +83,93 @@
                 case 0x16:
                 case 0x0e:
                 case 0x1e:
-                    ASL();
+                    //ASL();
+                    data = DecodeOperand();
+                    // set carry flag
+
+                    SetFlag(CPUStatusMasks.CarryMask, ((data & 128) == 128));
+
+                    data = (data << 1) & 0xFE;
+
+                    if (_currentInstruction_AddressingMode == AddressingModes.Accumulator)
+                    {
+                        _accumulator = data;
+                    }
+                    else
+                    {
+                        SetByte(DecodeAddress(), data);
+                    }
+
+
+                    SetZNFlags(data);
                     break;
 
                 case 0x90:
-                    BCC();
+                    //BCC();
+                    if ((_statusRegister & 0x1) != 0x1)
+                        Branch();
                     break;
 
                 case 0xb0:
-                    BCS();
+                    //BCS();
+                    if ((_statusRegister & 0x1) == 0x1)
+                        Branch();
                     break;
-
                 case 0xf0:
-                    BEQ();
+                    //BEQ();
+                    if ((_statusRegister & 0x2) == 0x2)
+                        Branch();
                     break;
-
                 case 0x24:
                 case 0x2c:
                     //BIT();
                     data = DecodeOperand();
                     // overflow is bit 6
                     SetFlag(CPUStatusMasks.OverflowMask, (data & 64) == 64);
+                    //if ((operand & 64) == 64)
+                    //{
+                    //    _statusRegister = _statusRegister | 0x40;
+                    //}
+                    //else
+                    //{
+                    //    _statusRegister = _statusRegister & 0xBF;
+                    //}
 
                     // negative is bit 7
-                    _statusRegister = ((data & 128) == 128) ? _statusRegister | 128 : _statusRegister & 127;
-                    _statusRegister |= ((data & Accumulator) == 0) ? 0x2 :  0xFD;
+                    if ((data & 128) == 128)
+                    {
+                        _statusRegister = _statusRegister | 128;
+                    }
+                    else
+                    {
+                        _statusRegister = _statusRegister & 127;
+                    }
 
+                    if ((data & Accumulator) == 0)
+                    {
+                        _statusRegister = _statusRegister | 0x2;
+                    }
+                    else
+                    {
+                        _statusRegister = _statusRegister & 0xFD;
+                    }
                     break;
-
                 case 0x30:
-                    BMI();
-                    break;
+                    //BMI();
+                    if ((_statusRegister & 0x80) == 0x80)
+                        Branch();
 
+                    break;
                 case 0xd0:
-                    BNE();
+                    //BNE();
+                    if ((_statusRegister & 0x2) != 0x2)
+                        Branch();
                     break;
-
                 case 0x10:
-                    BPL();
+                    //BPL();
+                    if ((_statusRegister & 0x80) != 0x80)
+                        Branch();
                     break;
-
                 case 0x00:
                     //BRK();
                     //BRK causes a non-maskable interrupt and increments the program counter by one. 
@@ -154,27 +201,39 @@
                     break;
 
                 case 0x50:
-                    BVC();
+                    //BVC();
+                    if ((_statusRegister & 0x40) != 0x40)
+                        Branch();
+
                     break;
 
                 case 0x70:
-                    BVS();
-                    break;
+                    //BVS();
+                    if ((_statusRegister & 0x40) == 0x40)
+                        Branch();
 
+                    break;
                 case 0x18:
-                    CLC();
+                    //CLC();
+                    SetFlag(CPUStatusMasks.CarryMask, false);
+
                     break;
 
                 case 0xd8:
-                    CLD();
+                    //CLD();
+                    SetFlag(CPUStatusMasks.DecimalModeMask, false);
                     break;
 
                 case 0x58:
-                    CLI();
+                    //CLI();
+                    SetFlag(CPUStatusMasks.InterruptDisableMask, false);
+
                     break;
 
                 case 0xb8:
-                    CLV();
+                    //CLV();
+                    SetFlag(CPUStatusMasks.OverflowMask, false);
+
                     break;
 
                 case 0xc9:
@@ -185,19 +244,28 @@
                 case 0xd9:
                 case 0xc1:
                 case 0xd1:
-                    CMP();
+                    //CMP();
+                    data = (Accumulator + 0x100 - DecodeOperand());
+                    Compare(data);
+
                     break;
 
                 case 0xe0:
                 case 0xe4:
                 case 0xec:
-                    CPX();
+                    //CPX();
+                    data = (_indexRegisterX + 0x100 - DecodeOperand());
+                    Compare(data);
+
                     break;
 
                 case 0xc0:
                 case 0xc4:
                 case 0xcc:
-                    CPY();
+                    //CPY();
+                    data = (_indexRegisterY + 0x100 - DecodeOperand());
+                    Compare(data);
+
                     break;
 
                 case 0xc6:
@@ -212,11 +280,19 @@
                     break;
 
                 case 0xca:
-                    DEX();
+                    //DEX();
+                    _indexRegisterX = _indexRegisterX - 1;
+                    _indexRegisterX = _indexRegisterX & 0xFF;
+                    SetZNFlags(_indexRegisterX);
+
                     break;
 
                 case 0x88:
-                    DEY();
+                    //DEY();
+                    _indexRegisterY = _indexRegisterY - 1;
+                    _indexRegisterY = _indexRegisterY & 0xFF;
+                    SetZNFlags(_indexRegisterY);
+
                     break;
 
                 case 0x49:
@@ -245,11 +321,17 @@
                     break;
 
                 case 0xe8:
-                    INX();
+                    //INX();
+                    _indexRegisterX = _indexRegisterX + 1;
+                    _indexRegisterX = _indexRegisterX & 0xFF;
+                    SetZNFlags(_indexRegisterX);
+
                     break;
 
                 case 0xc8:
-                    INY();
+                    _indexRegisterY = _indexRegisterY + 1;
+                    _indexRegisterY = _indexRegisterY & 0xFF;
+                    SetZNFlags(_indexRegisterY);
                     break;
 
                 case 0x4c:
@@ -268,7 +350,11 @@
                     break;
 
                 case 0x20:
-                    JSR();
+                    //JSR();
+                    PushStack((_programCounter >> 8) & 0xFF);
+                    PushStack((_programCounter - 1) & 0xFF);
+
+                    _programCounter = DecodeAddress();
                     break;
 
                 case 0xa9:
@@ -279,15 +365,18 @@
                 case 0xb9:
                 case 0xa1:
                 case 0xb1:
-                    LDA();
+                    //LDA();
+                    _accumulator = DecodeOperand();
+                    SetZNFlags(_accumulator);
                     break;
-
                 case 0xa2:
                 case 0xa6:
                 case 0xb6:
                 case 0xae:
                 case 0xbe:
-                    LDX();
+                    //LDX();
+                    _indexRegisterX = DecodeOperand();
+                    SetZNFlags(_indexRegisterX);
                     break;
 
                 case 0xa0:
@@ -295,7 +384,9 @@
                 case 0xb4:
                 case 0xac:
                 case 0xbc:
-                    LDY();
+                    //LDY();
+                    _indexRegisterY = DecodeOperand();
+                    SetZNFlags(_indexRegisterY);
                     break;
 
                 case 0x4a:
@@ -303,7 +394,24 @@
                 case 0x56:
                 case 0x4e:
                 case 0x5e:
-                    LSR();
+                    //LSR();
+                    data = DecodeOperand();
+                    //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
+
+                    SetFlag(CPUStatusMasks.CarryMask, (data & 1) == 1);
+                    //target.SetFlag(CPUStatusBits.Carry, (rst & 1) == 1);
+                    data = data >> 1 & 0xFF;
+
+                    SetZNFlags(data);
+
+                    if (_currentInstruction_AddressingMode == AddressingModes.Accumulator)
+                    {
+                        _accumulator = data;
+                    }
+                    else
+                    {
+                        SetByte(DecodeAddress(), data);
+                    }
                     break;
 
                 case 0xea:
@@ -321,18 +429,22 @@
                 //case 0x80:
                 //case 0x82:
                 case 0x89:
-                //case 0xc2:
-                //case 0xd4:
-                //case 0xe2:
-                //case 0xf4:
-                //case 0x0c:
-                //case 0x1c:
-                //case 0x3c:
-                //case 0x5c:
-                //case 0x7c:
-                //case 0xdc:
-                //case 0xfc:
-                    NOP();
+                    //case 0xc2:
+                    //case 0xd4:
+                    //case 0xe2:
+                    //case 0xf4:
+                    //case 0x0c:
+                    //case 0x1c:
+                    //case 0x3c:
+                    //case 0x5c:
+                    //case 0x7c:
+                    //case 0xdc:
+                    //case 0xfc:
+                    //NOP();
+                    if (_currentInstruction_AddressingMode == AddressingModes.AbsoluteX)
+                    {
+                        DecodeAddress();
+                    }
                     break;
 
                 case 0x09:
@@ -350,21 +462,27 @@
                     break;
 
                 case 0x48:
-                    PHA();
+                    //PHA();
+                    PushStack(_accumulator);
+
                     break;
 
                 case 0x08:
-                    PHP();
+                    //PHP();
+                    data = _statusRegister | 0x10 | 0x20;
+                    PushStack(data);
+
                     break;
 
                 case 0x68:
-                    PLA();
+                    //PLA();
+                    _accumulator = PopStack();
+                    SetZNFlags(_accumulator);
                     break;
-
                 case 0x28:
-                    PLP();
+                    //PLP();
+                    _statusRegister = PopStack(); // | 0x20;
                     break;
-
                 case 0x2a:
                 case 0x26:
                 case 0x36:
@@ -422,11 +540,19 @@
                     break;
 
                 case 0x40:
-                    RTI();
+                    //RTI();
+                    _statusRegister = PopStack();// | 0x20;
+                    lowByte = PopStack();
+                    highByte = PopStack();
+                    _programCounter = ((highByte << 8) | lowByte);
                     break;
 
                 case 0x60:
-                    RTS();
+                    //RTS();
+                    lowByte = (PopStack() + 1) & 0xFF;
+                    highByte = PopStack();
+                    _programCounter = ((highByte << 8) | lowByte);
+
                     break;
 
                 case 0xeb: // undocumented sbc immediate
@@ -461,15 +587,20 @@
                     break;
 
                 case 0x38:
-                    SEC();
+                    //SEC();
+                    SetFlag(CPUStatusMasks.CarryMask, true);
+
                     break;
 
                 case 0xf8:
-                    SED();
+                    //SED();
+                    SetFlag(CPUStatusMasks.DecimalModeMask, true);
+
                     break;
 
                 case 0x78:
-                    SEI();
+                    //SEI();
+                    SetFlag(CPUStatusMasks.InterruptDisableMask, true);
                     break;
 
                 case 0x85:
@@ -479,57 +610,142 @@
                 case 0x99:
                 case 0x81:
                 case 0x91:
-                    STA();
+                    //STA();
+                    SetByte(DecodeAddress(), _accumulator);
+
                     break;
 
                 case 0x86:
                 case 0x96:
                 case 0x8e:
-                    STX();
+                    //STX();
+                    SetByte(DecodeAddress(), _indexRegisterX);
+
                     break;
 
                 case 0x84:
                 case 0x94:
                 case 0x8c:
-                    STY();
+                    //STY();
+                    SetByte(DecodeAddress(), _indexRegisterY);
+
                     break;
 
                 case 0xaa:
-                    TAX();
+                    //TAX();
+                    _indexRegisterX = _accumulator;
+                    SetZNFlags(_indexRegisterX);
+
                     break;
 
                 case 0xa8:
-                    TAY();
+                    //TAY();
+                    _indexRegisterY = _accumulator;
+                    SetZNFlags(_indexRegisterY);
+
                     break;
 
                 case 0xba:
-                    TSX();
+                    //TSX();
+                    _indexRegisterX = _stackPointer;
+                    SetZNFlags(_indexRegisterX);
+
                     break;
 
                 case 0x8a:
-                    TXA();
+                    //TXA();
+                    _accumulator = _indexRegisterX;
+                    SetZNFlags(_accumulator);
+
                     break;
 
                 case 0x9a:
-                    TXS();
+                    //TXS();
+                    _stackPointer = _indexRegisterX;
+
                     break;
 
                 case 0x98:
-                    TYA();
+                    //TYA();
+                    _accumulator = _indexRegisterY;
+                    SetZNFlags(_accumulator);
+
                     break;
                     //undocumented opcodes
                 case 0x0b:
                 case 0x2b:
-                    AAC();
+                    //AAC();
+                    //AND byte with accumulator. If result is negative then carry is set.
+                    //Status flags: N,Z,C
+                    _accumulator = DecodeOperand() & _accumulator & 0xFF;
+
+                    SetFlag(CPUStatusMasks.CarryMask, (_accumulator & 0x80) == 0x80);
+
+                    SetZNFlags(_accumulator);
+
                     break;
                 case 0x4b:
-                    ASR();
+                    //AND byte with accumulator, then shift right one bit in accumu-lator.
+                    //Status flags: N,Z,C
+                    _accumulator = DecodeOperand() & _accumulator;
+
+                    SetFlag(CPUStatusMasks.CarryMask, (_accumulator & 1) == 1);
+                    _accumulator = _accumulator >> 1;
+
+                    SetZNFlags(_accumulator);
                     break;
                 case 0x6b:
-                    ARR();
+                    //ARR();
+                    //AND byte with accumulator, then rotate one bit right in accu - mulator and
+                    //  check bit 5 and 6:
+                    //If both bits are 1: set C, clear V. 0x30
+                    //If both bits are 0: clear C and V.
+                    //If only bit 5 is 1: set V, clear C.
+                    //If only bit 6 is 1: set C and V.
+                    //Status flags: N,V,Z,C
+                    _accumulator = DecodeOperand() & _accumulator;
+
+                    if ((_statusRegister & 0x01) == 0x01)
+                    {
+                        _accumulator = (_accumulator >> 1) | 0x80;
+                    }
+                    else
+                    {
+                        _accumulator = (_accumulator >> 1);
+                    }
+
+                    // original bit 0 shifted to carry
+                    //            target.SetFlag(CPUStatusBits.Carry, (); 
+
+                    SetFlag(CPUStatusMasks.CarryMask, (_accumulator & 0x01) == 0x01);
+
+
+                    switch (_accumulator & 0x30)
+                    {
+                        case 0x30:
+                            SetFlag(CPUStatusMasks.CarryMask, true);
+                            SetFlag(CPUStatusMasks.InterruptDisableMask, false);
+                            break;
+                        case 0x00:
+                            SetFlag(CPUStatusMasks.CarryMask, false);
+                            SetFlag(CPUStatusMasks.InterruptDisableMask, false);
+                            break;
+                        case 0x10:
+                            SetFlag(CPUStatusMasks.CarryMask, false);
+                            SetFlag(CPUStatusMasks.InterruptDisableMask, true);
+                            break;
+                        case 0x20:
+                            SetFlag(CPUStatusMasks.CarryMask, true);
+                            SetFlag(CPUStatusMasks.InterruptDisableMask, true);
+                            break;
+                    }
                     break;
                 case 0xab:
-                    ATX();
+                    //ATX();
+                    //AND byte with accumulator, then transfer accumulator to X register.
+                    //Status flags: N,Z
+                    _indexRegisterX = _accumulator = DecodeOperand() & _accumulator;
+                    SetZNFlags(_indexRegisterX);
                     break;
             }
         }

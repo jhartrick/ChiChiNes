@@ -7,25 +7,44 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
     "use strict";
 
     Bridge.define("ChiChiNES.AddressingModes", {
-        $kind: "enum",
         statics: {
             fields: {
                 Bullshit: 0,
-                Implicit: 1,
-                Accumulator: 2,
-                Immediate: 3,
-                ZeroPage: 4,
-                ZeroPageX: 5,
-                ZeroPageY: 6,
-                Relative: 7,
-                Absolute: 8,
-                AbsoluteX: 9,
-                AbsoluteY: 10,
-                Indirect: 11,
-                IndexedIndirect: 12,
-                IndirectIndexed: 13,
-                IndirectZeroPage: 14,
-                IndirectAbsoluteX: 15
+                Implicit: 0,
+                Accumulator: 0,
+                Immediate: 0,
+                ZeroPage: 0,
+                ZeroPageX: 0,
+                ZeroPageY: 0,
+                Relative: 0,
+                Absolute: 0,
+                AbsoluteX: 0,
+                AbsoluteY: 0,
+                Indirect: 0,
+                IndexedIndirect: 0,
+                IndirectIndexed: 0,
+                IndirectZeroPage: 0,
+                IndirectAbsoluteX: 0
+            },
+            ctors: {
+                init: function () {
+                    this.Bullshit = 0;
+                    this.Implicit = 1;
+                    this.Accumulator = 2;
+                    this.Immediate = 3;
+                    this.ZeroPage = 4;
+                    this.ZeroPageX = 5;
+                    this.ZeroPageY = 6;
+                    this.Relative = 7;
+                    this.Absolute = 8;
+                    this.AbsoluteX = 9;
+                    this.AbsoluteY = 10;
+                    this.Indirect = 11;
+                    this.IndexedIndirect = 12;
+                    this.IndirectIndexed = 13;
+                    this.IndirectZeroPage = 14;
+                    this.IndirectAbsoluteX = 15;
+                }
             }
         }
     });
@@ -1721,8 +1740,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             clockcount: null,
             instruction: null,
             addressmode: null,
-            memoryPatches: null,
-            genieCodes: null,
             _cheating: false,
             __frameFinished: false,
             lowByte: 0,
@@ -1952,22 +1969,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     } else {
                         this._ticks = value;
                     }
-                }
-            },
-            MemoryPatches: {
-                get: function () {
-                    return this.memoryPatches;
-                },
-                set: function (value) {
-                    this.memoryPatches = value;
-                }
-            },
-            GenieCodes: {
-                get: function () {
-                    return this.genieCodes;
-                },
-                set: function (value) {
-                    this.genieCodes = value;
                 }
             },
             Cheating: {
@@ -2255,11 +2256,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this.lastcpuClock = value;
                 }
             },
-            OutBuffer: {
-                get: function () {
-                    return this.outBuffer;
-                }
-            },
             PixelAwareDevice: {
                 get: function () {
                     return this.pixelDevices;
@@ -2295,9 +2291,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.nextEvent = -1;
                 this.clockcount = System.Array.init(256, 0, System.Int32);
                 this.instruction = System.Array.init(256, 0, System.Int32);
-                this.addressmode = System.Array.init(256, 0, ChiChiNES.AddressingModes);
-                this.memoryPatches = new (System.Collections.Generic.Dictionary$2(System.Int32,ChiChiNES.Hacking.IMemoryPatch))();
-                this.genieCodes = new (System.Collections.Generic.Dictionary$2(System.Int32,System.Int32))();
+                this.addressmode = System.Array.init(256, 0, System.Int32);
                 this._cheating = false;
                 this.__frameFinished = true;
                 this.Rams = System.Array.init(8192, 0, System.Int32);
@@ -2391,8 +2385,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 this._statusRegister |= 32; // (int)CPUStatusMasks.ExpansionMask;
             },
-            GetFlag: function (Flag) {
-                var flag = Flag;
+            GetFlag: function (flag) {
                 return ((this._statusRegister & flag) === flag);
             },
             InterruptRequest: function () {
@@ -3437,14 +3430,14 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         break;
                     case ChiChiNES.AddressingModes.AbsoluteX: 
                         // absolute, x indexed - two paramaters + Index register x
-                        result = (((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterX);
+                        result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterX) | 0));
                         if ((result & 255) < this._indexRegisterX) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
                         break;
                     case ChiChiNES.AddressingModes.AbsoluteY: 
                         // absolute, y indexed - two paramaters + Index register y
-                        result = (((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterY);
+                        result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterY) | 0));
                         if ((result & 255) < this._indexRegisterY) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
@@ -3454,46 +3447,46 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         result = this._currentInstruction_Parameters0 & 255;
                         break;
                     case ChiChiNES.AddressingModes.ZeroPageX: 
-                        result = (this._currentInstruction_Parameters0 + this._indexRegisterX) & 255;
+                        result = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 255;
                         break;
                     case ChiChiNES.AddressingModes.ZeroPageY: 
-                        result = ((this._currentInstruction_Parameters0 & 255) + (this._indexRegisterY & 255)) & 255;
+                        result = ((((this._currentInstruction_Parameters0 & 255) + (this._indexRegisterY & 255)) | 0)) & 255;
                         break;
                     case ChiChiNES.AddressingModes.Indirect: 
                         this.lowByte = this._currentInstruction_Parameters0;
                         this.highByte = this._currentInstruction_Parameters1 << 8;
                         var indAddr = (this.highByte | this.lowByte) & 65535;
                         var indirectAddr = (this.GetByte$1(indAddr));
-                        this.lowByte = (this.lowByte + 1) & 255;
+                        this.lowByte = (((this.lowByte + 1) | 0)) & 255;
                         indAddr = (this.highByte | this.lowByte) & 65535;
-                        indirectAddr |= (this.GetByte$1(indAddr) << 8);
+                        indirectAddr = indirectAddr | (this.GetByte$1(indAddr) << 8);
                         result = indirectAddr;
                         break;
                     case ChiChiNES.AddressingModes.IndexedIndirect: 
-                        var addr = (this._currentInstruction_Parameters0 + this._indexRegisterX) & 255;
+                        var addr = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 255;
                         this.lowByte = this.GetByte$1(addr);
-                        addr = addr + 1;
+                        addr = (addr + 1) | 0;
                         this.highByte = this.GetByte$1(addr & 255);
                         this.highByte = this.highByte << 8;
                         result = this.highByte | this.lowByte;
                         break;
                     case ChiChiNES.AddressingModes.IndirectIndexed: 
-                        this.lowByte = this.GetByte$1(this._currentInstruction_Parameters0 & 255);
-                        this.highByte = this.GetByte$1((this._currentInstruction_Parameters0 + 1) & 255) << 8;
+                        this.lowByte = this.GetByte$1(this._currentInstruction_Parameters0);
+                        this.highByte = this.GetByte$1((((this._currentInstruction_Parameters0 + 1) | 0)) & 255) << 8;
                         addr = (this.lowByte | this.highByte);
-                        result = addr + this._indexRegisterY;
+                        result = (addr + this._indexRegisterY) | 0;
                         if ((result & 255) > this._indexRegisterY) {
                             this._currentInstruction_ExtraTiming = 1;
                         }
                         break;
                     case ChiChiNES.AddressingModes.Relative: 
-                        result = (this._programCounter + this._currentInstruction_Parameters0);
+                        result = (((this._programCounter + this._currentInstruction_Parameters0) | 0));
                         break;
                     default: 
                         this.HandleBadOperation();
                         break;
                 }
-                return result;
+                return result & 65535;
             },
             HandleBadOperation: function () {
                 throw new System.NotImplementedException("Executors.DecodeAddress() recieved an invalid addressmode");
@@ -3555,7 +3548,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         // start the read process
                         data = this.DecodeOperand();
                         carryFlag = (this._statusRegister & 1);
-                        result = (this._accumulator + data + carryFlag);
+                        result = (this._accumulator + data + carryFlag) | 0;
                         // carry flag
                         this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, result > 255);
                         // overflow flag
@@ -3581,16 +3574,35 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 22: 
                     case 14: 
                     case 30: 
-                        this.ASL();
+                        //ASL();
+                        data = this.DecodeOperand();
+                        // set carry flag
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, ((data & 128) === 128));
+                        data = (data << 1) & 254;
+                        if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
+                            this._accumulator = data;
+                        } else {
+                            this.SetByte$1(this.DecodeAddress(), data);
+                        }
+                        this.SetZNFlags(data);
                         break;
                     case 144: 
-                        this.BCC();
+                        //BCC();
+                        if ((this._statusRegister & 1) !== 1) {
+                            this.Branch();
+                        }
                         break;
                     case 176: 
-                        this.BCS();
+                        //BCS();
+                        if ((this._statusRegister & 1) === 1) {
+                            this.Branch();
+                        }
                         break;
                     case 240: 
-                        this.BEQ();
+                        //BEQ();
+                        if ((this._statusRegister & 2) === 2) {
+                            this.Branch();
+                        }
                         break;
                     case 36: 
                     case 44: 
@@ -3598,18 +3610,43 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         data = this.DecodeOperand();
                         // overflow is bit 6
                         this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, (data & 64) === 64);
+                        //if ((operand & 64) == 64)
+                        //{
+                        //    _statusRegister = _statusRegister | 0x40;
+                        //}
+                        //else
+                        //{
+                        //    _statusRegister = _statusRegister & 0xBF;
+                        //}
                         // negative is bit 7
-                        this._statusRegister = ((data & 128) === 128) ? this._statusRegister | 128 : this._statusRegister & 127;
-                        this._statusRegister |= ((data & this.Accumulator) === 0) ? 2 : 253;
+                        if ((data & 128) === 128) {
+                            this._statusRegister = this._statusRegister | 128;
+                        } else {
+                            this._statusRegister = this._statusRegister & 127;
+                        }
+                        if ((data & this.Accumulator) === 0) {
+                            this._statusRegister = this._statusRegister | 2;
+                        } else {
+                            this._statusRegister = this._statusRegister & 253;
+                        }
                         break;
                     case 48: 
-                        this.BMI();
+                        //BMI();
+                        if ((this._statusRegister & 128) === 128) {
+                            this.Branch();
+                        }
                         break;
                     case 208: 
-                        this.BNE();
+                        //BNE();
+                        if ((this._statusRegister & 2) !== 2) {
+                            this.Branch();
+                        }
                         break;
                     case 16: 
-                        this.BPL();
+                        //BPL();
+                        if ((this._statusRegister & 128) !== 128) {
+                            this.Branch();
+                        }
                         break;
                     case 0: 
                         //BRK();
@@ -3635,22 +3672,32 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this._programCounter = lowByte + highByte * 256;
                         break;
                     case 80: 
-                        this.BVC();
+                        //BVC();
+                        if ((this._statusRegister & 64) !== 64) {
+                            this.Branch();
+                        }
                         break;
                     case 112: 
-                        this.BVS();
+                        //BVS();
+                        if ((this._statusRegister & 64) === 64) {
+                            this.Branch();
+                        }
                         break;
                     case 24: 
-                        this.CLC();
+                        //CLC();
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
                         break;
                     case 216: 
-                        this.CLD();
+                        //CLD();
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.DecimalModeMask, false);
                         break;
                     case 88: 
-                        this.CLI();
+                        //CLI();
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
                         break;
                     case 184: 
-                        this.CLV();
+                        //CLV();
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, false);
                         break;
                     case 201: 
                     case 197: 
@@ -3660,17 +3707,23 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 217: 
                     case 193: 
                     case 209: 
-                        this.CMP();
+                        //CMP();
+                        data = (this.Accumulator + 256 - this.DecodeOperand());
+                        this.Compare(data);
                         break;
                     case 224: 
                     case 228: 
                     case 236: 
-                        this.CPX();
+                        //CPX();
+                        data = (this._indexRegisterX + 256 - this.DecodeOperand());
+                        this.Compare(data);
                         break;
                     case 192: 
                     case 196: 
                     case 204: 
-                        this.CPY();
+                        //CPY();
+                        data = (this._indexRegisterY + 256 - this.DecodeOperand());
+                        this.Compare(data);
                         break;
                     case 198: 
                     case 214: 
@@ -3683,10 +3736,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.SetZNFlags(data);
                         break;
                     case 202: 
-                        this.DEX();
+                        //DEX();
+                        this._indexRegisterX = this._indexRegisterX - 1;
+                        this._indexRegisterX = this._indexRegisterX & 255;
+                        this.SetZNFlags(this._indexRegisterX);
                         break;
                     case 136: 
-                        this.DEY();
+                        //DEY();
+                        this._indexRegisterY = this._indexRegisterY - 1;
+                        this._indexRegisterY = this._indexRegisterY & 255;
+                        this.SetZNFlags(this._indexRegisterY);
                         break;
                     case 73: 
                     case 69: 
@@ -3711,10 +3770,15 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.SetZNFlags(data);
                         break;
                     case 232: 
-                        this.INX();
+                        //INX();
+                        this._indexRegisterX = this._indexRegisterX + 1;
+                        this._indexRegisterX = this._indexRegisterX & 255;
+                        this.SetZNFlags(this._indexRegisterX);
                         break;
                     case 200: 
-                        this.INY();
+                        this._indexRegisterY = this._indexRegisterY + 1;
+                        this._indexRegisterY = this._indexRegisterY & 255;
+                        this.SetZNFlags(this._indexRegisterY);
                         break;
                     case 76: 
                     case 108: 
@@ -3727,7 +3791,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         }
                         break;
                     case 32: 
-                        this.JSR();
+                        //JSR();
+                        this.PushStack((this._programCounter >> 8) & 255);
+                        this.PushStack((this._programCounter - 1) & 255);
+                        this._programCounter = this.DecodeAddress();
                         break;
                     case 169: 
                     case 165: 
@@ -3737,28 +3804,45 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 185: 
                     case 161: 
                     case 177: 
-                        this.LDA();
+                        //LDA();
+                        this._accumulator = this.DecodeOperand();
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 162: 
                     case 166: 
                     case 182: 
                     case 174: 
                     case 190: 
-                        this.LDX();
+                        //LDX();
+                        this._indexRegisterX = this.DecodeOperand();
+                        this.SetZNFlags(this._indexRegisterX);
                         break;
                     case 160: 
                     case 164: 
                     case 180: 
                     case 172: 
                     case 188: 
-                        this.LDY();
+                        //LDY();
+                        this._indexRegisterY = this.DecodeOperand();
+                        this.SetZNFlags(this._indexRegisterY);
                         break;
                     case 74: 
                     case 70: 
                     case 86: 
                     case 78: 
                     case 94: 
-                        this.LSR();
+                        //LSR();
+                        data = this.DecodeOperand();
+                        //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (data & 1) === 1);
+                        //target.SetFlag(CPUStatusBits.Carry, (rst & 1) == 1);
+                        data = data >> 1 & 255;
+                        this.SetZNFlags(data);
+                        if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
+                            this._accumulator = data;
+                        } else {
+                            this.SetByte$1(this.DecodeAddress(), data);
+                        }
                         break;
                     case 234: 
                     case 26: 
@@ -3786,7 +3870,10 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         //case 0x7c:
                         //case 0xdc:
                         //case 0xfc:
-                        this.NOP();
+                        //NOP();
+                        if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.AbsoluteX) {
+                            this.DecodeAddress();
+                        }
                         break;
                     case 9: 
                     case 5: 
@@ -3801,16 +3888,22 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.SetZNFlags(this._accumulator);
                         break;
                     case 72: 
-                        this.PHA();
+                        //PHA();
+                        this.PushStack(this._accumulator);
                         break;
                     case 8: 
-                        this.PHP();
+                        //PHP();
+                        data = this._statusRegister | 16 | 32;
+                        this.PushStack(data);
                         break;
                     case 104: 
-                        this.PLA();
+                        //PLA();
+                        this._accumulator = this.PopStack();
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 40: 
-                        this.PLP();
+                        //PLP();
+                        this._statusRegister = this.PopStack(); // | 0x20;
                         break;
                     case 42: 
                     case 38: 
@@ -3852,10 +3945,17 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         }
                         break;
                     case 64: 
-                        this.RTI();
+                        //RTI();
+                        this._statusRegister = this.PopStack(); // | 0x20;
+                        lowByte = this.PopStack();
+                        highByte = this.PopStack();
+                        this._programCounter = ((highByte << 8) | lowByte);
                         break;
                     case 96: 
-                        this.RTS();
+                        //RTS();
+                        lowByte = (this.PopStack() + 1) & 255;
+                        highByte = this.PopStack();
+                        this._programCounter = ((highByte << 8) | lowByte);
                         break;
                     case 235: 
                     case 233: 
@@ -3878,13 +3978,16 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this.SetZNFlags(this._accumulator);
                         break;
                     case 56: 
-                        this.SEC();
+                        //SEC();
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
                         break;
                     case 248: 
-                        this.SED();
+                        //SED();
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.DecimalModeMask, true);
                         break;
                     case 120: 
-                        this.SEI();
+                        //SEI();
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
                         break;
                     case 133: 
                     case 149: 
@@ -3893,48 +3996,110 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     case 153: 
                     case 129: 
                     case 145: 
-                        this.STA();
+                        //STA();
+                        this.SetByte$1(this.DecodeAddress(), this._accumulator);
                         break;
                     case 134: 
                     case 150: 
                     case 142: 
-                        this.STX();
+                        //STX();
+                        this.SetByte$1(this.DecodeAddress(), this._indexRegisterX);
                         break;
                     case 132: 
                     case 148: 
                     case 140: 
-                        this.STY();
+                        //STY();
+                        this.SetByte$1(this.DecodeAddress(), this._indexRegisterY);
                         break;
                     case 170: 
-                        this.TAX();
+                        //TAX();
+                        this._indexRegisterX = this._accumulator;
+                        this.SetZNFlags(this._indexRegisterX);
                         break;
                     case 168: 
-                        this.TAY();
+                        //TAY();
+                        this._indexRegisterY = this._accumulator;
+                        this.SetZNFlags(this._indexRegisterY);
                         break;
                     case 186: 
-                        this.TSX();
+                        //TSX();
+                        this._indexRegisterX = this._stackPointer;
+                        this.SetZNFlags(this._indexRegisterX);
                         break;
                     case 138: 
-                        this.TXA();
+                        //TXA();
+                        this._accumulator = this._indexRegisterX;
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 154: 
-                        this.TXS();
+                        //TXS();
+                        this._stackPointer = this._indexRegisterX;
                         break;
                     case 152: 
-                        this.TYA();
+                        //TYA();
+                        this._accumulator = this._indexRegisterY;
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 11: 
                     case 43: 
-                        this.AAC();
+                        //AAC();
+                        //AND byte with accumulator. If result is negative then carry is set.
+                        //Status flags: N,Z,C
+                        this._accumulator = this.DecodeOperand() & this._accumulator & 255;
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 128) === 128);
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 75: 
-                        this.ASR();
+                        //AND byte with accumulator, then shift right one bit in accumu-lator.
+                        //Status flags: N,Z,C
+                        this._accumulator = this.DecodeOperand() & this._accumulator;
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
+                        this._accumulator = this._accumulator >> 1;
+                        this.SetZNFlags(this._accumulator);
                         break;
                     case 107: 
-                        this.ARR();
+                        //ARR();
+                        //AND byte with accumulator, then rotate one bit right in accu - mulator and
+                        //  check bit 5 and 6:
+                        //If both bits are 1: set C, clear V. 0x30
+                        //If both bits are 0: clear C and V.
+                        //If only bit 5 is 1: set V, clear C.
+                        //If only bit 6 is 1: set C and V.
+                        //Status flags: N,V,Z,C
+                        this._accumulator = this.DecodeOperand() & this._accumulator;
+                        if ((this._statusRegister & 1) === 1) {
+                            this._accumulator = (this._accumulator >> 1) | 128;
+                        } else {
+                            this._accumulator = (this._accumulator >> 1);
+                        }
+                        // original bit 0 shifted to carry
+                        //            target.SetFlag(CPUStatusBits.Carry, (); 
+                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
+                        switch (this._accumulator & 48) {
+                            case 48: 
+                                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
+                                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
+                                break;
+                            case 0: 
+                                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
+                                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
+                                break;
+                            case 16: 
+                                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
+                                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
+                                break;
+                            case 32: 
+                                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
+                                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
+                                break;
+                        }
                         break;
                     case 171: 
-                        this.ATX();
+                        //ATX();
+                        //AND byte with accumulator, then transfer accumulator to X register.
+                        //Status flags: N,Z
+                        this._indexRegisterX = (this._accumulator = this.DecodeOperand() & this._accumulator);
+                        this.SetZNFlags(this._indexRegisterX);
                         break;
                 }
             },
@@ -3956,114 +4121,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 } // ((int)CPUStatusMasks.NegativeResultMask);
 
             },
-            LDA: function () {
-
-                this._accumulator = this.DecodeOperand();
-
-                this.SetZNFlags(this._accumulator);
-
-            },
-            LDX: function () {
-
-                this._indexRegisterX = this.DecodeOperand();
-                this.SetZNFlags(this._indexRegisterX);
-            },
-            LDY: function () {
-                this._indexRegisterY = this.DecodeOperand();
-                this.SetZNFlags(this._indexRegisterY);
-            },
-            STA: function () {
-                this.SetByte$1(this.DecodeAddress(), this._accumulator);
-            },
-            STX: function () {
-                this.SetByte$1(this.DecodeAddress(), this._indexRegisterX);
-            },
-            STY: function () {
-                this.SetByte$1(this.DecodeAddress(), this._indexRegisterY);
-            },
-            SED: function () {
-                this.SetFlag(ChiChiNES.CPUStatusMasks.DecimalModeMask, true);
-                // StatusRegister = StatusRegister | 0x8;
-            },
-            CLD: function () {
-                this.SetFlag(ChiChiNES.CPUStatusMasks.DecimalModeMask, false);
-                //            StatusRegister = StatusRegister & 0xF7;
-            },
-            LSR: function () {
-                var rst = this.DecodeOperand();
-                //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
-
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (rst & 1) === 1);
-                //target.SetFlag(CPUStatusBits.Carry, (rst & 1) == 1);
-                rst = rst >> 1 & 255;
-
-                this.SetZNFlags(rst);
-
-                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
-                    this._accumulator = rst;
-                } else {
-                    this.SetByte$1(this.DecodeAddress(), rst);
-                }
-            },
-            SKB: function () {
-                // _programCounter++;
-            },
-            ASL: function () {
-                var data = this.DecodeOperand();
-                // set carry flag
-
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, ((data & 128) === 128));
-
-                data = (data << 1) & 254;
-
-                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.Accumulator) {
-                    this._accumulator = data;
-                } else {
-                    this.SetByte$1(this.DecodeAddress(), data);
-                }
-
-
-                this.SetZNFlags(data);
-            },
-            SEC: function () {
-                // carry flag bit 0
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
-            },
-            CLC: function () {
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
-            },
-            SEI: function () {
-                //StatusRegister = StatusRegister | 0x4;
-                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
-            },
-            CLI: function () {
-                //            StatusRegister = StatusRegister & 0xFB;
-                this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
-            },
-            CLV: function () {
-                this.SetFlag(ChiChiNES.CPUStatusMasks.OverflowMask, false);
-
-            },
             Compare: function (data) {
                 this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, data > 255);
                 this.SetZNFlags(data & 255);
-            },
-            CMP: function () {
-                var data = (this.Accumulator + 256 - this.DecodeOperand());
-                this.Compare(data);
-            },
-            CPX: function () {
-                var data = (this._indexRegisterX + 256 - this.DecodeOperand());
-                this.Compare(data);
-            },
-            CPY: function () {
-                var data = (this._indexRegisterY + 256 - this.DecodeOperand());
-                this.Compare(data);
-            },
-            NOP: function () {
-                if (this._currentInstruction_AddressingMode === ChiChiNES.AddressingModes.AbsoluteX) {
-                    this.DecodeAddress();
-                }
             },
             Branch: function () {
                 //System.Diagnostics.Debug.Assert(cpuTiming[_currentInstruction_OpCode] == 2);
@@ -4081,193 +4141,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._currentInstruction_ExtraTiming = 2;
                 }
 
-            },
-            BCC: function () {
-
-                if ((this._statusRegister & 1) !== 1) {
-                    this.Branch();
-                }
-            },
-            BCS: function () {
-                if ((this._statusRegister & 1) === 1) {
-                    this.Branch();
-                }
-            },
-            BPL: function () {
-                if ((this._statusRegister & 128) !== 128) {
-                    this.Branch();
-                }
-            },
-            BMI: function () {
-                if ((this._statusRegister & 128) === 128) {
-                    this.Branch();
-                }
-            },
-            BVC: function () {
-                if ((this._statusRegister & 64) !== 64) {
-                    this.Branch();
-                }
-            },
-            BVS: function () {
-                if ((this._statusRegister & 64) === 64) {
-                    this.Branch();
-                }
-            },
-            BNE: function () {
-                if ((this._statusRegister & 2) !== 2) {
-                    this.Branch();
-                }
-            },
-            BEQ: function () {
-                if ((this._statusRegister & 2) === 2) {
-                    this.Branch();
-                }
-            },
-            DEX: function () {
-                this._indexRegisterX = this._indexRegisterX - 1;
-                this._indexRegisterX = this._indexRegisterX & 255;
-                this.SetZNFlags(this._indexRegisterX);
-            },
-            DEY: function () {
-                this._indexRegisterY = this._indexRegisterY - 1;
-                this._indexRegisterY = this._indexRegisterY & 255;
-                this.SetZNFlags(this._indexRegisterY);
-            },
-            INX: function () {
-                this._indexRegisterX = this._indexRegisterX + 1;
-                this._indexRegisterX = this._indexRegisterX & 255;
-                this.SetZNFlags(this._indexRegisterX);
-            },
-            INY: function () {
-                this._indexRegisterY = this._indexRegisterY + 1;
-                this._indexRegisterY = this._indexRegisterY & 255;
-                this.SetZNFlags(this._indexRegisterY);
-            },
-            TAX: function () {
-                this._indexRegisterX = this._accumulator;
-                this.SetZNFlags(this._indexRegisterX);
-
-            },
-            TXA: function () {
-                this._accumulator = this._indexRegisterX;
-                this.SetZNFlags(this._accumulator);
-            },
-            TAY: function () {
-                this._indexRegisterY = this._accumulator;
-                this.SetZNFlags(this._indexRegisterY);
-            },
-            TYA: function () {
-                this._accumulator = this._indexRegisterY;
-                this.SetZNFlags(this._accumulator);
-            },
-            TXS: function () {
-                this._stackPointer = this._indexRegisterX;
-            },
-            TSX: function () {
-                this._indexRegisterX = this._stackPointer;
-                this.SetZNFlags(this._indexRegisterX);
-            },
-            PHA: function () {
-                this.PushStack(this._accumulator);
-            },
-            PLA: function () {
-                this._accumulator = this.PopStack();
-                this.SetZNFlags(this._accumulator);
-            },
-            PHP: function () {
-                //PHP and BRK push the current status with bits 4 and 5 set on the stack; 
-                // BRK then sets the I flag.
-                var newStatus = this._statusRegister | 16 | 32;
-                this.PushStack(newStatus);
-            },
-            PLP: function () {
-                this._statusRegister = this.PopStack(); // | 0x20;
-            },
-            JSR: function () {
-                this.PushStack((this._programCounter >> 8) & 255);
-                this.PushStack((this._programCounter - 1) & 255);
-
-                this._programCounter = this.DecodeAddress();
-            },
-            RTS: function () {
-                var high, low;
-                low = (this.PopStack() + 1) & 255;
-                high = this.PopStack();
-                this._programCounter = ((high << 8) | low);
-            },
-            RTI: function () {
-                this._statusRegister = this.PopStack(); // | 0x20;
-                var low = this.PopStack();
-                var high = this.PopStack();
-                this._programCounter = ((256 * high) + low);
-            },
-            AAC: function () {
-                //AND byte with accumulator. If result is negative then carry is set.
-                //Status flags: N,Z,C
-                this._accumulator = this.DecodeOperand() & this._accumulator & 255;
-
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 128) === 128);
-
-                this.SetZNFlags(this._accumulator);
-
-            },
-            ASR: function () {
-                //AND byte with accumulator, then shift right one bit in accumu-lator.
-                //Status flags: N,Z,C
-                this._accumulator = this.DecodeOperand() & this._accumulator;
-
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
-                this._accumulator = this._accumulator >> 1;
-
-                this.SetZNFlags(this._accumulator);
-
-            },
-            ARR: function () {
-                //AND byte with accumulator, then rotate one bit right in accu - mulator and
-                //  check bit 5 and 6:
-                //If both bits are 1: set C, clear V. 0x30
-                //If both bits are 0: clear C and V.
-                //If only bit 5 is 1: set V, clear C.
-                //If only bit 6 is 1: set C and V.
-                //Status flags: N,V,Z,C
-                this._accumulator = this.DecodeOperand() & this._accumulator;
-
-                if ((this._statusRegister & 1) === 1) {
-                    this._accumulator = (this._accumulator >> 1) | 128;
-                } else {
-                    this._accumulator = (this._accumulator >> 1);
-                }
-
-                // original bit 0 shifted to carry
-                //            target.SetFlag(CPUStatusBits.Carry, (); 
-
-                this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, (this._accumulator & 1) === 1);
-
-
-                switch (this._accumulator & 48) {
-                    case 48: 
-                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
-                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
-                        break;
-                    case 0: 
-                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
-                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, false);
-                        break;
-                    case 16: 
-                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, false);
-                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
-                        break;
-                    case 32: 
-                        this.SetFlag(ChiChiNES.CPUStatusMasks.CarryMask, true);
-                        this.SetFlag(ChiChiNES.CPUStatusMasks.InterruptDisableMask, true);
-                        break;
-                }
-            },
-            ATX: function () {
-                //AND byte with accumulator, then transfer accumulator to X register.
-                //Status flags: N,Z
-                this._indexRegisterX = (this._accumulator = this.DecodeOperand() & this._accumulator);
-                this.SetZNFlags(this._indexRegisterX);
             },
             NMIHandler: function () {
                 this._handleNMI = true;
@@ -4354,10 +4227,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     default: 
                         throw new System.Exception("Bullshit!");
                 }
-                if (this._cheating && this.memoryPatches.containsKey(address)) {
+                //if (_cheating && memoryPatches.ContainsKey(address))
+                //{
 
-                    return this.memoryPatches.get(address).ChiChiNES$Hacking$IMemoryPatch$Activated ? this.memoryPatches.get(address).ChiChiNES$Hacking$IMemoryPatch$GetData(result) & 255 : result & 255;
-                }
+                //    return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
+                //}
 
                 return result & 255;
             },
@@ -4416,10 +4290,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     default: 
                         throw new System.Exception("Bullshit!");
                 }
-                if (this._cheating && this.memoryPatches.containsKey(address)) {
+                //if (_cheating && memoryPatches.ContainsKey(address))
+                //{
 
-                    return this.memoryPatches.get(address).ChiChiNES$Hacking$IMemoryPatch$Activated ? this.memoryPatches.get(address).ChiChiNES$Hacking$IMemoryPatch$GetData(result) & 255 : result & 255;
-                }
+                //    return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
+                //}
 
                 return result & 255;
             },
@@ -4845,8 +4720,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                                 this.lockedHScroll = this._hScroll;
                                 this.lockedVScroll = this._vScroll;
-                                this.lockedVScroll -= this.currentYPosition;
-
+                                this.lockedVScroll = this.lockedVScroll - this.currentYPosition;
                             }
                             this.UpdatePixelInfo();
                             // relock vscroll during render when this happens
@@ -5263,9 +5137,9 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 return result;
             },
             GetAttributeTableEntry: function (ppuNameTableMemoryStart, i, j) {
-                var LookUp = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, ((((((((8192 + ppuNameTableMemoryStart) | 0) + 960) | 0) + (((Bridge.Int.div(i, 4)) | 0))) | 0) + (Bridge.Int.mul((((Bridge.Int.div(j, 4)) | 0)), 8))) | 0));
+                var LookUp = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
 
-                switch ((i & 2) | Bridge.Int.mul((j & 2), 2)) {
+                switch ((i & 2) | (j & 2) * 2) {
                     case 0: 
                         return (LookUp << 2) & 12;
                     case 2: 
@@ -5332,9 +5206,8 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             this.currentYPosition = 0;
                             break;
                         case ChiChiNES.CPU2A03.frameClockEnd: 
-                            //if (fillRGB) FillBuffer();
                             this.shouldRender = true;
-                            this.__frameFinished = true;
+                            //__frameFinished = true;
                             this.frameFinished();
                             this.PPU_SetupVINT();
                             this.frameOn = false;
@@ -5431,6 +5304,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                                 this.yNTXor = 0;
                             }
 
+
                         }
 
                     }
@@ -5481,33 +5355,55 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
     });
 
     Bridge.define("ChiChiNES.CPUStatusBits", {
-        $kind: "enum",
         statics: {
             fields: {
                 Carry: 0,
-                ZeroResult: 1,
-                InterruptDisable: 2,
-                DecimalMode: 3,
-                BreakCommand: 4,
-                Expansion: 5,
-                Overflow: 6,
-                NegativeResult: 7
+                ZeroResult: 0,
+                InterruptDisable: 0,
+                DecimalMode: 0,
+                BreakCommand: 0,
+                Expansion: 0,
+                Overflow: 0,
+                NegativeResult: 0
+            },
+            ctors: {
+                init: function () {
+                    this.Carry = 0;
+                    this.ZeroResult = 1;
+                    this.InterruptDisable = 2;
+                    this.DecimalMode = 3;
+                    this.BreakCommand = 4;
+                    this.Expansion = 5;
+                    this.Overflow = 6;
+                    this.NegativeResult = 7;
+                }
             }
         }
     });
 
     Bridge.define("ChiChiNES.CPUStatusMasks", {
-        $kind: "enum",
         statics: {
             fields: {
-                CarryMask: 1,
-                ZeroResultMask: 2,
-                InterruptDisableMask: 4,
-                DecimalModeMask: 8,
-                BreakCommandMask: 16,
-                ExpansionMask: 32,
-                OverflowMask: 64,
-                NegativeResultMask: 128
+                CarryMask: 0,
+                ZeroResultMask: 0,
+                InterruptDisableMask: 0,
+                DecimalModeMask: 0,
+                BreakCommandMask: 0,
+                ExpansionMask: 0,
+                OverflowMask: 0,
+                NegativeResultMask: 0
+            },
+            ctors: {
+                init: function () {
+                    this.CarryMask = 1;
+                    this.ZeroResultMask = 2;
+                    this.InterruptDisableMask = 4;
+                    this.DecimalModeMask = 8;
+                    this.BreakCommandMask = 16;
+                    this.ExpansionMask = 32;
+                    this.OverflowMask = 64;
+                    this.NegativeResultMask = 128;
+                }
             }
         }
     });
@@ -5795,7 +5691,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._ppu.PPU_Initialize();
                     this._cart.ChiChiNES$INESCart$InitializeCart();
                     this._cpu.ResetCPU();
-                    this.ClearGenieCodes();
+                    //ClearGenieCodes();
                     this._cpu.PowerOn();
                     this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
                 }
@@ -5810,7 +5706,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         this._cart.ChiChiNES$INESCart$SRAM = this.SRAMReader(this._cart.ChiChiNES$INESCart$CheckSum);
                     }
                     this._cpu.ResetCPU();
-                    this.ClearGenieCodes();
+                    //ClearGenieCodes();
                     this._cpu.PowerOn();
                     this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
                 }
@@ -5928,110 +5824,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     this._cart.ChiChiNES$INESCart$ReadState(cloneState);
                 }
             },
-            ClearGenieCodes: function () {
-                this._cpu.GenieCodes.clear();
-                this._cpu.Cheating = false;
-            },
-            AddGameGenieCode: function (code, patch) {
-                var $t;
-                var hexCode = System.Array.init(code.length, 0, System.Byte);
-                var i = 0;
-
-
-                $t = Bridge.getEnumerator(code.toUpperCase());
-                try {
-                    while ($t.moveNext()) {
-                        var c = $t.Current;
-                        var digit = 0;
-                        switch (c) {
-                            case 65: 
-                                digit = 0;
-                                break;
-                            case 80: 
-                                digit = 1;
-                                break;
-                            case 90: 
-                                digit = 2;
-                                break;
-                            case 76: 
-                                digit = 3;
-                                break;
-                            case 71: 
-                                digit = 4;
-                                break;
-                            case 73: 
-                                digit = 5;
-                                break;
-                            case 84: 
-                                digit = 6;
-                                break;
-                            case 89: 
-                                digit = 7;
-                                break;
-                            case 69: 
-                                digit = 8;
-                                break;
-                            case 79: 
-                                digit = 9;
-                                break;
-                            case 88: 
-                                digit = 10;
-                                break;
-                            case 85: 
-                                digit = 11;
-                                break;
-                            case 75: 
-                                digit = 12;
-                                break;
-                            case 83: 
-                                digit = 13;
-                                break;
-                            case 86: 
-                                digit = 14;
-                                break;
-                            case 78: 
-                                digit = 15;
-                                break;
-                        }
-                        hexCode[Bridge.identity(i, (i = (i + 1) | 0))] = digit;
-                    }
-                } finally {
-                    if (Bridge.is($t, System.IDisposable)) {
-                        $t.System$IDisposable$dispose();
-                    }
-                }
-                // magic spell that makes the genie appear!
-                // http://tuxnes.sourceforge.net/gamegenie.html
-                var address = ((32768 + ((hexCode[3] & 7) << 12)) | 0) | ((hexCode[5] & 7) << 8) | ((hexCode[4] & 8) << 8) | ((hexCode[2] & 7) << 4) | ((hexCode[1] & 8) << 4) | (hexCode[4] & 7) | (hexCode[3] & 8);
-
-
-                var data = 0;
-                var compare = 0;
-                if (hexCode.length === 6) {
-                    data = ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4) | (hexCode[0] & 7) | (hexCode[5] & 8);
-
-                    patch.v = new ChiChiNES.Hacking.MemoryPatch(address, data);
-                } else if (hexCode.length === 8) {
-                    data = ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4) | (hexCode[0] & 7) | (hexCode[7] & 8);
-                    compare = ((hexCode[7] & 7) << 4) | ((hexCode[6] & 8) << 4) | (hexCode[6] & 7) | (hexCode[5] & 8);
-
-                    patch.v = new ChiChiNES.Hacking.ComparedMemoryPatch(address, (compare & 255), (data & 255));
-                } else {
-                    // not a genie code!  
-                    patch.v = null;
-                    return false;
-                }
-                try {
-                    patch.v.ChiChiNES$Hacking$IMemoryPatch$Activated = true;
-                    this._cpu.MemoryPatches.add(address, patch.v);
-                    this._cpu.Cheating = true;
-                }
-                catch ($e1) {
-                    $e1 = System.Exception.create($e1);
-                    this._cpu.Cheating = false;
-                }
-                return this._cpu.Cheating;
-            },
             SetupSound: function () {
                 this._sharedWave = new ChiChiNES.BeepsBoops.WavSharer.ctor();
                 //writer = new wavwriter(44100, "d:\\nesout.wav");
@@ -6059,11 +5851,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
                 if (!this.frameOn) {
                     this._totalCPUClocks = this._cpu.Clock;
-                    //lock (_sharedWave)
-                    //{
-                    //    soundBopper.FlushFrame(_totalCPUClocks);
-                    //    soundBopper.EndFrame(_totalCPUClocks);
-                    //}
                     this._totalCPUClocks = 0;
                     this._cpu.Clock = 0;
                     this._ppu.LastcpuClock = 0;
@@ -6078,7 +5865,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this.frameOn = true;
                 this.frameJustEnded = false;
 
-                this._cpu.RunFrame();
+                //_cpu.RunFrame();
+                this._cpu.FindNextEvent();
+                do {
+                    this._cpu.Step();
+                } while (this.frameOn);
 
                 this._totalCPUClocks = this._cpu.Clock;
 
@@ -7526,11 +7317,11 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                     dest = (this.ChrRomCount - 1) | 0;
                 }
 
-                var oneKsrc = Bridge.Int.mul(src, 8);
-                var oneKdest = Bridge.Int.mul(dest, 8);
+                var oneKsrc = src << 3;
+                var oneKdest = dest << 3;
                 //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
                 //  setup ppuBankStarts in 0x400 block chunks 
-                for (var i = 0; i < (Bridge.Int.mul(numberOf8kBanks, 8)); i = (i + 1) | 0) {
+                for (var i = 0; i < (numberOf8kBanks << 3); i = (i + 1) | 0) {
                     this.ppuBankStarts[((oneKdest + i) | 0)] = Bridge.Int.mul((((oneKsrc + i) | 0)), 1024);
 
                 }
@@ -7548,7 +7339,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 if (this.mapperId === 7) {
                     // val selects which bank to swap, 32k at a time
                     var newbank8 = 0;
-                    newbank8 = Bridge.Int.mul(4, (val & 15));
+                    newbank8 = (val & 15) << 2;
 
                     this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
                     // whizzler.DrawTo(clock);
@@ -7617,18 +7408,18 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._registers[2] = 0;
                 this._registers[3] = 0;
 
-                this.SetupBankStarts(0, 1, this.PrgRomCount * 2 - 2, this.PrgRomCount * 2 - 1);
+                this.SetupBankStarts(0, 1, ((Bridge.Int.mul(this.PrgRomCount, 2) - 2) | 0), ((Bridge.Int.mul(this.PrgRomCount, 2) - 1) | 0));
 
                 this.sequence = 0;
                 this.accumulator = 0;
             },
             MaskBankAddress$1: function (bank) {
-                if (bank >= this.PrgRomCount * 2) {
+                if (bank >= (this.PrgRomCount << 1)) {
                     var i;
                     i = 255;
-                    while ((bank & i) >= this.PrgRomCount * 2) {
+                    while ((bank & i) >= Bridge.Int.mul(this.PrgRomCount, 2)) {
 
-                        i = i / 2;
+                        i = (i >> 1) & 255;
                     }
 
                     return (bank & i);
@@ -7638,12 +7429,12 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
             },
             CopyBanks: function (dest, src, numberOf4kBanks) {
                 if (this.ChrRomCount > 0) {
-                    var oneKdest = dest * 4;
-                    var oneKsrc = src * 4;
+                    var oneKdest = Bridge.Int.mul(dest, 4);
+                    var oneKsrc = Bridge.Int.mul(src, 4);
                     //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
                     //  setup ppuBankStarts in 0x400 block chunks 
-                    for (var i = 0; i < (numberOf4kBanks * 4); ++i) {
-                        this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+                    for (var i = 0; i < (numberOf4kBanks << 2); i = (i + 1) | 0) {
+                        this.ppuBankStarts[((oneKdest + i) | 0)] = (((oneKsrc + i) | 0)) << 10;
                     }
 
                     //Array.Copy(chrRom, src * 0x1000, whizzler.cartCopyVidRAM, dest * 0x1000, numberOf4kBanks * 0x1000);
@@ -7656,7 +7447,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 switch (address & 61440) {
                     case 24576: 
                     case 28672: 
-                        this.prgRomBank6[address & 8191] = val;
+                        this.prgRomBank6[address & 8191] = val & 255;
                         break;
                     default: 
                         this.lastwriteAddress = address;
@@ -7668,7 +7459,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                             if ((val & 1) === 1) {
                                 this.accumulator = this.accumulator | (1 << this.sequence);
                             }
-                            this.sequence = this.sequence + 1;
+                            this.sequence = (this.sequence + 1) | 0;
                         }
                         if (this.sequence === 5) {
                             var regnum = (address & 32767) >> 13;
@@ -7704,7 +7495,7 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 } else {
                     //CopyBanks(0, _registers[1], 2);
                     this.CopyBanks(0, this._registers[1], 1);
-                    this.CopyBanks(1, this._registers[1] + 1, 1);
+                    this.CopyBanks(1, ((this._registers[1] + 1) | 0), 1);
                 }
                 this.BankSwitchesChanged = true;
 
@@ -7721,19 +7512,19 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
 
 
                 if ((this._registers[0] & 8) === 0) {
-                    reg = 4 * ((this._registers[3] >> 1) & 15) + this.bank_select;
-                    this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
+                    reg = (Bridge.Int.mul(4, ((this._registers[3] >> 1) & 15)) + this.bank_select) | 0;
+                    this.SetupBankStarts(reg, ((reg + 1) | 0), ((reg + 2) | 0), ((reg + 3) | 0));
                 } else {
-                    reg = 2 * (this._registers[3]) + this.bank_select;
+                    reg = (Bridge.Int.mul(2, (this._registers[3])) + this.bank_select) | 0;
                     //bit 2 - toggles between low PRGROM area switching and high
                     //PRGROM area switching
                     //0 = high PRGROM switching, 1 = low PRGROM switching
                     if ((this._registers[0] & 4) === 4) {
                         // select 16k bank in register 3 (setupbankstarts switches 8k banks)
-                        this.SetupBankStarts(reg, reg + 1, this.PrgRomCount * 2 - 2, this.PrgRomCount * 2 - 1);
+                        this.SetupBankStarts(reg, ((reg + 1) | 0), (((this.PrgRomCount << 1) - 2) | 0), (((this.PrgRomCount << 1) - 1) | 0));
                         //SetupBanks(reg8, reg8 + 1, 0xFE, 0xFF);
                     } else {
-                        this.SetupBankStarts(0, 1, reg, reg + 1);
+                        this.SetupBankStarts(0, 1, reg, ((reg + 1) | 0));
                     }
                 }
             },

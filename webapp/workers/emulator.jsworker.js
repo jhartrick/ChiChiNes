@@ -1,7 +1,8 @@
 ﻿//require('bridge.min.js');
 //require('ChiChiCore.min.js');
 importScripts('http://localhost:802/workers/bridge.min.js');
-importScripts('http://localhost:802/workers/ChiChiCore.min.js');
+importScripts('http://localhost:802/workers/ChiChiCore.js');
+importScripts('http://localhost:802/workers/ChiChi.HWCore.js');
 
 (function (globals, tendo) {
     var cartName = '';
@@ -74,14 +75,19 @@ importScripts('http://localhost:802/workers/ChiChiCore.min.js');
         const wavsharer = new ChiChiNES.BeepsBoops.WavSharer();
 
         const soundbop = new ChiChiNES.BeepsBoops.Bopper(wavsharer);
-        const cpu = new ChiChiNES.CPU2A03(soundbop);
+        const cpu = new ChiChiCPPU(soundbop);
+        //const cpu = new ChiChiNES.CPU2A03(soundbop);
         cpu.PPU_FillRGB = false;
         tendo.machine = new ChiChiNES.NESMachine(cpu,
             wavsharer,
             soundbop);
+
+        cpu.frameFinished = () => { tendo.machine.FrameFinished(); };
+
         tendo.machine.PadOne = tendo.controlPad1;//this.controlPad;
         //this.tileDoodler = new Tiler(this.machine);
         tendo.machine.Drawscreen = () => {
+
           // globals.postMessage({ frame: true, fps: framesPerSecond });
         };
         this.ready = true;
@@ -198,7 +204,7 @@ importScripts('http://localhost:802/workers/ChiChiCore.min.js');
             };
             if (tendo.Debugging) {
                 info.debug = {
-                    currentCpuStatus: {
+                    currentCpuStatus: tendo.machine.Cpu.GetStatus ? tendo.machine.Cpu.GetStatus() : {
                         PC: tendo.machine.Cpu.ProgramCounter,
                         A: tendo.machine.Cpu.Accumulator,
                         X: tendo.machine.Cpu.IndexRegisterX,
@@ -238,7 +244,7 @@ importScripts('http://localhost:802/workers/ChiChiCore.min.js');
                 cartName = event.data.name;
               break;
           case 'setvbuffer':
-                tendo.machine.Cpu.ByteOutBuffer = event.data.vbuffer;
+                tendo.machine.Cpu.byteOutBuffer = event.data.vbuffer;
               break;
           case 'setaudiobuffer':
                 tendo.sharedAudioBuffer = event.data.audiobuffer;

@@ -11,7 +11,7 @@ namespace ChiChiNES
     public partial class CPU2A03
     {
 
-        protected int lastcpuClock;
+        private int lastcpuClock;
 
         public int LastcpuClock
         {
@@ -22,7 +22,7 @@ namespace ChiChiNES
         /// draws from the lastcpuClock to the current one
         /// </summary>
         /// <param name="cpuClockNum"></param>
-        [Rules(Integer = IntegerRule.Plain )]
+
         public void DrawTo(int cpuClockNum)
         {
             int frClock = (cpuClockNum - lastcpuClock )* 3;
@@ -85,9 +85,8 @@ namespace ChiChiNES
                         break;
 
                     case frameClockEnd:
-                        //if (fillRGB) FillBuffer();
                         shouldRender = true;
-                        __frameFinished = true;
+                        //__frameFinished = true;
                         frameFinished();
 
                         PPU_SetupVINT();
@@ -192,6 +191,7 @@ namespace ChiChiNES
                         else {
                             yNTXor = 0x00;
                         }
+						
 
                     }
 
@@ -201,18 +201,11 @@ namespace ChiChiNES
             lastcpuClock = cpuClockNum;
         }
 
-
         public int[] byteOutBuffer = new int[256 * 256 * 4];
 
-        protected int[] outBuffer = new int[256 * 256];
+        private int[] outBuffer = new int[256 * 256];
 
-        public int[] OutBuffer
-        {
-            get { return outBuffer; }
-        }
-
-
-        protected int vbufLocation;
+        private int vbufLocation;
 
         public void UpdatePixelInfo()
         {

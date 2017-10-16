@@ -1,38 +1,43 @@
-﻿/// <reference path="./bridge.d.ts" />
+/// <reference path="./bridge.d.ts" />
 
 declare module ChiChiNES {
-    export enum AddressingModes {
-        Bullshit = 0,
-        Implicit = 1,
-        Accumulator = 2,
-        Immediate = 3,
-        ZeroPage = 4,
-        ZeroPageX = 5,
-        ZeroPageY = 6,
-        Relative = 7,
-        Absolute = 8,
-        AbsoluteX = 9,
-        AbsoluteY = 10,
-        Indirect = 11,
-        IndexedIndirect = 12,
-        IndirectIndexed = 13,
-        IndirectZeroPage = 14,
-        IndirectAbsoluteX = 15
+    export interface AddressingModes {
     }
+    export interface AddressingModesFunc extends Function {
+        prototype: AddressingModes;
+        new (): AddressingModes;
+        Bullshit: number;
+        Implicit: number;
+        Accumulator: number;
+        Immediate: number;
+        ZeroPage: number;
+        ZeroPageX: number;
+        ZeroPageY: number;
+        Relative: number;
+        Absolute: number;
+        AbsoluteX: number;
+        AbsoluteY: number;
+        Indirect: number;
+        IndexedIndirect: number;
+        IndirectIndexed: number;
+        IndirectZeroPage: number;
+        IndirectAbsoluteX: number;
+    }
+    var AddressingModes: AddressingModesFunc;
 
     export interface BaseCart extends ChiChiNES.INESCart {
         irqRaised: boolean;
         Debugging: boolean;
         DebugEvents: System.Collections.Generic.List$1<ChiChiNES.CartDebugEvent>;
-        ChrRom: number[];
+        ChrRom: any;
         ChrRomCount: number;
         PrgRomCount: number;
-        ROMHashFunction: {(prg: number[], chr: number[]): string};
+        ROMHashFunction: {(prg: any, chr: any): string};
         Whizzler: ChiChiNES.CPU2A03;
         IrqRaised: boolean;
         CheckSum: string;
         CPU: ChiChiNES.CPU2A03;
-        SRAM: number[];
+        SRAM: any;
         CartName: string;
         NumberOfPrgRoms: number;
         NumberOfChrRoms: number;
@@ -41,16 +46,16 @@ declare module ChiChiNES {
         NMIHandler: {(): void};
         IRQAsserted: boolean;
         NextEventAt: number;
-        PpuBankStarts: number[];
-        BankStartCache: number[];
+        PpuBankStarts: any;
+        BankStartCache: any;
         CurrentBank: number;
         BankSwitchesChanged: boolean;
         OneScreenOffset: number;
         UsesSRAM: boolean;
         ChrRamStart: number;
-        PPUBankStarts: number[];
+        PPUBankStarts: any;
         ClearDebugEvents(): void;
-        LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: number[], chrRomData: number[], chrRomOffset: number): void;
+        LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void;
         UpdateScanlineCounter(): void;
         GetByte(clock: number, address: number): number;
         SetupBankStarts(reg8: number, regA: number, regC: number, regE: number): void;
@@ -64,7 +69,6 @@ declare module ChiChiNES {
         GetPPUByte(clock: number, address: number): number;
         ActualChrRomOffset(address: number): number;
         SetPPUByte(clock: number, address: number, data: number): void;
-        FetchPixelEffect(vramAddress: number): number[];
         Mirror(clockNum: number, mirroring: number): void;
         InitializeCart(): void;
         SetByte(clock: number, address: number, data: number): void;
@@ -128,18 +132,18 @@ declare module ChiChiNES {
         Whizzler: ChiChiNES.CPU2A03;
         ChiChiNES$INESCart$CPU: ChiChiNES.CPU2A03;
         CPU: ChiChiNES.CPU2A03;
-        ChiChiNES$INESCart$ChrRom: number[];
-        ChrRom: number[];
+        ChiChiNES$INESCart$ChrRom: any;
+        ChrRom: any;
         ChiChiNES$INESCart$ChrRamStart: number;
         ChrRamStart: number;
-        ChiChiNES$INESCart$PPUBankStarts: number[];
-        PPUBankStarts: number[];
-        ChiChiNES$INESCart$ROMHashFunction: {(prg: number[], chr: number[]): string};
-        ROMHashFunction: {(prg: number[], chr: number[]): string};
+        ChiChiNES$INESCart$PPUBankStarts: any;
+        PPUBankStarts: any;
+        ChiChiNES$INESCart$ROMHashFunction: {(prg: any, chr: any): string};
+        ROMHashFunction: {(prg: any, chr: any): string};
         ChiChiNES$INESCart$CheckSum: string;
         CheckSum: string;
-        ChiChiNES$INESCart$SRAM: number[];
-        SRAM: number[];
+        ChiChiNES$INESCart$SRAM: any;
+        SRAM: any;
         ChiChiNES$INESCart$Mirroring: ChiChiNES.NameTableMirroring;
         Mirroring: ChiChiNES.NameTableMirroring;
         ChiChiNES$INESCart$CartName: string;
@@ -162,14 +166,14 @@ declare module ChiChiNES {
          */
         ChiChiNES$INESCart$BankSwitchesChanged: boolean;
         BankSwitchesChanged: boolean;
-        ChiChiNES$INESCart$BankStartCache: number[];
-        BankStartCache: number[];
+        ChiChiNES$INESCart$BankStartCache: any;
+        BankStartCache: any;
         ChiChiNES$INESCart$CurrentBank: number;
         CurrentBank: number;
         ChiChiNES$INESCart$UsesSRAM: boolean;
         UsesSRAM: boolean;
-        ChiChiNES$INESCart$LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: number[], chrRomData: number[], chrRomOffset: number): void;
-        LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: number[], chrRomData: number[], chrRomOffset: number): void;
+        ChiChiNES$INESCart$LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void;
+        LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void;
         ChiChiNES$INESCart$InitializeCart(): void;
         InitializeCart(): void;
         ChiChiNES$INESCart$UpdateScanlineCounter(): void;
@@ -182,8 +186,6 @@ declare module ChiChiNES {
         GetPPUByte(clock: number, address: number): number;
         ChiChiNES$INESCart$SetPPUByte(clock: number, address: number, data: number): void;
         SetPPUByte(clock: number, address: number, data: number): void;
-        ChiChiNES$INESCart$FetchPixelEffect(vramAddress: number): number[];
-        FetchPixelEffect(vramAddress: number): number[];
         ChiChiNES$INESCart$ActualChrRomOffset(address: number): number;
         ActualChrRomOffset(address: number): number;
         ChiChiNES$INESCart$UpdateBankStartCache(): number;
@@ -203,9 +205,6 @@ declare module ChiChiNES {
         FlipX: boolean;
         FlipY: boolean;
         Changed: boolean;
-        getHashCode(): ChiChiNES.NESSprite;
-        equals(o: ChiChiNES.NESSprite): Boolean;
-        $clone(to: ChiChiNES.NESSprite): ChiChiNES.NESSprite;
     }
     export interface NESSpriteFunc extends Function {
         prototype: NESSprite;
@@ -228,21 +227,19 @@ declare module ChiChiNES {
         IsRunning: boolean;
         PadOne: ChiChiNES.IControlPad;
         PadTwo: ChiChiNES.IControlPad;
-        SRAMReader: {(RomID: string): number[]};
-        SRAMWriter: {(RomID: string, SRAM: number[]): void};
+        SRAMReader: {(RomID: string): any};
+        SRAMWriter: {(RomID: string, SRAM: any): void};
         Initialize(): void;
         Reset(): void;
         PowerOn(): void;
         PowerOff(): void;
         EjectCart(): void;
-        LoadCart(rom: number[]): void;
+        LoadCart(rom: any): void;
         GoTendo_NoThread(fileName: string): void;
         GoTendo(fileName: string): void;
         HasState(index: number): boolean;
         GetState(index: number): void;
         SetState(index: number): void;
-        ClearGenieCodes(): void;
-        AddGameGenieCode(code: string, patch: {v: ChiChiNES.Hacking.IMemoryPatch}): boolean;
         SetupSound(): void;
         dispose(): void;
         Step(): void;
@@ -251,7 +248,7 @@ declare module ChiChiNES {
     }
     export interface NESMachineFunc extends Function {
         prototype: NESMachine;
-        new (cpu: ChiChiNES.CPU2A03, wavSharer: ChiChiNES.BeepsBoops.WavSharer, soundBopper: ChiChiNES.BeepsBoops.Bopper, soundThread: ChiChiNES.Sound.SoundThreader): NESMachine;
+        new (cpu: ChiChiNES.CPU2A03, wavSharer: ChiChiNES.BeepsBoops.WavSharer, soundBopper: ChiChiNES.BeepsBoops.Bopper): NESMachine;
     }
     var NESMachine: NESMachineFunc;
 
@@ -304,27 +301,37 @@ declare module ChiChiNES {
         setByte(clock: number, data: number): void;
     }
 
-    export enum CPUStatusMasks {
-        CarryMask = 1,
-        ZeroResultMask = 2,
-        InterruptDisableMask = 4,
-        DecimalModeMask = 8,
-        BreakCommandMask = 16,
-        ExpansionMask = 32,
-        OverflowMask = 64,
-        NegativeResultMask = 128
+    export interface CPUStatusMasks {
     }
+    export interface CPUStatusMasksFunc extends Function {
+        prototype: CPUStatusMasks;
+        new (): CPUStatusMasks;
+        CarryMask: number;
+        ZeroResultMask: number;
+        InterruptDisableMask: number;
+        DecimalModeMask: number;
+        BreakCommandMask: number;
+        ExpansionMask: number;
+        OverflowMask: number;
+        NegativeResultMask: number;
+    }
+    var CPUStatusMasks: CPUStatusMasksFunc;
 
-    export enum CPUStatusBits {
-        Carry = 0,
-        ZeroResult = 1,
-        InterruptDisable = 2,
-        DecimalMode = 3,
-        BreakCommand = 4,
-        Expansion = 5,
-        Overflow = 6,
-        NegativeResult = 7
+    export interface CPUStatusBits {
     }
+    export interface CPUStatusBitsFunc extends Function {
+        prototype: CPUStatusBits;
+        new (): CPUStatusBits;
+        Carry: number;
+        ZeroResult: number;
+        InterruptDisable: number;
+        DecimalMode: number;
+        BreakCommand: number;
+        Expansion: number;
+        Overflow: number;
+        NegativeResult: number;
+    }
+    var CPUStatusBits: CPUStatusBitsFunc;
 
     export interface NesCartMMC3 extends ChiChiNES.BaseCart {
         IRQAsserted: boolean;
@@ -360,6 +367,23 @@ declare module ChiChiNES {
     }
     var ClockedRequestEventArgs: ClockedRequestEventArgsFunc;
 
+    export interface IClockedMemoryMappedIOElement {
+        ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler: {(): void};
+        NMIHandler: {(): void};
+        ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted: boolean;
+        IRQAsserted: boolean;
+        ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt: number;
+        NextEventAt: number;
+        ChiChiNES$IClockedMemoryMappedIOElement$GetByte(Clock: number, address: number): number;
+        GetByte(Clock: number, address: number): number;
+        ChiChiNES$IClockedMemoryMappedIOElement$SetByte(Clock: number, address: number, data: number): void;
+        SetByte(Clock: number, address: number, data: number): void;
+        ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent(Clock: number): void;
+        HandleEvent(Clock: number): void;
+        ChiChiNES$IClockedMemoryMappedIOElement$ResetClock(Clock: number): void;
+        ResetClock(Clock: number): void;
+    }
+
     export interface CartDebugEvent {
         Clock: number;
         EventType: string;
@@ -372,24 +396,24 @@ declare module ChiChiNES {
     var CartDebugEvent: CartDebugEventFunc;
 
     export interface CPU2A03 {
-        addressmode: ChiChiNES.AddressingModes[];
+        addressmode: Uint8Array;
         frameClock: number;
         FrameEnded: boolean;
-        addDebugEvent(value: {(sender: any, e: System.Object): void}): void;
-        removeDebugEvent(value: {(sender: any, e: System.Object): void}): void;
-        Accumulator: number;
-        IndexRegisterY: number;
-        IndexRegisterX: number;
-        ProgramCounter: number;
-        StatusRegister: number;
-        AddressCodePage: number;
-        AddressLowByte: number;
-        AddressBus: number;
-        DataBus: number;
-        MemoryLock: boolean;
-        ReadWrite: boolean;
-        Ready: boolean;
-        Reset: boolean;
+        byteOutBuffer: Uint8Array;
+
+        //Accumulator: number;
+        //IndexRegisterY: number;
+        //IndexRegisterX: number;
+        //ProgramCounter: number;
+        //StatusRegister: number;
+        //AddressCodePage: number;
+        //AddressLowByte: number;
+        //AddressBus: number;
+        //DataBus: number;
+        //MemoryLock: boolean;
+        //ReadWrite: boolean;
+        //Ready: boolean;
+        //Reset: boolean;
         /**
          * read only access to the current instruction pointed to by the program counter
          *
@@ -401,8 +425,6 @@ declare module ChiChiNES {
          * @type ChiChiNES.CPU2A03.Instruction
          */
         CurrentInstruction: ChiChiNES.CPU2A03.Instruction;
-        OperationCounter: number;
-        Clock: number;
         /**
          * number of full clock ticks elapsed since emulation started
          *
@@ -412,159 +434,80 @@ declare module ChiChiNES {
          * @function Ticks
          * @type number
          */
-        Ticks: number;
+        //Cheating: boolean;
         SoundBopper: ChiChiNES.IClockedMemoryMappedIOElement;
         PadOne: ChiChiNES.InputHandler;
         PadTwo: ChiChiNES.InputHandler;
         Cart: ChiChiNES.IClockedMemoryMappedIOElement;
-        StackPointer: number;
+       // StackPointer: number;
         Debugging: boolean;
-        InstructionUsage: number[];
+        //InstructionUsage: any;
         InstructionHistoryPointer: number;
         InstructionHistory: ChiChiNES.CPU2A03.Instruction[];
-        PPU_HScroll: number;
-        PPU_VScroll: number;
-        PPU_CurrentYPosition: number;
-        PPU_CurrentXPosition: number;
-        PPU_ScanlinePos: number;
-        PPU_ScanlineNum: number;
-        PPU_IsDebugging: boolean;
-        NMIOccurred: boolean;
-        PPU_ShouldRender: boolean;
-        PPU_HandleVBlankIRQ: boolean;
-        VROM: number[];
-        PPU_PPUControlByte0: number;
-        PPU_NMIIsThrown: boolean;
-        PPU_PPUControlByte1: number;
-        PPU_BackgroundVisible: boolean;
-        PPU_SpritesAreVisible: boolean;
-        PPU_PPUStatus: number;
-        PPU_PPUAddress: number;
-        PPU_PatternTableIndex: number;
-        PPU_IsRendering: boolean;
-        FrameOn: boolean;
-        PPU_NameTableMemoryStart: number;
-        CurrentFrame: number[];
+        //PPU_HScroll: number;
+        //PPU_VScroll: number;
+        //PPU_CurrentYPosition: number;
+        //PPU_CurrentXPosition: number;
+        //PPU_ScanlinePos: number;
+        //PPU_ScanlineNum: number;
+        //PPU_IsDebugging: boolean;
+        //NMIOccurred: boolean;
+        //PPU_ShouldRender: boolean;
+        //PPU_HandleVBlankIRQ: boolean;
+        //VROM: any;
+        //PPU_PPUControlByte0: number;
+        //PPU_NMIIsThrown: boolean;
+        //PPU_PPUControlByte1: number;
+        //PPU_BackgroundVisible: boolean;
+        //PPU_SpritesAreVisible: boolean;
+        //PPU_PPUStatus: number;
+        //PPU_PPUAddress: number;
+        //PPU_PatternTableIndex: number;
+        //PPU_IsRendering: boolean;
+        //FrameOn: boolean;
+        //PPU_NameTableMemoryStart: number;
+        CurrentFrame: any;
         ChrRomHandler: ChiChiNES.INESCart;
-        /**
-         * ppu doesnt throw irq's
-         *
-         * @instance
-         * @public
-         * @memberof ChiChiNES.CPU2A03
-         * @function PPU_IRQAsserted
-         * @type boolean
-         */
-        PPU_IRQAsserted: boolean;
-        PPU_NextEventAt: number;
-        PPU_FrameFinishHandler: {(): void};
-        PPU_SpriteCopyHasHappened: boolean;
-        PPU_MaxSpritesPerScanline: number;
-        PPU_SpriteRam: number[];
-        SpritesOnLine: number[];
+
+        //PPU_IRQAsserted: boolean;
+        //PPU_NextEventAt: number;
+        //PPU_FrameFinishHandler: {(): void};
+        //PPU_SpriteCopyHasHappened: boolean;
+        //PPU_MaxSpritesPerScanline: number;
+        //PPU_SpriteRam: any;
+        SpritesOnLine: any;
         LastcpuClock: number;
-        OutBuffer: number[];
         PixelAwareDevice: ChiChiNES.IPixelAwareDevice;
-        ByteOutBuffer: number[];
-        getSRMask(flag: ChiChiNES.CPUStatusBits): number;
-        SetFlag(Flag: ChiChiNES.CPUStatusMasks, value: boolean): void;
-        GetFlag(Flag: ChiChiNES.CPUStatusMasks): boolean;
+        //ByteOutBuffer: any;
+        SetFlag(Flag: number, value: boolean): void;
+        GetFlag(flag: number): boolean;
         InterruptRequest(): void;
         NonMaskableInterrupt(): void;
         CheckEvent(): void;
-
+        RunFast(): void;
         Step(): void;
 
-        /**
-         * runs up to x clock cycles, then returns
-         *
-         * @instance
-         * @public
-         * @this ChiChiNES.CPU2A03
-         * @memberof ChiChiNES.CPU2A03
-         * @param   {number}    count
-         * @return  {void}
-         */
-
+        setupticks(): void;
         ResetCPU(): void;
         PowerOn(): void;
-
+        //GetState(outStream: System.Collections.Generic.Queue$1<number>): void;
+        //SetState(inStream: System.Collections.Generic.Queue$1<number>): void;
+        RunFrame(): void;
         DecodeAddress(): number;
         HandleBadOperation(): void;
         DecodeOperand(): number;
         Execute(): void;
         SetZNFlags(data: number): void;
-        LDA(): void;
-        LDX(): void;
-        LDY(): void;
-        STA(): void;
-        STX(): void;
-        STY(): void;
-        SED(): void;
-        CLD(): void;
-        JMP(): void;
-        DEC(): void;
-        INC(): void;
-        ADC(): void;
-        LSR(): void;
-        SKB(): void;
-        SBC(): void;
-        AND(): void;
-        ORA(): void;
-        EOR(): void;
-        ASL(): void;
-        BIT(): void;
-        SEC(): void;
-        CLC(): void;
-        SEI(): void;
-        CLI(): void;
-        CLV(): void;
         Compare(data: number): void;
-        CMP(): void;
-        CPX(): void;
-        CPY(): void;
-        NOP(): void;
         Branch(): void;
-        BCC(): void;
-        BCS(): void;
-        BPL(): void;
-        BMI(): void;
-        BVC(): void;
-        BVS(): void;
-        BNE(): void;
-        BEQ(): void;
-        DEX(): void;
-        DEY(): void;
-        INX(): void;
-        INY(): void;
-        TAX(): void;
-        TXA(): void;
-        TAY(): void;
-        TYA(): void;
-        TXS(): void;
-        TSX(): void;
-        PHA(): void;
-        PLA(): void;
-        PHP(): void;
-        PLP(): void;
-        JSR(): void;
-        ROR(): void;
-        ROL(): void;
-        RTS(): void;
-        RTI(): void;
-        BRK(): void;
-        AAC(): void;
-        ASR(): void;
-        ARR(): void;
-        ATX(): void;
         NMIHandler(): void;
         IRQUpdater(): void;
-        LoadBytes(offset: number, bytes: number[]): void;
-        LoadBytes$1(offset: number, bytes: number[], length: number): void;
-        PushStack(data: number): void;
-        PopStack(): number;
-        GetByte(): number;
-        GetByte$1(address: number): number;
+        LoadBytes(offset: number, bytes: any): void;
+        LoadBytes$1(offset: number, bytes: any, length: number): void;
+        //PushStack(data: number): void;
+        //PopStack(): number;
+        //GetByte(): number;
+        //GetByte$1(address: number): number;
         PeekByte(address: number): number;
         /**
          * gets an array of cpu memory, without affecting emulation
@@ -577,9 +520,9 @@ declare module ChiChiNES {
          * @param   {number}            finish
          * @return  {Array.<number>}
          */
-        PeekBytes(start: number, finish: number): number[];
-        SetByte(): void;
-        SetByte$1(address: number, data: number): void;
+        PeekBytes(start: number, finish: number): any;
+        //SetByte(): void;
+        //SetByte$1(address: number, data: number): void;
         FindNextEvent(): void;
         HandleNextEvent(): void;
         ResetInstructionHistory(): void;
@@ -587,18 +530,16 @@ declare module ChiChiNES {
         FireDebugEvent(s: string): void;
         PeekInstruction(address: number): ChiChiNES.CPU2A03.Instruction;
         PPU_Initialize(): void;
-        PPU_WriteState(writer: System.Collections.Generic.Queue$1<number>): void;
-        PPU_ReadState(state: System.Collections.Generic.Queue$1<number>): void;
+        //PPU_WriteState(writer: System.Collections.Generic.Queue$1<number>): void;
+        //PPU_ReadState(state: System.Collections.Generic.Queue$1<number>): void;
         PPU_SetupVINT(): void;
-        PPU_ClearVINT(): void;
-        PPU_RunNewScanlineEvents(): void;
         PPU_VidRAM_GetNTByte(address: number): number;
         UpdatePPUControlByte0(): void;
         PPU_SetByte(Clock: number, address: number, data: number): void;
         PPU_GetByte(Clock: number, address: number): number;
         PPU_HandleEvent(Clock: number): void;
         PPU_ResetClock(Clock: number): void;
-        PPU_CopySprites(source: {v: number[]}, copyFrom: number): void;
+        PPU_CopySprites(copyFrom: number): void;
         PPU_InitSprites(): void;
         PPU_GetSpritePixel(): number;
         PPU_WhissaSpritePixel(patternTableIndex: number, x: number, y: number, sprite: {v: ChiChiNES.NESSprite}, tileIndex: number): number;
@@ -646,12 +587,12 @@ declare module ChiChiNES {
         prototype: CPU2A03;
         Instruction: ChiChiNES.CPU2A03.InstructionFunc;
         new (bopper: ChiChiNES.BeepsBoops.Bopper): CPU2A03;
-        pal: number[];
+        pal: any;
         frameClockEnd: number;
-        PPU_PowersOfTwo: number[];
+        PPU_PowersOfTwo: any;
         PPU_PixelWhizzler(): void;
         
-        GetPalRGBA(): number[];
+        GetPalRGBA(): any;
     }
     var CPU2A03: CPU2A03Func;
     module CPU2A03 {
@@ -683,31 +624,43 @@ declare module ChiChiNES {
         }
     }
 
-    export interface IClockedMemoryMappedIOElement {
-        ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler: {(): void};
-        NMIHandler: {(): void};
-        ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted: boolean;
-        IRQAsserted: boolean;
-        ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt: number;
-        NextEventAt: number;
-        ChiChiNES$IClockedMemoryMappedIOElement$GetByte(Clock: number, address: number): number;
-        GetByte(Clock: number, address: number): number;
-        ChiChiNES$IClockedMemoryMappedIOElement$SetByte(Clock: number, address: number, data: number): void;
-        SetByte(Clock: number, address: number, data: number): void;
-        ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent(Clock: number): void;
-        HandleEvent(Clock: number): void;
-        ChiChiNES$IClockedMemoryMappedIOElement$ResetClock(Clock: number): void;
-        ResetClock(Clock: number): void;
-    }
-
 }
 
 declare module ChiChiNES.BeepsBoops {
+    export interface Blip {
+        BlipBuffer: ChiChiNES.BeepsBoops.Blip.blip_buffer_t;
+        blip_samples_avail: number;
+        blip_new(size: number): void;
+        blip_set_rates(clock_rate: number, sample_rate: number): void;
+        blip_clear(): void;
+        blip_clocks_needed(samples: number): number;
+        blip_end_frame(t: number): void;
+        remove_samples(count: number): void;
+        ReadBytes(outbuf: any, count: number, stereo: number): number;
+        blip_add_delta(time: number, delta: number): void;
+        blip_add_delta_fast(time: number, delta: number): void;
+    }
+    export interface BlipFunc extends Function {
+        prototype: Blip;
+        blip_buffer_t: ChiChiNES.BeepsBoops.Blip.blip_buffer_tFunc;
+        new (size: number): Blip;
+    }
+    var Blip: BlipFunc;
+    module Blip {
+        export interface blip_buffer_t {
+            samples: any;
+        }
+        export interface blip_buffer_tFunc extends Function {
+            prototype: blip_buffer_t;
+            new (size: number): blip_buffer_t;
+        }
+    }
+
     export interface WavSharer extends ChiChiNES.BeepsBoops.IWavReader {
         Locker: any;
         NESTooFast: boolean;
         Frequency: number;
-        SharedBuffer: number[];
+        SharedBuffer: any;
         SharedBufferLength: number;
         BufferAvailable: boolean;
         BytesWritten: {(sender: any, e: System.Object): void};
@@ -716,7 +669,7 @@ declare module ChiChiNES.BeepsBoops {
         StartReadWaves(): void;
         ReadWaves(): void;
         WroteBytes(): void;
-        SetSharedBuffer(values: number[]): void;
+        SetSharedBuffer(values: any): void;
     }
     export interface WavSharerFunc extends Function {
         prototype: WavSharer;
@@ -729,6 +682,120 @@ declare module ChiChiNES.BeepsBoops {
         };
     }
     var WavSharer: WavSharerFunc;
+
+    export interface Bopper extends ChiChiNES.IClockedMemoryMappedIOElement,ChiChiNES.BeepsBoops.IAPU {
+        SampleRate: number;
+        Muted: boolean;
+        InterruptRaised: boolean;
+        EnableSquare0: boolean;
+        EnableSquare1: boolean;
+        EnableTriangle: boolean;
+        EnableNoise: boolean;
+        NMIHandler: {(): void};
+        IRQAsserted: boolean;
+        NextEventAt: number;
+        RebuildSound(): void;
+        GetByte(Clock: number, address: number): number;
+        ReadStatus(): number;
+        SetByte(Clock: number, address: number, data: number): void;
+        DoSetByte(Clock: number, address: number, data: number): void;
+        UpdateFrame(time: number): void;
+        RunFrameEvents(time: number, step: number): void;
+        EndFrame(time: number): void;
+        FlushFrame(time: number): void;
+        HandleEvent(Clock: number): void;
+        ResetClock(Clock: number): void;
+    }
+    export interface BopperFunc extends Function {
+        prototype: Bopper;
+        new (output: ChiChiNES.BeepsBoops.WavSharer): Bopper;
+    }
+    var Bopper: BopperFunc;
+
+    export interface IAPU {
+        ChiChiNES$BeepsBoops$IAPU$InterruptRaised: boolean;
+        InterruptRaised: boolean;
+        ChiChiNES$BeepsBoops$IAPU$Muted: boolean;
+        Muted: boolean;
+        ChiChiNES$BeepsBoops$IAPU$EnableSquare0: boolean;
+        EnableSquare0: boolean;
+        ChiChiNES$BeepsBoops$IAPU$EnableSquare1: boolean;
+        EnableSquare1: boolean;
+        ChiChiNES$BeepsBoops$IAPU$EnableTriangle: boolean;
+        EnableTriangle: boolean;
+        ChiChiNES$BeepsBoops$IAPU$EnableNoise: boolean;
+        EnableNoise: boolean;
+        ChiChiNES$BeepsBoops$IAPU$UpdateFrame(time: number): void;
+        UpdateFrame(time: number): void;
+        ChiChiNES$BeepsBoops$IAPU$EndFrame(time: number): void;
+        EndFrame(time: number): void;
+    }
+
+    export interface IWavReader {
+        ChiChiNES$BeepsBoops$IWavReader$SharedBuffer: any;
+        SharedBuffer: any;
+        ChiChiNES$BeepsBoops$IWavReader$SharedBufferLength: number;
+        SharedBufferLength: number;
+        ChiChiNES$BeepsBoops$IWavReader$Frequency: number;
+        Frequency: number;
+        ChiChiNES$BeepsBoops$IWavReader$BufferAvailable: boolean;
+        BufferAvailable: boolean;
+        ChiChiNES$BeepsBoops$IWavReader$BytesWritten: {(sender: any, e: System.Object): void};
+        BytesWritten: {(sender: any, e: System.Object): void};
+        ChiChiNES$BeepsBoops$IWavReader$StartReadWaves(): void;
+        StartReadWaves(): void;
+        ChiChiNES$BeepsBoops$IWavReader$ReadWaves(): void;
+        ReadWaves(): void;
+        ChiChiNES$BeepsBoops$IWavReader$SetSharedBuffer(values: any): void;
+        SetSharedBuffer(values: any): void;
+    }
+
+    export interface NoiseChannel {
+        Length: number;
+        /**
+         * Period of current waveform
+         *
+         * @instance
+         * @public
+         * @memberof ChiChiNES.BeepsBoops.NoiseChannel
+         * @function Period
+         * @type number
+         */
+        Period: number;
+        /**
+         * Volume envelope for current waveform
+         *
+         * @instance
+         * @public
+         * @memberof ChiChiNES.BeepsBoops.NoiseChannel
+         * @function Volume
+         * @type number
+         */
+        Volume: number;
+        /**
+         * current time in channel
+         *
+         * @instance
+         * @public
+         * @memberof ChiChiNES.BeepsBoops.NoiseChannel
+         * @function Time
+         * @type number
+         */
+        Time: number;
+        Looping: boolean;
+        Enabled: boolean;
+        Gain: number;
+        WriteRegister(register: number, data: number, time: number): void;
+        Run(end_time: number): void;
+        UpdateAmplitude(amp: number): void;
+        EndFrame(time: number): void;
+        FrameClock(time: number, step: number): void;
+    }
+    export interface NoiseChannelFunc extends Function {
+        prototype: NoiseChannel;
+        new (bleeper: ChiChiNES.BeepsBoops.Blip, chan: number): NoiseChannel;
+    }
+    var NoiseChannel: NoiseChannelFunc;
 
     export interface DMCChannel {
         Length: number;
@@ -807,72 +874,6 @@ declare module ChiChiNES.BeepsBoops {
     }
     var DMCChannel: DMCChannelFunc;
 
-    export interface IWavReader {
-        ChiChiNES$BeepsBoops$IWavReader$SharedBuffer: number[];
-        SharedBuffer: number[];
-        ChiChiNES$BeepsBoops$IWavReader$SharedBufferLength: number;
-        SharedBufferLength: number;
-        ChiChiNES$BeepsBoops$IWavReader$Frequency: number;
-        Frequency: number;
-        ChiChiNES$BeepsBoops$IWavReader$BufferAvailable: boolean;
-        BufferAvailable: boolean;
-        ChiChiNES$BeepsBoops$IWavReader$BytesWritten: {(sender: any, e: System.Object): void};
-        BytesWritten: {(sender: any, e: System.Object): void};
-        ChiChiNES$BeepsBoops$IWavReader$StartReadWaves(): void;
-        StartReadWaves(): void;
-        ChiChiNES$BeepsBoops$IWavReader$ReadWaves(): void;
-        ReadWaves(): void;
-        ChiChiNES$BeepsBoops$IWavReader$SetSharedBuffer(values: number[]): void;
-        SetSharedBuffer(values: number[]): void;
-    }
-
-    export interface NoiseChannel {
-        Length: number;
-        /**
-         * Period of current waveform
-         *
-         * @instance
-         * @public
-         * @memberof ChiChiNES.BeepsBoops.NoiseChannel
-         * @function Period
-         * @type number
-         */
-        Period: number;
-        /**
-         * Volume envelope for current waveform
-         *
-         * @instance
-         * @public
-         * @memberof ChiChiNES.BeepsBoops.NoiseChannel
-         * @function Volume
-         * @type number
-         */
-        Volume: number;
-        /**
-         * current time in channel
-         *
-         * @instance
-         * @public
-         * @memberof ChiChiNES.BeepsBoops.NoiseChannel
-         * @function Time
-         * @type number
-         */
-        Time: number;
-        Looping: boolean;
-        Enabled: boolean;
-        Gain: number;
-        WriteRegister(register: number, data: number, time: number): void;
-        Run(end_time: number): void;
-        UpdateAmplitude(amp: number): void;
-        EndFrame(time: number): void;
-        FrameClock(time: number, step: number): void;
-    }
-    export interface NoiseChannelFunc extends Function {
-        prototype: NoiseChannel;
-        new (bleeper: ChiChiNES.BeepsBoops.Blip, chan: number): NoiseChannel;
-    }
-    var NoiseChannel: NoiseChannelFunc;
-
     export interface SoundStatusChangeEventArgs {
         Muted: boolean;
     }
@@ -882,34 +883,44 @@ declare module ChiChiNES.BeepsBoops {
     }
     var SoundStatusChangeEventArgs: SoundStatusChangeEventArgsFunc;
 
-    export interface Blip {
-        BlipBuffer: ChiChiNES.BeepsBoops.Blip.blip_buffer_t;
-        blip_samples_avail: number;
-        blip_new(size: number): void;
-        blip_set_rates(clock_rate: number, sample_rate: number): void;
-        blip_clear(): void;
-        blip_clocks_needed(samples: number): number;
-        blip_end_frame(t: number): void;
-        remove_samples(count: number): void;
-        ReadBytes(outbuf: number[], count: number, stereo: number): number;
-        blip_add_delta(time: number, delta: number): void;
-        blip_add_delta_fast(time: number, delta: number): void;
+    export interface TriangleChannel {
+        Length: number;
+        /**
+         * Period of current waveform
+         *
+         * @instance
+         * @public
+         * @memberof ChiChiNES.BeepsBoops.TriangleChannel
+         * @function Period
+         * @type number
+         */
+        Period: number;
+        /**
+         * current time in channel
+         *
+         * @instance
+         * @public
+         * @memberof ChiChiNES.BeepsBoops.TriangleChannel
+         * @function Time
+         * @type number
+         */
+        Time: number;
+        Envelope: number;
+        Looping: boolean;
+        Enabled: boolean;
+        Amplitude: number;
+        Gain: number;
+        WriteRegister(register: number, data: number, time: number): void;
+        Run(end_time: number): void;
+        UpdateAmplitude(new_amp: number): void;
+        EndFrame(time: number): void;
+        FrameClock(time: number, step: number): void;
     }
-    export interface BlipFunc extends Function {
-        prototype: Blip;
-        blip_buffer_t: ChiChiNES.BeepsBoops.Blip.blip_buffer_tFunc;
-        new (size: number): Blip;
+    export interface TriangleChannelFunc extends Function {
+        prototype: TriangleChannel;
+        new (bleeper: ChiChiNES.BeepsBoops.Blip, chan: number): TriangleChannel;
     }
-    var Blip: BlipFunc;
-    module Blip {
-        export interface blip_buffer_t {
-            samples: number[];
-        }
-        export interface blip_buffer_tFunc extends Function {
-            prototype: blip_buffer_t;
-            new (size: number): blip_buffer_t;
-        }
-    }
+    var TriangleChannel: TriangleChannelFunc;
 
     export interface SquareChannel {
         Length: number;
@@ -988,94 +999,6 @@ declare module ChiChiNES.BeepsBoops {
     }
     var SquareChannel: SquareChannelFunc;
 
-    export interface TriangleChannel {
-        Length: number;
-        /**
-         * Period of current waveform
-         *
-         * @instance
-         * @public
-         * @memberof ChiChiNES.BeepsBoops.TriangleChannel
-         * @function Period
-         * @type number
-         */
-        Period: number;
-        /**
-         * current time in channel
-         *
-         * @instance
-         * @public
-         * @memberof ChiChiNES.BeepsBoops.TriangleChannel
-         * @function Time
-         * @type number
-         */
-        Time: number;
-        Envelope: number;
-        Looping: boolean;
-        Enabled: boolean;
-        Amplitude: number;
-        Gain: number;
-        WriteRegister(register: number, data: number, time: number): void;
-        Run(end_time: number): void;
-        UpdateAmplitude(new_amp: number): void;
-        EndFrame(time: number): void;
-        FrameClock(time: number, step: number): void;
-    }
-    export interface TriangleChannelFunc extends Function {
-        prototype: TriangleChannel;
-        new (bleeper: ChiChiNES.BeepsBoops.Blip, chan: number): TriangleChannel;
-    }
-    var TriangleChannel: TriangleChannelFunc;
-
-    export interface Bopper extends ChiChiNES.IClockedMemoryMappedIOElement,ChiChiNES.BeepsBoops.IAPU {
-        SampleRate: number;
-        Muted: boolean;
-        WriteBuffer: number[];
-        InterruptRaised: boolean;
-        EnableSquare0: boolean;
-        EnableSquare1: boolean;
-        EnableTriangle: boolean;
-        EnableNoise: boolean;
-        NMIHandler: {(): void};
-        IRQAsserted: boolean;
-        NextEventAt: number;
-        RebuildSound(): void;
-        GetByte(Clock: number, address: number): number;
-        ReadStatus(): number;
-        SetByte(Clock: number, address: number, data: number): void;
-        DoSetByte(Clock: number, address: number, data: number): void;
-        UpdateFrame(time: number): void;
-        RunFrameEvents(time: number, step: number): void;
-        EndFrame(time: number): void;
-        FlushFrame(time: number): void;
-        HandleEvent(Clock: number): void;
-        ResetClock(Clock: number): void;
-    }
-    export interface BopperFunc extends Function {
-        prototype: Bopper;
-        new (output: ChiChiNES.BeepsBoops.WavSharer): Bopper;
-    }
-    var Bopper: BopperFunc;
-
-    export interface IAPU {
-        ChiChiNES$BeepsBoops$IAPU$InterruptRaised: boolean;
-        InterruptRaised: boolean;
-        ChiChiNES$BeepsBoops$IAPU$Muted: boolean;
-        Muted: boolean;
-        ChiChiNES$BeepsBoops$IAPU$EnableSquare0: boolean;
-        EnableSquare0: boolean;
-        ChiChiNES$BeepsBoops$IAPU$EnableSquare1: boolean;
-        EnableSquare1: boolean;
-        ChiChiNES$BeepsBoops$IAPU$EnableTriangle: boolean;
-        EnableTriangle: boolean;
-        ChiChiNES$BeepsBoops$IAPU$EnableNoise: boolean;
-        EnableNoise: boolean;
-        ChiChiNES$BeepsBoops$IAPU$UpdateFrame(time: number): void;
-        UpdateFrame(time: number): void;
-        ChiChiNES$BeepsBoops$IAPU$EndFrame(time: number): void;
-        EndFrame(time: number): void;
-    }
-
 }
 
 declare module ChiChiNES.CPU {
@@ -1093,6 +1016,15 @@ declare module ChiChiNES.CPU {
 }
 
 declare module ChiChiNES.Hacking {
+    export interface IMemoryPatch {
+        ChiChiNES$Hacking$IMemoryPatch$Activated: boolean;
+        Activated: boolean;
+        ChiChiNES$Hacking$IMemoryPatch$Address: number;
+        Address: number;
+        ChiChiNES$Hacking$IMemoryPatch$GetData(data: number): number;
+        GetData(data: number): number;
+    }
+
     export interface MemoryPatch extends ChiChiNES.Hacking.IMemoryPatch {
         Activated: boolean;
         Address: number;
@@ -1117,18 +1049,30 @@ declare module ChiChiNES.Hacking {
     }
     var ComparedMemoryPatch: ComparedMemoryPatchFunc;
 
-    export interface IMemoryPatch {
-        ChiChiNES$Hacking$IMemoryPatch$Activated: boolean;
-        Activated: boolean;
-        ChiChiNES$Hacking$IMemoryPatch$Address: number;
-        Address: number;
-        ChiChiNES$Hacking$IMemoryPatch$GetData(data: number): number;
-        GetData(data: number): number;
-    }
-
 }
 
 declare module ChiChiNES.Interaction {
+    export interface NESDisplayPluginAttribute extends System.Attribute {
+    }
+    export interface NESDisplayPluginAttributeFunc extends Function {
+        prototype: NESDisplayPluginAttribute;
+        new (): NESDisplayPluginAttribute;
+    }
+    var NESDisplayPluginAttribute: NESDisplayPluginAttributeFunc;
+
+    export enum CallbackType {
+        None = 0,
+        NoArgs = 1,
+        Array = 2,
+        IntPtr = 3
+    }
+
+    export enum NESPixelFormats {
+        RGB = 0,
+        BGR = 1,
+        Indexed = 2
+    }
+
     export interface InvalidDisplayContextException extends System.Exception {
     }
     export interface InvalidDisplayContextExceptionFunc extends Function {
@@ -1141,20 +1085,6 @@ declare module ChiChiNES.Interaction {
         };
     }
     var InvalidDisplayContextException: InvalidDisplayContextExceptionFunc;
-
-    export enum NESPixelFormats {
-        RGB = 0,
-        BGR = 1,
-        Indexed = 2
-    }
-
-    export interface NESDisplayPluginAttribute extends System.Attribute {
-    }
-    export interface NESDisplayPluginAttributeFunc extends Function {
-        prototype: NESDisplayPluginAttribute;
-        new (): NESDisplayPluginAttribute;
-    }
-    var NESDisplayPluginAttribute: NESDisplayPluginAttributeFunc;
 
     /** @namespace ChiChiNES.Interaction */
 
@@ -1190,13 +1120,6 @@ declare module ChiChiNES.Interaction {
         ToggleFullScreen(): void;
         ChiChiNES$Interaction$IDisplayContext$SetPausedState(state: boolean): void;
         SetPausedState(state: boolean): void;
-    }
-
-    export enum CallbackType {
-        None = 0,
-        NoArgs = 1,
-        Array = 2,
-        IntPtr = 3
     }
 
 }
@@ -1240,7 +1163,7 @@ declare module ChiChiNES.ROMLoader {
     export interface iNESFileHandlerFunc extends Function {
         prototype: iNESFileHandler;
         new (): iNESFileHandler;
-        LoadROM(ppu: ChiChiNES.CPU2A03, thefile: number[]): ChiChiNES.INESCart;
+        LoadROM(ppu: ChiChiNES.CPU2A03, thefile: any): ChiChiNES.INESCart;
     }
     var iNESFileHandler: iNESFileHandlerFunc;
 
@@ -1256,30 +1179,4 @@ declare module ChiChiNES.ROMLoader {
         };
     }
     var CartLoadException: CartLoadExceptionFunc;
-
-}
-
-declare module ChiChiNES.Sound {
-    export interface IWavStreamer extends System.IDisposable {
-        ChiChiNES$Sound$IWavStreamer$Muted: boolean;
-        Muted: boolean;
-        ChiChiNES$Sound$IWavStreamer$Volume: number;
-        Volume: number;
-        ChiChiNES$Sound$IWavStreamer$playPCM(): void;
-        playPCM(): void;
-        ChiChiNES$Sound$IWavStreamer$checkSamples(): void;
-        checkSamples(): void;
-    }
-
-    export interface SoundThreader extends System.IDisposable {
-        WavePlayer: ChiChiNES.Sound.IWavStreamer;
-        OnSoundStatusChanged(sender: any, e: ChiChiNES.BeepsBoops.SoundStatusChangeEventArgs): void;
-        PlaySound(o: any): void;
-        dispose(): void;
-    }
-    export interface SoundThreaderFunc extends Function {
-        prototype: SoundThreader;
-        new (streamer: ChiChiNES.Sound.IWavStreamer): SoundThreader;
-    }
-    var SoundThreader: SoundThreaderFunc;
 }

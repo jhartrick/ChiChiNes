@@ -8,6 +8,7 @@ namespace ChiChiNES
     {
         int lowByte, highByte;
 
+        [Rules(Integer =IntegerRule.Managed)]
         int DecodeAddress()
         {
             _currentInstruction_ExtraTiming = 0;
@@ -65,7 +66,7 @@ namespace ChiChiNES
                     result = highByte | lowByte;
                     break;
                 case AddressingModes.IndirectIndexed:
-                    lowByte = GetByte(_currentInstruction_Parameters0 & 0xFF) ;
+                    lowByte = GetByte(_currentInstruction_Parameters0);
                     highByte = GetByte((_currentInstruction_Parameters0 + 1) & 0xFF )  << 8;
                     addr = (lowByte | highByte) ;
                     result = addr + _indexRegisterY;
@@ -82,7 +83,7 @@ namespace ChiChiNES
                     HandleBadOperation();
                     break;
             }
-            return (ushort)result;
+            return result & 0xFFFF;
         }
 
         private void HandleBadOperation()

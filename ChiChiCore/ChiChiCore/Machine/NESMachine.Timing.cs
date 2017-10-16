@@ -37,11 +37,6 @@ namespace ChiChiNES
 
             if (!frameOn) {
                 _totalCPUClocks = _cpu.Clock;
-                //lock (_sharedWave)
-                //{
-                //    soundBopper.FlushFrame(_totalCPUClocks);
-                //    soundBopper.EndFrame(_totalCPUClocks);
-                //}
                 _totalCPUClocks = 0;
                 _cpu.Clock = 0;
                 _ppu.LastcpuClock = 0;
@@ -58,7 +53,12 @@ namespace ChiChiNES
             frameOn = true;
             frameJustEnded = false;
 
-            _cpu.RunFrame();
+            //_cpu.RunFrame();
+            _cpu.FindNextEvent();
+            do
+            {
+                _cpu.Step();
+            } while (frameOn);
 
             _totalCPUClocks = _cpu.Clock;
 

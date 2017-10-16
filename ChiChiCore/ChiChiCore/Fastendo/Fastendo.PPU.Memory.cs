@@ -186,8 +186,7 @@ namespace ChiChiNES
 
                             lockedHScroll = _hScroll;
                             lockedVScroll = _vScroll;
-                            lockedVScroll -= currentYPosition;
-
+                            lockedVScroll = lockedVScroll - currentYPosition;
                         }
                         UpdatePixelInfo();
                         // relock vscroll during render when this happens

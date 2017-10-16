@@ -94,7 +94,7 @@ namespace ChiChiNES
 
         public int DataBus { get; set; }
 
-        private int getSRMask(CPUStatusBits flag)
+        private int getSRMask(int flag)
         {
             switch (flag)
             {
@@ -118,18 +118,17 @@ namespace ChiChiNES
             return 0x00;
         }
 
-        public void SetFlag(CPUStatusMasks Flag, bool value)
+        public void SetFlag(int Flag, bool value)
         {
             _statusRegister = (value ?
-                (_statusRegister | (int)Flag) :
-                (_statusRegister & ~(int)Flag));
+                (_statusRegister | Flag) :
+                (_statusRegister & ~Flag));
 
             _statusRegister |= 0x20;// (int)CPUStatusMasks.ExpansionMask;
         }
 
-        public bool GetFlag(CPUStatusMasks Flag)
+        public bool GetFlag(int flag)
         {
-            int flag = (int)Flag;
             return ((_statusRegister & flag) == flag);
         }
 
@@ -180,8 +179,8 @@ namespace ChiChiNES
             // push sr onto stack
             PushStack(newStatusReg);
             // point pc to interrupt service routine
-            byte lowByte = (byte)GetByte(0xFFFA);
-            byte highByte = (byte)GetByte(0xFFFB);
+            int lowByte = GetByte(0xFFFA);
+            int highByte = GetByte(0xFFFB);
             int jumpTo = lowByte | (highByte << 8);
             ProgramCounter = jumpTo;
             //nonOpCodeticks = 7;
@@ -216,7 +215,7 @@ namespace ChiChiNES
 
 
         //private Instruction _currentInstruction = new Instruction();
-        private AddressingModes _currentInstruction_AddressingMode = AddressingModes.Bullshit;// = inst.AddressingMode;
+        private int _currentInstruction_AddressingMode = AddressingModes.Bullshit;// = inst.AddressingMode;
         private int _currentInstruction_Address =0;
         private int _currentInstruction_OpCode = 0;
         private int _currentInstruction_Parameters0 =0;
@@ -420,7 +419,8 @@ namespace ChiChiNES
         // debugging stuff from basicnes
         int[] clockcount = new int[0x100];
         int[] instruction = new int[0x100];
-        public AddressingModes[] addressmode = new AddressingModes[0x100];
+
+        public int[] addressmode = new int[0x100];
 
         public void setupticks()
         {

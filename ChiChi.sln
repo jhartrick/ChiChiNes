@@ -7,6 +7,8 @@ Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "ChiChi", "ChiChi.njsproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChiChiCore", "ChiChiCore\ChiChiCore\ChiChiCore.csproj", "{0E863123-CC36-46CB-976E-D8CB5CEBEA2D}"
 EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "typeScriptChiChi", "tsChiChi\typeScriptChiChi.njsproj", "{3207783D-B173-4898-BD7B-F4A172D609B0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{0E863123-CC36-46CB-976E-D8CB5CEBEA2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0E863123-CC36-46CB-976E-D8CB5CEBEA2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0E863123-CC36-46CB-976E-D8CB5CEBEA2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3207783D-B173-4898-BD7B-F4A172D609B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3207783D-B173-4898-BD7B-F4A172D609B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3207783D-B173-4898-BD7B-F4A172D609B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3207783D-B173-4898-BD7B-F4A172D609B0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

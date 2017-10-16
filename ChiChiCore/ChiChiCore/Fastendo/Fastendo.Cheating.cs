@@ -8,22 +8,22 @@ namespace ChiChiNES
 {
     public partial class CPU2A03
     {
-        private Dictionary<int, IMemoryPatch> memoryPatches = new Dictionary<int, IMemoryPatch>();
+        //private Dictionary<int, IMemoryPatch> memoryPatches = new Dictionary<int, IMemoryPatch>();
 
-        public Dictionary<int, IMemoryPatch> MemoryPatches
-        {
-            get { return memoryPatches; }
-            set { memoryPatches = value; }
-        }
+        //public Dictionary<int, IMemoryPatch> MemoryPatches
+        //{
+        //    get { return memoryPatches; }
+        //    set { memoryPatches = value; }
+        //}
 
-        private Dictionary<int, int> genieCodes = new Dictionary<int, int>();
+        //private Dictionary<int, int> genieCodes = new Dictionary<int, int>();
 
-        public Dictionary<int, int> GenieCodes
-        {
-            get { return genieCodes; }
-            set { genieCodes = value;
-            }
-        }
+        //public Dictionary<int, int> GenieCodes
+        //{
+        //    get { return genieCodes; }
+        //    set { genieCodes = value;
+        //    }
+        //}
         bool _cheating = false;
 
         public bool Cheating

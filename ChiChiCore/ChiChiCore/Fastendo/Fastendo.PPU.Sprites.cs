@@ -85,7 +85,6 @@ namespace ChiChiNES
 
         //well, this is somethin
         // which is better than nothin
-        //[Bridge.Rules(Integer = Bridge.IntegerRule.Managed)]
         protected int PPU_GetSpritePixel()
         {
             isForegroundPixel = false;
@@ -166,7 +165,6 @@ namespace ChiChiNES
             return 0;
         }
 
-        //[Bridge.Rules(Integer = Bridge.IntegerRule.Managed)]
         protected int PPU_WhissaSpritePixel(int patternTableIndex, int x, int y, ref NESSprite sprite, int tileIndex)
         {
             // 8x8 tile

@@ -124,10 +124,9 @@ namespace ChiChiNES
             return result;
         }
 
-        [Rules(Integer = IntegerRule.Managed)]
         private int GetAttributeTableEntry(int ppuNameTableMemoryStart, int i, int j)
         {
-            int LookUp = this.chrRomHandler.GetPPUByte(0, 0x2000 + ppuNameTableMemoryStart + 0x3C0 + (i / 4) + ((j / 4) * 0x8));
+            int LookUp = this.chrRomHandler.GetPPUByte(0, 0x2000 + ppuNameTableMemoryStart + 0x3C0 + (i >> 2) + ((j >> 2) * 0x8));
 
             switch ((i & 2) | (j & 2) * 2)
             {

@@ -167,11 +167,11 @@ namespace ChiChiNES
                 // cart sram, lives here
 
             }
-            if (_cheating && memoryPatches.ContainsKey(address))
-            {
+            //if (_cheating && memoryPatches.ContainsKey(address))
+            //{
                 
-                return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
-            }
+            //    return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
+            //}
 
             return result & 0xFF;
         }
@@ -240,11 +240,11 @@ namespace ChiChiNES
                     // cart sram, lives here
 
             }
-            if (_cheating && memoryPatches.ContainsKey(address))
-            {
+            //if (_cheating && memoryPatches.ContainsKey(address))
+            //{
 
-                return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
-            }
+            //    return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
+            //}
 
             return result & 0xFF;
         }

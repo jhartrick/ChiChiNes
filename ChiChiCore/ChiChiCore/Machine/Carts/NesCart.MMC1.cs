@@ -2,7 +2,7 @@
 
 namespace ChiChiNES
 {
-        [Rules(Integer =IntegerRule.Plain)]
+        [Rules(Integer =IntegerRule.Managed)]
         public class NesCartMMC1 : BaseCart
         {
 
@@ -36,13 +36,13 @@ namespace ChiChiNES
  
             public new int MaskBankAddress(int bank)
             {
-                if (bank >= PrgRomCount * 2)
+                if (bank >= (PrgRomCount << 1))
                 {
                     int i; i = 0xFF;
                     while ((bank & i) >= PrgRomCount * 2)
                     {
 
-                        i = i / 2;
+                        i = (i >> 1) & 0xFF;
                     }
 
                     return (bank & i);
@@ -63,8 +63,8 @@ namespace ChiChiNES
                     int oneKsrc = src * 4;
                     //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
                     //  setup ppuBankStarts in 0x400 block chunks 
-                    for (int i = 0; i < (numberOf4kBanks * 4); ++i)
-                        ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 0x400;
+                    for (int i = 0; i < (numberOf4kBanks << 2); ++i)
+                        ppuBankStarts[oneKdest + i] = (oneKsrc + i) << 10;
 
                     //Array.Copy(chrRom, src * 0x1000, whizzler.cartCopyVidRAM, dest * 0x1000, numberOf4kBanks * 0x1000);
                 }
@@ -84,7 +84,7 @@ namespace ChiChiNES
                 {
                     case 0x6000:
                     case 0x7000:
-                        prgRomBank6[address & 0x1FFF] = (byte)val;
+                        prgRomBank6[address & 0x1FFF] = val & 0xFF;
                         break;
 
                     default:
@@ -180,7 +180,7 @@ namespace ChiChiNES
                     if ((_registers[0] & 4) == 4) // if bit set, swap low bank, else high bank
                     {
                         // select 16k bank in register 3 (setupbankstarts switches 8k banks)
-                        SetupBankStarts(reg, reg + 1, PrgRomCount * 2 - 2, PrgRomCount * 2 - 1);
+                        SetupBankStarts(reg, reg + 1, (PrgRomCount << 1) - 2, (PrgRomCount <<1) - 1);
                         //SetupBanks(reg8, reg8 + 1, 0xFE, 0xFF);
                     }
                     else

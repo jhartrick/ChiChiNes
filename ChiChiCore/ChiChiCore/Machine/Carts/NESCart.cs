@@ -59,11 +59,11 @@ namespace ChiChiNES.CPU
 
             if (dest >= ChrRomCount) dest = ChrRomCount - 1;
             
-            int oneKsrc = src * 8;
-            int oneKdest = dest * 8;
+            int oneKsrc = src << 3;
+            int oneKdest = dest << 3;
             //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
             //  setup ppuBankStarts in 0x400 block chunks 
-            for (int i = 0; i < (numberOf8kBanks * 8); ++i)
+            for (int i = 0; i < (numberOf8kBanks << 3); ++i)
             {
                 ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 0x400;
 
@@ -89,7 +89,7 @@ namespace ChiChiNES.CPU
             {
                 // val selects which bank to swap, 32k at a time
                 int newbank8 = 0;
-                newbank8 = 4 * (val & 0xF);
+                newbank8 = (val & 0xF) << 2;
 
                 SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
                 // whizzler.DrawTo(clock);

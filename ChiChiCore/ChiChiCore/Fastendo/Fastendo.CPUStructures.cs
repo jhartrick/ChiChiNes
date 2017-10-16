@@ -51,14 +51,5 @@ namespace ChiChiNES
             public int Length;
         }
 
-        //public class CPUStatus
-        //{
-        //    public int StatusRegister;
-        //    public int ProgramCounter;
-        //    public int Accumulator;
-        //    public int IndexRegisterX;
-        //    public int IndexRegisterY;
-        //}
-
     }
 }

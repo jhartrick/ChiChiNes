@@ -25,7 +25,7 @@ namespace ChiChiNES
                 _ppu.PPU_Initialize();
                 _cart.InitializeCart();
                 _cpu.ResetCPU();
-                ClearGenieCodes();
+                //ClearGenieCodes();
                 _cpu.PowerOn();
                 RunState = RunningStatuses.Running;
             }
@@ -42,7 +42,7 @@ namespace ChiChiNES
                 if (SRAMReader != null && _cart.UsesSRAM)
                     _cart.SRAM = SRAMReader(_cart.CheckSum);
                 _cpu.ResetCPU();
-                ClearGenieCodes();
+                //ClearGenieCodes();
                 _cpu.PowerOn();
                 RunState = RunningStatuses.Running;
             }
@@ -252,122 +252,124 @@ namespace ChiChiNES
         //    }
         //}
 
-        public void ClearGenieCodes()
-        {
-            _cpu.GenieCodes.Clear();
-            _cpu.Cheating = false;
-        }
-
-        public bool AddGameGenieCode(string code, out IMemoryPatch patch)
-        {
-            byte[] hexCode = new byte[code.Length];
-            int i = 0;
 
 
-            foreach (char c in code.ToUpper())
-            {
-                byte digit = 0;
-                switch (c)
-                {
-                    case 'A':
-                        digit = 0x0;
-                        break;
-                    case 'P':
-                        digit = 0x1;
-                        break;
-                    case 'Z':
-                        digit = 0x2;
-                        break;
-                    case 'L':
-                        digit = 0x3;
-                        break;
-                    case 'G':
-                        digit = 0x4;
-                        break;
-                    case 'I':
-                        digit = 0x5;
-                        break;
-                    case 'T':
-                        digit = 0x6;
-                        break;
-                    case 'Y':
-                        digit = 0x7;
-                        break;
-                    case 'E':
-                        digit = 0x8;
-                        break;
-                    case 'O':
-                        digit = 0x9;
-                        break;
-                    case 'X':
-                        digit = 0xA;
-                        break;
-                    case 'U':
-                        digit = 0xB;
-                        break;
-                    case 'K':
-                        digit = 0xC;
-                        break;
-                    case 'S':
-                        digit = 0xD;
-                        break;
-                    case 'V':
-                        digit = 0xE;
-                        break;
-                    case 'N':
-                        digit = 0xF;
-                        break;
-                }
-                hexCode[i++] = digit;
-            }
+        //public void ClearGenieCodes()
+        //{
+        //    _cpu.GenieCodes.Clear();
+        //    _cpu.Cheating = false;
+        //}
 
-            // magic spell that makes the genie appear!
-            // http://tuxnes.sourceforge.net/gamegenie.html
-            int address = 0x8000 +
-                  ((hexCode[3] & 7) << 12)
-                | ((hexCode[5] & 7) << 8) | ((hexCode[4] & 8) << 8)
-                | ((hexCode[2] & 7) << 4) | ((hexCode[1] & 8) << 4)
-                | (hexCode[4] & 7) | (hexCode[3] & 8);
+        //public bool AddGameGenieCode(string code, out IMemoryPatch patch)
+        //{
+        //    byte[] hexCode = new byte[code.Length];
+        //    int i = 0;
 
 
-            int data = 0;
-            int compare = 0;
-            if (hexCode.Length == 6)
-            {
-                data =
-                     ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4)
-                    | (hexCode[0] & 7) | (hexCode[5] & 8);
+        //    foreach (char c in code.ToUpper())
+        //    {
+        //        byte digit = 0;
+        //        switch (c)
+        //        {
+        //            case 'A':
+        //                digit = 0x0;
+        //                break;
+        //            case 'P':
+        //                digit = 0x1;
+        //                break;
+        //            case 'Z':
+        //                digit = 0x2;
+        //                break;
+        //            case 'L':
+        //                digit = 0x3;
+        //                break;
+        //            case 'G':
+        //                digit = 0x4;
+        //                break;
+        //            case 'I':
+        //                digit = 0x5;
+        //                break;
+        //            case 'T':
+        //                digit = 0x6;
+        //                break;
+        //            case 'Y':
+        //                digit = 0x7;
+        //                break;
+        //            case 'E':
+        //                digit = 0x8;
+        //                break;
+        //            case 'O':
+        //                digit = 0x9;
+        //                break;
+        //            case 'X':
+        //                digit = 0xA;
+        //                break;
+        //            case 'U':
+        //                digit = 0xB;
+        //                break;
+        //            case 'K':
+        //                digit = 0xC;
+        //                break;
+        //            case 'S':
+        //                digit = 0xD;
+        //                break;
+        //            case 'V':
+        //                digit = 0xE;
+        //                break;
+        //            case 'N':
+        //                digit = 0xF;
+        //                break;
+        //        }
+        //        hexCode[i++] = digit;
+        //    }
 
-                patch = new MemoryPatch(address, data);
-            }
-            else if (hexCode.Length == 8)
-            {
-                data =
-                     ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4)
-                    | (hexCode[0] & 7) | (hexCode[7] & 8);
-                compare =
-                     ((hexCode[7] & 7) << 4) | ((hexCode[6] & 8) << 4)
-                    | (hexCode[6] & 7) | (hexCode[5] & 8);
+        //    // magic spell that makes the genie appear!
+        //    // http://tuxnes.sourceforge.net/gamegenie.html
+        //    int address = 0x8000 +
+        //          ((hexCode[3] & 7) << 12)
+        //        | ((hexCode[5] & 7) << 8) | ((hexCode[4] & 8) << 8)
+        //        | ((hexCode[2] & 7) << 4) | ((hexCode[1] & 8) << 4)
+        //        | (hexCode[4] & 7) | (hexCode[3] & 8);
 
-                patch = new ComparedMemoryPatch(address, (byte)compare, (byte)data);
-            }
-            else
-            {
-                // not a genie code!  
-                patch = null;
-                return false;
-            }
-            try
-            {
-                patch.Activated = true;
-                _cpu.MemoryPatches.Add(address, patch);
-                _cpu.Cheating = true;
-            }
-            catch {
-                _cpu.Cheating = false;
-            }
-            return _cpu.Cheating;
-        }
+
+        //    int data = 0;
+        //    int compare = 0;
+        //    if (hexCode.Length == 6)
+        //    {
+        //        data =
+        //             ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4)
+        //            | (hexCode[0] & 7) | (hexCode[5] & 8);
+
+        //        patch = new MemoryPatch(address, data);
+        //    }
+        //    else if (hexCode.Length == 8)
+        //    {
+        //        data =
+        //             ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4)
+        //            | (hexCode[0] & 7) | (hexCode[7] & 8);
+        //        compare =
+        //             ((hexCode[7] & 7) << 4) | ((hexCode[6] & 8) << 4)
+        //            | (hexCode[6] & 7) | (hexCode[5] & 8);
+
+        //        patch = new ComparedMemoryPatch(address, (byte)compare, (byte)data);
+        //    }
+        //    else
+        //    {
+        //        // not a genie code!  
+        //        patch = null;
+        //        return false;
+        //    }
+        //    try
+        //    {
+        //        patch.Activated = true;
+        //        _cpu.MemoryPatches.Add(address, patch);
+        //        _cpu.Cheating = true;
+        //    }
+        //    catch {
+        //        _cpu.Cheating = false;
+        //    }
+        //    return _cpu.Cheating;
+        //}
 
     }
 }
