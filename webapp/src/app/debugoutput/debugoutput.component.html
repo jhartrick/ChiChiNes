@@ -5,7 +5,7 @@
 </div>
 <div class="cpuStatus">
   <p>
-    PC: {{ nes.debugger.currentCpuStatus.PC.toString(16) }} A: {{ nes.debugger.currentCpuStatus.A.toString(16) }} X: {{ nes.debugger.currentCpuStatus.X.toString(16) }} Y: {{ nes.debugger.currentCpuStatus.Y.toString(16) }} SP: {{ nes.debugger.currentCpuStatus.SP.toString(16) }}
+    PC: {{ nes.debugger.currentCpuStatus?.PC?.toString(16) }} A: {{ nes.debugger.currentCpuStatus?.A?.toString(16) }} X: {{ nes.debugger.currentCpuStatus?.X?.toString(16) }} Y: {{ nes.debugger.currentCpuStatus?.Y?.toString(16) }} SP: {{ nes.debugger.currentCpuStatus?.SP?.toString(16) }}
   </p>
   <p>
     SR: {{ nes.debugger.decodedStatusRegister }}

@@ -12,8 +12,13 @@ import 'rxjs/add/observable/fromEvent';
 
 
 
-export interface DecodedInstruction extends ChiChiNES.CPU2A03.Instruction {
+export class DecodedInstruction extends ChiChiNES.CPU2A03.Instruction {
   asm: string;
+
+  public toString(): string {
+      const result = ' ' + this.frame + ' ' + this.Address.toString(16) + ': ' + this.asm;
+      return result;
+  } 
 }
 
 export class DebugEventInfo {
@@ -22,7 +27,7 @@ export class DebugEventInfo {
 }
 
 export class InstructionHistoryDatabase {
-  private bufData: DecodedInstruction[] = new Array<DecodedInstruction>();
+  public bufData: DecodedInstruction[] = new Array<DecodedInstruction>();
   /** Stream that emits whenever the data has been modified. */
   dataChange: BehaviorSubject<DecodedInstruction[]> = new BehaviorSubject<DecodedInstruction[]>([]);
   get data(): DecodedInstruction[] { return this.dataChange.value; }
@@ -55,21 +60,21 @@ export class DebugInstructionDataSource extends DataSource<any> {
   set filter(filter: string) { this._filterChange.next(filter); }
 
 
-  length : number ;
+  length: number ;
 
-  constructor(private _exampleDatabase: InstructionHistoryDatabase, private _paginator: MatPaginator) {
+  constructor(public dataBase: InstructionHistoryDatabase, private _paginator: MatPaginator) {
     super();
   }
 
   /** Connect function called by the table to retrieve one stream containing the data to render. */
   connect(): Observable<DecodedInstruction[]> {
     const displayDataChanges = [
-      this._exampleDatabase.dataChange,
+      this.dataBase.dataChange,
       this._paginator.page,
     ];
 
     return Observable.merge(...displayDataChanges).map(() => {
-      const data = this._exampleDatabase.data.slice();
+      const data = this.dataBase.data.slice();
       // Grab the page's slice of data.
       const startIndex = this._paginator.pageIndex * this._paginator.pageSize;
       return data.splice(startIndex, this._paginator.pageSize);

@@ -396,7 +396,6 @@ declare module ChiChiNES {
     var CartDebugEvent: CartDebugEventFunc;
 
     export interface CPU2A03 {
-        addressmode: Uint8Array;
         frameClock: number;
         FrameEnded: boolean;
         byteOutBuffer: Uint8Array;
@@ -414,17 +413,7 @@ declare module ChiChiNES {
         //ReadWrite: boolean;
         //Ready: boolean;
         //Reset: boolean;
-        /**
-         * read only access to the current instruction pointed to by the program counter
-         *
-         * @instance
-         * @public
-         * @readonly
-         * @memberof ChiChiNES.CPU2A03
-         * @function CurrentInstruction
-         * @type ChiChiNES.CPU2A03.Instruction
-         */
-        CurrentInstruction: ChiChiNES.CPU2A03.Instruction;
+
         /**
          * number of full clock ticks elapsed since emulation started
          *
@@ -487,7 +476,6 @@ declare module ChiChiNES {
         RunFast(): void;
         Step(): void;
 
-        setupticks(): void;
         ResetCPU(): void;
         PowerOn(): void;
         //GetState(outStream: System.Collections.Generic.Queue$1<number>): void;
