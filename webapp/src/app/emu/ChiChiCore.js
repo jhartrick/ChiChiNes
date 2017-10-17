@@ -416,7 +416,6 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                 this._blipBuffer.factor = ChiChiNES.BeepsBoops.Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375);
 
                 /* Fails if clock_rate exceeds maximum, relative to sample_rate */
-                System.Diagnostics.Debug.assert(this._blipBuffer.factor > 0);
             },
             blip_clear: function () {
                 this._blipBuffer.offset = 0;

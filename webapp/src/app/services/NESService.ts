@@ -350,8 +350,7 @@ export class Emulator {
     }
 
     private initWebWorker() {
-
-
+        
         const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../../workers/emulator.jsworker.js');
         this.worker = new Worker(nesWorker);
         this.postNesMessage({
@@ -386,8 +385,8 @@ export class Emulator {
             //console.log(data.data);
         };
         this.debugger = new Debugger(this.nesStateSubject.asObservable());
-
-        this.postNesMessage({ command: "create" });
+        var createCommand = 'create';
+        this.postNesMessage({ command: createCommand });
     }
-
+    
 }

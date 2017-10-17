@@ -112,8 +112,6 @@ importScripts('http://localhost:802/workers/ChiChi.HWCore.js');
         for (let i = 0; i < len; ++i) {
             if (tendo.sharedAudioBufferPos + i > tendo.sharedAudioBuffer.length) {
                 tendo.sharedAudioBufferPos = 0;
-                this.iops[0] = 0;
-                Atomics.wait(this.iops, 0, 0);
                 return;
             }
             tendo.sharedAudioBuffer[tendo.sharedAudioBufferPos + i] = tendo.machine.WaveForms.SharedBuffer[i];
@@ -142,6 +140,9 @@ importScripts('http://localhost:802/workers/ChiChi.HWCore.js');
             framesPerSecond = 0;
 
             if (!tendo.soundEnabled) flushAudio();
+            this.iops[0] = 0;
+            //Atomics.wait(this.iops, 0, 0);
+
             if ((framesRendered++ & 0x2F) === 0x2F) {
                 framesPerSecond = ((framesRendered / (new Date().getTime() - startTime)) * 1000);
                 framesRendered = 0; startTime = new Date().getTime();

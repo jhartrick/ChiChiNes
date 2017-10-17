@@ -17,6 +17,33 @@
     IndirectAbsoluteX
 }
 
+ class ChiChiSprite {
+
+     public YPosition: number = 0;
+
+     public XPosition: number = 0;
+
+
+     public SpriteNumber: number = 0;
+
+     public Foreground: boolean = false;
+
+     public IsVisible: boolean = false;
+
+     //WhissaSpritePixel(_ppu.PatternTableIndex, currentSprites[i].TileIndex, xPos, yLine, currentSprites[i].AttributeByte, currentSprites[i].FlipX, currentSprites[i].FlipY);
+
+     public TileIndex: number = 0;
+
+
+     public AttributeByte: number = 0;
+
+     public FlipX: boolean = false;
+
+     public FlipY: boolean = false;
+
+     public Changed: boolean = false;
+
+ }
 
  class ChiChiCPPU implements ChiChiNES.CPU2A03
  {
@@ -41,12 +68,12 @@
     private spritesOnThisScanline: number= 0;
     private spriteZeroHit: boolean = false;
     private isForegroundPixel: boolean = false;
-    private currentSprites: ChiChiNES.NESSprite[];
+    private currentSprites: ChiChiSprite[];
     private _spriteCopyHasHappened: boolean = false;
 
     public LastcpuClock: number= 0;
 
-    private unpackedSprites: ChiChiNES.NESSprite[];
+    private unpackedSprites: ChiChiSprite[];
     private chrRomHandler: ChiChiNES.INESCart;
 
     private spriteChanges: boolean = false;
@@ -97,7 +124,7 @@
     private _cheating = false;
     private __frameFinished = true;
     // system ram
-    private Rams = new Uint8Array(256);// System.Array.init(8192, 0, System.Int32);
+    private Rams = new Uint8Array(8192);// System.Array.init(vv, 0, System.Int32);
     private _stackPointer = 255;
 
     // debug helpers
@@ -156,11 +183,11 @@
     private vidRamIsRam = true;
     private _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
     private _openBus = 0;
-    private sprite0scanline = -1;
-    private sprite0x = -1;
+    private sprite0scanline = 0;
+    private sprite0x = 0;
     private _maxSpritesPerScanline = 64;
     private spriteRAM = new Uint8Array(256);// System.Array.init(256, 0, System.Int32);
-    private spritesOnLine = new Uint8Array(512);// System.Array.init(512, 0, System.Int32);
+    private spritesOnLine = new Array<number>(512);// System.Array.init(512, 0, System.Int32);
     private patternEntry = 0;
     private patternEntryByte2 = 0;
     private currentTileIndex = 0;
@@ -191,7 +218,7 @@
 
             //this.vBuffer = System.Array.init(61440, 0, System.Byte);
 
-            ChiChiNES.CPU2A03.GetPalRGBA();
+            //ChiChiNES.CPU2A03.GetPalRGBA();
 
     }
 
@@ -218,7 +245,14 @@
     Cart: ChiChiNES.IClockedMemoryMappedIOElement;
 
     FrameOn: boolean;
-    PPU_NameTableMemoryStart: number;
+    get PPU_NameTableMemoryStart(): number {
+        return this.nameTableMemoryStart;
+    }
+
+    set PPU_NameTableMemoryStart(value: number) {
+        this.nameTableMemoryStart = value;
+    }
+
     CurrentFrame: number[];
 
     get Clock(): number { return this.clock; }
@@ -237,13 +271,30 @@
     }
 
     PPU_IRQAsserted: boolean;
-    PPU_NextEventAt: number;
+
+    get PPU_NextEventAt(): number {
+        
+            if (this.frameClock < 6820) {
+                return (6820 - this.frameClock) / 3;
+            } else {
+                return (((89345 - this.frameClock) / 341) / 3);
+            }
+            //}
+            //else
+            //{
+            //    return (6823 - frameClock) / 3;
+            //}
+        
+    }
+
     PPU_FrameFinishHandler: () => void;
+
     PPU_SpriteCopyHasHappened: boolean;
     PPU_MaxSpritesPerScanline: number;
+
     PPU_SpriteRam: number[];
     SpritesOnLine: number[];
-    PixelAwareDevice: ChiChiNES.IPixelAwareDevice;
+    
 
     SetFlag(Flag: number, value: boolean): void {
         this._statusRegister = (value ? (this._statusRegister | Flag) : (this._statusRegister & ~Flag));
@@ -267,7 +318,7 @@
         // if enabled
 
         // push pc onto stack (high byte first)
-        this.PushStack(this._programCounter / 256);
+        this.PushStack(this._programCounter >> 8);
         this.PushStack(this._programCounter);
         // push sr onto stack
         this.PushStack(this._statusRegister);
@@ -1205,7 +1256,7 @@
         this._operationCounter = 0;
         this._stackPointer = 253;
         this.setupticks();
-        this._programCounter = this.GetByte(65532) | (this.GetByte(65533) << 8);
+        this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
         this._ticks = 4;
     }
 
@@ -1227,7 +1278,7 @@
         this.Rams[10] = 223;
         this.Rams[15] = 191;
 
-        this._programCounter = this.GetByte(65532) | (this.GetByte(65533) << 8);
+        this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
     }
 
     GetState(outStream: System.Collections.Generic.Queue$1<number>): void {
@@ -1275,7 +1326,7 @@
                 break;
             case ChiChiCPPU_AddressingModes.ZeroPage:
                 // first parameter represents offset in zero page
-                result = this._currentInstruction_Parameters0 & 0xFF;
+                result = this._currentInstruction_Parameters0;
                 break;
             case ChiChiCPPU_AddressingModes.ZeroPageX:
                 result = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 0xFF;
@@ -1338,12 +1389,12 @@
     }
 
     Execute(): void {
-        var data = 0;
-        var lowByte = 0;
-        var highByte = 0;
-        var carryFlag = 0;
-        var result = 0;
-        var oldbit = 0;
+        let data = 0;
+        let lowByte = 0;
+        let highByte = 0;
+        let carryFlag = 0;
+        let result = 0;
+        let oldbit = 0;
 
         switch (this._currentInstruction_OpCode) {
             case 128:
@@ -1444,14 +1495,6 @@
                 data = this.DecodeOperand();
                 // overflow is bit 6
                 this.SetFlag(this.SRMasks_OverflowMask, (data & 64) === 64);
-                //if ((operand & 64) == 64)
-                //{
-                //    _statusRegister = _statusRegister | 0x40;
-                //}
-                //else
-                //{
-                //    _statusRegister = _statusRegister & 0xBF;
-                //}
                 // negative is bit 7
                 if ((data & 128) === 128) {
                     this._statusRegister = this._statusRegister | 128;
@@ -2081,14 +2124,14 @@
     SetByte(address: number, data: number): void {
         // check high byte, find appropriate handler
         if (address < 2048) {
-            this.Rams[address & 2047] = data & 255;
+            this.Rams[address & 2047] = data ;
             return;
         }
         switch (address & 61440) {
             case 0:
             case 4096:
                 // nes sram
-                this.Rams[address & 2047] = data & 255;
+                this.Rams[address & 2047] = data;
                 break;
             case 20480:
                 this.Cart.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
@@ -2179,6 +2222,7 @@
         this._PPUControlByte0 = 0;
         this._PPUControlByte1 = 0;
         this._hScroll = 0;
+        this._vScroll = 0;
         this.scanlineNum = 0;
         this.scanlinePos = 0;
         this._spriteAddress = 0;
@@ -2255,7 +2299,7 @@
                 //     NMIHasBeenThrownThisFrame = false;
                 //}
                 //UpdatePixelInfo();
-                this.nameTableMemoryStart = this.nameTableBits * 1024;
+                this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 1:
                 //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
@@ -2291,7 +2335,7 @@
                 this.spriteRAM[this._spriteAddress] = data;
                 // UnpackSprite(_spriteAddress / 4);
                 this._spriteAddress = (this._spriteAddress + 1) & 255;
-                this.unpackedSprites[this._spriteAddress / 4].Changed = true;
+                this.unpackedSprites[this._spriteAddress >> 2].Changed = true;
                 this.spriteChanges = true;
                 break;
             case 5:
@@ -2424,7 +2468,8 @@
             case 1:
             case 5:
             case 6:
-                return this._openBus;
+                return 0;
+               // return this._openBus;
             case 2:
                 var ret;
                 this.PPUAddressLatchIsHigh = true;
@@ -2440,22 +2485,22 @@
                 //}
                 // clear vblank flag if read
                 this.DrawTo(Clock);
-                if ((ret & 128) === 128) {
+                if ((ret & 0x80) === 0x80) {
 
 
-                    this._PPUStatus = this._PPUStatus & -129;
+                    this._PPUStatus = this._PPUStatus & ~0x80;
 
                 }
                 this.UpdatePixelInfo();
                 //}
-                this._openBus = ret;
+                //this._openBus = ret;
                 return ret;
             case 4:
                 var tmp = this.spriteRAM[this._spriteAddress];
                 //ppuLatch = spriteRAM[SpriteAddress];
                 // should not increment on read ?
                 //SpriteAddress = (SpriteAddress + 1) & 0xFF;
-                this._openBus = tmp;
+                //this._openBus = tmp;
                 return tmp;
             case 7:
                 //        If Mapper = 9 Then
@@ -2511,22 +2556,22 @@
             var spriteLocation = (this._spriteAddress + i) & 255;
             if (this.spriteRAM[spriteLocation] !== this.Rams[copyFrom + i]) {
                 this.spriteRAM[spriteLocation] = this.Rams[copyFrom + i];
-                this.unpackedSprites[(spriteLocation / 4) & 255].Changed = true;
+                this.unpackedSprites[(spriteLocation >> 2) & 255].Changed = true;
             }
         }
         this._spriteCopyHasHappened = true;
         this.spriteChanges = true;
     }
     PPU_InitSprites(): void {
-        this.currentSprites = new Array < ChiChiNES.NESSprite>(this._maxSpritesPerScanline); //ChiChiNES.NESSprite;
+        this.currentSprites = new Array < ChiChiSprite>(this._maxSpritesPerScanline); //ChiChiSprite;
         for (let i = 0; i < this._maxSpritesPerScanline; ++i) {
-            this.currentSprites[i] = new ChiChiNES.NESSprite();
+            this.currentSprites[i] = new ChiChiSprite();
         }
 
-        this.unpackedSprites = new Array<ChiChiNES.NESSprite>(64);
+        this.unpackedSprites = new Array<ChiChiSprite>(64);
 
         for (let i1 = 0; i1 < 64; ++i1) {
-            this.unpackedSprites[i1] = new ChiChiNES.NESSprite();
+            this.unpackedSprites[i1] = new ChiChiSprite();
         }
 
     }
@@ -2591,7 +2636,7 @@
         }
         return 0;        
     }
-    PPU_WhissaSpritePixel(patternTableIndex: number, x: number, y: number, sprite: { v: ChiChiNES.NESSprite; }, tileIndex: number): number {
+    PPU_WhissaSpritePixel(patternTableIndex: number, x: number, y: number, sprite: { v: ChiChiSprite; }, tileIndex: number): number {
         // 8x8 tile
         let patternEntry = 0;
         let patternEntryBit2 = 0;
@@ -2629,7 +2674,7 @@
                     this.sprite0x = this.unpackedSprites[spriteID].XPosition;
                 }
 
-                var spId = spriteNum / 4;
+                var spId = spriteNum >> 2;
                 if (spId < 32) {
                     this.outBuffer[(64768) + yLine] |= 1 << spId;
                 } else {
@@ -2687,19 +2732,19 @@
         return result & 255;
     }
     FetchNextTile(): void {
-        const ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
+        let ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
 
-        const xTilePosition = this.xPosition >> 3;
+        let xTilePosition = this.xPosition >> 3;
 
-        const tileRow = (this.yPosition >> 3) % 30 << 5;
+        let tileRow = (this.yPosition >> 3) % 30 << 5;
 
-        const tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+        let tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
 
-        const TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, tileNametablePosition);
+        let TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, tileNametablePosition);
 
-        const patternTableYOffset = this.yPosition & 7;
+        let patternTableYOffset = this.yPosition & 7;
 
-        const patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+        let patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
 
         this.patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID);
         this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID + 8);
@@ -2712,7 +2757,7 @@
     }
 
     GetAttributeTableEntry(ppuNameTableMemoryStart: number, i: number, j: number): number {
-        const LookUp = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
+        let LookUp = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
 
         switch ((i & 2) | (j & 2) * 2) {
             case 0:
@@ -2796,19 +2841,19 @@
                         this.xPosition &= 255;
 
                         /* fetch next tile */
-                        var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
+                        let ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
 
-                        var xTilePosition = this.xPosition >> 3;
+                        let  xTilePosition = this.xPosition >> 3;
 
                         //int tileRow = (yPosition >> 3) % 30 << 5;
 
                         //int tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
 
-                        var TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + xTilePosition + ((this.yPosition >> 3) % 30 << 5));
+                        let  TileIndex = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + xTilePosition + ((this.yPosition >> 3) % 30 << 5));
 
-                        var patternTableYOffset = this.yPosition & 7;
+                        let  patternTableYOffset = this.yPosition & 7;
 
-                        var patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+                        let  patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
 
                         this.patternEntry = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID);
                         this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID + 8);
@@ -2819,9 +2864,9 @@
                     }
 
                     /* draw pixel */
-                    var tilePixel = this._tilesAreVisible ? this.PPU_GetNameTablePixel() : 0;
+                    const tilePixel = this._tilesAreVisible ? this.PPU_GetNameTablePixel() : 0;
                     // bool foregroundPixel = isForegroundPixel;
-                    var spritePixel = this._spritesAreVisible ? this.PPU_GetSpritePixel() : 0;
+                    const spritePixel = this._spritesAreVisible ? this.PPU_GetSpritePixel() : 0;
 
                     if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
                         this.hitSprite = true;

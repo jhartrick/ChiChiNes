@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ChiChiNES;
-using ChiChiNES;
+
+using Bridge;
 
 namespace ChiChiNES.CPU
 {
+    [Rules(Integer=IntegerRule.Managed)]
     public class NESCart : BaseCart
     {
 

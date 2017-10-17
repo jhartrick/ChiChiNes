@@ -259,14 +259,6 @@ declare module ChiChiNES {
         FourScreen = 3
     }
 
-    export interface IPixelAwareDevice {
-        ChiChiNES$IPixelAwareDevice$addNeedPixelNow(value: {(sender: any, e: ChiChiNES.ClockedRequestEventArgs): void}): void;
-        ChiChiNES$IPixelAwareDevice$removeNeedPixelNow(value: {(sender: any, e: ChiChiNES.ClockedRequestEventArgs): void}): void;
-        addNeedPixelNow(value: {(sender: any, e: ChiChiNES.ClockedRequestEventArgs): void}): void;
-        removeNeedPixelNow(value: {(sender: any, e: ChiChiNES.ClockedRequestEventArgs): void}): void;
-        ChiChiNES$IPixelAwareDevice$PixelICareAbout: number;
-        PixelICareAbout: number;
-    }
 
     export interface NesCartMMC1 extends ChiChiNES.BaseCart {
         InitializeCart(): void;
@@ -396,9 +388,9 @@ declare module ChiChiNES {
     var CartDebugEvent: CartDebugEventFunc;
 
     export interface CPU2A03 {
-        addressmode: Uint8Array;
-        frameClock: number;
-        FrameEnded: boolean;
+        //addressmode: any;
+        //frameClock: number;
+        //FrameEnded: boolean;
         byteOutBuffer: Uint8Array;
 
         //Accumulator: number;
@@ -477,7 +469,6 @@ declare module ChiChiNES {
         //PPU_SpriteRam: any;
         SpritesOnLine: any;
         LastcpuClock: number;
-        PixelAwareDevice: ChiChiNES.IPixelAwareDevice;
         //ByteOutBuffer: any;
         SetFlag(Flag: number, value: boolean): void;
         GetFlag(flag: number): boolean;

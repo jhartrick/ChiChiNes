@@ -6,6 +6,7 @@ using ChiChiNES;
 
 using ChiChiNES;
 using ChiChiNES;
+using Bridge;
 
 namespace ChiChiNES
 {
@@ -15,6 +16,7 @@ namespace ChiChiNES
 
     public delegate void WriteMySRAM(string romID, ref byte[] rams);
 
+    [Rules(Integer =IntegerRule.Managed)]
     public abstract class BaseCart : INESCart
     {
 

@@ -17,6 +17,22 @@ var ChiChiCPPU_AddressingModes;
     ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectZeroPage"] = 14] = "IndirectZeroPage";
     ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectAbsoluteX"] = 15] = "IndirectAbsoluteX";
 })(ChiChiCPPU_AddressingModes || (ChiChiCPPU_AddressingModes = {}));
+var ChiChiSprite = (function () {
+    function ChiChiSprite() {
+        this.YPosition = 0;
+        this.XPosition = 0;
+        this.SpriteNumber = 0;
+        this.Foreground = false;
+        this.IsVisible = false;
+        //WhissaSpritePixel(_ppu.PatternTableIndex, currentSprites[i].TileIndex, xPos, yLine, currentSprites[i].AttributeByte, currentSprites[i].FlipX, currentSprites[i].FlipY);
+        this.TileIndex = 0;
+        this.AttributeByte = 0;
+        this.FlipX = false;
+        this.FlipY = false;
+        this.Changed = false;
+    }
+    return ChiChiSprite;
+}());
 var ChiChiCPPU = (function () {
     function ChiChiCPPU(bopper) {
         //this.$initialize();
@@ -77,7 +93,7 @@ var ChiChiCPPU = (function () {
         this._cheating = false;
         this.__frameFinished = true;
         // system ram
-        this.Rams = new Uint8Array(256); // System.Array.init(8192, 0, System.Int32);
+        this.Rams = new Uint8Array(8192); // System.Array.init(vv, 0, System.Int32);
         this._stackPointer = 255;
         // debug helpers
         this.instructionUsage = new Uint32Array(256); //System.Array.init(256, 0, System.Int32);
@@ -108,11 +124,11 @@ var ChiChiCPPU = (function () {
         this.vidRamIsRam = true;
         this._palette = new Uint8Array(32); // System.Array.init(32, 0, System.Int32);
         this._openBus = 0;
-        this.sprite0scanline = -1;
-        this.sprite0x = -1;
+        this.sprite0scanline = 0;
+        this.sprite0x = 0;
         this._maxSpritesPerScanline = 64;
         this.spriteRAM = new Uint8Array(256); // System.Array.init(256, 0, System.Int32);
-        this.spritesOnLine = new Uint8Array(512); // System.Array.init(512, 0, System.Int32);
+        this.spritesOnLine = new Array(512); // System.Array.init(512, 0, System.Int32);
         this.patternEntry = 0;
         this.patternEntryByte2 = 0;
         this.currentTileIndex = 0;
@@ -129,7 +145,7 @@ var ChiChiCPPU = (function () {
         // init PPU
         this.PPU_InitSprites();
         //this.vBuffer = System.Array.init(61440, 0, System.Byte);
-        ChiChiNES.CPU2A03.GetPalRGBA();
+        //ChiChiNES.CPU2A03.GetPalRGBA();
     }
     Object.defineProperty(ChiChiCPPU.prototype, "Debugging", {
         get: function () {
@@ -171,6 +187,16 @@ var ChiChiCPPU = (function () {
     ChiChiCPPU.prototype.removeDebugEvent = function (value) {
         // throw new Error('Method not implemented.');
     };
+    Object.defineProperty(ChiChiCPPU.prototype, "PPU_NameTableMemoryStart", {
+        get: function () {
+            return this.nameTableMemoryStart;
+        },
+        set: function (value) {
+            this.nameTableMemoryStart = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(ChiChiCPPU.prototype, "Clock", {
         get: function () { return this.clock; },
         set: function (value) {
@@ -192,6 +218,23 @@ var ChiChiCPPU = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(ChiChiCPPU.prototype, "PPU_NextEventAt", {
+        get: function () {
+            if (this.frameClock < 6820) {
+                return (6820 - this.frameClock) / 3;
+            }
+            else {
+                return (((89345 - this.frameClock) / 341) / 3);
+            }
+            //}
+            //else
+            //{
+            //    return (6823 - frameClock) / 3;
+            //}
+        },
+        enumerable: true,
+        configurable: true
+    });
     ChiChiCPPU.prototype.SetFlag = function (Flag, value) {
         this._statusRegister = (value ? (this._statusRegister | Flag) : (this._statusRegister & ~Flag));
         this._statusRegister |= 32; // (int)CPUStatusMasks.ExpansionMask;
@@ -209,7 +252,7 @@ var ChiChiCPPU = (function () {
         var newStatusReg = this._statusRegister & -17 | 32;
         // if enabled
         // push pc onto stack (high byte first)
-        this.PushStack(this._programCounter / 256);
+        this.PushStack(this._programCounter >> 8);
         this.PushStack(this._programCounter);
         // push sr onto stack
         this.PushStack(this._statusRegister);
@@ -1108,7 +1151,7 @@ var ChiChiCPPU = (function () {
         this._operationCounter = 0;
         this._stackPointer = 253;
         this.setupticks();
-        this._programCounter = this.GetByte(65532) | (this.GetByte(65533) << 8);
+        this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
         this._ticks = 4;
     };
     ChiChiCPPU.prototype.PowerOn = function () {
@@ -1127,7 +1170,7 @@ var ChiChiCPPU = (function () {
         this.Rams[9] = 239;
         this.Rams[10] = 223;
         this.Rams[15] = 191;
-        this._programCounter = this.GetByte(65532) | (this.GetByte(65533) << 8);
+        this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
     };
     ChiChiCPPU.prototype.GetState = function (outStream) {
         //throw new Error('Method not implemented.');
@@ -1168,7 +1211,7 @@ var ChiChiCPPU = (function () {
                 break;
             case ChiChiCPPU_AddressingModes.ZeroPage:
                 // first parameter represents offset in zero page
-                result = this._currentInstruction_Parameters0 & 0xFF;
+                result = this._currentInstruction_Parameters0;
                 break;
             case ChiChiCPPU_AddressingModes.ZeroPageX:
                 result = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 0xFF;
@@ -1334,14 +1377,6 @@ var ChiChiCPPU = (function () {
                 data = this.DecodeOperand();
                 // overflow is bit 6
                 this.SetFlag(this.SRMasks_OverflowMask, (data & 64) === 64);
-                //if ((operand & 64) == 64)
-                //{
-                //    _statusRegister = _statusRegister | 0x40;
-                //}
-                //else
-                //{
-                //    _statusRegister = _statusRegister & 0xBF;
-                //}
                 // negative is bit 7
                 if ((data & 128) === 128) {
                     this._statusRegister = this._statusRegister | 128;
@@ -1963,14 +1998,14 @@ var ChiChiCPPU = (function () {
     ChiChiCPPU.prototype.SetByte = function (address, data) {
         // check high byte, find appropriate handler
         if (address < 2048) {
-            this.Rams[address & 2047] = data & 255;
+            this.Rams[address & 2047] = data;
             return;
         }
         switch (address & 61440) {
             case 0:
             case 4096:
                 // nes sram
-                this.Rams[address & 2047] = data & 255;
+                this.Rams[address & 2047] = data;
                 break;
             case 20480:
                 this.Cart.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
@@ -2058,6 +2093,7 @@ var ChiChiCPPU = (function () {
         this._PPUControlByte0 = 0;
         this._PPUControlByte1 = 0;
         this._hScroll = 0;
+        this._vScroll = 0;
         this.scanlineNum = 0;
         this.scanlinePos = 0;
         this._spriteAddress = 0;
@@ -2130,7 +2166,7 @@ var ChiChiCPPU = (function () {
                 //     NMIHasBeenThrownThisFrame = false;
                 //}
                 //UpdatePixelInfo();
-                this.nameTableMemoryStart = this.nameTableBits * 1024;
+                this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 1:
                 //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
@@ -2166,7 +2202,7 @@ var ChiChiCPPU = (function () {
                 this.spriteRAM[this._spriteAddress] = data;
                 // UnpackSprite(_spriteAddress / 4);
                 this._spriteAddress = (this._spriteAddress + 1) & 255;
-                this.unpackedSprites[this._spriteAddress / 4].Changed = true;
+                this.unpackedSprites[this._spriteAddress >> 2].Changed = true;
                 this.spriteChanges = true;
                 break;
             case 5:
@@ -2291,7 +2327,8 @@ var ChiChiCPPU = (function () {
             case 1:
             case 5:
             case 6:
-                return this._openBus;
+                return 0;
+            // return this._openBus;
             case 2:
                 var ret;
                 this.PPUAddressLatchIsHigh = true;
@@ -2307,19 +2344,19 @@ var ChiChiCPPU = (function () {
                 //}
                 // clear vblank flag if read
                 this.DrawTo(Clock);
-                if ((ret & 128) === 128) {
-                    this._PPUStatus = this._PPUStatus & -129;
+                if ((ret & 0x80) === 0x80) {
+                    this._PPUStatus = this._PPUStatus & ~0x80;
                 }
                 this.UpdatePixelInfo();
                 //}
-                this._openBus = ret;
+                //this._openBus = ret;
                 return ret;
             case 4:
                 var tmp = this.spriteRAM[this._spriteAddress];
                 //ppuLatch = spriteRAM[SpriteAddress];
                 // should not increment on read ?
                 //SpriteAddress = (SpriteAddress + 1) & 0xFF;
-                this._openBus = tmp;
+                //this._openBus = tmp;
                 return tmp;
             case 7:
                 //        If Mapper = 9 Then
@@ -2374,20 +2411,20 @@ var ChiChiCPPU = (function () {
             var spriteLocation = (this._spriteAddress + i) & 255;
             if (this.spriteRAM[spriteLocation] !== this.Rams[copyFrom + i]) {
                 this.spriteRAM[spriteLocation] = this.Rams[copyFrom + i];
-                this.unpackedSprites[(spriteLocation / 4) & 255].Changed = true;
+                this.unpackedSprites[(spriteLocation >> 2) & 255].Changed = true;
             }
         }
         this._spriteCopyHasHappened = true;
         this.spriteChanges = true;
     };
     ChiChiCPPU.prototype.PPU_InitSprites = function () {
-        this.currentSprites = new Array(this._maxSpritesPerScanline); //ChiChiNES.NESSprite;
+        this.currentSprites = new Array(this._maxSpritesPerScanline); //ChiChiSprite;
         for (var i = 0; i < this._maxSpritesPerScanline; ++i) {
-            this.currentSprites[i] = new ChiChiNES.NESSprite();
+            this.currentSprites[i] = new ChiChiSprite();
         }
         this.unpackedSprites = new Array(64);
         for (var i1 = 0; i1 < 64; ++i1) {
-            this.unpackedSprites[i1] = new ChiChiNES.NESSprite();
+            this.unpackedSprites[i1] = new ChiChiSprite();
         }
     };
     ChiChiCPPU.prototype.PPU_GetSpritePixel = function () {
@@ -2471,7 +2508,7 @@ var ChiChiCPPU = (function () {
                     this.sprite0scanline = scanline;
                     this.sprite0x = this.unpackedSprites[spriteID].XPosition;
                 }
-                var spId = spriteNum / 4;
+                var spId = spriteNum >> 2;
                 if (spId < 32) {
                     this.outBuffer[(64768) + yLine] |= 1 << spId;
                 }
