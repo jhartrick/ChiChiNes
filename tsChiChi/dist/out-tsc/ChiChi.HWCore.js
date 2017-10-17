@@ -24,7 +24,6 @@ var ChiChiSprite = (function () {
         this.SpriteNumber = 0;
         this.Foreground = false;
         this.IsVisible = false;
-        //WhissaSpritePixel(_ppu.PatternTableIndex, currentSprites[i].TileIndex, xPos, yLine, currentSprites[i].AttributeByte, currentSprites[i].FlipX, currentSprites[i].FlipY);
         this.TileIndex = 0;
         this.AttributeByte = 0;
         this.FlipX = false;
