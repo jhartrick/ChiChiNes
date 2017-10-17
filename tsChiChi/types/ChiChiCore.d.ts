@@ -213,11 +213,8 @@ declare module ChiChiNES {
     var NESSprite: NESSpriteFunc;
 
     export interface NESMachine extends System.IDisposable {
-        addDrawscreen(value: {(sender: any, e: System.Object): void}): void;
-        removeDrawscreen(value: {(sender: any, e: System.Object): void}): void;
-        CurrentCartName: string;
+        Drawscreen(): void;
         RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
-        CurrentSaveSlot: number;
         Cpu: ChiChiNES.CPU2A03;
         Cart: ChiChiNES.INESCart;
         SoundBopper: ChiChiNES.BeepsBoops.Bopper;
@@ -233,19 +230,18 @@ declare module ChiChiNES {
         Reset(): void;
         PowerOn(): void;
         PowerOff(): void;
+        Step(): void;
+        RunFrame(): void;
+
         EjectCart(): void;
         LoadCart(rom: any): void;
-        GoTendo_NoThread(fileName: string): void;
-        GoTendo(fileName: string): void;
         HasState(index: number): boolean;
         GetState(index: number): void;
         SetState(index: number): void;
         SetupSound(): void;
-        dispose(): void;
-        Step(): void;
-        RunFrame(): void;
         FrameFinished(): void;
     }
+
     export interface NESMachineFunc extends Function {
         prototype: NESMachine;
         new (cpu: ChiChiNES.CPU2A03, wavSharer: ChiChiNES.BeepsBoops.WavSharer, soundBopper: ChiChiNES.BeepsBoops.Bopper): NESMachine;
@@ -391,6 +387,8 @@ declare module ChiChiNES {
         //addressmode: any;
         //frameClock: number;
         //FrameEnded: boolean;
+        Clock: number;
+        frameFinished: () => void;
         byteOutBuffer: Uint8Array;
 
         //Accumulator: number;

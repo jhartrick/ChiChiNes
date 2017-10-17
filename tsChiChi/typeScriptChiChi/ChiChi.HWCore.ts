@@ -84,8 +84,156 @@ class ChiChiNullPad implements ChiChiNES.InputHandler{
     ChiChiNES$IClockedMemoryMappedIOElement$ResetClock(Clock: number): void {
      
     }
+}
 
-    
+class ChiChiMachine implements ChiChiNES.NESMachine {
+    private frameJustEnded = true;
+    private frameOn= false;
+    private totalCPUClocks = 0;
+
+    constructor() {
+
+        var wavSharer = new ChiChiNES.BeepsBoops.WavSharer();
+        
+        this.SoundBopper = new ChiChiNES.BeepsBoops.Bopper(wavSharer);
+
+        this.WaveForms = wavSharer;
+
+        this.Cpu = new ChiChiCPPU(this.SoundBopper);
+        
+        this.Cpu.frameFinished = () => { this.FrameFinished(); };
+
+        this.Initialize();        
+    }
+
+    Drawscreen(): void {
+        
+    }
+
+    RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
+    Cpu: ChiChiNES.CPU2A03 ;
+    Cart: ChiChiNES.INESCart;
+    SoundBopper: ChiChiNES.BeepsBoops.Bopper;
+    WaveForms: ChiChiNES.BeepsBoops.IWavReader;
+    EnableSound: boolean;
+    FrameCount: number;
+    IsRunning: boolean;
+    PadOne: ChiChiNES.IControlPad;
+    PadTwo: ChiChiNES.IControlPad;
+    SRAMReader: (RomID: string) => any;
+    SRAMWriter: (RomID: string, SRAM: any) => void;
+    Initialize(): void {
+
+    }
+    Reset(): void {
+        if (this.Cpu != null && this.Cart != null) {
+            // ForceStop();
+            this.SoundBopper.RebuildSound();
+            this.Cpu.PPU_Initialize();
+            this.Cart.ChiChiNES$INESCart$InitializeCart();
+            this.Cpu.ResetCPU();
+            //ClearGenieCodes();
+            this.Cpu.PowerOn();
+            this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
+        }
+    }
+    PowerOn(): void {
+        if (this.Cpu != null && this.Cart != null) {
+            this.SoundBopper.RebuildSound();
+            this.Cpu.PPU_Initialize();
+            this.Cart.ChiChiNES$INESCart$InitializeCart();
+            // if (this.SRAMReader !=  null && this.Cart.UsesSRAM) {
+            //     this.Cart.SRAM = this.SRAMReader(this.Cart.ChiChiNES$INESCart$CheckSum);
+            // }
+            this.Cpu.ResetCPU();
+            //ClearGenieCodes();
+            this.Cpu.PowerOn();
+            this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
+        }
+    }
+    PowerOff(): void {
+        this.Cart = null;
+        this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Unloaded;
+    }
+
+
+    Step(): void {
+        if (this.frameJustEnded) {
+            this.Cpu.FindNextEvent();
+            this.frameOn = true;
+            this.frameJustEnded = false;
+        }
+        this.Cpu.Step();
+
+        if (!this.frameOn) {
+            this.totalCPUClocks = this.Cpu.Clock;
+            this.totalCPUClocks = 0;
+            this.Cpu.Clock = 0;
+            this.Cpu.LastcpuClock = 0;
+            this.frameJustEnded = true;
+        }
+        //_cpu.Clock = _totalCPUClocks;
+        //breakpoints: HandleBreaks();        
+    }
+    RunFrame(): void {
+        this.frameOn = true;
+        this.frameJustEnded = false;
+
+        //_cpu.RunFrame();
+        this.Cpu.FindNextEvent();
+        do {
+            this.Cpu.Step();
+        } while (this.frameOn);
+
+        this.totalCPUClocks = this.Cpu.Clock;
+
+        if (this.EnableSound) {
+            this.SoundBopper.FlushFrame(this.totalCPUClocks);
+            this.SoundBopper.EndFrame(this.totalCPUClocks);
+        }
+
+        this.totalCPUClocks = 0;
+        this.Cpu.Clock = 0;
+        this.Cpu.LastcpuClock = 0;        
+    }
+    EjectCart(): void {
+        throw new Error("Method not implemented.");
+    }
+    LoadCart(rom: any): void {
+        this.EjectCart();
+
+        this.Cart = ChiChiNES.ROMLoader.iNESFileHandler.LoadROM(this.Cpu, rom);
+        if (this.Cart != null) {
+
+            this.Cpu.Cart = this.Cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
+            this.Cpu.Cart.NMIHandler =  this.Cpu.InterruptRequest;
+            this.Cpu.ChrRomHandler = this.Cart;
+
+
+        } else {
+            throw new ChiChiNES.ROMLoader.CartLoadException.ctor("Unsupported ROM type - load failed.");
+        }        
+    }
+    HasState(index: number): boolean {
+        throw new Error("Method not implemented.");
+    }
+    GetState(index: number): void {
+        throw new Error("Method not implemented.");
+    }
+    SetState(index: number): void {
+        throw new Error("Method not implemented.");
+    }
+    SetupSound(): void {
+        throw new Error("Method not implemented.");
+    }
+    FrameFinished(): void {
+        this.frameJustEnded = true;
+        this.frameOn = false;
+        this.Drawscreen();
+    }
+    dispose(): void {
+        throw new Error("Method not implemented.");
+    }
 }
 
  class ChiChiCPPU implements ChiChiNES.CPU2A03
@@ -102,7 +250,9 @@ class ChiChiNullPad implements ChiChiNES.InputHandler{
     readonly SRMasks_NegativeResultMask = 0x80;
 
 
-    private frameFinished: () => void;
+    public frameFinished: () => void;
+
+
     private  vbufLocation: number= 0;
     private yPosition: number= 0;
     private xPosition: number= 0;

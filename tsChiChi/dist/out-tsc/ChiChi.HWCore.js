@@ -37,6 +37,153 @@ var ChiChiSprite = /** @class */ (function () {
     }
     return ChiChiSprite;
 }());
+var ChiChiNullPad = /** @class */ (function () {
+    function ChiChiNullPad() {
+    }
+    ChiChiNullPad.prototype.controlPad_NextControlByteSet = function (sender, e) {
+        // throw new Error("Method not implemented.");
+    };
+    ChiChiNullPad.prototype.GetByte = function (clock, address) {
+        return this.CurrentByte;
+    };
+    ChiChiNullPad.prototype.SetByte = function (clock, address, data) {
+    };
+    ChiChiNullPad.prototype.SetNextControlByte = function (data) {
+    };
+    ChiChiNullPad.prototype.HandleEvent = function (Clock) {
+    };
+    ChiChiNullPad.prototype.ResetClock = function (Clock) {
+    };
+    ChiChiNullPad.prototype.ChiChiNES$IClockedMemoryMappedIOElement$GetByte = function (Clock, address) {
+        return this.GetByte(Clock, address);
+    };
+    ChiChiNullPad.prototype.ChiChiNES$IClockedMemoryMappedIOElement$SetByte = function (Clock, address, data) {
+        this.SetByte(Clock, address, data);
+    };
+    ChiChiNullPad.prototype.ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent = function (Clock) {
+    };
+    ChiChiNullPad.prototype.ChiChiNES$IClockedMemoryMappedIOElement$ResetClock = function (Clock) {
+    };
+    return ChiChiNullPad;
+}());
+var ChiChiMachine = /** @class */ (function () {
+    function ChiChiMachine() {
+        var _this = this;
+        this.frameJustEnded = true;
+        this.frameOn = false;
+        this.totalCPUClocks = 0;
+        var wavSharer = new ChiChiNES.BeepsBoops.WavSharer();
+        this.SoundBopper = new ChiChiNES.BeepsBoops.Bopper(wavSharer);
+        this.WaveForms = wavSharer;
+        this.Cpu = new ChiChiCPPU(this.SoundBopper);
+        this.Cpu.frameFinished = function () { _this.FrameFinished(); };
+        this.Initialize();
+    }
+    ChiChiMachine.prototype.Drawscreen = function () {
+    };
+    ChiChiMachine.prototype.Initialize = function () {
+    };
+    ChiChiMachine.prototype.Reset = function () {
+        if (this.Cpu != null && this.Cart != null) {
+            // ForceStop();
+            this.SoundBopper.RebuildSound();
+            this.Cpu.PPU_Initialize();
+            this.Cart.ChiChiNES$INESCart$InitializeCart();
+            this.Cpu.ResetCPU();
+            //ClearGenieCodes();
+            this.Cpu.PowerOn();
+            this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
+        }
+    };
+    ChiChiMachine.prototype.PowerOn = function () {
+        if (this.Cpu != null && this.Cart != null) {
+            this.SoundBopper.RebuildSound();
+            this.Cpu.PPU_Initialize();
+            this.Cart.ChiChiNES$INESCart$InitializeCart();
+            // if (this.SRAMReader !=  null && this.Cart.UsesSRAM) {
+            //     this.Cart.SRAM = this.SRAMReader(this.Cart.ChiChiNES$INESCart$CheckSum);
+            // }
+            this.Cpu.ResetCPU();
+            //ClearGenieCodes();
+            this.Cpu.PowerOn();
+            this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
+        }
+    };
+    ChiChiMachine.prototype.PowerOff = function () {
+        this.Cart = null;
+        this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Unloaded;
+    };
+    ChiChiMachine.prototype.Step = function () {
+        if (this.frameJustEnded) {
+            this.Cpu.FindNextEvent();
+            this.frameOn = true;
+            this.frameJustEnded = false;
+        }
+        this.Cpu.Step();
+        if (!this.frameOn) {
+            this.totalCPUClocks = this.Cpu.Clock;
+            this.totalCPUClocks = 0;
+            this.Cpu.Clock = 0;
+            this.Cpu.LastcpuClock = 0;
+            this.frameJustEnded = true;
+        }
+        //_cpu.Clock = _totalCPUClocks;
+        //breakpoints: HandleBreaks();        
+    };
+    ChiChiMachine.prototype.RunFrame = function () {
+        this.frameOn = true;
+        this.frameJustEnded = false;
+        //_cpu.RunFrame();
+        this.Cpu.FindNextEvent();
+        do {
+            this.Cpu.Step();
+        } while (this.frameOn);
+        this.totalCPUClocks = this.Cpu.Clock;
+        if (this.EnableSound) {
+            this.SoundBopper.FlushFrame(this.totalCPUClocks);
+            this.SoundBopper.EndFrame(this.totalCPUClocks);
+        }
+        this.totalCPUClocks = 0;
+        this.Cpu.Clock = 0;
+        this.Cpu.LastcpuClock = 0;
+    };
+    ChiChiMachine.prototype.EjectCart = function () {
+        throw new Error("Method not implemented.");
+    };
+    ChiChiMachine.prototype.LoadCart = function (rom) {
+        this.EjectCart();
+        this.Cart = ChiChiNES.ROMLoader.iNESFileHandler.LoadROM(this.Cpu, rom);
+        if (this.Cart != null) {
+            this.Cpu.Cart = this.Cart; // Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
+            this.Cpu.Cart.NMIHandler = this.Cpu.InterruptRequest;
+            this.Cpu.ChrRomHandler = this.Cart;
+        }
+        else {
+            throw new ChiChiNES.ROMLoader.CartLoadException.ctor("Unsupported ROM type - load failed.");
+        }
+    };
+    ChiChiMachine.prototype.HasState = function (index) {
+        throw new Error("Method not implemented.");
+    };
+    ChiChiMachine.prototype.GetState = function (index) {
+        throw new Error("Method not implemented.");
+    };
+    ChiChiMachine.prototype.SetState = function (index) {
+        throw new Error("Method not implemented.");
+    };
+    ChiChiMachine.prototype.SetupSound = function () {
+        throw new Error("Method not implemented.");
+    };
+    ChiChiMachine.prototype.FrameFinished = function () {
+        this.frameJustEnded = true;
+        this.frameOn = false;
+        this.Drawscreen();
+    };
+    ChiChiMachine.prototype.dispose = function () {
+        throw new Error("Method not implemented.");
+    };
+    return ChiChiMachine;
+}());
 var ChiChiCPPU = /** @class */ (function () {
     function ChiChiCPPU(bopper) {
         //this.$initialize();
@@ -148,6 +295,8 @@ var ChiChiCPPU = /** @class */ (function () {
         bopper.NMIHandler = this.IRQUpdater;
         // init PPU
         this.PPU_InitSprites();
+        this._padOne = new ChiChiNullPad();
+        this._padTwo = new ChiChiNullPad();
         //this.vBuffer = System.Array.init(61440, 0, System.Byte);
         //ChiChiNES.CPU2A03.GetPalRGBA();
     }
@@ -235,6 +384,16 @@ var ChiChiCPPU = /** @class */ (function () {
             //{
             //    return (6823 - frameClock) / 3;
             //}
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiCPPU.prototype, "PPU_FrameFinishHandler", {
+        get: function () {
+            return this.frameFinished;
+        },
+        set: function (value) {
+            this.frameFinished = value;
         },
         enumerable: true,
         configurable: true
@@ -1409,7 +1568,7 @@ var ChiChiCPPU = /** @class */ (function () {
                 //     NMIHasBeenThrownThisFrame = false;
                 //}
                 //UpdatePixelInfo();
-                this.nameTableMemoryStart = this.nameTableBits * 0x400;
+                this.nameTableMemoryStart = this.nameTableBits * 1024;
                 break;
             case 1:
                 //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
@@ -1578,14 +1737,6 @@ var ChiChiCPPU = /** @class */ (function () {
                 // bit 7 is set to 0 after a read occurs
                 // return lower 5 latched bits, and the status
                 ret = (this.ppuReadBuffer & 31) | this._PPUStatus;
-                //ret = _PPUStatus;
-                //{
-                //If read during HBlank and Bit #7 of $2000 is set to 0, then switch to Name Table #0
-                //if ((PPUControlByte0 & 0x80) == 0 && scanlinePos > 0xFF)
-                //{
-                //    nameTableMemoryStart = 0;
-                //}
-                // clear vblank flag if read
                 this.DrawTo(Clock);
                 if ((ret & 0x80) === 0x80) {
                     this._PPUStatus = this._PPUStatus & ~0x80;
@@ -1602,11 +1753,6 @@ var ChiChiCPPU = /** @class */ (function () {
                 //this._openBus = tmp;
                 return tmp;
             case 7:
-                //        If Mapper = 9 Then
-                //            If PPUAddress < &H2000& Then
-                //                map9_latch tmp, (PPUAddress And &H1000&)
-                //            End If
-                //        End If
                 // palette reads shouldn't be buffered like regular vram reads, they re internal
                 if ((this._PPUAddress & 65280) === 16128) {
                     // these palettes are all mirrored every 0x10 bytes
@@ -1666,8 +1812,8 @@ var ChiChiCPPU = /** @class */ (function () {
             this.currentSprites[i] = new ChiChiSprite();
         }
         this.unpackedSprites = new Array(64);
-        for (var i1 = 0; i1 < 64; ++i1) {
-            this.unpackedSprites[i1] = new ChiChiSprite();
+        for (var i = 0; i < 64; ++i) {
+            this.unpackedSprites[i] = new ChiChiSprite();
         }
     };
     ChiChiCPPU.prototype.PPU_GetSpritePixel = function () {
