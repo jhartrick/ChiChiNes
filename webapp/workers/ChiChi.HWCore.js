@@ -17,6 +17,11 @@ var ChiChiCPPU_AddressingModes;
     ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectZeroPage"] = 14] = "IndirectZeroPage";
     ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectAbsoluteX"] = 15] = "IndirectAbsoluteX";
 })(ChiChiCPPU_AddressingModes || (ChiChiCPPU_AddressingModes = {}));
+var ChiChiInstruction = /** @class */ (function () {
+    function ChiChiInstruction() {
+    }
+    return ChiChiInstruction;
+}());
 var ChiChiSprite = /** @class */ (function () {
     function ChiChiSprite() {
         this.YPosition = 0;
@@ -98,7 +103,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this.instructionUsage = new Uint32Array(256); //System.Array.init(256, 0, System.Int32);
         this._debugging = false;
         this.instructionHistoryPointer = 255;
-        this._instructionHistory = new Array(256); //System.Array.init(256, null, ChiChiNES.CPU2A03.Instruction);
+        this._instructionHistory = new Array(256); //System.Array.init(256, null, ChiChiInstruction);
         // 'internal
         this.currentXPosition = 0;
         this.currentYPosition = 0;
@@ -1299,8 +1304,21 @@ var ChiChiCPPU = /** @class */ (function () {
         this.instructionHistoryPointer = 255;
     };
     ChiChiCPPU.prototype.WriteInstructionHistoryAndUsage = function () {
-        var $t;
-        this._instructionHistory[(this.instructionHistoryPointer--) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.time = this.systemClock, $t.A = this._accumulator, $t.X = this._indexRegisterX, $t.Y = this._indexRegisterY, $t.SR = this._statusRegister, $t.SP = this._stackPointer, $t.frame = this.clock, $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
+        var inst = new ChiChiInstruction();
+        inst.time = this.systemClock;
+        inst.A = this._accumulator;
+        inst.X = this._indexRegisterX;
+        inst.Y = this._indexRegisterY;
+        inst.SR = this._statusRegister;
+        inst.SP = this._stackPointer;
+        inst.frame = this.clock;
+        inst.OpCode = this._currentInstruction_OpCode;
+        inst.Parameters0 = this._currentInstruction_Parameters0;
+        inst.Parameters1 = this._currentInstruction_Parameters1;
+        inst.Address = this._currentInstruction_Address;
+        inst.AddressingMode = this._currentInstruction_AddressingMode;
+        inst.ExtraTiming = this._currentInstruction_ExtraTiming;
+        this._instructionHistory[(this.instructionHistoryPointer--) & 255] = inst;
         this.instructionUsage[this._currentInstruction_OpCode]++;
         if ((this.instructionHistoryPointer & 255) === 255) {
             this.FireDebugEvent("instructionHistoryFull");

@@ -46,8 +46,47 @@ class ChiChiInstruction implements ChiChiInstruction{
      FlipX: boolean = false;
      FlipY: boolean = false;
      Changed: boolean = false;
-
  }
+
+class ChiChiNullPad implements ChiChiNES.InputHandler{
+    IsZapper: boolean;
+    ControlPad: ChiChiNES.IControlPad;
+    CurrentByte: number;
+    NMIHandler: () => void;
+    IRQAsserted: boolean;
+    NextEventAt: number;
+    controlPad_NextControlByteSet(sender: any, e: ChiChiNES.ControlByteEventArgs): void {
+        // throw new Error("Method not implemented.");
+    }
+    GetByte(clock: number, address: number): number {
+        return this.CurrentByte;
+    }
+    SetByte(clock: number, address: number, data: number): void {
+    }
+    SetNextControlByte(data: number): void {
+    }
+    HandleEvent(Clock: number): void {
+    }
+    ResetClock(Clock: number): void {
+    }
+    ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler: () => void;
+    ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted: boolean;
+    ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt: number;
+    ChiChiNES$IClockedMemoryMappedIOElement$GetByte(Clock: number, address: number): number {
+        return this.GetByte(Clock,address);
+    }
+    ChiChiNES$IClockedMemoryMappedIOElement$SetByte(Clock: number, address: number, data: number): void {
+        this.SetByte(Clock, address, data);
+    }
+    ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent(Clock: number): void {
+        
+    }
+    ChiChiNES$IClockedMemoryMappedIOElement$ResetClock(Clock: number): void {
+     
+    }
+
+    
+}
 
  class ChiChiCPPU implements ChiChiNES.CPU2A03
  {
@@ -63,7 +102,7 @@ class ChiChiInstruction implements ChiChiInstruction{
     readonly SRMasks_NegativeResultMask = 0x80;
 
 
-    private frameFinished: () => {};
+    private frameFinished: () => void;
     private  vbufLocation: number= 0;
     private yPosition: number= 0;
     private xPosition: number= 0;
@@ -219,6 +258,8 @@ class ChiChiInstruction implements ChiChiInstruction{
 
             // init PPU
             this.PPU_InitSprites();
+            this._padOne = new ChiChiNullPad();
+            this._padTwo = new ChiChiNullPad();
 
             //this.vBuffer = System.Array.init(61440, 0, System.Byte);
 
@@ -291,7 +332,12 @@ class ChiChiInstruction implements ChiChiInstruction{
         
     }
 
-    PPU_FrameFinishHandler: () => void;
+    get PPU_FrameFinishHandler(): () => void {
+        return this.frameFinished;
+    } 
+    set PPU_FrameFinishHandler(value: () => void)  {
+        this.frameFinished = value;
+    } 
 
     PPU_SpriteCopyHasHappened: boolean;
     PPU_MaxSpritesPerScanline: number;
@@ -1524,7 +1570,7 @@ class ChiChiInstruction implements ChiChiInstruction{
                 //     NMIHasBeenThrownThisFrame = false;
                 //}
                 //UpdatePixelInfo();
-                this.nameTableMemoryStart = this.nameTableBits * 0x400;
+                this.nameTableMemoryStart = this.nameTableBits * 1024;
                 break;
             case 1:
                 //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
@@ -1701,14 +1747,7 @@ class ChiChiInstruction implements ChiChiInstruction{
                 // bit 7 is set to 0 after a read occurs
                 // return lower 5 latched bits, and the status
                 ret = (this.ppuReadBuffer & 31) | this._PPUStatus;
-                //ret = _PPUStatus;
-                //{
-                //If read during HBlank and Bit #7 of $2000 is set to 0, then switch to Name Table #0
-                //if ((PPUControlByte0 & 0x80) == 0 && scanlinePos > 0xFF)
-                //{
-                //    nameTableMemoryStart = 0;
-                //}
-                // clear vblank flag if read
+
                 this.DrawTo(Clock);
                 if ((ret & 0x80) === 0x80) {
 
@@ -1728,11 +1767,7 @@ class ChiChiInstruction implements ChiChiInstruction{
                 //this._openBus = tmp;
                 return tmp;
             case 7:
-                //        If Mapper = 9 Then
-                //            If PPUAddress < &H2000& Then
-                //                map9_latch tmp, (PPUAddress And &H1000&)
-                //            End If
-                //        End If
+
                 // palette reads shouldn't be buffered like regular vram reads, they re internal
                 if ((this._PPUAddress & 65280) === 16128) {
                     // these palettes are all mirrored every 0x10 bytes
@@ -1795,8 +1830,8 @@ class ChiChiInstruction implements ChiChiInstruction{
 
         this.unpackedSprites = new Array<ChiChiSprite>(64);
 
-        for (let i1 = 0; i1 < 64; ++i1) {
-            this.unpackedSprites[i1] = new ChiChiSprite();
+        for (let i = 0; i < 64; ++i) {
+            this.unpackedSprites[i] = new ChiChiSprite();
         }
 
     }
