@@ -478,7 +478,6 @@ declare module ChiChiNES {
         RunFast(): void;
         Step(): void;
 
-        setupticks(): void;
         ResetCPU(): void;
         PowerOn(): void;
         //GetState(outStream: System.Collections.Generic.Queue$1<number>): void;
