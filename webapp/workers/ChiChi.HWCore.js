@@ -81,6 +81,13 @@ var ChiChiMachine = /** @class */ (function () {
     }
     ChiChiMachine.prototype.Drawscreen = function () {
     };
+    Object.defineProperty(ChiChiMachine.prototype, "Cart", {
+        get: function () {
+            return this.Cpu.Cart;
+        },
+        enumerable: true,
+        configurable: true
+    });
     ChiChiMachine.prototype.Initialize = function () {
     };
     ChiChiMachine.prototype.Reset = function () {
@@ -110,7 +117,7 @@ var ChiChiMachine = /** @class */ (function () {
         }
     };
     ChiChiMachine.prototype.PowerOff = function () {
-        this.Cart = null;
+        this.EjectCart();
         this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Unloaded;
     };
     ChiChiMachine.prototype.Step = function () {
@@ -148,13 +155,14 @@ var ChiChiMachine = /** @class */ (function () {
         this.Cpu.LastcpuClock = 0;
     };
     ChiChiMachine.prototype.EjectCart = function () {
-        throw new Error("Method not implemented.");
+        this.Cpu.Cart = null;
+        this.Cpu.ChrRomHandler = null;
     };
     ChiChiMachine.prototype.LoadCart = function (rom) {
         this.EjectCart();
-        this.Cart = ChiChiNES.ROMLoader.iNESFileHandler.LoadROM(this.Cpu, rom);
-        if (this.Cart != null) {
-            this.Cpu.Cart = this.Cart; // Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
+        var cart = ChiChiNES.ROMLoader.iNESFileHandler.LoadROM(this.Cpu, rom);
+        if (cart != null) {
+            this.Cpu.Cart = cart; // Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
             this.Cpu.Cart.NMIHandler = this.Cpu.InterruptRequest;
             this.Cpu.ChrRomHandler = this.Cart;
         }

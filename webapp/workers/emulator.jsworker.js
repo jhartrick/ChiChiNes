@@ -72,17 +72,18 @@ importScripts('http://192.168.56.103:801/workers/ChiChi.HWCore.js');
     }
 
     function createMachine() {
-        const wavsharer = new ChiChiNES.BeepsBoops.WavSharer();
+        // const wavsharer = new ChiChiNES.BeepsBoops.WavSharer();
 
-        const soundbop = new ChiChiNES.BeepsBoops.Bopper(wavsharer);
-        const cpu = new ChiChiCPPU(soundbop);
-        //const cpu = new ChiChiNES.CPU2A03(soundbop);
-        cpu.PPU_FillRGB = false;
-        tendo.machine = new ChiChiNES.NESMachine(cpu,
-            wavsharer,
-            soundbop);
+        // const soundbop = new ChiChiNES.BeepsBoops.Bopper(wavsharer);
+        // const cpu = new ChiChiCPPU(soundbop);
+        // //const cpu = new ChiChiNES.CPU2A03(soundbop);
+        // cpu.PPU_FillRGB = false;
+        // tendo.machine = new ChiChiNES.NESMachine(cpu,
+        //     wavsharer,
+        //     soundbop);
 
-        cpu.frameFinished = () => { tendo.machine.FrameFinished(); };
+        tendo.machine = new ChiChiMachine();
+      //  cpu.frameFinished = () => { tendo.machine.FrameFinished(); };
 
         tendo.machine.PadOne = tendo.controlPad1;//this.controlPad;
         //this.tileDoodler = new Tiler(this.machine);

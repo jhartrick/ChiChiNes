@@ -112,7 +112,10 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
 
     RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
     Cpu: ChiChiNES.CPU2A03 ;
-    Cart: ChiChiNES.INESCart;
+    get Cart(): ChiChiNES.INESCart {
+        return <ChiChiNES.INESCart>this.Cpu.Cart;
+    }
+
     SoundBopper: ChiChiNES.BeepsBoops.Bopper;
     WaveForms: ChiChiNES.BeepsBoops.IWavReader;
     EnableSound: boolean;
@@ -152,7 +155,7 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
         }
     }
     PowerOff(): void {
-        this.Cart = null;
+        this.EjectCart();
         this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Unloaded;
     }
 
@@ -197,15 +200,17 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
         this.Cpu.LastcpuClock = 0;        
     }
     EjectCart(): void {
-        throw new Error("Method not implemented.");
+        this.Cpu.Cart = null;
+        this.Cpu.ChrRomHandler = null;
+
     }
     LoadCart(rom: any): void {
         this.EjectCart();
 
-        this.Cart = ChiChiNES.ROMLoader.iNESFileHandler.LoadROM(this.Cpu, rom);
-        if (this.Cart != null) {
+        var cart = ChiChiNES.ROMLoader.iNESFileHandler.LoadROM(this.Cpu, rom);
+        if (cart != null) {
 
-            this.Cpu.Cart = this.Cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
+            this.Cpu.Cart = cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
             this.Cpu.Cart.NMIHandler =  this.Cpu.InterruptRequest;
             this.Cpu.ChrRomHandler = this.Cart;
 
