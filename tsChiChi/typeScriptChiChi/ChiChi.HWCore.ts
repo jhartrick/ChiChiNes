@@ -17,6 +17,23 @@
     IndirectAbsoluteX
 }
 
+class ChiChiInstruction implements ChiChiInstruction{
+    AddressingMode: number;
+    frame: number;
+    time: number;
+    A: number;
+    X: number;
+    Y: number;
+    SR: number;
+    SP: number;
+    Address: number;
+    OpCode: number;
+    Parameters0: number;
+    Parameters1: number;
+    ExtraTiming: number;
+    Length: number;
+}
+
  class ChiChiSprite {
 
      YPosition: number = 0;
@@ -29,8 +46,200 @@
      FlipX: boolean = false;
      FlipY: boolean = false;
      Changed: boolean = false;
-
  }
+
+class ChiChiNullPad implements ChiChiNES.InputHandler{
+    IsZapper: boolean;
+    ControlPad: ChiChiNES.IControlPad;
+    CurrentByte: number;
+    NMIHandler: () => void;
+    IRQAsserted: boolean;
+    NextEventAt: number;
+    controlPad_NextControlByteSet(sender: any, e: ChiChiNES.ControlByteEventArgs): void {
+        // throw new Error("Method not implemented.");
+    }
+    GetByte(clock: number, address: number): number {
+        return this.CurrentByte;
+    }
+    SetByte(clock: number, address: number, data: number): void {
+    }
+    SetNextControlByte(data: number): void {
+    }
+    HandleEvent(Clock: number): void {
+    }
+    ResetClock(Clock: number): void {
+    }
+    ChiChiNES$IClockedMemoryMappedIOElement$NMIHandler: () => void;
+    ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted: boolean;
+    ChiChiNES$IClockedMemoryMappedIOElement$NextEventAt: number;
+    ChiChiNES$IClockedMemoryMappedIOElement$GetByte(Clock: number, address: number): number {
+        return this.GetByte(Clock,address);
+    }
+    ChiChiNES$IClockedMemoryMappedIOElement$SetByte(Clock: number, address: number, data: number): void {
+        this.SetByte(Clock, address, data);
+    }
+    ChiChiNES$IClockedMemoryMappedIOElement$HandleEvent(Clock: number): void {
+        
+    }
+    ChiChiNES$IClockedMemoryMappedIOElement$ResetClock(Clock: number): void {
+     
+    }
+}
+
+class ChiChiMachine implements ChiChiNES.NESMachine {
+    private frameJustEnded = true;
+    private frameOn= false;
+    private totalCPUClocks = 0;
+
+    constructor() {
+
+        var wavSharer = new ChiChiNES.BeepsBoops.WavSharer();
+        
+        this.SoundBopper = new ChiChiNES.BeepsBoops.Bopper(wavSharer);
+
+        this.WaveForms = wavSharer;
+
+        this.Cpu = new ChiChiCPPU(this.SoundBopper);
+        
+        this.Cpu.frameFinished = () => { this.FrameFinished(); };
+
+        this.Initialize();        
+    }
+
+    Drawscreen(): void {
+        
+    }
+
+    RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
+    Cpu: ChiChiNES.CPU2A03 ;
+    get Cart(): ChiChiNES.INESCart {
+        return <ChiChiNES.INESCart>this.Cpu.Cart;
+    }
+
+    SoundBopper: ChiChiNES.BeepsBoops.Bopper;
+    WaveForms: ChiChiNES.BeepsBoops.IWavReader;
+    EnableSound: boolean;
+    FrameCount: number;
+    IsRunning: boolean;
+    PadOne: ChiChiNES.IControlPad;
+    PadTwo: ChiChiNES.IControlPad;
+    SRAMReader: (RomID: string) => any;
+    SRAMWriter: (RomID: string, SRAM: any) => void;
+    Initialize(): void {
+
+    }
+    Reset(): void {
+        if (this.Cpu != null && this.Cart != null) {
+            // ForceStop();
+            this.SoundBopper.RebuildSound();
+            this.Cpu.PPU_Initialize();
+            this.Cart.ChiChiNES$INESCart$InitializeCart();
+            this.Cpu.ResetCPU();
+            //ClearGenieCodes();
+            this.Cpu.PowerOn();
+            this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
+        }
+    }
+    PowerOn(): void {
+        if (this.Cpu != null && this.Cart != null) {
+            this.SoundBopper.RebuildSound();
+            this.Cpu.PPU_Initialize();
+            this.Cart.ChiChiNES$INESCart$InitializeCart();
+            // if (this.SRAMReader !=  null && this.Cart.UsesSRAM) {
+            //     this.Cart.SRAM = this.SRAMReader(this.Cart.ChiChiNES$INESCart$CheckSum);
+            // }
+            this.Cpu.ResetCPU();
+            //ClearGenieCodes();
+            this.Cpu.PowerOn();
+            this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
+        }
+    }
+    PowerOff(): void {
+        this.EjectCart();
+        this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Unloaded;
+    }
+
+
+    Step(): void {
+        if (this.frameJustEnded) {
+            this.Cpu.FindNextEvent();
+            this.frameOn = true;
+            this.frameJustEnded = false;
+        }
+        this.Cpu.Step();
+
+        if (!this.frameOn) {
+            this.totalCPUClocks = this.Cpu.Clock;
+            this.totalCPUClocks = 0;
+            this.Cpu.Clock = 0;
+            this.Cpu.LastcpuClock = 0;
+            this.frameJustEnded = true;
+        }
+        //_cpu.Clock = _totalCPUClocks;
+        //breakpoints: HandleBreaks();        
+    }
+    RunFrame(): void {
+        this.frameOn = true;
+        this.frameJustEnded = false;
+
+        //_cpu.RunFrame();
+        this.Cpu.FindNextEvent();
+        do {
+            this.Cpu.Step();
+        } while (this.frameOn);
+
+        this.totalCPUClocks = this.Cpu.Clock;
+
+        if (this.EnableSound) {
+            this.SoundBopper.FlushFrame(this.totalCPUClocks);
+            this.SoundBopper.EndFrame(this.totalCPUClocks);
+        }
+
+        this.totalCPUClocks = 0;
+        this.Cpu.Clock = 0;
+        this.Cpu.LastcpuClock = 0;        
+    }
+    EjectCart(): void {
+        this.Cpu.Cart = null;
+        this.Cpu.ChrRomHandler = null;
+
+    }
+    LoadCart(rom: any): void {
+        this.EjectCart();
+
+        var cart = ChiChiNES.ROMLoader.iNESFileHandler.LoadROM(this.Cpu, rom);
+        if (cart != null) {
+
+            this.Cpu.Cart = cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
+            this.Cpu.Cart.NMIHandler =  this.Cpu.InterruptRequest;
+            this.Cpu.ChrRomHandler = this.Cart;
+
+
+        } else {
+            throw new ChiChiNES.ROMLoader.CartLoadException.ctor("Unsupported ROM type - load failed.");
+        }        
+    }
+    HasState(index: number): boolean {
+        throw new Error("Method not implemented.");
+    }
+    GetState(index: number): void {
+        throw new Error("Method not implemented.");
+    }
+    SetState(index: number): void {
+        throw new Error("Method not implemented.");
+    }
+    SetupSound(): void {
+        throw new Error("Method not implemented.");
+    }
+    FrameFinished(): void {
+        this.frameJustEnded = true;
+        this.frameOn = false;
+        this.Drawscreen();
+    }
+    dispose(): void {
+        throw new Error("Method not implemented.");
+    }
+}
 
  class ChiChiCPPU implements ChiChiNES.CPU2A03
  {
@@ -46,7 +255,9 @@
     readonly SRMasks_NegativeResultMask = 0x80;
 
 
-    private frameFinished: () => {};
+    public frameFinished: () => void;
+
+
     private  vbufLocation: number= 0;
     private yPosition: number= 0;
     private xPosition: number= 0;
@@ -127,7 +338,7 @@
     }
 
     private instructionHistoryPointer = 255;
-    private _instructionHistory = new Array(256);//System.Array.init(256, null, ChiChiNES.CPU2A03.Instruction);
+    private _instructionHistory = new Array(256);//System.Array.init(256, null, ChiChiInstruction);
 
     public get InstructionHistory(): Array<any> {
         return this._instructionHistory;
@@ -202,6 +413,8 @@
 
             // init PPU
             this.PPU_InitSprites();
+            this._padOne = new ChiChiNullPad();
+            this._padTwo = new ChiChiNullPad();
 
             //this.vBuffer = System.Array.init(61440, 0, System.Byte);
 
@@ -225,7 +438,7 @@
        // throw new Error('Method not implemented.');
     }
 
-    CurrentInstruction: ChiChiNES.CPU2A03.Instruction;
+    CurrentInstruction: ChiChiInstruction;
 
     SoundBopper: ChiChiNES.IClockedMemoryMappedIOElement;
 
@@ -274,7 +487,12 @@
         
     }
 
-    PPU_FrameFinishHandler: () => void;
+    get PPU_FrameFinishHandler(): () => void {
+        return this.frameFinished;
+    } 
+    set PPU_FrameFinishHandler(value: () => void)  {
+        this.frameFinished = value;
+    } 
 
     PPU_SpriteCopyHasHappened: boolean;
     PPU_MaxSpritesPerScanline: number;
@@ -1397,9 +1615,22 @@
     }
 
     WriteInstructionHistoryAndUsage(): void {
-        var $t;
-
-        this._instructionHistory[(this.instructionHistoryPointer--) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.time = this.systemClock, $t.A = this._accumulator, $t.X = this._indexRegisterX, $t.Y = this._indexRegisterY, $t.SR = this._statusRegister, $t.SP = this._stackPointer, $t.frame = this.clock, $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
+        const inst : ChiChiInstruction = new ChiChiInstruction();
+        inst.time = this.systemClock;
+        inst.A = this._accumulator; 
+        inst.X = this._indexRegisterX; 
+        inst.Y = this._indexRegisterY; 
+        inst.SR = this._statusRegister; 
+        inst.SP = this._stackPointer; 
+        inst.frame = this.clock; 
+        inst.OpCode = this._currentInstruction_OpCode;
+        inst.Parameters0 = this._currentInstruction_Parameters0;
+        inst.Parameters1 = this._currentInstruction_Parameters1;
+        inst.Address = this._currentInstruction_Address; 
+        inst.AddressingMode = this._currentInstruction_AddressingMode;
+        inst.ExtraTiming = this._currentInstruction_ExtraTiming;
+        
+        this._instructionHistory[(this.instructionHistoryPointer--) & 255] = inst;
         this.instructionUsage[this._currentInstruction_OpCode]++;
         if ((this.instructionHistoryPointer & 255) === 255) {
             this.FireDebugEvent("instructionHistoryFull");
@@ -1408,7 +1639,7 @@
     FireDebugEvent(s: string): void {
         throw new Error('Method not implemented.');
     }
-    PeekInstruction(address: number): ChiChiNES.CPU2A03.Instruction {
+    PeekInstruction(address: number): ChiChiInstruction {
         throw new Error('Method not implemented.');
     }
     PPU_Initialize(): void {
@@ -1494,7 +1725,7 @@
                 //     NMIHasBeenThrownThisFrame = false;
                 //}
                 //UpdatePixelInfo();
-                this.nameTableMemoryStart = this.nameTableBits * 0x400;
+                this.nameTableMemoryStart = this.nameTableBits * 1024;
                 break;
             case 1:
                 //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
@@ -1671,14 +1902,7 @@
                 // bit 7 is set to 0 after a read occurs
                 // return lower 5 latched bits, and the status
                 ret = (this.ppuReadBuffer & 31) | this._PPUStatus;
-                //ret = _PPUStatus;
-                //{
-                //If read during HBlank and Bit #7 of $2000 is set to 0, then switch to Name Table #0
-                //if ((PPUControlByte0 & 0x80) == 0 && scanlinePos > 0xFF)
-                //{
-                //    nameTableMemoryStart = 0;
-                //}
-                // clear vblank flag if read
+
                 this.DrawTo(Clock);
                 if ((ret & 0x80) === 0x80) {
 
@@ -1698,11 +1922,7 @@
                 //this._openBus = tmp;
                 return tmp;
             case 7:
-                //        If Mapper = 9 Then
-                //            If PPUAddress < &H2000& Then
-                //                map9_latch tmp, (PPUAddress And &H1000&)
-                //            End If
-                //        End If
+
                 // palette reads shouldn't be buffered like regular vram reads, they re internal
                 if ((this._PPUAddress & 65280) === 16128) {
                     // these palettes are all mirrored every 0x10 bytes
@@ -1765,8 +1985,8 @@
 
         this.unpackedSprites = new Array<ChiChiSprite>(64);
 
-        for (let i1 = 0; i1 < 64; ++i1) {
-            this.unpackedSprites[i1] = new ChiChiSprite();
+        for (let i = 0; i < 64; ++i) {
+            this.unpackedSprites[i] = new ChiChiSprite();
         }
 
     }
