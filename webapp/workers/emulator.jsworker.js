@@ -1,8 +1,8 @@
 ﻿//require('bridge.min.js');
 //require('ChiChiCore.min.js');
-importScripts('http://localhost:802/workers/bridge.min.js');
-importScripts('http://localhost:802/workers/ChiChiCore.js');
-importScripts('http://localhost:802/workers/ChiChi.HWCore.js');
+importScripts('http://192.168.56.103:801/workers/bridge.js');
+importScripts('http://192.168.56.103:801/workers/ChiChiCore.js');
+importScripts('http://192.168.56.103:801/workers/ChiChi.HWCore.js');
 
 (function (globals, tendo) {
     var cartName = '';

@@ -17,6 +17,23 @@
     IndirectAbsoluteX
 }
 
+class ChiChiInstruction implements ChiChiInstruction{
+    AddressingMode: number;
+    frame: number;
+    time: number;
+    A: number;
+    X: number;
+    Y: number;
+    SR: number;
+    SP: number;
+    Address: number;
+    OpCode: number;
+    Parameters0: number;
+    Parameters1: number;
+    ExtraTiming: number;
+    Length: number;
+}
+
  class ChiChiSprite {
 
      YPosition: number = 0;
@@ -127,7 +144,7 @@
     }
 
     private instructionHistoryPointer = 255;
-    private _instructionHistory = new Array(256);//System.Array.init(256, null, ChiChiNES.CPU2A03.Instruction);
+    private _instructionHistory = new Array(256);//System.Array.init(256, null, ChiChiInstruction);
 
     public get InstructionHistory(): Array<any> {
         return this._instructionHistory;
@@ -225,7 +242,7 @@
        // throw new Error('Method not implemented.');
     }
 
-    CurrentInstruction: ChiChiNES.CPU2A03.Instruction;
+    CurrentInstruction: ChiChiInstruction;
 
     SoundBopper: ChiChiNES.IClockedMemoryMappedIOElement;
 
@@ -1397,9 +1414,22 @@
     }
 
     WriteInstructionHistoryAndUsage(): void {
-        var $t;
-
-        this._instructionHistory[(this.instructionHistoryPointer--) & 255] = ($t = new ChiChiNES.CPU2A03.Instruction.ctor(), $t.time = this.systemClock, $t.A = this._accumulator, $t.X = this._indexRegisterX, $t.Y = this._indexRegisterY, $t.SR = this._statusRegister, $t.SP = this._stackPointer, $t.frame = this.clock, $t.OpCode = this._currentInstruction_OpCode, $t.Parameters0 = this._currentInstruction_Parameters0, $t.Parameters1 = this._currentInstruction_Parameters1, $t.Address = this._currentInstruction_Address, $t.AddressingMode = this._currentInstruction_AddressingMode, $t.ExtraTiming = this._currentInstruction_ExtraTiming, $t);
+        const inst : ChiChiInstruction = new ChiChiInstruction();
+        inst.time = this.systemClock;
+        inst.A = this._accumulator; 
+        inst.X = this._indexRegisterX; 
+        inst.Y = this._indexRegisterY; 
+        inst.SR = this._statusRegister; 
+        inst.SP = this._stackPointer; 
+        inst.frame = this.clock; 
+        inst.OpCode = this._currentInstruction_OpCode;
+        inst.Parameters0 = this._currentInstruction_Parameters0;
+        inst.Parameters1 = this._currentInstruction_Parameters1;
+        inst.Address = this._currentInstruction_Address; 
+        inst.AddressingMode = this._currentInstruction_AddressingMode;
+        inst.ExtraTiming = this._currentInstruction_ExtraTiming;
+        
+        this._instructionHistory[(this.instructionHistoryPointer--) & 255] = inst;
         this.instructionUsage[this._currentInstruction_OpCode]++;
         if ((this.instructionHistoryPointer & 255) === 255) {
             this.FireDebugEvent("instructionHistoryFull");
@@ -1408,7 +1438,7 @@
     FireDebugEvent(s: string): void {
         throw new Error('Method not implemented.');
     }
-    PeekInstruction(address: number): ChiChiNES.CPU2A03.Instruction {
+    PeekInstruction(address: number): ChiChiInstruction {
         throw new Error('Method not implemented.');
     }
     PPU_Initialize(): void {
