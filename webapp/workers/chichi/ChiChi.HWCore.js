@@ -86,6 +86,192 @@ var ChiChiControlPad = /** @class */ (function () {
     };
     return ChiChiControlPad;
 }());
+var ChiChiBopper = /** @class */ (function () {
+    function ChiChiBopper() {
+        this.throwingIRQs = false;
+        this.reg15 = 0;
+        this.master_vol = 4369;
+        this.registers = new ChiChiNES.PortQueueing.QueuedPort();
+        this._sampleRate = 44100;
+        this.square0Gain = 873;
+        this.square1Gain = 873;
+        this.triangleGain = 1004;
+        this.noiseGain = 567;
+        this.muted = false;
+        this.lastFrameHit = 0;
+    }
+    Object.defineProperty(ChiChiBopper.prototype, "SampleRate", {
+        get: function () {
+            return this._sampleRate;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiBopper.prototype, "sampleRate", {
+        set: function (value) {
+            this._sampleRate = value;
+            this.RebuildSound();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ChiChiBopper.prototype.RebuildSound = function () {
+        var $t;
+        this.myBlipper = new ChiChiNES.BeepsBoops.Blip(this._sampleRate / 5);
+        this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
+        this.writer = new ChiChiNES.BeepsBoops.WavSharer();
+        this.writer.Frequency = this.sampleRate;
+        //this.writer.
+        this.registers.clear();
+        this.InterruptRaised = false;
+        this.square0Gain = 873;
+        this.square1Gain = 873;
+        this.triangleGain = 1004;
+        this.noiseGain = 567;
+        this.square0 = ($t = new ChiChiNES.BeepsBoops.SquareChannel(this.myBlipper, 0), $t.Gain = this.square0Gain, $t.Period = 10, $t.SweepComplement = true, $t);
+        this.square1 = ($t = new ChiChiNES.BeepsBoops.SquareChannel(this.myBlipper, 1), $t.Gain = this.square1Gain, $t.Period = 10, $t.SweepComplement = false, $t);
+        this.triangle = ($t = new ChiChiNES.BeepsBoops.TriangleChannel(this.myBlipper, 2), $t.Gain = this.triangleGain, $t.Period = 0, $t);
+        this.noise = ($t = new ChiChiNES.BeepsBoops.NoiseChannel(this.myBlipper, 3), $t.Gain = this.noiseGain, $t.Period = 0, $t);
+        this.dmc = ($t = new ChiChiNES.BeepsBoops.DMCChannel(this.myBlipper, 4), $t.Gain = 873, $t.Period = 10, $t);
+    };
+    ChiChiBopper.prototype.GetByte = function (Clock, address) {
+        if (address === 16384) {
+            this.InterruptRaised = false;
+        }
+        if (address === 16405) {
+            return this.ReadStatus();
+        }
+        else {
+            return 66;
+        }
+    };
+    ChiChiBopper.prototype.ReadStatus = function () {
+        return ((this.square0.Length > 0) ? 1 : 0) | ((this.square1.Length > 0) ? 2 : 0) | ((this.triangle.Length > 0) ? 4 : 0) | ((this.square0.Length > 0) ? 8 : 0) | (this.InterruptRaised ? 64 : 0);
+    };
+    ChiChiBopper.prototype.SetByte = function (Clock, address, data) {
+        if (address === 16384) {
+            this.InterruptRaised = false;
+        }
+        this.DoSetByte(Clock, address, data);
+        this.registers.enqueue(new ChiChiNES.PortQueueing.PortWriteEntry(Clock, address, data));
+    };
+    ChiChiBopper.prototype.DoSetByte = function (Clock, address, data) {
+        switch (address) {
+            case 16384:
+            case 16385:
+            case 16386:
+            case 16387:
+                this.square0.WriteRegister(address - 16384, data, Clock);
+                break;
+            case 16388:
+            case 16389:
+            case 16390:
+            case 16391:
+                this.square1.WriteRegister(address - 16388, data, Clock);
+                break;
+            case 16392:
+            case 16393:
+            case 16394:
+            case 16395:
+                this.triangle.WriteRegister(address - 16392, data, Clock);
+                break;
+            case 16396:
+            case 16397:
+            case 16398:
+            case 16399:
+                this.noise.WriteRegister(address - 16396, data, Clock);
+                break;
+            case 16400:
+            case 16401:
+            case 16402:
+            case 16403:
+                // dmc.WriteRegister(address - 0x40010, data, Clock);
+                break;
+            case 16405:
+                this.reg15 = data;
+                this.square0.WriteRegister(4, data & 1, Clock);
+                this.square1.WriteRegister(4, data & 2, Clock);
+                this.triangle.WriteRegister(4, data & 4, Clock);
+                this.noise.WriteRegister(4, data & 8, Clock);
+                break;
+            case 16407:
+                this.throwingIRQs = ((data & 64) !== 64);
+                this.lastFrameHit = 0;
+                break;
+        }
+    };
+    ChiChiBopper.prototype.UpdateFrame = function (time) {
+        if (this.muted) {
+            return;
+        }
+        this.RunFrameEvents(time, this.lastFrameHit);
+        if (this.lastFrameHit === 3) {
+            if (this.throwingIRQs) {
+                this.InterruptRaised = true;
+            }
+            this.lastFrameHit = 0;
+            //EndFrame(time);
+        }
+        else {
+            this.lastFrameHit++;
+        }
+    };
+    ChiChiBopper.prototype.RunFrameEvents = function (time, step) {
+        this.triangle.FrameClock(time, step);
+        this.noise.FrameClock(time, step);
+        this.square0.FrameClock(time, step);
+        this.square1.FrameClock(time, step);
+    };
+    ChiChiBopper.prototype.EndFrame = function (time) {
+        this.square0.EndFrame(time);
+        this.square1.EndFrame(time);
+        this.triangle.EndFrame(time);
+        this.noise.EndFrame(time);
+        if (!this.muted) {
+            this.myBlipper.blip_end_frame(time);
+        }
+        var count = this.myBlipper.ReadBytes(this.writer.SharedBuffer, this.writer.SharedBuffer.length / 2, 0);
+        this.writer.WavesWritten(count);
+    };
+    ChiChiBopper.prototype.FlushFrame = function (time) {
+        var currentClock = 0;
+        var frameClocker = 0;
+        var currentEntry;
+        while (this.registers.Count > 0) {
+            currentEntry = this.registers.dequeue();
+            if (frameClocker > 7445) {
+                frameClocker -= 7445;
+                this.UpdateFrame(7445);
+            }
+            this.DoSetByte(currentEntry.time, currentEntry.address, currentEntry.data);
+            currentClock = currentEntry.time;
+            frameClocker = currentEntry.time;
+        }
+        // hit the latest frame boundary, maybe too much math for too little reward
+        var clockDelta = currentClock % 7445;
+        if (this.lastFrameHit === 0) {
+            this.UpdateFrame(7445);
+        }
+        while (this.lastFrameHit > 0) {
+            this.UpdateFrame(7445 * (this.lastFrameHit + 1));
+        }
+    };
+    ChiChiBopper.prototype.HandleEvent = function (Clock) {
+        this.UpdateFrame(Clock);
+        this.lastClock = Clock;
+        if (Clock > 29780) {
+            this.writer;
+            {
+                this.EndFrame(Clock);
+            }
+        }
+    };
+    ChiChiBopper.prototype.ResetClock = function (Clock) {
+        this.lastClock = Clock;
+    };
+    ChiChiBopper.clock_rate = 1789772.727;
+    return ChiChiBopper;
+}());
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine() {
         var _this = this;
@@ -94,7 +280,7 @@ var ChiChiMachine = /** @class */ (function () {
         this.totalCPUClocks = 0;
         this._enableSound = false;
         var wavSharer = new ChiChiNES.BeepsBoops.WavSharer();
-        this.SoundBopper = new ChiChiNES.BeepsBoops.Bopper(wavSharer);
+        this.SoundBopper = new ChiChiBopper();
         this.WaveForms = wavSharer;
         this.Cpu = new ChiChiCPPU(this.SoundBopper);
         this.Cpu.frameFinished = function () { _this.FrameFinished(); };
@@ -1355,7 +1541,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this._handleNMI = true;
     };
     ChiChiCPPU.prototype.IRQUpdater = function () {
-        this._handleIRQ = this.SoundBopper.ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted || this.Cart.ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted;
+        this._handleIRQ = this.SoundBopper.IRQAsserted || this.Cart.ChiChiNES$IClockedMemoryMappedIOElement$IRQAsserted;
     };
     ChiChiCPPU.prototype.LoadBytes = function (offset, bytes) {
         throw new Error('Method not implemented.');
@@ -1403,7 +1589,7 @@ var ChiChiCPPU = /** @class */ (function () {
                         //result = _padTwo.GetByte(clock, address);
                         break;
                     case 16405:
-                        result = this.SoundBopper.ChiChiNES$IClockedMemoryMappedIOElement$GetByte(this.clock, address);
+                        result = this.SoundBopper.GetByte(this.clock, address);
                         break;
                     default:
                         // return open bus?
@@ -1495,7 +1681,7 @@ var ChiChiCPPU = /** @class */ (function () {
                     case 16399:
                     case 16405:
                     case 16407:
-                        this.SoundBopper.ChiChiNES$IClockedMemoryMappedIOElement$SetByte(this.clock, address, data);
+                        this.SoundBopper.SetByte(this.clock, address, data);
                         break;
                     case 16404:
                         this.PPU_CopySprites(data * 256);
@@ -2023,9 +2209,6 @@ var ChiChiCPPU = /** @class */ (function () {
         this.patternEntryByte2 = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, patternID + 8);
         this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
     };
-    ChiChiCPPU.prototype.GetNameTablePixelOld = function () {
-        throw new Error('Method not implemented.');
-    };
     ChiChiCPPU.prototype.GetAttributeTableEntry = function (ppuNameTableMemoryStart, i, j) {
         var LookUp = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
         switch ((i & 2) | (j & 2) * 2) {
@@ -2172,6 +2355,19 @@ var ChiChiCPPU = /** @class */ (function () {
             Y: this._indexRegisterY,
             SP: this._stackPointer,
             SR: this._statusRegister
+        };
+    };
+    ChiChiCPPU.prototype.GetPPUStatus = function () {
+        return {
+            status: this._PPUStatus,
+            controlByte0: this._PPUControlByte0,
+            controlByte1: this._PPUControlByte1,
+            nameTableStart: this.nameTableMemoryStart,
+            currentTile: this.currentTileIndex,
+            lockedVScroll: this.lockedVScroll,
+            lockedHScroll: this.lockedHScroll,
+            X: this.currentXPosition,
+            Y: this.currentYPosition
         };
     };
     // statics 

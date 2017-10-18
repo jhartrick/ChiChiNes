@@ -415,7 +415,7 @@ declare module ChiChiNES {
          * @type number
          */
         //Cheating: boolean;
-        SoundBopper: ChiChiNES.IClockedMemoryMappedIOElement;
+        SoundBopper: ChiChiNES.BeepsBoops.Bopper;
         PadOne: ChiChiNES.InputHandler;
         PadTwo: ChiChiNES.InputHandler;
         Cart: ChiChiNES.IClockedMemoryMappedIOElement;
@@ -546,7 +546,6 @@ declare module ChiChiNES {
          */
         PPU_GetNameTablePixel(): number;
         FetchNextTile(): void;
-        GetNameTablePixelOld(): number;
         GetAttributeTableEntry(ppuNameTableMemoryStart: number, i: number, j: number): number;
         /**
          * draws from the lastcpuClock to the current one
@@ -661,7 +660,7 @@ declare module ChiChiNES.BeepsBoops {
     }
     var WavSharer: WavSharerFunc;
 
-    export interface Bopper extends ChiChiNES.IClockedMemoryMappedIOElement,ChiChiNES.BeepsBoops.IAPU {
+    export interface Bopper  {
         SampleRate: number;
         Muted: boolean;
         InterruptRaised: boolean;

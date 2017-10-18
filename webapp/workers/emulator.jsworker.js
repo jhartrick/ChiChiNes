@@ -1,8 +1,12 @@
 ﻿//require('bridge.min.js');
 //require('ChiChiCore.min.js');
-importScripts('http://localhost:802/workers/bridge.min.js');
-importScripts('http://localhost:802/workers/ChiChiCore.js');
-importScripts('http://localhost:802/workers/chichi/ChiChi.HWCore.js');
+importScripts('http://192.168.56.103:801/workers/bridge.min.js');
+importScripts('http://192.168.56.103:801/workers/ChiChiCore.js');
+importScripts('http://192.168.56.103:801/workers/chichi/ChiChi.HWCore.js');
+
+//importScripts('http://localhost:802/workers/bridge.min.js');
+//importScripts('http://localhost:802/workers/ChiChiCore.js');
+//importScripts('http://localhost:802/workers/chichi/ChiChi.HWCore.js');
 
 (function (globals, tendo) {
     var cartName = '';
@@ -146,7 +150,9 @@ importScripts('http://localhost:802/workers/chichi/ChiChi.HWCore.js');
                         Y: tendo.machine.Cpu.IndexRegisterY,
                         SP: tendo.machine.Cpu.StackPointer,
                         SR: tendo.machine.Cpu.StatusRegister
-                    }, InstructionHistory: {
+                    },
+                    currentPPUStatus: tendo.machine.Cpu.GetPPUStatus ? tendo.machine.Cpu.GetPPUStatus() : {},
+                    InstructionHistory: {
                         Buffer: tendo.machine.Cpu.InstructionHistory.slice(0),
                         Index: tendo.machine.Cpu.InstructionHistoryPointer,
                         Finish : tendo.frameFinished
