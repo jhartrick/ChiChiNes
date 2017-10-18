@@ -184,7 +184,7 @@ export class Emulator {
             case 88: //x
                 this.padOneState |= 1 & 0xFF;
                 break;
-            case 13: // enter
+            case 13: case 89: // enter
                 this.padOneState |= 8 & 0xFF;
                 break;
             case 9: // tab

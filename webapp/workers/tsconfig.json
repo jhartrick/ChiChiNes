@@ -1,22 +1,21 @@
 ﻿{
   "compileOnSave": false,
   "compilerOptions": {
-    "outDir": "./dist/out-tsc",
+    "module": "none",
+    "outDir": "./chichi/",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es5",
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "suppressImplicitAnyIndexErrors": true,
     "typeRoots": [
       "node_modules/@types"
     ],
     "lib": [
-      "webworker",
-      "es2017",
-      "dom"
+      "dom",
+      "es2017"
     ]
   }
 }

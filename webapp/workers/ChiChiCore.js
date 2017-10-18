@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @version 1.0.0.0
  * @copyright Copyright ©  2017
  * @compiler Bridge.NET 16.3.2

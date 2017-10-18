@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Emulator } from 'app/services/NESService'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/catch'
@@ -42,10 +42,10 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasTop: string = '0px';
 
 
-    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(4096 * Float32Array.BYTES_PER_ELEMENT);
+    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(2048 * Float32Array.BYTES_PER_ELEMENT);
     private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
 
-    constructor(private nesService: Emulator, cd: ChangeDetectorRef) {
+    constructor(private nesService: Emulator, cd: ChangeDetectorRef, private zone: NgZone) {
     }
 
     @HostListener('document:keydown', ['$event'])
@@ -86,7 +86,7 @@ export class ChiChiComponent implements AfterViewInit {
         this.audioSource = this.audioCtx.createBufferSource();
         
         this.sound.setNodeSource(this.audioSource);
-        this.audioSource.buffer = this.audioCtx.createBuffer(1, 4096, 44100);
+        this.audioSource.buffer = this.audioCtx.createBuffer(1, 2048, 44100);
         var scriptNode = this.audioCtx.createScriptProcessor(2048, 1, 1);
 
         this.audioSource.connect(scriptNode);
@@ -124,7 +124,7 @@ export class ChiChiComponent implements AfterViewInit {
                 }
 
             }
-            this.nesService.clearAudio();
+           // this.nesService.clearAudio();
         }
 
         scriptNode.connect(this.audioCtx.destination);
@@ -206,11 +206,13 @@ void main()	{
     }
 
     drawFrame(): void {
-      requestAnimationFrame(() => {
-        this.renderer.render(this.scene, this.camera);
-        this.text.needsUpdate = true;
-        this.drawFrame();
-      });
+        this.zone.runOutsideAngular(() => {
+            requestAnimationFrame(() => {
+                this.renderer.render(this.scene, this.camera);
+                this.text.needsUpdate = true;
+                this.drawFrame();
+            });
+        });
     }
 
     soundOver = true;

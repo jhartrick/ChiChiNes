@@ -88,37 +88,51 @@ class ChiChiNullPad implements ChiChiNES.InputHandler{
 
 class ChiChiMachine implements ChiChiNES.NESMachine {
     private frameJustEnded = true;
-    private frameOn= false;
+    private frameOn = false;
     private totalCPUClocks = 0;
 
     constructor() {
 
         var wavSharer = new ChiChiNES.BeepsBoops.WavSharer();
-        
+
         this.SoundBopper = new ChiChiNES.BeepsBoops.Bopper(wavSharer);
 
         this.WaveForms = wavSharer;
 
         this.Cpu = new ChiChiCPPU(this.SoundBopper);
-        
+
         this.Cpu.frameFinished = () => { this.FrameFinished(); };
 
-        this.Initialize();        
+        this.Initialize();
     }
 
     Drawscreen(): void {
-        
+
     }
 
     RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
-    Cpu: ChiChiNES.CPU2A03 ;
+    Cpu: ChiChiNES.CPU2A03;
     get Cart(): ChiChiNES.INESCart {
         return <ChiChiNES.INESCart>this.Cpu.Cart;
     }
 
     SoundBopper: ChiChiNES.BeepsBoops.Bopper;
     WaveForms: ChiChiNES.BeepsBoops.IWavReader;
-    EnableSound: boolean;
+
+    private _enableSound: boolean = false;
+    get EnableSound(): boolean {
+        return this._enableSound;
+    }
+
+    set EnableSound(value: boolean) {
+        this.SoundBopper.Muted = !value;
+        this._enableSound = value;
+        if (this._enableSound) {
+            this.SoundBopper.RebuildSound();
+        }
+    }
+    
+
     FrameCount: number;
     IsRunning: boolean;
     PadOne: ChiChiNES.IControlPad;
@@ -140,6 +154,7 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
             this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
         }
     }
+
     PowerOn(): void {
         if (this.Cpu != null && this.Cart != null) {
             this.SoundBopper.RebuildSound();
@@ -154,11 +169,11 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
             this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Running;
         }
     }
+
     PowerOff(): void {
         this.EjectCart();
         this.RunState = ChiChiNES.Machine.ControlPanel.RunningStatuses.Unloaded;
     }
-
 
     Step(): void {
         if (this.frameJustEnded) {
@@ -178,6 +193,7 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
         //_cpu.Clock = _totalCPUClocks;
         //breakpoints: HandleBreaks();        
     }
+
     RunFrame(): void {
         this.frameOn = true;
         this.frameJustEnded = false;
@@ -190,20 +206,20 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
 
         this.totalCPUClocks = this.Cpu.Clock;
 
-        if (this.EnableSound) {
-            this.SoundBopper.FlushFrame(this.totalCPUClocks);
-            this.SoundBopper.EndFrame(this.totalCPUClocks);
-        }
+        this.SoundBopper.FlushFrame(this.totalCPUClocks);
+        this.SoundBopper.EndFrame(this.totalCPUClocks);
 
         this.totalCPUClocks = 0;
         this.Cpu.Clock = 0;
         this.Cpu.LastcpuClock = 0;        
     }
+
     EjectCart(): void {
         this.Cpu.Cart = null;
         this.Cpu.ChrRomHandler = null;
 
     }
+
     LoadCart(rom: any): void {
         this.EjectCart();
 
@@ -219,9 +235,11 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
             throw new ChiChiNES.ROMLoader.CartLoadException.ctor("Unsupported ROM type - load failed.");
         }        
     }
+
     HasState(index: number): boolean {
         throw new Error("Method not implemented.");
     }
+
     GetState(index: number): void {
         throw new Error("Method not implemented.");
     }
@@ -237,12 +255,11 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
         this.Drawscreen();
     }
     dispose(): void {
-        throw new Error("Method not implemented.");
     }
 }
 
- class ChiChiCPPU implements ChiChiNES.CPU2A03
- {
+class ChiChiCPPU implements ChiChiNES.CPU2A03
+{
     PadTwo: ChiChiNES.InputHandler;
 
     readonly SRMasks_CarryMask = 0x01;
