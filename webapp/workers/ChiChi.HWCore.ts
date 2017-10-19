@@ -103,10 +103,6 @@ class ChiChiControlPad implements ChiChiNES.IControlPad {
 }
 
 class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
-    lastClock: number;
-    private writer: ChiChiNES.BeepsBoops.WavSharer;
-    throwingIRQs: boolean = false;
-    reg15: number = 0;
 // blipper
     private myBlipper: ChiChiNES.BeepsBoops.Blip;
 // channels 
@@ -116,6 +112,10 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
     private noise: ChiChiNES.BeepsBoops.NoiseChannel;
     private dmc: ChiChiNES.BeepsBoops.DMCChannel;
 
+
+    private lastClock: number;
+    private throwingIRQs: boolean = false;
+    private reg15: number = 0;
 
     private master_vol = 4369;
     private static clock_rate = 1789772.727;
@@ -128,7 +128,8 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
     private muted = false;
     private lastFrameHit = 0;
 
-
+    constructor(private writer: ChiChiNES.BeepsBoops.WavSharer) {
+    }
     get SampleRate(): number{
         return this._sampleRate;
     }
@@ -180,7 +181,7 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
         var $t;
         this.myBlipper = new ChiChiNES.BeepsBoops.Blip(this._sampleRate / 5);
         this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
-        this.writer = new ChiChiNES.BeepsBoops.WavSharer();
+        //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
         this.writer.Frequency = this.sampleRate;
         //this.writer.
 
@@ -359,22 +360,15 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
     private totalCPUClocks = 0;
 
     constructor() {
-
         var wavSharer = new ChiChiNES.BeepsBoops.WavSharer();
-
-        this.SoundBopper = new ChiChiBopper();
-
+        this.SoundBopper = new ChiChiBopper(wavSharer);
         this.WaveForms = wavSharer;
-
         this.Cpu = new ChiChiCPPU(this.SoundBopper);
-
         this.Cpu.frameFinished = () => { this.FrameFinished(); };
-
         this.Initialize();
     }
 
     Drawscreen(): void {
-
     }
 
     RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
@@ -399,7 +393,6 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
         }
     }
 
-
     FrameCount: number;
     IsRunning: boolean;
 
@@ -412,9 +405,11 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
     }
     SRAMReader: (RomID: string) => any;
     SRAMWriter: (RomID: string, SRAM: any) => void;
+
     Initialize(): void {
 
     }
+
     Reset(): void {
         if (this.Cpu != null && this.Cart != null) {
             // ForceStop();
@@ -604,8 +599,7 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
 
     // CPU Op info
     private clockcount = new Uint8Array(256); // System.Array.init(256, 0, System.Int32);
-    private instruction = new Uint8Array(256); // System.Array.init(256, 0, System.Int32);
-    public addressmode = new Uint8Array(256);// System.Array.init(256, 0, System.Int32);
+
 
     private _cheating = false;
     private __frameFinished = true;
@@ -658,7 +652,7 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     private shouldRender = false;
     private _frames = 0;
     private hitSprite = false;
-    private PPUAddressLatchIsHigh = true;
+    private PPUAddressLatchIsHigh = false;
     private p32 = new Uint32Array(256);// System.Array.init(256, 0, System.Int32);
     private isRendering = true;
     public frameClock = 0;
@@ -1910,7 +1904,8 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
         //isRendering = false;
 
         if (this.PPU_NMIIsThrown) {
-            this.NMIHandler();
+            //this.NMIHandler();
+            this._handleNMI = true;
             this.PPU_HandleVBlankIRQ = true;
             this.NMIHasBeenThrownThisFrame = true;
         }

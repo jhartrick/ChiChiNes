@@ -91,6 +91,7 @@ export class CpuStatus {
 }
 
 export class Debugger {
+        currentPPUStatus: any;
         private machine : Observable<any>;
         constructor(machine: Observable<any>) {
             this.machine = machine;
@@ -100,6 +101,7 @@ export class Debugger {
             }).subscribe((data) => {
                 const debug = data.debug;
                 this.currentCpuStatus = debug.currentCpuStatus;
+                this.currentPPUStatus = debug.currentPPUStatus;
                 if (debug.InstructionHistory) {
                     this.setInstructionPage(debug.InstructionHistory.Buffer, debug.InstructionHistory.Index);
                     if (debug.InstructionHistory.Finish) {

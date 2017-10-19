@@ -11,6 +11,15 @@
     SR: {{ nes.debugger.decodedStatusRegister }}
   </p>
 </div>
+<div class="ppuStatus">
+  <p>
+    X: {{ nes.debugger.currentPPUStatus?.X }} Y: {{ nes.debugger.currentPPUStatus?.Y }} Name Table: {{ nes.debugger.currentPPUStatus?.nameTableStart.toString(16) }} Tile: {{ nes.debugger.currentPPUStatus?.currentTile.toString(16) }} Status: {{ nes.debugger.currentPPUStatus?.status.toString(16) }}
+  </p>
+  <p>
+    locked hscroll: {{ nes.debugger.currentPPUStatus?.lockedHScroll }} locked vscroll: {{ nes.debugger.currentPPUStatus?.lockedVScroll }} 
+  </p>
+</div>
+
 <mat-tab-group dynamicHeight="true" [(selectedIndex)]="selectedTabIndex">
   <mat-tab label="CPU">
 
