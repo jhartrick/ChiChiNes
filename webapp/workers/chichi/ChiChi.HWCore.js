@@ -89,6 +89,181 @@ var ChiChiControlPad = /** @class */ (function () {
     return ChiChiControlPad;
 }());
 //apu classes
+var TriangleChannel = /** @class */ (function () {
+    function TriangleChannel(bleeper, chan) {
+        this._bleeper = null;
+        this._chan = 0;
+        this.LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+        this._length = 0;
+        this._period = 0;
+        this._time = 0;
+        this._envelope = 0;
+        this._looping = false;
+        this._enabled = false;
+        this._amplitude = 0;
+        this._gain = 0;
+        this._linCtr = 0;
+        this._phase = 0;
+        this._linVal = 0;
+        this._linStart = false;
+        this._bleeper = bleeper;
+        this._chan = chan;
+        this._enabled = true;
+    }
+    Object.defineProperty(TriangleChannel.prototype, "Period", {
+        get: function () {
+            return this._period;
+        },
+        set: function (value) {
+            this._period = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TriangleChannel.prototype, "Time", {
+        get: function () {
+            return this._time;
+        },
+        set: function (value) {
+            this._time = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TriangleChannel.prototype, "Envelope", {
+        get: function () {
+            return this._envelope;
+        },
+        set: function (value) {
+            this._envelope = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TriangleChannel.prototype, "Looping", {
+        get: function () {
+            return this._looping;
+        },
+        set: function (value) {
+            this._looping = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TriangleChannel.prototype, "Enabled", {
+        get: function () {
+            return this._enabled;
+        },
+        set: function (value) {
+            this._enabled = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TriangleChannel.prototype, "Gain", {
+        get: function () {
+            return this._gain;
+        },
+        set: function (value) {
+            this._gain = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TriangleChannel.prototype, "Amplitude", {
+        get: function () {
+            return this._amplitude;
+        },
+        set: function (value) {
+            this._amplitude = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TriangleChannel.prototype, "Length", {
+        get: function () {
+            return this._length;
+        },
+        set: function (value) {
+            this._length = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    TriangleChannel.prototype.WriteRegister = function (register, data, time) {
+        //Run(time);
+        switch (register) {
+            case 0:
+                this._looping = (data & 128) === 128;
+                this._linVal = data & 127;
+                break;
+            case 1:
+                break;
+            case 2:
+                this._period &= 1792;
+                this._period |= data;
+                break;
+            case 3:
+                this._period &= 255;
+                this._period |= (data & 7) << 8;
+                // setup lengthhave
+                if (this._enabled) {
+                    this._length = this.LengthCounts[(data >> 3) & 31];
+                }
+                this._linStart = true;
+                break;
+            case 4:
+                this._enabled = (data !== 0);
+                if (!this._enabled) {
+                    this._length = 0;
+                }
+                break;
+        }
+    };
+    TriangleChannel.prototype.Run = function (end_time) {
+        var period = this._period + 1;
+        if (this._linCtr === 0 || this._length === 0 || this._period < 4) {
+            // leave it at it's current phase
+            this._time = end_time;
+            return;
+        }
+        for (; this._time < end_time; this._time += period, this._phase = (this._phase + 1) % 32) {
+            this.UpdateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
+        }
+    };
+    TriangleChannel.prototype.UpdateAmplitude = function (new_amp) {
+        var delta = new_amp * this._gain - this._amplitude;
+        this._amplitude += delta;
+        this._bleeper.blip_add_delta(this._time, delta);
+    };
+    TriangleChannel.prototype.EndFrame = function (time) {
+        this.Run(time);
+        this._time = 0;
+    };
+    TriangleChannel.prototype.FrameClock = function (time, step) {
+        this.Run(time);
+        if (this._linStart) {
+            this._linCtr = this._linVal;
+        }
+        else {
+            if (this._linCtr > 0) {
+                this._linCtr--;
+            }
+        }
+        if (!this._looping) {
+            this._linStart = false;
+        }
+        switch (step) {
+            case 1:
+            case 3:
+                if (this._length > 0 && !this._looping) {
+                    this._length--;
+                }
+                break;
+        }
+    };
+    return TriangleChannel;
+}());
 var SquareChannel = /** @class */ (function () {
     function SquareChannel(bleeper, chan) {
         this._chan = 0;
@@ -420,9 +595,17 @@ var ChiChiBopper = /** @class */ (function () {
         this.square1Gain = 873;
         this.triangleGain = 1004;
         this.noiseGain = 567;
-        this.square0 = ($t = new ChiChiNES.BeepsBoops.SquareChannel(this.myBlipper, 0), $t.Gain = this.square0Gain, $t.Period = 10, $t.SweepComplement = true, $t);
-        this.square1 = ($t = new ChiChiNES.BeepsBoops.SquareChannel(this.myBlipper, 1), $t.Gain = this.square1Gain, $t.Period = 10, $t.SweepComplement = false, $t);
-        this.triangle = ($t = new ChiChiNES.BeepsBoops.TriangleChannel(this.myBlipper, 2), $t.Gain = this.triangleGain, $t.Period = 0, $t);
+        this.square0 = new SquareChannel(this.myBlipper, 0);
+        this.square0.Gain = this.square0Gain;
+        this.square0.Period = 10;
+        this.square0.SweepComplement = true;
+        this.square1 = new SquareChannel(this.myBlipper, 0);
+        this.square1.Gain = this.square1Gain;
+        this.square1.Period = 10;
+        this.square1.SweepComplement = false;
+        this.triangle = new TriangleChannel(this.myBlipper, 2);
+        this.triangle.Gain = this.triangleGain;
+        this.triangle.Period = 0;
         this.noise = ($t = new ChiChiNES.BeepsBoops.NoiseChannel(this.myBlipper, 3), $t.Gain = this.noiseGain, $t.Period = 0, $t);
         this.dmc = ($t = new ChiChiNES.BeepsBoops.DMCChannel(this.myBlipper, 4), $t.Gain = 873, $t.Period = 10, $t);
     };
