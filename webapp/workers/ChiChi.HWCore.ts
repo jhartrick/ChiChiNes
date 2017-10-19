@@ -1,4 +1,5 @@
-﻿enum ChiChiCPPU_AddressingModes {
+﻿// utility classes
+enum ChiChiCPPU_AddressingModes {
     Bullshit,
     Implicit,
     Accumulator,
@@ -47,7 +48,7 @@ class ChiChiSprite {
     FlipY: boolean = false;
     Changed: boolean = false;
 }
-
+//input classes
 class ChiChiInputHandler implements ChiChiNES.InputHandler {
     IsZapper: boolean;
     ControlPad: ChiChiNES.IControlPad = new ChiChiControlPad();
@@ -72,7 +73,6 @@ class ChiChiInputHandler implements ChiChiNES.InputHandler {
     }
 
 }
-
 
 class ChiChiControlPad implements ChiChiNES.IControlPad {
 
@@ -102,20 +102,431 @@ class ChiChiControlPad implements ChiChiNES.IControlPad {
     }
 }
 
+//apu classes
+class TriangleChannel implements ChiChiNES.BeepsBoops.TriangleChannel {
+    private _bleeper: ChiChiNES.BeepsBoops.Blip = null;
+    private _chan = 0;
+    private LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+    private _length = 0;
+    private _period = 0;
+    private _time = 0;
+    private _envelope = 0;
+    private _looping = false;
+    private _enabled = false;
+    private _amplitude = 0;
+    private _gain = 0;
+    private _linCtr = 0;
+    private _phase = 0;
+    private _linVal = 0;
+    private _linStart = false;
+
+    constructor(bleeper: ChiChiNES.BeepsBoops.Blip, chan: number) {
+        this._bleeper = bleeper;
+        this._chan = chan;
+
+        this._enabled = true;
+    }  
+
+    get Period(): number {
+        return this._period;
+    }
+
+    set Period(value: number) {
+        this._period = value;
+    }
+
+   
+    get Time(): number {
+        return this._time;
+    }
+
+    set Time(value: number) {
+        this._time = value;
+    }
+
+    get Envelope(): number {
+        return this._envelope;
+    }
+
+    set Envelope (value: number) {
+        this._envelope = value;
+    }
+    get Looping(): boolean {
+        return this._looping;
+    }
+
+    set Looping (value: boolean) {
+        this._looping = value;
+    }    
+
+    get Enabled(): boolean {
+        return this._enabled;
+    }
+
+    set Enabled (value: boolean) {
+        this._enabled = value;
+    }    
+
+    get Gain(): number {
+        return this._gain;
+    }
+
+    set Gain (value: number) {
+        this._gain = value;
+    }
+
+    get Amplitude(): number {
+        return this._amplitude;
+    }
+
+    set Amplitude (value: number) {
+        this._amplitude = value;
+    }
+
+    get Length(): number {
+        return this._length;
+    }
+
+    set Length (value: number) {
+        this._length = value;
+    }
+
+
+    WriteRegister(register: number, data: number, time: number): void {
+                //Run(time);
+
+                switch (register) {
+                    case 0: 
+                        this._looping = (data & 128) === 128;
+                        this._linVal = data & 127;
+                        break;
+                    case 1: 
+                        break;
+                    case 2: 
+                        this._period &= 1792;
+                        this._period |= data;
+                        break;
+                    case 3: 
+                        this._period &= 255;
+                        this._period |= (data & 7) << 8;
+                        // setup lengthhave
+                        if (this._enabled) {
+                            this._length = this.LengthCounts[(data >> 3) & 31];
+                        }
+                        this._linStart = true;
+                        break;
+                    case 4: 
+                        this._enabled = (data !== 0);
+                        if (!this._enabled) {
+                            this._length = 0;
+                        }
+                        break;
+                }
+    }
+    Run(end_time: number): void {
+        var period = this._period + 1;
+        if (this._linCtr === 0 || this._length === 0 || this._period < 4) {
+            // leave it at it's current phase
+            this._time = end_time;
+            return;
+        }
+
+        for (; this._time < end_time; this._time += period, this._phase = (this._phase + 1) % 32) {
+            this.UpdateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
+        }
+    }
+    UpdateAmplitude(new_amp: number): void {
+        var delta = new_amp * this._gain - this._amplitude;
+        this._amplitude += delta;
+        this._bleeper.blip_add_delta(this._time, delta);
+    }
+    EndFrame(time: number): void {
+        this.Run(time);
+        this._time = 0;
+    }
+    FrameClock(time: number, step: number): void {
+        this.Run(time);
+        
+        if (this._linStart) {
+            this._linCtr = this._linVal;
+
+        } else {
+            if (this._linCtr > 0) {
+                this._linCtr--;
+            }
+        }
+
+        if (!this._looping) {
+            this._linStart = false;
+        }
+
+        switch (step) {
+            case 1: 
+            case 3: 
+                if (this._length > 0 && !this._looping) {
+                    this._length--;
+                }
+                break;
+        }
+    }
+    
+}
+
+class SquareChannel implements ChiChiNES.BeepsBoops.SquareChannel {Length: number;
+    private _chan = 0;
+    private _bleeper: ChiChiNES.BeepsBoops.Blip = null;
+    private LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+    private _dutyCycle = 0;
+    private _length = 0;
+    private _timer = 0;
+    private _rawTimer = 0;
+    private _volume = 0;
+    private _time = 0;
+    private _envelope = 0;
+    private _looping = false;
+    private _enabled = false;
+    private _amplitude = 0;
+    private doodies: number[]= [2, 6, 30, 249];
+    private _sweepShift = 0;
+    private _sweepCounter = 0;
+    private _sweepDivider = 0;
+    private _sweepNegateFlag = false;
+    private _sweepEnabled = false;
+    private _startSweep = false;
+    private _sweepInvalid = false;
+    private _phase = 0;
+    private _gain = 0;
+    private _envTimer = 0;
+    private _envStart = false;
+    private _envConstantVolume = false;
+    private _envVolume = 0;
+    private _sweepComplement = false;
+
+    constructor(bleeper: ChiChiNES.BeepsBoops.Blip, chan: number) {
+        this._bleeper = bleeper;
+        this._chan = chan;
+
+        this._enabled = true;
+        this._sweepDivider = 1;
+        this._envTimer = 15;
+    }  
+// properties
+    get DutyCycle(): number {
+        return this._dutyCycle;
+    }
+
+    set DutyCycle(value: number) {
+        this._dutyCycle = value;
+    }
+    
+    get Period(): number {
+        return this._timer;
+    }
+
+    set Period(value: number) {
+        this._timer = value;
+    }
+
+    get Volume(): number {
+        return this._volume;
+    }
+
+    set Volume(value: number) {
+        this._volume = value;
+    }
+    
+    get Time(): number {
+        return this._time;
+    }
+
+    set Time(value: number) {
+        this._time = value;
+    }
+
+    get Envelope(): number {
+        return this._envelope;
+    }
+
+    set Envelope (value: number) {
+        this._envelope = value;
+    }
+
+    get Looping(): boolean {
+        return this._looping;
+    }
+
+    set Looping (value: boolean) {
+        this._looping = value;
+    }    
+
+    get Enabled(): boolean {
+        return this._enabled;
+    }
+
+    set Enabled (value: boolean) {
+        this._enabled = value;
+    }    
+
+    get Gain(): number {
+        return this._gain;
+    }
+
+    set Gain (value: number) {
+        this._gain = value;
+    }
+    
+    get SweepComplement(): boolean {
+        return this._sweepComplement;
+    }
+
+    set SweepComplement (value: boolean) {
+        this._sweepComplement = value;
+    }    
+
+// functions
+    WriteRegister(register: number, data: number, time: number): void {
+        switch (register) {
+            case 0: 
+                this._envConstantVolume = (data & 16) === 16;
+                this._volume = data & 15;
+                this._dutyCycle = this.doodies[(data >> 6) & 3];
+                this._looping = (data & 32) === 32;
+                this._sweepInvalid = false;
+                break;
+            case 1: 
+                this._sweepShift = data & 7;
+                this._sweepNegateFlag = (data & 8) === 8;
+                this._sweepDivider = (data >> 4) & 7;
+                this._sweepEnabled = (data & 128) === 128;
+                this._startSweep = true;
+                this._sweepInvalid = false;
+                break;
+            case 2: 
+                this._timer &= 1792;
+                this._timer |= data;
+                this._rawTimer = this._timer;
+                break;
+            case 3: 
+                this._timer &= 255;
+                this._timer |= (data & 7) << 8;
+                this._rawTimer = this._timer;
+                this._phase = 0;
+                // setup length
+                if (this._enabled) {
+                    this._length = this.LengthCounts[(data >> 3) & 31];
+                }
+                this._envStart = true;
+                break;
+            case 4: 
+                this._enabled = (data !== 0);
+                if (!this._enabled) {
+                    this._length = 0;
+                }
+                break;
+        }
+    }
+
+    Run(end_time: number): void {
+        var period = this._sweepEnabled ? ((this._timer + 1) & 2047) << 1 : ((this._rawTimer + 1) & 2047) << 1;
+        
+                        if (period === 0) {
+                            this._time = end_time;
+                            this.UpdateAmplitude(0);
+                            return;
+                        }
+        
+                        var volume = this._envConstantVolume ? this._volume : this._envVolume;
+        
+        
+                        if (this._length === 0 || volume === 0 || this._sweepInvalid) {
+                            this._phase += ((end_time - this._time) / period) & 7;
+                            this._time = end_time;
+                            this.UpdateAmplitude(0);
+                            return;
+                        }
+                        for (; this._time < end_time; this._time += period, this._phase++) {
+                            this.UpdateAmplitude((this._dutyCycle >> (this._phase & 7) & 1) * volume);
+                        }
+                        this._phase &= 7;
+    }
+    UpdateAmplitude(new_amp: number): void {
+        var delta = new_amp * this._gain - this._amplitude;
+        
+                        this._amplitude += delta;
+                        this._bleeper.blip_add_delta(this._time, delta);
+        }
+    EndFrame(time: number): void {
+        this.Run(time);
+        
+                        this._time = 0;
+            }
+    FrameClock(time: number, step: number): void{
+        this.Run(time);
+
+        if (!this._envStart) {
+            this._envTimer--;
+            if (this._envTimer === 0) {
+                this._envTimer = this._volume + 1;
+                if (this._envVolume > 0) {
+                    this._envVolume--;
+                } else {
+                    this._envVolume = this._looping ? 15 : 0;
+                }
+            }
+        } else {
+            this._envStart = false;
+            this._envTimer = this._volume + 1;
+            this._envVolume = 15;
+        }
+
+        switch (step) {
+            case 1: 
+            case 3: 
+                --this._sweepCounter;
+                if (this._sweepCounter === 0) {
+                    this._sweepCounter = this._sweepDivider + 1;
+                    if (this._sweepEnabled && this._sweepShift > 0) {
+                        var sweep = this._timer >> this._sweepShift;
+                        if (this._sweepComplement) {
+                            this._timer += this._sweepNegateFlag ? ~sweep : sweep;
+                        } else {
+                            this._timer += this._sweepNegateFlag ? ~sweep + 1 : sweep;
+                        }
+                        this._sweepInvalid = (this._rawTimer < 8 || (this._timer & 2048) === 2048);
+                        //if (_sweepInvalid)
+                        //{
+                        //    _sweepInvalid = true;
+                        //}
+                    }
+                }
+                if (this._startSweep) {
+                    this._startSweep = false;
+                    this._sweepCounter = this._sweepDivider + 1;
+
+                }
+                if (!this._looping && this._length > 0) {
+                    this._length--;
+                }
+                break;
+        }
+    }
+}
+
 class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
+
+    lastClock: number;
+    private writer: ChiChiNES.BeepsBoops.WavSharer;
+    throwingIRQs: boolean = false;
+    reg15: number = 0;
 // blipper
     private myBlipper: ChiChiNES.BeepsBoops.Blip;
 // channels 
-    private square0:  ChiChiNES.BeepsBoops.SquareChannel;
-    private square1: ChiChiNES.BeepsBoops.SquareChannel;
-    private triangle: ChiChiNES.BeepsBoops.TriangleChannel;
+    private square0:  SquareChannel;
+    private square1: SquareChannel;
+    private triangle: TriangleChannel;
     private noise: ChiChiNES.BeepsBoops.NoiseChannel;
     private dmc: ChiChiNES.BeepsBoops.DMCChannel;
 
-
-    private lastClock: number;
-    private throwingIRQs: boolean = false;
-    private reg15: number = 0;
 
     private master_vol = 4369;
     private static clock_rate = 1789772.727;
@@ -192,9 +603,20 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
         this.triangleGain = 1004;
         this.noiseGain = 567;
 
-        this.square0 = ($t = new ChiChiNES.BeepsBoops.SquareChannel(this.myBlipper, 0), $t.Gain = this.square0Gain, $t.Period = 10, $t.SweepComplement = true, $t);
-        this.square1 = ($t = new ChiChiNES.BeepsBoops.SquareChannel(this.myBlipper, 1), $t.Gain = this.square1Gain, $t.Period = 10, $t.SweepComplement = false, $t);
-        this.triangle = ($t = new ChiChiNES.BeepsBoops.TriangleChannel(this.myBlipper, 2), $t.Gain = this.triangleGain, $t.Period = 0, $t);
+        this.square0 = new SquareChannel(this.myBlipper, 0);
+        this.square0.Gain = this.square0Gain;
+        this.square0.Period = 10;
+        this.square0.SweepComplement = true;
+
+        this.square1 = new SquareChannel(this.myBlipper, 0);
+        this.square1.Gain = this.square1Gain;
+        this.square1.Period = 10;
+        this.square1.SweepComplement = false;
+
+        this.triangle = new TriangleChannel(this.myBlipper, 2);
+        this.triangle.Gain = this.triangleGain;
+        this.triangle.Period = 0;
+
         this.noise = ($t = new ChiChiNES.BeepsBoops.NoiseChannel(this.myBlipper, 3), $t.Gain = this.noiseGain, $t.Period = 0, $t);
         this.dmc = ($t = new ChiChiNES.BeepsBoops.DMCChannel(this.myBlipper, 4), $t.Gain = 873, $t.Period = 10, $t);
     }
@@ -354,6 +776,7 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
 
 }
 
+//machine wrapper
 class ChiChiMachine implements ChiChiNES.NESMachine {
     private frameJustEnded = true;
     private frameOn = false;
@@ -526,6 +949,7 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
     }
 }
 
+//chichipig
 class ChiChiCPPU implements ChiChiNES.CPU2A03 {
 
     readonly SRMasks_CarryMask = 0x01;
