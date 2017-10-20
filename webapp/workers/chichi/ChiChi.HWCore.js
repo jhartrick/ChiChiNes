@@ -139,12 +139,14 @@ var Blip = /** @class */ (function () {
     Blip.prototype.remove_samples = function (count) {
         var remain = this.BlipBuffer.avail + Blip.buf_extra - count;
         this.BlipBuffer.avail -= count;
-        for (var i = 0; i < remain; i++) {
-            this.BlipBuffer.samples[count + i] = this.BlipBuffer.samples[i];
-        }
-        for (var i = 0; i < count; ++i) {
-            this.BlipBuffer.samples[i] = 0;
-        }
+        this.BlipBuffer.samples.copyWithin(count, 0, remain);
+        // for (let i = 0; i < remain; i++) {
+        //     this.BlipBuffer.samples[count + i] = this.BlipBuffer.samples[i];
+        // }
+        this.BlipBuffer.samples.fill(0, 0, count);
+        // for (let i = 0;i < count; ++i) {
+        //     this.BlipBuffer.samples[i] = 0;
+        // } 
         //        this.BlipBuffer.samples = this
         //        System.Array.copy(this._blipBuffer.samples, count, this._blipBuffer.samples, 0, remain);
         //        System.Array.fill(this._blipBuffer.samples, 0, remain, count);
