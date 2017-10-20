@@ -60,7 +60,6 @@ importScripts('http://localhost:802/workers/chichi/ChiChi.HWCore.js');
 
     function run(reset) {
         var framesRendered = 0;
-        var startTime = new Date().getTime();
         const machine = tendo.machine;    
 
         if (reset) {
@@ -71,6 +70,7 @@ importScripts('http://localhost:802/workers/chichi/ChiChi.HWCore.js');
         machine.Cpu.Debugging = false;
         clearInterval(tendo.interval);
         // intervalId = setInterval(() => 
+        var startTime = new Date().getTime();
         tendo.interval = this.setInterval(() => {
             tendo.machine.PadOne.padOneState = this.iops[2] & 0xFF;
             tendo.machine.PadTwo.padTwoState = (this.iops[2] >> 8) & 0xFF;
@@ -86,7 +86,7 @@ importScripts('http://localhost:802/workers/chichi/ChiChi.HWCore.js');
                 this.iops[1] = framesPerSecond;
                 //globals.postMessage({ frame: true, fps: framesPerSecond });
             }
-        }, 0);
+        }, 16);
     }
 
     function runFrame() {

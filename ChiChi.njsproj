@@ -24,7 +24,6 @@
     <Compile Include="config\webpack.worker.js" />
     <Compile Include="src\assets\workers\emulator.worker.ff" />
     <Compile Include="workers\bridge.js" />
-    <Compile Include="workers\ChiChi.HWCore.js" />
     <Compile Include="workers\ChiChiCore.js" />
     <Compile Include="workers\emulator.jsworker.js" />
     <Compile Include="workers\worker.js" />
@@ -98,6 +97,7 @@
     <TypeScriptCompile Include="src\app\chichines\chichines.component.ts" />
     <TypeScriptCompile Include="src\environments\environment.prod.ts" />
     <TypeScriptCompile Include="src\environments\environment.ts" />
+    <TypeScriptCompile Include="workers\ChiChi.HWCore.ts" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin" />

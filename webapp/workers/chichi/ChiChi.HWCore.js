@@ -978,7 +978,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this.shouldRender = false;
         this._frames = 0;
         this.hitSprite = false;
-        this.PPUAddressLatchIsHigh = false;
+        this.PPUAddressLatchIsHigh = true;
         this.p32 = new Uint32Array(256); // System.Array.init(256, 0, System.Int32);
         this.isRendering = true;
         this.frameClock = 0;
@@ -1150,17 +1150,17 @@ var ChiChiCPPU = /** @class */ (function () {
     ChiChiCPPU.prototype.NonMaskableInterrupt = function () {
         //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
         //  set is pushed on the stack, then the I flag is set. 
-        var newStatusReg = this._statusRegister & -17 | 32;
+        var newStatusReg = this._statusRegister & ~0x10 | 0x20;
         this.SetFlag(this.SRMasks_InterruptDisableMask, true);
         // push pc onto stack (high byte first)
         this.PushStack(this._programCounter >> 8);
-        this.PushStack(this._programCounter & 255);
+        this.PushStack(this._programCounter & 0xFF);
         //c7ab
         // push sr onto stack
         this.PushStack(newStatusReg);
         // point pc to interrupt service routine
-        var lowByte = this.GetByte(65530);
-        var highByte = this.GetByte(65531);
+        var lowByte = this.GetByte(0xFFFA);
+        var highByte = this.GetByte(0xFFFB);
         var jumpTo = lowByte | (highByte << 8);
         this._programCounter = jumpTo;
     };
@@ -1175,19 +1175,19 @@ var ChiChiCPPU = /** @class */ (function () {
         }
     };
     ChiChiCPPU.prototype.Step = function () {
-        var tickCount = 0;
+        //let tickCount = 0;
         this._currentInstruction_ExtraTiming = 0;
-        this.DrawTo(this.clock);
+        //this.DrawTo(this.clock);
         if (this.nextEvent <= this.clock) {
             this.HandleNextEvent();
         }
         if (this._handleNMI) {
             this._handleNMI = false;
             this.clock += 7;
-            this.NonMaskableInterrupt();
+            //this.NonMaskableInterrupt();
             //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
             //  set is pushed on the stack, then the I flag is set. 
-            var newStatusReg = this._statusRegister & -17 | 32;
+            var newStatusReg = this._statusRegister & ~0x10 | 0x20;
             this.SetFlag(this.SRMasks_InterruptDisableMask, true);
             // push pc onto stack (high byte first)
             this.PushStack(this._programCounter >> 8);
@@ -1196,8 +1196,8 @@ var ChiChiCPPU = /** @class */ (function () {
             // push sr onto stack
             this.PushStack(newStatusReg);
             // point pc to interrupt service routine
-            var lowByte = this.GetByte(65530);
-            var highByte = this.GetByte(65531);
+            var lowByte = this.GetByte(0xFFFA);
+            var highByte = this.GetByte(0xFFFB);
             var jumpTo = lowByte | (highByte << 8);
             this._programCounter = jumpTo;
             //nonOpCodeticks = 7;
@@ -1210,7 +1210,7 @@ var ChiChiCPPU = /** @class */ (function () {
             //  set is pushed on the stack, then the I flag is set. 
             if (!this.GetFlag(this.SRMasks_InterruptDisableMask)) {
                 this.SetFlag(this.SRMasks_InterruptDisableMask, true);
-                var newStatusReg1 = this._statusRegister & -17 | 32;
+                var newStatusReg1 = this._statusRegister & ~0x10 | 0x20;
                 // if enabled
                 // push pc onto stack (high byte first)
                 this.PushStack(this._programCounter >> 8);
@@ -1218,7 +1218,7 @@ var ChiChiCPPU = /** @class */ (function () {
                 // push sr onto stack
                 this.PushStack(this._statusRegister);
                 // point pc to interrupt service routine
-                this._programCounter = this.GetByte(65534) + (this.GetByte(65535) << 8);
+                this._programCounter = this.GetByte(0xFFFE) + (this.GetByte(0xFFFF) << 8);
                 // nonOpCodeticks = 7;
             }
         }
@@ -2283,14 +2283,14 @@ var ChiChiCPPU = /** @class */ (function () {
                 this._PPUControlByte0 = data;
                 this._openBus = data;
                 this.nameTableBits = this._PPUControlByte0 & 3;
-                this._backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 4096;
+                this._backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
                 // if we toggle /vbl we can throw multiple NMIs in a vblank period
                 //if ((data & 0x80) == 0x80 && NMIHasBeenThrownThisFrame)
                 //{
                 //     NMIHasBeenThrownThisFrame = false;
                 //}
                 //UpdatePixelInfo();
-                this.nameTableMemoryStart = this.nameTableBits * 1024;
+                this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 1:
                 //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
@@ -2302,14 +2302,14 @@ var ChiChiCPPU = /** @class */ (function () {
                 //      6	G (to be documented)
                 //      7	B (to be documented)
                 this.DrawTo(Clock);
-                this.isRendering = (data & 24) !== 0;
+                this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
-                this._spritesAreVisible = (this._PPUControlByte1 & 16) === 16;
-                this._tilesAreVisible = (this._PPUControlByte1 & 8) === 8;
-                this._clipTiles = (this._PPUControlByte1 & 2) !== 2;
-                this._clipSprites = (this._PPUControlByte1 & 4) !== 4;
+                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
+                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
+                this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
+                this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
                 //UpdatePixelInfo();
-                this.nameTableMemoryStart = this.nameTableBits * 1024;
+                this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 2:
                 this.ppuReadBuffer = data;
@@ -2319,7 +2319,7 @@ var ChiChiCPPU = /** @class */ (function () {
                 //3	    -	internal object attribute memory index pointer 
                 //          (64 attributes, 32 bits each, byte granular access). 
                 //          stored value post-increments on access to port 4.
-                this._spriteAddress = data & 255;
+                this._spriteAddress = data & 0xFF;
                 this._openBus = this._spriteAddress;
                 break;
             case 4:
@@ -2365,12 +2365,12 @@ var ChiChiCPPU = /** @class */ (function () {
                 //the top two bits of the value written are ignored. 
                 if (this.PPUAddressLatchIsHigh) {
                     //            //a) Write upper address byte into $2006
-                    this._PPUAddress = (this._PPUAddress & 255) | ((data & 63) << 8);
+                    this._PPUAddress = (this._PPUAddress & 0xFF) | ((data & 0x3F) << 8);
                     this.PPUAddressLatchIsHigh = false;
                 }
                 else {
                     //            //b) Write lower address byte into $2006
-                    this._PPUAddress = (this._PPUAddress & 32512) | data & 255;
+                    this._PPUAddress = (this._PPUAddress & 0x7F00) | data & 0xFF;
                     this.PPUAddressLatchIsHigh = true;
                     // writes here during rendering directly affect the scroll counter
                     // from Marat Fazulamans doc
@@ -2383,8 +2383,8 @@ var ChiChiCPPU = /** @class */ (function () {
                     //   +-------------- Additional vertical scroll in pixels (0..3)
                     // on second write during frame, loopy t (_hscroll, _vscroll) is copied to loopy_v (lockedHscroll, lockedVScroll)
                     this.DrawTo(Clock);
-                    this._hScroll = ((this._PPUAddress & 31) << 3); // +(currentXPosition & 7);
-                    this._vScroll = (((this._PPUAddress >> 5) & 31) << 3);
+                    this._hScroll = ((this._PPUAddress & 0x1F) << 3); // +(currentXPosition & 7);
+                    this._vScroll = (((this._PPUAddress >> 5) & 0x1F) << 3);
                     this._vScroll |= ((this._PPUAddress >> 12) & 3);
                     this.nameTableBits = ((this._PPUAddress >> 10) & 3);
                     if (this.frameOn) {
@@ -2402,23 +2402,21 @@ var ChiChiCPPU = /** @class */ (function () {
                 //            //   address will increment either by 1 (bit 2 of
                 //            //   $2000 is 0) or by 32 (bit 2 of $2000 is 1).
                 // ppuLatch = data;
-                if ((this._PPUAddress & 65280) === 16128) {
+                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
                     this.DrawTo(Clock);
                     //WriteToNESPalette(_PPUAddress, (byte)data);
-                    var palAddress = (this._PPUAddress) & 31;
+                    var palAddress = (this._PPUAddress) & 0x1F;
                     this._palette[palAddress] = data;
                     // rgb32OutBuffer[255 * 256 + palAddress] = data;
-                    if ((this._PPUAddress & 65519) === 16128) {
-                        this._palette[(palAddress ^ 16) & 31] = data;
-                        // rgb32OutBuffer[255 * 256 + palAddress ^ 0x10] = data;
+                    if ((this._PPUAddress & 0xFFEF) === 0x3F00) {
+                        this._palette[(palAddress ^ 16) & 0x1F] = data;
                     }
                     // these palettes are all mirrored every 0x10 bytes
                     this.UpdatePixelInfo();
-                    // _vidRAM[_PPUAddress ^ 0x1000] = (byte)data;
                 }
                 else {
                     // if its a nametable byte, mask it according to current mirroring
-                    if ((this._PPUAddress & 61440) === 8192) {
+                    if ((this._PPUAddress & 0xF000) === 0x2000) {
                         this.chrRomHandler.ChiChiNES$INESCart$SetPPUByte(Clock, this._PPUAddress, data);
                     }
                     else {
@@ -2436,7 +2434,7 @@ var ChiChiCPPU = /** @class */ (function () {
                 }
                 // reset the flag which makex xxx6 set the high byte of address
                 this.PPUAddressLatchIsHigh = true;
-                this._PPUAddress = (this._PPUAddress & 16383);
+                this._PPUAddress = (this._PPUAddress & 0x3FFF);
                 break;
         }
     };
@@ -2451,14 +2449,13 @@ var ChiChiCPPU = /** @class */ (function () {
             case 1:
             case 5:
             case 6:
-                return 0;
-            // return this._openBus;
+                return this._openBus;
             case 2:
-                var ret;
+                var ret = 0;
                 this.PPUAddressLatchIsHigh = true;
                 // bit 7 is set to 0 after a read occurs
                 // return lower 5 latched bits, and the status
-                ret = (this.ppuReadBuffer & 31) | this._PPUStatus;
+                ret = (this.ppuReadBuffer & 0x1F) | this._PPUStatus;
                 this.DrawTo(Clock);
                 if ((ret & 0x80) === 0x80) {
                     this._PPUStatus = this._PPUStatus & ~0x80;
@@ -2476,9 +2473,9 @@ var ChiChiCPPU = /** @class */ (function () {
                 return tmp;
             case 7:
                 // palette reads shouldn't be buffered like regular vram reads, they re internal
-                if ((this._PPUAddress & 65280) === 16128) {
+                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
                     // these palettes are all mirrored every 0x10 bytes
-                    tmp = this._palette[this._PPUAddress & 31];
+                    tmp = this._palette[this._PPUAddress & 0x1F];
                     // palette read should also read vram into read buffer
                     // info i found on the nesdev forums
                     // When you read PPU $3F00-$3FFF, you get immediate data from Palette RAM 
@@ -2493,7 +2490,7 @@ var ChiChiCPPU = /** @class */ (function () {
                         this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress);
                     }
                     else {
-                        this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress & 16383);
+                        this.ppuReadBuffer = this.chrRomHandler.ChiChiNES$INESCart$GetPPUByte(Clock, this._PPUAddress & 0x3FFF);
                     }
                 }
                 if ((this._PPUControlByte0 & 4) === 4) {
@@ -2502,7 +2499,7 @@ var ChiChiCPPU = /** @class */ (function () {
                 else {
                     this._PPUAddress = this._PPUAddress + 1;
                 }
-                this._PPUAddress = (this._PPUAddress & 16383);
+                this._PPUAddress = (this._PPUAddress & 0x3FFF);
                 return tmp;
         }
         //throw new NotImplementedException(string.Format("PPU.GetByte() recieved invalid address {0,4:x}", address));
@@ -2723,8 +2720,8 @@ var ChiChiCPPU = /** @class */ (function () {
                     //PPU_ClearVINT();
                     this._PPUStatus = 0;
                     this.hitSprite = false;
-                    this.spriteSize = ((this._PPUControlByte0 & 32) === 32) ? 16 : 8;
-                    if ((this._PPUControlByte1 & 24) !== 0) {
+                    this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
+                    if ((this._PPUControlByte1 & 0x18) !== 0) {
                         this.isRendering = true;
                     }
                     this.frameOn = true;
@@ -2760,8 +2757,8 @@ var ChiChiCPPU = /** @class */ (function () {
                     /* update x position */
                     this.xPosition = this.currentXPosition + this.lockedHScroll;
                     if ((this.xPosition & 7) === 0) {
-                        this.xNTXor = ((this.xPosition & 256) === 256) ? 1024 : 0;
-                        this.xPosition &= 255;
+                        this.xNTXor = (this.xPosition & 0x100) ? 0x400 : 0;
+                        this.xPosition &= 0xFF;
                         /* fetch next tile */
                         var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
                         var xTilePosition = this.xPosition >> 3;
@@ -2822,7 +2819,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this.LastcpuClock = cpuClockNum;
     };
     ChiChiCPPU.prototype.UpdatePixelInfo = function () {
-        this.nameTableMemoryStart = this.nameTableBits * 1024;
+        this.nameTableMemoryStart = this.nameTableBits * 0x400;
     };
     ChiChiCPPU.prototype.GetStatus = function () {
         return {

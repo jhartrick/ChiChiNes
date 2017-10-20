@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @version 1.0.0.0
  * @copyright Copyright ©  2017
  * @compiler Bridge.NET 16.3.2
@@ -4733,11 +4733,13 @@ Bridge.assembly("ChiChiCore", function ($asm, globals) {
                         // ppuLatch = data;
                         if ((this._PPUAddress & 65280) === 16128) {
                             this.DrawTo(Clock);
-
+                            //WriteToNESPalette(_PPUAddress, (byte)data);
                             var palAddress = (this._PPUAddress) & 31;
                             this._palette[palAddress] = data;
+                            // rgb32OutBuffer[255 * 256 + palAddress] = data;
                             if ((this._PPUAddress & 65519) === 16128) {
                                 this._palette[(palAddress ^ 16) & 31] = data;
+                                // rgb32OutBuffer[255 * 256 + palAddress ^ 0x10] = data;
                             }
                             // these palettes are all mirrored every 0x10 bytes
                             this.UpdatePixelInfo();
