@@ -60,7 +60,6 @@
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.spec.ts" />
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.ts" />
     <TypeScriptCompile Include="src\app-typings\bridge.d.ts" />
-    <TypeScriptCompile Include="src\app-typings\ChiChiCore.d.ts" />
     <TypeScriptCompile Include="src\app\services\chichines.service.controlpad.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
@@ -98,6 +97,7 @@
     <TypeScriptCompile Include="src\environments\environment.prod.ts" />
     <TypeScriptCompile Include="src\environments\environment.ts" />
     <TypeScriptCompile Include="workers\ChiChi.HWCore.ts" />
+    <TypeScriptCompile Include="workers\types\ChiChiCore.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin" />

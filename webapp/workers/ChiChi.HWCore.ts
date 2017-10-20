@@ -103,6 +103,252 @@ class ChiChiControlPad implements ChiChiNES.IControlPad {
 }
 
 //apu classes
+
+class PortWriteEntry {
+    constructor(public time: number, public address: number, public data: number) { }
+}
+
+class QueuedPort {
+    private array = new Array<PortWriteEntry>();
+
+    get Count(): number {
+        return this.array.length;
+    }
+
+    clear() {
+        this.array.length = 0;
+    }
+    enqueue(item: PortWriteEntry) {
+        this.array.push(item);
+    }
+
+    dequeue(): PortWriteEntry {
+        return this.array.pop();
+    }
+
+}
+
+class DMCChannel implements ChiChiNES.BeepsBoops.DMCChannel {
+  Length: number;
+  DutyCycle: number;
+  Period: number;
+  Volume: number;
+  Time: number;
+  Envelope: number;
+  Looping: boolean;
+  Enabled: boolean;
+  Gain: number;
+  SweepComplement: boolean;
+
+  constructor(bleeper: ChiChiNES.BeepsBoops.Blip, chan: number) {
+      
+  }
+
+  WriteRegister(register: number, data: number, time: number): void {
+    //throw new Error('Method not implemented.');
+  }
+
+  Run(end_time: number): void {
+    //throw new Error('Method not implemented.');
+  }
+
+  UpdateAmplitude(new_amp: number): void {
+   // throw new Error('Method not implemented.');
+  }
+
+  EndFrame(time: number): void {
+  //  throw new Error('Method not implemented.');
+  }
+
+  FrameClock(time: number, step: number): void {
+  //  throw new Error('Method not implemented.');
+  }
+
+
+}
+
+class NoiseChannel implements ChiChiNES.BeepsBoops.NoiseChannel {
+    private _bleeper: any = null;
+    private _chan = 0;
+    private NoisePeriods = [4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068];
+    private LengthCounts = [10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30];
+    private _length= 0;
+    private _period=  0;
+    private _volume = 0;
+    private _time = 0;
+    private _envConstantVolume = false;
+    private _envVolume = 0;
+    private _looping = false;
+    private _enabled = false;
+    private amplitude = 0;
+    private _phase = 0;
+    private gain = 0;
+    private _envTimer = 0;
+    private _envStart = false;
+
+    constructor(bleeper: ChiChiNES.BeepsBoops.Blip, chan: number) {
+        this._bleeper = bleeper;
+        this._chan = chan;
+        this._enabled = true;
+        this._phase = 1;
+        this._envTimer = 15;
+
+    }
+
+    Length: number;
+
+    get Period(): number {
+        return this._period;
+    }
+
+    set Period(value: number) {
+        this._period = value;
+    }
+
+    get Volume(): number {
+        return this._volume;
+    }
+
+    set Volume(value: number) {
+        this._volume = value;
+    }
+
+
+    get Time(): number {
+        return this._time;
+    }
+
+    set Time(value: number) {
+        this._time = value;
+    }
+
+    get Looping(): boolean {
+        return this._looping;
+    }
+
+    set Looping(value: boolean) {
+        this._looping = value;
+    }
+
+    get Enabled(): boolean {
+        return this._enabled;
+    }
+
+    set Enabled(value: boolean) {
+        this._enabled = value;
+    }
+
+    get Gain(): number {
+        return this.gain;
+    }
+
+    set Gain(value: number) {
+        this.gain = value;
+    }
+
+    WriteRegister(register: number, data: number, time: number): void {
+        // Run(time);
+
+        switch (register) {
+            case 0:
+                this._envConstantVolume = (data & 16) === 16;
+                this._volume = data & 15;
+                this._looping = (data & 128) === 128;
+                break;
+            case 1:
+                break;
+            case 2:
+                this._period = this.NoisePeriods[data & 15];
+                // _period |= data;
+                break;
+            case 3:
+                // setup length
+                if (this._enabled) {
+                    this._length = this.LengthCounts[(data >> 3) & 31];
+                }
+                this._envStart = true;
+                break;
+            case 4:
+                this._enabled = (data !== 0);
+                if (!this._enabled) {
+                    this._length = 0;
+                }
+                break;
+        }
+    }
+
+    Run(end_time: number): void{
+        var volume = this._envConstantVolume ? this._volume : this._envVolume;
+        if (this._length === 0) {
+            volume = 0;
+        }
+        if (this._period === 0) {
+            this._time = end_time;
+            this.UpdateAmplitude(0);
+            return;
+        }
+
+        if (this._phase === 0) {
+            this._phase = 1;
+        }
+
+        for (; this._time < end_time; this._time += this._period) {
+            var new15;
+            if (this._looping) {
+                new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
+            } else {
+                new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
+            }
+            this.UpdateAmplitude(this._phase & 1 * volume);
+            this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
+
+
+
+        }
+    }
+
+    UpdateAmplitude(amp: number) {
+        var delta = amp * this.gain - this.amplitude;
+        this.amplitude += delta;
+        this._bleeper.blip_add_delta(this._time, delta);
+    }
+
+    EndFrame(time: number) {
+        this.Run(time);
+        this._time = 0;
+    }
+
+    FrameClock(time: number, step: number) {
+        this.Run(time);
+
+        if (!this._envStart) {
+            this._envTimer--;
+            if (this._envTimer === 0) {
+                this._envTimer = this._volume + 1;
+                if (this._envVolume > 0) {
+                    this._envVolume--;
+                } else {
+                    this._envVolume = this._looping ? 15 : 0;
+                }
+
+            }
+        } else {
+            this._envStart = false;
+            this._envTimer = this._volume + 1;
+            this._envVolume = 15;
+        }
+
+        switch (step) {
+            case 1:
+            case 2:
+                if (!this._looping && this._length > 0) {
+                    this._length--;
+                }
+                break;
+        }
+    }
+}
+
 class TriangleChannel implements ChiChiNES.BeepsBoops.TriangleChannel {
     private _bleeper: ChiChiNES.BeepsBoops.Blip = null;
     private _chan = 0;
@@ -523,13 +769,13 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
     private square0:  SquareChannel;
     private square1: SquareChannel;
     private triangle: TriangleChannel;
-    private noise: ChiChiNES.BeepsBoops.NoiseChannel;
-    private dmc: ChiChiNES.BeepsBoops.DMCChannel;
+    private noise: NoiseChannel;
+    private dmc: DMCChannel;
 
 
     private master_vol = 4369;
     private static clock_rate = 1789772.727;
-    private registers = new ChiChiNES.PortQueueing.QueuedPort();
+    private registers = new QueuedPort();
     private _sampleRate = 44100;
     private square0Gain = 873;
     private square1Gain = 873;
@@ -588,7 +834,6 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
     NextEventAt: number;
 
     RebuildSound(): void {
-        var $t;
         this.myBlipper = new ChiChiNES.BeepsBoops.Blip(this._sampleRate / 5);
         this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
@@ -613,11 +858,13 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
         this.square1.SweepComplement = false;
 
         this.triangle = new TriangleChannel(this.myBlipper, 2);
-        this.triangle.Gain = this.triangleGain;
-        this.triangle.Period = 0;
+        this.triangle.Gain = this.triangleGain; this.triangle.Period = 0;
 
-        this.noise = ($t = new ChiChiNES.BeepsBoops.NoiseChannel(this.myBlipper, 3), $t.Gain = this.noiseGain, $t.Period = 0, $t);
-        this.dmc = ($t = new ChiChiNES.BeepsBoops.DMCChannel(this.myBlipper, 4), $t.Gain = 873, $t.Period = 10, $t);
+        this.noise = new NoiseChannel(this.myBlipper, 3);
+        this.noise.Gain = this.noiseGain; this.noise.Period = 0;
+
+        this.dmc = new DMCChannel(this.myBlipper, 4);
+        this.dmc.Gain = 873; this.dmc.Period = 10;
     }
 
     GetByte(Clock: number, address: number): number {
@@ -640,7 +887,7 @@ class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
             this.InterruptRaised = false;
         }
         this.DoSetByte(Clock, address, data);
-        this.registers.enqueue(new ChiChiNES.PortQueueing.PortWriteEntry(Clock, address, data));
+        this.registers.enqueue(new PortWriteEntry(Clock, address, data));
 
     }
 
@@ -787,7 +1034,6 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
         this.WaveForms = wavSharer;
         this.Cpu = new ChiChiCPPU(this.SoundBopper);
         this.Cpu.frameFinished = () => { this.FrameFinished(); };
-        this.Initialize();
     }
 
     Drawscreen(): void {
@@ -825,12 +1071,10 @@ class ChiChiMachine implements ChiChiNES.NESMachine {
     get PadTwo(): ChiChiNES.IControlPad {
         return this.Cpu.PadTwo.ControlPad;
     }
+
     SRAMReader: (RomID: string) => any;
+
     SRAMWriter: (RomID: string, SRAM: any) => void;
-
-    Initialize(): void {
-
-    }
 
     Reset(): void {
         if (this.Cpu != null && this.Cart != null) {
@@ -987,7 +1231,8 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     private _tilesAreVisible: boolean = false;
     private _spritesAreVisible: boolean = false;
     private nameTableMemoryStart: number = 0;
-    // statics 
+
+// statics
     private static cpuTiming: number[] = [7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0];
     private static pal: Uint32Array = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     private static addressModes: number[] = [1, 12, 1, 0, 0, 4, 4, 0, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 4, 5, 5, 1, 1, 10, 1, 1, 8, 9, 9, 1, 8, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 9, 9, 9, 1, 1, 12, 1, 1, 1, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 1, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 11, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 15, 9, 9, 1, 7, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 1, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 8, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 9, 9, 10, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1];
@@ -996,12 +1241,14 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     //timing
     private clock = 0;
     private _ticks = 0;
-    // CPU Status
+
+// CPU Status
     private _statusRegister = 0;
     private _programCounter = 0;
 
     private _handleNMI: boolean = false;
     private _handleIRQ: boolean = false;
+// CPU Op info
 
     private _addressBus = 0;
     private _dataBus = 0;
@@ -1010,7 +1257,7 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     private _indexRegisterX = 0;
     private _indexRegisterY = 0;
 
-    // Current Instruction
+// Current Instruction
     private _currentInstruction_AddressingMode = ChiChiCPPU_AddressingModes.Bullshit;
     private _currentInstruction_Address = 0;
     private _currentInstruction_OpCode = 0;
@@ -1020,17 +1267,15 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     private systemClock = 0;
     private nextEvent = -1;
 
-    // CPU Op info
-    private clockcount = new Uint8Array(256); // System.Array.init(256, 0, System.Int32);
-
-
+//tbi
     private _cheating = false;
     private __frameFinished = true;
-    // system ram
+
+// system ram
     private Rams = new Uint8Array(8192);// System.Array.init(vv, 0, System.Int32);
     private _stackPointer = 255;
 
-    // debug helpers
+// debug helpers
     private instructionUsage = new Uint32Array(256);//System.Array.init(256, 0, System.Int32);
     private _debugging = false;
 
@@ -1042,6 +1287,7 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
         this._debugging = value;
     }
 
+    
     private instructionHistoryPointer = 255;
     private _instructionHistory = new Array(256);//System.Array.init(256, null, ChiChiInstruction);
 
@@ -1056,23 +1302,27 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     // ppu events
     // ppu variables 
     private _backgroundPatternTableIndex: number;
-    private PPU_HandleVBlankIRQ: boolean;
+
+    //private PPU_HandleVBlankIRQ: boolean;
+
     private _PPUAddress: number;
     private _PPUStatus: number;
-    private _PPUControlByte0: number;
-    private _PPUControlByte1: number;
+    private _PPUControlByte0: number; private _PPUControlByte1: number;
     private _spriteAddress: number;
-    // 'internal
+
+
     private currentXPosition = 0;
     private currentYPosition = 0;
     private _hScroll = 0;
     private _vScroll = 0;
     private lockedHScroll = 0;
     private lockedVScroll = 0;
-    private scanlineNum = 0;
-    private scanlinePos = 0;
-    private NMIHasBeenThrownThisFrame = false;
+    //private scanlineNum = 0;
+    //private scanlinePos = 0;
+
     private shouldRender = false;
+
+    //private NMIHasBeenThrownThisFrame = false;
     private _frames = 0;
     private hitSprite = false;
     private PPUAddressLatchIsHigh = true;
@@ -1089,18 +1339,24 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     private sprite0scanline = 0;
     private sprite0x = 0;
     private _maxSpritesPerScanline = 64;
+
+    private xNTXor = 0; private yNTXor = 0;
+
     private spriteRAM = new Uint8Array(256);// System.Array.init(256, 0, System.Int32);
     private spritesOnLine = new Array<number>(512);// System.Array.init(512, 0, System.Int32);
-    private patternEntry = 0;
-    private patternEntryByte2 = 0;
     private currentTileIndex = 0;
-    private xNTXor = 0;
-    private yNTXor = 0;
     private fetchTile = true;
+
+    // tile bytes currently latched in ppu
+    private patternEntry = 0; private patternEntryByte2 = 0;
+
+    //
     private outBuffer = new Uint8Array(65536);
-    private drawInfo = new Uint8Array(65536);
+
     private _padOne: ChiChiNES.InputHandler;
     private _padTwo: ChiChiNES.InputHandler;
+
+        // 'internal
 
     public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
 
@@ -2120,8 +2376,6 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
 
     GetByte(address: number): number {
         var result = 0;
-
-
         // check high byte, find appropriate handler
         switch (address & 61440) {
             case 0:
@@ -2185,6 +2439,7 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     PeekByte(address: number): number {
         throw new Error('Method not implemented.');
     }
+      
     PeekBytes(start: number, finish: number): number[] {
         throw new Error('Method not implemented.');
     }
@@ -2304,8 +2559,8 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
         this._PPUControlByte1 = 0;
         this._hScroll = 0;
         this._vScroll = 0;
-        this.scanlineNum = 0;
-        this.scanlinePos = 0;
+        //this.scanlineNum = 0;
+        //this.scanlinePos = 0;
         this._spriteAddress = 0;
     }
     PPU_WriteState(writer: System.Collections.Generic.Queue$1<number>): void {
@@ -2321,7 +2576,7 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
 
     PPU_SetupVINT(): void {
         this._PPUStatus = this._PPUStatus | 128;
-        this.NMIHasBeenThrownThisFrame = false;
+        //this.NMIHasBeenThrownThisFrame = false;
         // HandleVBlankIRQ = true;
         this._frames = this._frames + 1;
         //isRendering = false;
@@ -2329,8 +2584,8 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
         if (this.PPU_NMIIsThrown) {
             //this.NMIHandler();
             this._handleNMI = true;
-            this.PPU_HandleVBlankIRQ = true;
-            this.NMIHasBeenThrownThisFrame = true;
+            //this.PPU_HandleVBlankIRQ = true;
+            //this.NMIHasBeenThrownThisFrame = true;
         }
     }
     PPU_VidRAM_GetNTByte(address: number): number {
@@ -2761,11 +3016,11 @@ class ChiChiCPPU implements ChiChiNES.CPU2A03 {
     }
     PPU_UnpackSprites(): void {
         //Buffer.BlockCopy
-        var outBufferloc = 65280;
-        for (var i = 0; i < 256; i += 4) {
-            this.outBuffer[outBufferloc] = (this.spriteRAM[i] << 24) | (this.spriteRAM[i + 1] << 16) | (this.spriteRAM[i + 2] << 8) | (this.spriteRAM[i + 3] << 0);
-            outBufferloc++;
-        }
+        //var outBufferloc = 65280;
+        //for (var i = 0; i < 256; i += 4) {
+        //    this.outBuffer[outBufferloc] = (this.spriteRAM[i] << 24) | (this.spriteRAM[i + 1] << 16) | (this.spriteRAM[i + 2] << 8) | (this.spriteRAM[i + 3] << 0);
+        //    outBufferloc++;
+        //}
         // Array.Copy(spriteRAM, 0, outBuffer, 255 * 256 * 4, 256);
         for (var currSprite = 0; currSprite < this.unpackedSprites.length; ++currSprite) {
             if (this.unpackedSprites[currSprite].Changed) {

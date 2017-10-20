@@ -220,7 +220,6 @@ declare module ChiChiNES {
         PadTwo: ChiChiNES.IControlPad;
         SRAMReader: {(RomID: string): any};
         SRAMWriter: {(RomID: string, SRAM: any): void};
-        Initialize(): void;
         Reset(): void;
         PowerOn(): void;
         PowerOff(): void;
