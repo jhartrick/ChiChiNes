@@ -25,13 +25,13 @@ declare module ChiChiNES {
     }
     var AddressingModes: AddressingModesFunc;
 
-    export interface BaseCart extends ChiChiNES.INESCart {
+    export interface BaseCart  {
         irqRaised: boolean;
         Debugging: boolean;
-        DebugEvents: System.Collections.Generic.List$1<ChiChiNES.CartDebugEvent>;
-        ChrRom: any;
-        ChrRomCount: number;
-        PrgRomCount: number;
+        DebugEvents: any;
+        //ChrRom: any;
+        //ChrRomCount: number;
+        //PrgRomCount: number;
         ROMHashFunction: {(prg: any, chr: any): string};
         Whizzler: ChiChiNES.CPU2A03;
         IrqRaised: boolean;
@@ -44,16 +44,16 @@ declare module ChiChiNES {
         MapperID: number;
         Mirroring: ChiChiNES.NameTableMirroring;
         NMIHandler: {(): void};
-        IRQAsserted: boolean;
-        NextEventAt: number;
-        PpuBankStarts: any;
-        BankStartCache: any;
+        //IRQAsserted: boolean;
+        //NextEventAt: number;
+        //PpuBankStarts: any;
+        //BankStartCache: any;
         CurrentBank: number;
-        BankSwitchesChanged: boolean;
-        OneScreenOffset: number;
+        //BankSwitchesChanged: boolean;
+       // OneScreenOffset: number;
         UsesSRAM: boolean;
-        ChrRamStart: number;
-        PPUBankStarts: any;
+        //ChrRamStart: number;
+        //PPUBankStarts: any;
         ClearDebugEvents(): void;
         LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void;
         UpdateScanlineCounter(): void;
@@ -212,7 +212,7 @@ declare module ChiChiNES {
         Cpu: ChiChiNES.CPU2A03;
         Cart: ChiChiNES.INESCart;
         SoundBopper: ChiChiNES.BeepsBoops.Bopper;
-        WaveForms: ChiChiNES.BeepsBoops.IWavReader;
+        WaveForms: any;
         EnableSound: boolean;
         FrameCount: number;
         IsRunning: boolean;
@@ -311,7 +311,7 @@ declare module ChiChiNES {
     var CPUStatusBits: CPUStatusBitsFunc;
 
     export interface NesCartMMC3 extends ChiChiNES.BaseCart {
-        IRQAsserted: boolean;
+        //IRQAsserted: boolean;
         InitializeCart(): void;
         MaskBankAddress(bank: number): number;
         CopyBanks(dest: number, src: number, numberOf1kBanks: number): void;
@@ -632,19 +632,15 @@ declare module ChiChiNES.BeepsBoops {
         }
     }
 
-    export interface WavSharer extends ChiChiNES.BeepsBoops.IWavReader {
+    export interface WavSharer {
         Locker: any;
         NESTooFast: boolean;
         Frequency: number;
         SharedBuffer: any;
         SharedBufferLength: number;
         BufferAvailable: boolean;
-        BytesWritten: {(sender: any, e: System.Object): void};
         WavesWritten(remain: number): void;
-        Dispose(): void;
-        StartReadWaves(): void;
         ReadWaves(): void;
-        WroteBytes(): void;
         SetSharedBuffer(values: any): void;
     }
     export interface WavSharerFunc extends Function {

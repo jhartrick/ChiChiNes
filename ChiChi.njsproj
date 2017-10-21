@@ -97,7 +97,6 @@
     <TypeScriptCompile Include="src\environments\environment.prod.ts" />
     <TypeScriptCompile Include="src\environments\environment.ts" />
     <TypeScriptCompile Include="workers\ChiChi.HWCore.ts" />
-    <TypeScriptCompile Include="workers\types\ChiChiCore.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin" />

@@ -297,12 +297,11 @@ export class Emulator {
     }
 
     StopEmulator(): void {
-        this.nesInterop[0] = 0;
+        (<any>Atomics).store(this.nesInterop, 2, 0);
         this.postNesMessage({ command: "stop" });
     }
 
     ResetEmulator(): void {
-        this.nesInterop[0] = 0;
         this.postNesMessage({ command: "reset", debug: true });
         //this.machine.Reset();
     }
@@ -318,10 +317,10 @@ export class Emulator {
 
     private worker: Worker;
 
-    private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(3 * Int32Array .BYTES_PER_ELEMENT);
+    private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array .BYTES_PER_ELEMENT);
     private nesInterop: Int32Array = new Int32Array (<any>this.nesControlBuf);
 
-
+    readonly iop_runStatus = 2;
 
     private nesStateSubject: Subject<any> = new Subject();
 

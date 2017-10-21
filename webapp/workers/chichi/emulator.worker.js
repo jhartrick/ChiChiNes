@@ -1,5 +1,70 @@
-﻿importScripts('http://localhost:802/workers/chichi/ChiChi.HWCore.js');
-
+//require('bridge.min.js');
+//require('ChiChiCore.min.js');
+//importScripts('http://192.168.56.103:801/workers/bridge.min.js')
+//importScripts('http://192.168.56.103:801/workers/ChiChiCore.js');
+//importScripts('http://192.168.56.103:801/workers/chichi/ChiChi.HWCore.js');
+//importScripts('http://localhost:802/workers/bridge.min.js');
+//importScripts('http://localhost:802/workers/ChiChiCore.js');
+//importScripts('http://localhost:802/workers/chichi/ChiChi.HWCore.js');
+var tendo = /** @class */ (function () {
+    function tendo() {
+        var _this = this;
+        this.cartName = 'unk';
+        this.machine = new ChiChiMachine();
+        this.machine.Drawscreen = this.drawScreen;
+        this.machine.Cpu.Debugging = false;
+        this.machine.Cpu.FireDebugEvent = function () {
+            _this.updateState();
+        };
+    }
+    //Update State
+    tendo.prototype.updateState = function () {
+        var machine = this.machine;
+        var info = {
+            stateupdate: true,
+            runStatus: {},
+            cartInfo: {},
+            sound: {},
+            debug: {}
+        };
+        if (this.machine && this.machine.Cart) {
+            info.cartInfo = {
+                mapperId: this.machine.Cart.MapperID,
+                name: this.cartName,
+                prgRomCount: this.machine.Cart.NumberOfPrgRoms,
+                chrRomCount: this.machine.Cart.NumberOfChrRoms
+            };
+        }
+        if (machine) {
+            info.sound = {
+                soundEnabled: machine.EnableSound
+            };
+            if (this.machine.Cpu.Debugging) {
+                info.debug = {
+                    currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
+                        PC: 0,
+                        A: 0,
+                        X: 0,
+                        Y: 0,
+                        SP: 0,
+                        SR: 0
+                    },
+                    currentPPUStatus: this.machine.Cpu.GetPPUStatus ? this.machine.Cpu.GetPPUStatus() : {},
+                    InstructionHistory: {
+                        Buffer: this.machine.Cpu.InstructionHistory.slice(0),
+                        Index: this.machine.Cpu.InstructionHistoryPointer,
+                        Finish: true
+                    }
+                };
+            }
+        }
+        postMessage(info);
+    };
+    tendo.prototype.drawScreen = function () { };
+    tendo.prototype.handleMessage = function () { };
+    return tendo;
+}());
+/*
 (function (globals, tendo) {
     var cartName = '';
 
@@ -53,7 +118,8 @@
 
     function run(reset) {
         var framesRendered = 0;
-        const machine = tendo.machine;    
+        var startTime = new Date().getTime();
+        const machine = tendo.machine;
 
         if (reset) {
             machine.PowerOn();
@@ -62,25 +128,23 @@
 
         machine.Cpu.Debugging = false;
         clearInterval(tendo.interval);
-        // intervalId = setInterval(() => 
-        var startTime = new Date().getTime();
-        
+        // intervalId = setInterval(() =>
         tendo.interval = this.setInterval(() => {
-              tendo.machine.PadOne.padOneState = this.iops[2] & 0xFF;
-              tendo.machine.PadTwo.padTwoState = (this.iops[2] >> 8) & 0xFF;
-              machine.RunFrame();
-              framesPerSecond = 0;
+            tendo.machine.PadOne.padOneState = this.iops[2] & 0xFF;
+            tendo.machine.PadTwo.padTwoState = (this.iops[2] >> 8) & 0xFF;
+            machine.RunFrame();
+            framesPerSecond = 0;
 
-              flushAudio();
+            flushAudio();
 
-              if ((framesRendered++ & 0x2F) === 0x2F) {
-                  framesPerSecond = ((framesRendered / (new Date().getTime() - startTime)) * 1000);
-                  framesRendered = 0; startTime = new Date().getTime();
-                  this.iops[1] = framesPerSecond;
-                  //globals.postMessage({ frame: true, fps: framesPerSecond });
-              }
-          }, 16
-        );
+
+            if ((framesRendered++ & 0x2F) === 0x2F) {
+                framesPerSecond = ((framesRendered / (new Date().getTime() - startTime)) * 1000);
+                framesRendered = 0; startTime = new Date().getTime();
+                this.iops[1] = framesPerSecond;
+                //globals.postMessage({ frame: true, fps: framesPerSecond });
+            }
+        }, 0);
     }
 
     function runFrame() {
@@ -89,7 +153,7 @@
         const machine = tendo.machine;
         machine.Cpu.Debugging = tendo.Debugging;
         runStatus = runStatuses.DebugRunning;
-        // intervalId = setInterval(() => 
+        // intervalId = setInterval(() =>
         machine.RunFrame();
         framesPerSecond = 0;
         tendo.frameFinished = true;
@@ -102,7 +166,7 @@
         const machine = tendo.machine;
         machine.Cpu.Debugging = tendo.Debugging;
         runStatus = runStatuses.DebugRunning;
-        // intervalId = setInterval(() => 
+        // intervalId = setInterval(() =>
         machine.Step();
         framesPerSecond = 0;
         tendo.frameFinished = true;
@@ -116,7 +180,7 @@
     var runStatus = runStatuses.Off;
 
     function updateState() {
-        const machine = tendo.machine;    
+        const machine = tendo.machine;
 
         var info = {
             stateupdate: true,
@@ -161,7 +225,7 @@
     var iops = [0, 0, 0];
 
     this.onmessage = (event) => {
-        let machine = tendo.machine;    
+        let machine = tendo.machine;
         tendo.Debugging = false;
         tendo.frameFinished = false;
 
@@ -174,7 +238,6 @@
               break;
           case 'loadrom':
                 stop();
-                clearInterval(tendo.intervalId);
                 machine.LoadCart(event.data.rom);
                 cartName = event.data.name;
               break;
@@ -228,3 +291,5 @@
     }
 
 })(this, {});
+ */
+//# sourceMappingURL=emulator.worker.js.map
