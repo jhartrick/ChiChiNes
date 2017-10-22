@@ -1,10 +1,12 @@
 ﻿{
   "compileOnSave": false,
   "compilerOptions": {
-    "module": "none",
-    "outDir": "./chichi/",
-    "sourceMap": true,
+    //"outDir": "../src/assets/",
+    "outFile": "../src/assets/emulator.worker.js",
+    "sourceMap": false,
     "declaration": false,
+    "moduleResolution": "node",
+    "module": "amd",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es5",
@@ -14,7 +16,7 @@
       "node_modules/@types"
     ],
     "lib": [
-      "dom",
+      "webworker",
       "es2017"
     ]
   }

@@ -17,7 +17,6 @@ export class AppComponent {
       this.debugNav.open();
     });
   }
-
-  
+ 
   title = 'ChiChiNES';
 }

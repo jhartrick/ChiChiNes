@@ -42,7 +42,7 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasTop: string = '0px';
 
 
-    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(2048 * Float32Array.BYTES_PER_ELEMENT);
+    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(1024 * Float32Array.BYTES_PER_ELEMENT);
     private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
 
     constructor(private nesService: Emulator, cd: ChangeDetectorRef, private zone: NgZone) {
@@ -86,8 +86,8 @@ export class ChiChiComponent implements AfterViewInit {
         this.audioSource = this.audioCtx.createBufferSource();
         
         this.sound.setNodeSource(this.audioSource);
-        this.audioSource.buffer = this.audioCtx.createBuffer(1, 2048, 44100);
-        var scriptNode = this.audioCtx.createScriptProcessor(2048, 1, 1);
+        this.audioSource.buffer = this.audioCtx.createBuffer(1, 1024, 44100);
+        var scriptNode = this.audioCtx.createScriptProcessor(1024, 1, 1);
 
         this.audioSource.connect(scriptNode);
         scriptNode.onaudioprocess = (audioProcessingEvent) => {
@@ -104,7 +104,7 @@ export class ChiChiComponent implements AfterViewInit {
 
                     // Loop through the 4096 samples
                     for (var sample = 0; sample < inputBuffer.length; sample++) {
-                        let pos = ((sample / inputBuffer.length) * this.nesAudio.length) >>> 0;
+                        let pos = ((sample / inputBuffer.length) * this.nesAudio.length) | 0;
                         // make output equal to the same as the input
                         outputData[sample] = this.nesAudio[pos];
 

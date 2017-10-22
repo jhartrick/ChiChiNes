@@ -9,6 +9,8 @@
       "outDir": "dist",
       "assets": [
         "assets",
+        "./workers/chichi",
+        "./node_modules/requirejs/require.js",
         "favicon.ico"
       ],
       "index": "index.html",

@@ -5,8 +5,7 @@ import * as JSZip from 'jszip';
 
 @Component({
     selector: 'chichi-status',
-    template: `<p>Loaded: {{ (emuState | async)?.romLoaded }}</p>`,
-    changeDetection: ChangeDetectionStrategy.OnPush
+    template: `<p>Loaded: {{ (emuState | async)?.romLoaded }}</p>`
 })
 export class PowerStatusComponent {
 
@@ -47,8 +46,12 @@ export class ControlPanelComponent {
         const files: FileList = (<HTMLInputElement>e.target).files;
         this.romLoader.loadRom(files).subscribe((rom) => {
             this.poweroff();
-            this.nesService.LoadRom(rom.data, rom.name);
-        });
+            if (rom.nsf) {
+                this.nesService.LoadNsf(rom.data, rom.name);
+            } else {
+                this.nesService.LoadRom(rom.data, rom.name);
+            }
+            });
     }
 
     poweron() {

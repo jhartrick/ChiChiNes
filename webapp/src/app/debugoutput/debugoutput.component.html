@@ -5,7 +5,7 @@
 </div>
 <div class="cpuStatus">
   <p>
-    PC: {{ nes.debugger.currentCpuStatus.PC.toString(16) }} A: {{ nes.debugger.currentCpuStatus.A.toString(16) }} X: {{ nes.debugger.currentCpuStatus.X.toString(16) }} Y: {{ nes.debugger.currentCpuStatus.Y.toString(16) }} SP: {{ nes.debugger.currentCpuStatus.SP.toString(16) }}
+    PC: {{ nes.debugger.currentCpuStatus.PC }} A: {{ nes.debugger.currentCpuStatus.A }} X: {{ nes.debugger.currentCpuStatus.X }} Y: {{ nes.debugger.currentCpuStatus.Y }} SP: {{ nes.debugger.currentCpuStatus.SP }}
   </p>
   <p>
     SR: {{ nes.debugger.decodedStatusRegister }}
@@ -13,7 +13,7 @@
 </div>
 <div class="ppuStatus">
   <p>
-    X: {{ nes.debugger.currentPPUStatus?.X }} Y: {{ nes.debugger.currentPPUStatus?.Y }} Name Table: {{ nes.debugger.currentPPUStatus?.nameTableStart.toString(16) }} Tile: {{ nes.debugger.currentPPUStatus?.currentTile.toString(16) }} Status: {{ nes.debugger.currentPPUStatus?.status.toString(16) }}
+    X: {{ nes.debugger.currentPPUStatus?.X }} Y: {{ nes.debugger.currentPPUStatus?.Y }} Name Table: {{ nes.debugger.currentPPUStatus?.nameTableStart }} Tile: {{ nes.debugger.currentPPUStatus?.currentTile }} Status: {{ nes.debugger.currentPPUStatus?.status }}
   </p>
   <p>
     locked hscroll: {{ nes.debugger.currentPPUStatus?.lockedHScroll }} locked vscroll: {{ nes.debugger.currentPPUStatus?.lockedVScroll }} 

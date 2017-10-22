@@ -446,7 +446,7 @@ declare module ChiChiNES {
         //FrameOn: boolean;
         //PPU_NameTableMemoryStart: number;
         CurrentFrame: any;
-        ChrRomHandler: any;
+        ChrRomHandler: ChiChiNES.INESCart;
 
         //PPU_IRQAsserted: boolean;
         //PPU_NextEventAt: number;
@@ -656,14 +656,12 @@ declare module ChiChiNES.BeepsBoops {
     var WavSharer: WavSharerFunc;
 
     export interface Bopper  {
-        audioSettings: any;
-
         SampleRate: number;
         Muted: boolean;
         InterruptRaised: boolean;
         EnableSquare0: boolean;
         EnableSquare1: boolean;
-        enableTriangle: boolean;
+        EnableTriangle: boolean;
         EnableNoise: boolean;
         NMIHandler: {(): void};
         IRQAsserted: boolean;

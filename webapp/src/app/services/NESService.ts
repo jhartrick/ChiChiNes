@@ -4,7 +4,25 @@ import { AngControlPad } from './chichines.service.controlpad';
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import * as JSZip from 'jszip';
+import { AudioSettings } from "../../../workers/chichi/ChiChiTypes";
 
+class NesInfo {
+    stateupdate = true;
+    runStatus: any = {};
+    cartInfo: any = {};
+    sound: any = {};
+    debug: any = {
+        currentCpuStatus: {
+            PC: 0,
+            A: 0,
+            X: 0,
+            Y: 0,
+            SP: 0,
+            SR: 0
+        },
+        currentPPUStatus: {}
+    };
+}
 
 export class CartInfo {
     mapperId: number;
@@ -60,6 +78,7 @@ export class EmuState {
 export class RomFile  {
     name: string;
     data: number[];
+    nsf: boolean = false;
 }
 
 @Injectable()
@@ -77,7 +96,7 @@ export class RomLoader {
                         zipEntry.async('blob').then((fileData) => {
                             fileReader.onload = (ze) => {
                                 const zrom: number[] = Array.from(new Uint8Array(fileReader.result));
-                                observer.next({ name: file.name, data: zrom});
+                                observer.next({ name: file.name, data: zrom, nsf: false});
                             };
                             fileReader.readAsArrayBuffer(fileData);
                         });
@@ -95,20 +114,53 @@ export class RomLoader {
         if (file.name.endsWith('.zip')) {
             return this.loadZipRom(files);
         }
+        //if (file.name.endsWith('.nsf')) {
+        //    return this.loadNsf(files);
+        //}
+        if (file.name.endsWith('.nes')) {
+            const romLoader = new Observable<RomFile>(observer => {
+                const fileReader: FileReader = new FileReader();
+                fileReader.onload = (e) => {
+                    const rom: number[] = Array.from(new Uint8Array(fileReader.result));
+                    observer.next({ name: file.name, data: rom, nsf: false });
+                };
+                fileReader.readAsArrayBuffer(file);
+            });
+            return romLoader;
+        }
+    }
+
+    loadNsf(files: FileList): Observable<RomFile> {
+        const file = files[0];
         const romLoader = new Observable<RomFile>(observer => {
             const fileReader: FileReader = new FileReader();
             fileReader.onload = (e) => {
                 const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                observer.next({name: file.name, data: rom});
+                observer.next({ name: file.name, data: rom, nsf: true });
             };
             fileReader.readAsArrayBuffer(file);
         });
         return romLoader;
     }
+
 }
 
 @Injectable()
 export class Emulator {
+    private myAudioSettings: AudioSettings = new AudioSettings();;
+
+    get audioSettings(): AudioSettings {
+        return this.myAudioSettings;
+    }
+
+    set audioSettings(value: AudioSettings) {
+        this.myAudioSettings = value;
+    }
+
+    sync() {
+        this.postNesMessage({ command: "audiosettings", settings: this.myAudioSettings });
+    }
+    initNes: any;
    // private ready: boolean = false;
     
     private callback: () => void;
@@ -249,14 +301,17 @@ export class Emulator {
       //  this.ready = true;
     }
 
+    vbuffer: Uint8Array;
+
     SetVideoBuffer(array: Uint8Array): void {
+        this.vbuffer = array;
         //this.machine.PPU.ByteOutBuffer = array;
-        this.postNesMessage({ command: "setvbuffer", vbuffer: array });
     }
 
+    abuffer: Float32Array;
     SetAudioBuffer(array: Float32Array): void {
+        this.abuffer = array;
         //this.machine.PPU.ByteOutBuffer = array;
-        this.postNesMessage({ command: "setaudiobuffer", audiobuffer: array });
     }
 
 
@@ -272,14 +327,21 @@ export class Emulator {
         this.emuStateSubject.next(new EmuState(this.romName, false, false, false));
     }
 
+    LoadNsf(rom: number[], romName: string) {
+        this.postNesMessage({ command: "loadnsf", rom: rom, name: romName });
+        //        this.machine.LoadCart(rom);
+        this.romName = romName;
+        this.emuStateSubject.next(new EmuState(this.romName, false, false, false));
+    }
+
     // control
     StartEmulator(): void {
         this.nesInterop[0] = 1;
         setInterval(() => {
             this.fps = this.nesInterop[1];
             this.framesSubj.next(this.fps);
-        },100);
-
+        },500);
+        (<any>Atomics).store(this.nesInterop, 2, 1);
         this.postNesMessage({ command: "run" });
     }
 
@@ -331,8 +393,8 @@ export class Emulator {
     private oldOp: number = 0;
 
     private postNesMessage(message: any) {
-        this.oldOp = this.nesInterop[0] ;
-        this.nesInterop[0] = 0;
+        //this.oldOp = this.nesInterop[0] ;
+        //this.nesInterop[0] = 0;
         this.worker.postMessage(message);
     }
 
@@ -343,26 +405,28 @@ export class Emulator {
     }
 
     public clearAudio(): void {
-        
         (<any>Atomics).store(this.nesInterop, 0, 1);
         (<any>Atomics).wake(this.nesInterop, 0, 1);
     }
 
+    private nesReady = false;
     private initWebWorker() {
-        
-        const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../../workers/emulator.jsworker.js');
-        this.worker = new Worker(nesWorker);
-        this.postNesMessage({
-            command: 'setiops', iops: this.nesInterop
-        });
-        this.worker.onmessage = (data: MessageEvent) => {
-            //if (this.oldOp === 1 ) {
-            //    //this.nesInterop[0] = 1;
-            //    this.postNesMessage({ command: 'continue' });
-            //}
-            
+        this.debugger = new Debugger(this.nesStateSubject.asObservable());
+        this.nesStateSubject.next(new NesInfo());
 
+        const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../assets/emulator.worker.bootstrap.js');
+
+        this.worker = new Worker(nesWorker);
+
+        this.worker.onmessage = (data: MessageEvent) => {
             var d = data.data;
+            if (d === 'ready') {
+                this.nesReady = true;
+
+                var createCommand = 'create';
+                this.postNesMessage({ command: createCommand, vbuffer: this.vbuffer, abuffer: this.abuffer, iops: this.nesInterop });
+                return;
+            }
             this.nesStateSubject.next(d);
             if (d.frame) {
                 this.callback();
@@ -379,13 +443,13 @@ export class Emulator {
                 }
             }
             if (d.sound) {
-                this._soundEnabled = d.sound.soundEnabled
+                this._soundEnabled = d.sound.soundEnabled,
+                this.myAudioSettings = d.sound.settings
             }
             //console.log(data.data);
         };
-        this.debugger = new Debugger(this.nesStateSubject.asObservable());
-        var createCommand = 'create';
-        this.postNesMessage({ command: createCommand });
+        
+
     }
     
 }
