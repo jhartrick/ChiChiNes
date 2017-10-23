@@ -399,6 +399,10 @@ import { ChiChiInputHandler } from  './ChiChiControl'
         private _cheating = false;
         private __frameFinished = true;
 
+        public get PatternTableIndex() : number {
+            return this._backgroundPatternTableIndex;
+        }
+
         // system ram
         private _ramsBuffer = new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT);
         Rams = new Uint8Array(<any>this._ramsBuffer);// System.Array.init(vv, 0, System.Int32);
@@ -430,14 +434,14 @@ import { ChiChiInputHandler } from  './ChiChiControl'
 
         // ppu events
         // ppu variables 
-        private _backgroundPatternTableIndex: number;
+        private _backgroundPatternTableIndex: number=0;
 
         //private PPU_HandleVBlankIRQ: boolean;
 
-        private _PPUAddress: number;
-        private _PPUStatus: number;
-        private _PPUControlByte0: number; private _PPUControlByte1: number;
-        private _spriteAddress: number;
+        private _PPUAddress: number = 0;
+        private _PPUStatus: number = 0;
+        private _PPUControlByte0: number = 0; private _PPUControlByte1: number = 0;
+        private _spriteAddress: number = 0;
 
 
         private currentXPosition = 0;
@@ -2435,6 +2439,23 @@ import { ChiChiInputHandler } from  './ChiChiControl'
         UpdatePixelInfo(): void {
             this.nameTableMemoryStart = this.nameTableBits * 0x400;
         }
+
+        VidRAM_GetNTByte(address: number) : number
+        {
+            let result = 0;
+            if (address >= 0x2000 && address < 0x3000)
+            {
+
+                result = this.chrRomHandler.GetPPUByte(0, address );
+
+            }
+            else
+            {
+                result = this.chrRomHandler.GetPPUByte(0, address);
+            }
+            return result;
+        }
+
 
         GetStatus(): any {
             return {

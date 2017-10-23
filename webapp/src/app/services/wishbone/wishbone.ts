@@ -4,6 +4,7 @@ import { AudioSettings } from "../../../../workers/chichi/ChiChiTypes";
 import { ChiChiInputHandler } from '../../../../workers/chichi/ChiChiControl'
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
+import { TileDoodler } from "./wishbone.tiledoodler";
 
 class WishboneCart implements ChiChiNES.INESCart {
 
@@ -19,9 +20,11 @@ class WishboneCart implements ChiChiNES.INESCart {
     SRAM: any;
     Mirroring: ChiChiNES.NameTableMirroring;
     CartName: string;
+
     get NumberOfPrgRoms(): number {
         return this.realCart ? this.realCart.NumberOfPrgRoms : -1;
     }
+    
     get NumberOfChrRoms(): number {
         return this.realCart ? this.realCart.NumberOfChrRoms : -1;
     }
@@ -29,6 +32,7 @@ class WishboneCart implements ChiChiNES.INESCart {
     get MapperID(): number {
         return this.realCart ? this.realCart.MapperID : -1;
     }
+
     BankSwitchesChanged: boolean;
     BankStartCache: any;
     CurrentBank: number;
@@ -56,12 +60,14 @@ class WishboneCart implements ChiChiNES.INESCart {
     UpdateBankStartCache(): number {
         throw new Error('Method not implemented.');
     }
-    ResetBankStartCache(): void  {
+    ResetBankStartCache(): void {
         throw new Error('Method not implemented.');
     }
+
     NMIHandler: () => void;
 
     IRQAsserted: boolean;
+
     NextEventAt: number;
 
     GetPPUByte(clock: number, address: number): number {
@@ -70,15 +76,17 @@ class WishboneCart implements ChiChiNES.INESCart {
         else
             return 0;
     }
+
     SetPPUByte(clock: number, address: number, data: number): void {
         throw new Error('Method not implemented.');
     }
 
     GetByte(Clock: number, address: number): number {
-        if (this.realCart)
+        if (this.realCart) {
             return this.realCart.GetByte(Clock, address);
-        else
+        } else  {
             return 0;
+        }
     }
     SetByte(Clock: number, address: number, data: number): void {
         throw new Error('Method not implemented.');
@@ -94,6 +102,14 @@ class WishboneCart implements ChiChiNES.INESCart {
 }
 
 class WishBopper implements ChiChiNES.BeepsBoops.Bopper {
+
+    audioSettings: AudioSettings = new AudioSettings();
+    EnableNoise: boolean = true;
+    EnableSquare0: boolean = true;
+    EnableSquare1: boolean = true;
+    EnableTriangle: boolean = true;
+
+
     lastClock: number;
     throwingIRQs: boolean;
     reg15: number;
@@ -139,11 +155,6 @@ class WishBopper implements ChiChiNES.BeepsBoops.Bopper {
         throw new Error('Method not implemented.');
     }
 
-    audioSettings: AudioSettings = new AudioSettings();
-    EnableNoise: boolean = true;
-    EnableSquare0: boolean = true;
-    EnableSquare1: boolean = true;
-    EnableTriangle: boolean = true;
 }
 
 export class WishBoneControlPad implements ChiChiNES.IControlPad {
@@ -154,7 +165,7 @@ export class WishBoneControlPad implements ChiChiNES.IControlPad {
 
     // control pad
     handleKeyDownEvent(event: KeyboardEvent) {
-        
+
         switch (event.keyCode) {
             case 37: //left arrow
                 this.padOneState |= 64 & 0xFF;
@@ -222,7 +233,7 @@ export class WishBoneControlPad implements ChiChiNES.IControlPad {
 
     currentByte: number = 0;
     readNumber: number = 0;
-    
+
     CurrentByte: number = 0;
 
     refresh(): void {
@@ -240,6 +251,7 @@ export class WishBoneControlPad implements ChiChiNES.IControlPad {
 export class WishboneMachine implements ChiChiNES.NESMachine {
     fps: number = 0;
     nesReady: boolean;
+    tileDoodler: TileDoodler;
     private worker: Worker;
 
     private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT);
@@ -247,7 +259,7 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
 
 
     constructor() {
-        var wavSharer = new WavSharer();
+        const wavSharer = new WavSharer();
         this.SoundBopper = new WishBopper();
         this.WaveForms = wavSharer;
         this.Cpu = new WishboneCPPU(this.SoundBopper);
@@ -286,12 +298,16 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
     }
 
     handleMessage(data: MessageEvent) {
-        var d = data.data;
+        const d = data.data;
         if (d === 'ready') {
             this.nesReady = true;
 
-            var createCommand = 'create';
-            this.postNesMessage({ command: createCommand, vbuffer: this.Cpu.byteOutBuffer, abuffer: this.WaveForms.SharedBuffer, iops: this.nesInterop });
+            const createCommand = 'create';
+            this.postNesMessage({ command: createCommand,
+                vbuffer: this.Cpu.byteOutBuffer, 
+                abuffer: this.WaveForms.SharedBuffer, 
+                iops: this.nesInterop });
+
             return;
         }
 
@@ -299,7 +315,7 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
         this.nesStateSubject.next(this);
     }
 
-    private nesStateSubject: Subject<WishboneMachine> = new Subject <WishboneMachine>();
+    private nesStateSubject: Subject<WishboneMachine> = new Subject<WishboneMachine>();
 
     readonly iop_runStatus = 2;
 
@@ -310,7 +326,7 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
     asObservable() {
         return this.nesStateSubject.asObservable();
     }
-    
+
     postNesMessage(message: any) {
         //this.oldOp = this.nesInterop[0] ;
         //this.nesInterop[0] = 0;
@@ -318,11 +334,11 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
     }
 
     Run() {
-        this.postNesMessage({ command: "run", debug: false });
+        this.postNesMessage({ command: 'run', debug: false });
         setInterval(() => {
             this.fps = this.nesInterop[1];
         }, 500);
-       // (<any>Atomics).store(this.nesInterop, 2, 1);
+        // (<any>Atomics).store(this.nesInterop, 2, 1);
 
     }
 
@@ -331,7 +347,7 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
 
     RequestSync() {
         //case 'audiosettings':
-        //this.machine.SoundBopper.audioSettings = event.data.settings;
+        // this.machine.SoundBopper.audioSettings = event.data.settings;
 
         this.postNesMessage({ command: 'audiosettings', settings: this.SoundBopper.audioSettings });
     }
@@ -346,7 +362,7 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
             this.Cpu.instructionHistoryPointer = data.debug.InstructionHistory.Index;
             this.Cpu.flushHistory = data.debug.InstructionHistory.Finish ? true : false;
 
-            //{
+            // {
             //    currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
             //        PC: 0,
             //        A: 0,
@@ -362,13 +378,13 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
             //                Finish : true
             //    }
 
-            //}
+            // }
 
         }
     }
 
     Drawscreen() {
-        //throw new Error('Method not implemented.');
+        // throw new Error('Method not implemented.');
     }
     RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
     Cpu: WishboneCPPU;
@@ -407,7 +423,7 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
 
     LoadCart(rom: any) {
         let cartName = this.Cart.CartName;
-        var cart = iNESFileHandler.LoadROM(this.Cpu, rom);
+        let cart = iNESFileHandler.LoadROM(this.Cpu, rom);
 
         this.Cart = new WishboneCart();
         this.Cart.realCart = cart;
@@ -415,7 +431,8 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
         this.Cart.realCart.Whizzler = this.Cpu;
         this.Cart.CartName = cartName;
 
-        this.postNesMessage({ command: "loadrom", rom: rom, name: this.Cart.CartName });
+        this.tileDoodler = new TileDoodler(this.Cpu);
+        this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
         //        this.machine.LoadCart(rom);
     }
 
@@ -442,6 +459,8 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
 
 }
 
-class WishboneCPPU  extends ChiChiCPPU {
-    flushHistory: boolean = false;
+class WishboneCPPU extends ChiChiCPPU {
+    flushHistory = false;
+
+
 }

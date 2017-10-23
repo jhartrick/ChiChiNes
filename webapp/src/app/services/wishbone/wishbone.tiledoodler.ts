@@ -1,4 +1,6 @@
-﻿export class TileDoodler {
+﻿import { ChiChiCPPU } from "../../../../workers/chichi/ChiChi.HWCore";
+
+export class TileDoodler {
     static powersOfTwo = [1, 2, 4, 8, 6, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192];
     currentNameTableEntries: Array<Array<Uint8Array>> = null;
     currentPatternTableEntries: Array<Array<Array<Uint8Array>>> = null;
@@ -34,16 +36,16 @@
                 const result = new Uint8Array(64); // System.Array.init(64, 0, System.Int32);
                 result.fill(0);
 
-                actualAddress.v = new Array<number>(8); // 8, 0, System.Int32);
-                actualAddress.v.fill(0);
+                actualAddress = new Uint8Array(8); // 8, 0, System.Int32);
+                actualAddress.fill(0);
 
                 for (let  i = 0; i < 8; i++) {
                     const entryLoc = (PatternTable + (TileIndex << 4))  + i;
-                    const patternEntry = this.ppu.Cart.GetPPUByte(0, entryLoc);
+                    const patternEntry = this.ppu.ChrRomHandler.GetPPUByte(0, entryLoc);
 
-                    actualAddress.v[i] = this.ppu.Cart.ActualChrRomOffset(entryLoc);
+                    actualAddress[i] = this.ppu.ChrRomHandler.ActualChrRomOffset(entryLoc);
 
-                    const patternEntryBit2 = this.ppu.Cart.GetPPUByte(0, entryLoc + 8);
+                    const patternEntryBit2 = this.ppu.ChrRomHandler.GetPPUByte(0, entryLoc + 8);
 
                     for (let bit = 0; bit < 8; bit = (bit + 1) | 0) {
                         if ((patternEntry & TileDoodler.powersOfTwo[bit]) !== 0) {
@@ -178,22 +180,21 @@
     //                 }
     //             }
     //         },
-    //         DrawRect: function (newData, width, height, xPos, yPos) {
-    //             var $t;
+        DrawRect (newData : any, width: number, height: number, xPos: number, yPos: number) {
 
-    //             for (var j = 0; j < height; j = (j + 1) | 0) {
-    //                 for (var i = 0; i < width; i = (i + 1) | 0) {
+            for (let j = 0; j < height; j = (j + 1) | 0) {
+                for (let i = 0; i < width; i = (i + 1) | 0) {
 
-    //                     var xPosition = (((xPos + 8) | 0) - i) | 0;
-    //                     var yPosition = (yPos + j) | 0;
+                    const xPosition = (((xPos + 8) | 0) - i) | 0;
+                    const yPosition = (yPos + j) | 0;
 
-    //                     if (xPosition >= 256 || yPosition >= 240) {
-    //                         return;
-    //                     }
-    //                     ($t = this.ppu.ChiChiNES$IPPU$CurrentFrame)[((Bridge.Int.mul(yPosition, 256) + xPosition) | 0)] = (newData[(((Bridge.Int.mul(j, width)) + i) | 0)]) & 255;
-    //                 }
-    //             }
-    //         },
+                    if (xPosition >= 256 || yPosition >= 240) {
+                        return;
+                    }
+                    this.ppu.CurrentFrame[((yPosition * 256) + xPosition)] = newData[(j * width) + i];
+                }
+            }
+        }
     //         MergeRect: function (newData, width, height, xPos, yPos, inFront) {
     //             var $t;
 
@@ -235,37 +236,33 @@
     //                 }
     //             }
     //         },
-    //         DrawAllTiles: function () {
-    //             var $t;
-    //             if (this.YOffset > 256) {
-    //                 this.YOffset = this.YOffset & 255;
-    //             }
-    //             if (this.XOffset > 256) {
-    //                 this.XOffset = this.XOffset & 255;
-    //             }
 
-    //             //ppu.RawBuffer = new byte[ppu.RawBuffer.Length + 1];
+        DrawAllTiles () {
+            if (this.YOffset > 256) {
+                this.YOffset = this.YOffset & 255;
+            }
+            if (this.XOffset > 256) {
+                this.XOffset = this.XOffset & 255;
+            }
 
-    //             var NameTable = (8192 + (Bridge.Int.mul(1024, (this.ppu.ChiChiNES$IPPU$PPUControlByte0 & 3)))) | 0;
-    //             var nt2 = (Bridge.Int.div((NameTable & 3072), 1024)) | 0;
+            const NameTable = 8192 + (1024 * (this.ppu.PPUControlByte0 & 3));
+            const nt2 = ((NameTable & 3072) >> 10);
 
-    //             //int PatternTable;
-    //             //if ((ppu.PPUControlByte0 & 0x10) != 0)
-    //             //    PatternTable = 0x1000;
-    //             //else
-    //             //    PatternTable = 0;
+            for (let i = 0; i < 32; i++) {
+                for (let j = 0; j < 30; j++) {
+                    const TileIndex = this.ppu.VidRAM_GetNTByte(8192 + this.ppu.NameTableMemoryStart + i  + (j * 32));
 
-    //             for (var i = 0; i < 32; i = (i + 1) | 0) {
-    //                 for (var j = 0; j < 30; j = (j + 1) | 0) {
-    //                     //int TileIndex = (byte)ppu.NameTable[ppu.Mirror[nt2], i + (j * 32)];
-    //                     var TileIndex = (this.ppu.ChiChiNES$IPPU$VidRAM_GetNTByte(((((((8192 + this.ppu.ChiChiNES$IPPU$NameTableMemoryStart) | 0) + i) | 0) + (Bridge.Int.mul(j, 32))) | 0))) & 255;
+                    const addToCol = this.GetAttributeTableEntry(this.ppu.NameTableMemoryStart, i, j);
+                    this.DrawRect(
+                        this.GetPatternTableEntry(
+                            this.ppu.PatternTableIndex, TileIndex, addToCol, 
+                            this.currentNameTableEntries[i][j]),
+                                8, 8, (i * 8) + this.XOffset , (j * 8) + this.YOffset );
 
-    //                     var addToCol = this.GetAttributeTableEntry(this.ppu.ChiChiNES$IPPU$NameTableMemoryStart, i, j);
-    //                     this.DrawRect(this.GetPatternTableEntry(this.ppu.ChiChiNES$IPPU$PatternTableIndex, TileIndex, addToCol, Bridge.ref(($t = this.currentNameTableEntries[i]), j)), 8, 8, (((Bridge.Int.mul(i, 8)) + this.XOffset) | 0), (((Bridge.Int.mul(j, 8)) + this.YOffset) | 0));
+                }
+            }
+        }
 
-    //                 }
-    //             }
-    //         },
         GetAttributeTableEntry (ppuNameTableMemoryStart: number, i: number, j: number) : number {
 
             const LookUp = this.ppu.VidRAM_GetNTByte((8192 + ppuNameTableMemoryStart)  + 960) + (i >> 2) + ((j >> 2) * 8);
@@ -440,7 +437,8 @@
     //                 }
     //             }
     //             return patterns.v;
-    //         },
+    //         }
+
     //         /**
     //          * returns a pixel array representing a current nametable in memory
     //          nametable will be 0,0x400, 0x800, 0xC00, mapped to 0x200 + Nametable
@@ -452,28 +450,28 @@
     //          * @param   {number}            NameTable
     //          * @return  {Array.<number>}
     //          */
-        DoodleNameTable (NameTable): Int32Array {
-            //  a doodle returns an Int32Array containing RGBA values 
-            const result = new Int32Array(61440);
+    DoodleNameTable (NameTable): Int32Array {
+        //  a doodle returns an Int32Array containing RGBA values
+        const result = new Int32Array(61440);
 
-            for (let i = 0; i < 32; i = (i + 1) | 0) {
-                for (let j = 0; j < 30; j = (j + 1) | 0) {
+        for (let i = 0; i < 32; i = (i + 1) | 0) {
+            for (let j = 0; j < 30; j = (j + 1) | 0) {
 
-                    const address = ((8192 + NameTable)  + i)  + (j * 32) ;
-                    const TileIndex = this.ppu.Cart.GetPPUByte(0, address);
+                const address = ((8192 + NameTable)  + i)  + (j * 32) ;
+                const TileIndex = this.ppu.ChrRomHandler.GetPPUByte(0, address);
 
-                    const addToCol = this.GetAttributeTableEntry(NameTable, i, j);
-                    const tile = this.GetPatternTableEntry(this.ppu.PatternTableIndex, TileIndex,
-                         addToCol, this.currentNameTableEntries[i][j]);
-                    this.DrawTile(result, 256, 240, tile, (i * 8), (j * 8));
-                }
+                const addToCol = this.GetAttributeTableEntry(NameTable, i, j);
+                const tile = this.GetPatternTableEntry(this.ppu.PatternTableIndex, TileIndex,
+                        addToCol, this.currentNameTableEntries[i][j]);
+                this.DrawTile(result, 256, 240, tile, (i * 8), (j * 8));
             }
-            return result;
         }
+        return result;
+    }
 
-        DrawTile (destBuffer: Int32Array, width, height, tile, xPos, yPos) {
-        for (let j = 0; j < 8; j = (j + 1) | 0) {
-            for (let i = 0; i < 8; i = (i + 1) | 0) {
+    DrawTile (destBuffer: Int32Array, width, height, tile, xPos, yPos) {
+        for (let j = 0; j < 8; j++) {
+            for (let i = 0; i < 8; i++) {
                 const xPosition = (xPos + 8) - i;
                 const yPosition = (yPos + j) * width;
                 if (xPos > height) {
@@ -482,7 +480,7 @@
                 if (((yPosition + xPosition) | 0) >= destBuffer.length) {
                     break;
                 }
-                destBuffer[yPosition + xPosition] = tile[(j * 8) + i ] & 255;
+                 destBuffer[yPosition + xPosition] =  ChiChiCPPU.pal[ tile[(j * 8) + i ]];
             }
         }
     }

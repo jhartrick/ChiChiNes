@@ -49,28 +49,28 @@ export enum RunStatus {
 }
 
 
-//export class Tiler {
+export class Tiler {
 
-//    constructor(private nes: ChiChiNES.NESMachine) { }
-//    patternTables: Uint8ClampedArray[] = new Array<Uint8ClampedArray>(2);
+   constructor(private nes: WishboneMachine) { }
+   patternTables: Uint8ClampedArray[] = new Array<Uint8ClampedArray>(2);
 
-//    DoodleNameTable(nametable: number, outbuf:  Uint8ClampedArray ): void
-//    {
-//        //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
-//        const doodle1 = this.nes.Tiler.DoodleNameTable(nametable);
-//        const pal = ChiChiCPPU.pal;
+   DoodleNameTable(nametable: number, outbuf:  Uint8ClampedArray ): void
+   {
+       //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
+       const doodle1 = this.nes.tileDoodler.DoodleNameTable(nametable);
+       const pal = ChiChiCPPU.pal;
 
-//        for (let i = 0; i <= doodle1.length; ++i) {
-//            const color = pal[doodle1[i]];
-//            outbuf[i * 4] = (color >> 0) & 0xFF;
-//            outbuf[(i * 4) + 1] = (color >> 9) & 0xFF;
-//            outbuf[(i * 4) + 2] = (color >> 16 ) & 0xFF;
-//            outbuf[(i * 4) + 3] =  0xFF;
-//        }
+       for (let i = 0; i <= doodle1.length; ++i) {
+           const color = pal[doodle1[i]];
+           outbuf[i * 4] = (color >> 0) & 0xFF;
+           outbuf[(i * 4) + 1] = (color >> 9) & 0xFF;
+           outbuf[(i * 4) + 2] = (color >> 16 ) & 0xFF;
+           outbuf[(i * 4) + 3] =  0xFF;
+       }
 
-//        this.patternTables[1] = new Uint8ClampedArray(this.nes.Tiler.DoodlePatternTable(0x1000));
-//    }
-//}
+       //this.patternTables[1] = new Uint8ClampedArray(this.nes.tileDoodler.DoodlePatternTable(0x1000));
+   }
+}
 
 export class EmuState {
     constructor(public romLoaded: string, public powerState: boolean, public paused: boolean, public debugging: boolean) {
@@ -151,10 +151,10 @@ export class RomLoader {
 export class Emulator {
     public wishbone = new WishboneMachine();
 
-
+    public tiler: Tiler = new Tiler(this.wishbone);
     initNes: any;
    // private ready: boolean = false;
-    
+
     private callback: () => void;
     private _soundEnabled = false;
 
