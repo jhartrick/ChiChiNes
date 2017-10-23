@@ -53,7 +53,7 @@
     bankAstart = 0;
     bankCstart = 0;
     bankEstart = 0;
-    prgRomBank6 = new Uint8Array(8192);
+    prgRomBank6 = new Uint8Array(<any>new SharedArrayBuffer(8192));
     private _ROMHashfunction: any = null;
     checkSum: any = null;
     private mirroring = -1;
@@ -227,8 +227,8 @@
     }
 
     GetPPUByte(clock: number, address: number): number {
-        var bank = (address / 1024) | 0;
-        var newAddress = (this.ppuBankStarts[bank] + (address & 1023)) | 0;
+        var bank = address >> 10 ;
+        var newAddress = this.ppuBankStarts[bank] + (address & 1023);
 
         //while (newAddress > chrRamStart)
         //{
@@ -239,7 +239,7 @@
 
     SetPPUByte(clock: number, address: number, data: number): void {
         var bank = address >> 10; //, 1024)) | 0;
-        var newAddress = this.bankStartCache[(this.CurrentBank * 16) + bank | 0] + (address & 1023); // ppuBankStarts[bank] + (address & 0x3FF);
+        var newAddress = this.bankStartCache[(this.CurrentBank << 4) + bank] + (address & 1023); // ppuBankStarts[bank] + (address & 0x3FF);
         this.chrRom[newAddress] = data;
     }
 
@@ -401,7 +401,6 @@
 }
 
 export class NesCart extends BaseCart implements ChiChiNES.CPU.NESCart {
-    prgRomBank6$1 = new Uint8Array(2048);
     prevBSSrc = new Uint8Array(8);
 
     irqRaised: boolean;
@@ -476,7 +475,7 @@ export class NesCart extends BaseCart implements ChiChiNES.CPU.NESCart {
     SetByte(clock: number, address: number, val: number): void {
         if (address >= 24576 && address <= 32767) {
             if (this.SRAMEnabled) {
-                this.prgRomBank6$1[address & 8191] = val & 255;
+                this.prgRomBank6[address & 8191] = val & 255;
             }
 
             return;

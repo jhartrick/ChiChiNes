@@ -19,12 +19,20 @@ class WishboneCart implements ChiChiNES.INESCart {
     SRAM: any;
     Mirroring: ChiChiNES.NameTableMirroring;
     CartName: string;
-    NumberOfPrgRoms: number;
-    NumberOfChrRoms: number;
-    MapperID: number;
+    get NumberOfPrgRoms(): number {
+        return this.realCart ? this.realCart.NumberOfPrgRoms : -1;
+    }
+    get NumberOfChrRoms(): number {
+        return this.realCart ? this.realCart.NumberOfChrRoms : -1;
+    }
+
+    get MapperID(): number {
+        return this.realCart ? this.realCart.MapperID : -1;
+    }
     BankSwitchesChanged: boolean;
     BankStartCache: any;
     CurrentBank: number;
+
     UsesSRAM: boolean;
 
     LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void {
@@ -52,6 +60,7 @@ class WishboneCart implements ChiChiNES.INESCart {
         throw new Error('Method not implemented.');
     }
     NMIHandler: () => void;
+
     IRQAsserted: boolean;
     NextEventAt: number;
 
@@ -331,18 +340,6 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
         this.SoundBopper.audioSettings = data.sound.settings;
         if (data.Cpu.Rams) {
             this.Cpu.Rams = data.Cpu.Rams;
-        }
-        if (data.cartInfo) {
-            //this.Cart.CartName = data.cartInfo.name;
-            this.Cart.MapperID = data.cartInfo.mapperId;
-            this.Cart.NumberOfPrgRoms = data.cartInfo.prgRomCount;
-            this.Cart.NumberOfChrRoms = data.cartInfo.chrRomCount;
-            //info.cartInfo = {
-            //    mapperId: this.machine.Cart.MapperID,
-            //    name: this.cartName,
-            //    prgRomCount: this.machine.Cart.NumberOfPrgRoms,
-            //    chrRomCount: this.machine.Cart.NumberOfChrRoms
-            //};
         }
         if (data.debug && data.debug.InstructionHistory) {
             this.Cpu._instructionHistory = data.debug.InstructionHistory.Buffer;

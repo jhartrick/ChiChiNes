@@ -34,7 +34,7 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
             this.bankAstart = 0;
             this.bankCstart = 0;
             this.bankEstart = 0;
-            this.prgRomBank6 = new Uint8Array(8192);
+            this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192));
             this._ROMHashfunction = null;
             this.checkSum = null;
             this.mirroring = -1;
@@ -199,8 +199,8 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
             // throw new Error('Method not implemented.');
         };
         BaseCart.prototype.GetPPUByte = function (clock, address) {
-            var bank = (address / 1024) | 0;
-            var newAddress = (this.ppuBankStarts[bank] + (address & 1023)) | 0;
+            var bank = address >> 10;
+            var newAddress = this.ppuBankStarts[bank] + (address & 1023);
             //while (newAddress > chrRamStart)
             //{
             //    newAddress -= chrRamStart;
@@ -209,7 +209,7 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
         };
         BaseCart.prototype.SetPPUByte = function (clock, address, data) {
             var bank = address >> 10; //, 1024)) | 0;
-            var newAddress = this.bankStartCache[(this.CurrentBank * 16) + bank | 0] + (address & 1023); // ppuBankStarts[bank] + (address & 0x3FF);
+            var newAddress = this.bankStartCache[(this.CurrentBank << 4) + bank] + (address & 1023); // ppuBankStarts[bank] + (address & 0x3FF);
             this.chrRom[newAddress] = data;
         };
         BaseCart.prototype.SetupBankStarts = function (reg8, regA, regC, regE) {
@@ -349,7 +349,6 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
         __extends(NesCart, _super);
         function NesCart() {
             var _this = _super !== null && _super.apply(this, arguments) || this;
-            _this.prgRomBank6$1 = new Uint8Array(2048);
             _this.prevBSSrc = new Uint8Array(8);
             return _this;
         }
@@ -394,7 +393,7 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
         NesCart.prototype.SetByte = function (clock, address, val) {
             if (address >= 24576 && address <= 32767) {
                 if (this.SRAMEnabled) {
-                    this.prgRomBank6$1[address & 8191] = val & 255;
+                    this.prgRomBank6[address & 8191] = val & 255;
                 }
                 return;
             }
@@ -4915,7 +4914,6 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
         };
         tendoWrapper.prototype.run = function (reset) {
             var _this = this;
-            this.runStatus = ChiChiTypes_3.RunningStatuses.Running;
             var framesRendered = 0;
             var machine = this.machine;
             if (reset) {

@@ -5,6 +5,6 @@
 </mat-button-toggle>
 <div class="ramTable">
   <table>
-    <tr *ngFor="let line of data" [myTr]="line" showAscii="{{displayType}}"></tr>
+    <tr *ngFor="let line of data;let i = index" [myTr]="line" [myIndex]="i" showAscii="{{displayType}}"></tr>
   </table>
 </div>

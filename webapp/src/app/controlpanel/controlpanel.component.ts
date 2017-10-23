@@ -1,5 +1,5 @@
 ﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Emulator, EmuState, RomLoader } from 'app/services/NESService'
+import { Emulator, EmuState, RomLoader } from '../services/NESService'
 import { Observable } from 'rxjs';
 import * as JSZip from 'jszip';
 import { AudioSettings } from "../../../workers/chichi/ChiChiTypes";
@@ -14,12 +14,8 @@ export class PowerStatusComponent {
     @Input('emuState') emuState: Observable<any>;
 
     constructor() {
-        
-        //this.emuState.subscribe(data => this.state = data);
     }
 }
-
-
 
 @Component({
   selector: 'controlpanel',
@@ -81,10 +77,10 @@ export class ControlPanelComponent {
         this.powerstate = 'OFF';
         this.wishbone = nesService.wishbone;
         this.wishbone.asObservable().subscribe((machine) => {
-              if (machine && machine.SoundBopper)
+            if (machine && machine.SoundBopper) {
                 this.audioSettings = machine.SoundBopper.audioSettings;
-
-              cd.markForCheck();
+            }
+            cd.markForCheck();
         });
     }
 
@@ -97,7 +93,7 @@ export class ControlPanelComponent {
             } else {
                 this.nesService.LoadRom(rom.data, rom.name);
             }
-            });
+        });
     }
 
     poweron() {
@@ -117,6 +113,7 @@ export class ControlPanelComponent {
     reset(): void {
         this.wishbone.Reset();
     }
+
     powertoggle() {
         if (this.powerstate == 'OFF') {
             this.poweron();

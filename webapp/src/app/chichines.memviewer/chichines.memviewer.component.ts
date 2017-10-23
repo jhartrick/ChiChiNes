@@ -29,10 +29,14 @@ export class AsciiPipe implements PipeTransform {
 @Component({
     styleUrls: ['./chichines.memviewer.component.css'],
     selector: '[myTr]',
-    template: `<td *ngFor="let item of row">{{item | ascii: showAscii}}</td>`
+    template: `<td>{{ lineAddress() }}:</td><td *ngFor="let item of row">{{item | ascii: showAscii}}</td>`
 })
 export class MyTrComponent {
     @Input('myTr') row;
+    @Input('myIndex') myIndex;
+    lineAddress() {
+        return '0x' + ((this.myIndex * 16).toString(16)).padStart(4, '0');
+    }
     @Input('showAscii') showAscii: string;
 }
 
@@ -79,7 +83,6 @@ export class MemViewerComponent implements OnInit {
         var data = new Array<Uint8Array>();
         for (var i = 0; i < chunks ; ++i) {
             data.push(ram.slice(i * this.pageSize, i * this.pageSize + this.pageSize));
-            
         }
         this._data = data;
     }

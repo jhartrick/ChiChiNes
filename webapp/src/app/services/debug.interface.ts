@@ -578,7 +578,7 @@ export class Debugger {
 
         public disassemble (inst : ChiChiNES.CPU2A03.Instruction): string
         {
-            if (!inst || !inst.Parameters0) return '';
+            if (!inst || !inst.OpCode) return '';
             var parms : string = "";
             parms = parms + inst.Parameters0.toString(16);
             parms = parms + inst.Parameters1.toString(16);
