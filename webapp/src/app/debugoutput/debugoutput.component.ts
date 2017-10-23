@@ -1,7 +1,7 @@
 ﻿import { Component, OnInit, ViewChild, ElementRef, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Emulator } from '../services/NESService'
 import { DecodedInstruction, InstructionHistoryDatabase, DebugInstructionDataSource } from '../services/debug.interface'
-import {MatPaginator} from '@angular/material';
+import { MatPaginator } from '@angular/material';
 
 @Component({
   selector: 'app-debugoutput',
@@ -9,14 +9,14 @@ import {MatPaginator} from '@angular/material';
   styleUrls: ['./debugoutput.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
+
 export class DebugOutputComponent implements OnInit  {
     selectedTabIndex = 0;
-    
     @ViewChild('tileDoodle') tileDoodle: ElementRef;
     @ViewChild(MatPaginator) paginator: MatPaginator;
     public instructions: string[];
     public dbgDataSource:  DebugInstructionDataSource ;
-    
+
     constructor(public nes: Emulator, private cd: ChangeDetectorRef) {
         // this.cd.detach();
     }
@@ -37,8 +37,5 @@ export class DebugOutputComponent implements OnInit  {
     }
 
     ngOnInit(): void {
-       // this.dbgDataSource = new DebugInstructionDataSource(this.nes.debugger.lastInstructions, this.paginator); 
     }
-
-    
 }

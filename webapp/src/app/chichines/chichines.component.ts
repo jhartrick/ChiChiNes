@@ -1,16 +1,15 @@
 ﻿import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Emulator } from 'app/services/NESService'
-import 'rxjs/add/operator/map'
-import 'rxjs/add/operator/catch'
-import * as THREE from 'three'
-import { AudioSettings } from "../../../workers/chichi/ChiChiTypes";
-import { WishBoneControlPad } from "../services/wishbone/wishbone";
+import { Emulator } from 'app/services/NESService';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/catch';
+import * as THREE from 'three';
+import { AudioSettings } from '../../../workers/chichi/ChiChiTypes';
+import { WishBoneControlPad } from '../services/wishbone/wishbone';
 
 @Component({
     selector: 'chichi',
     templateUrl: './chichi.component.html',
     styleUrls: ['./chichi.component.css'],
-    
 })
 
 export class ChiChiComponent implements AfterViewInit {
@@ -38,19 +37,14 @@ export class ChiChiComponent implements AfterViewInit {
 
     private sound: THREE.Audio;
     private listener: THREE.AudioListener;
-    private audioCtx : AudioContext;
-    private audioSource : AudioBufferSourceNode;
+    private audioCtx: AudioContext;
+    private audioSource: AudioBufferSourceNode;
 
     public canvasLeft: string = '0px';
     public canvasTop: string = '0px';
 
-
-
-
     private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(1024 * Float32Array.BYTES_PER_ELEMENT);
     private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
-
-
 
     constructor(private nesService: Emulator, private cd: ChangeDetectorRef, private zone: NgZone) {
     }
@@ -107,7 +101,7 @@ export class ChiChiComponent implements AfterViewInit {
                 // Loop through the output channels (in this case there is only one)
                 for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
                     var inputData = inputBuffer.getChannelData(channel);
-                    var outputData = outputBuffer.getChannelData(channel);
+                    let outputData = outputBuffer.getChannelData(channel);
 
                     // Loop through the 4096 samples
                     for (var sample = 0; sample < inputBuffer.length; sample++) {
@@ -137,11 +131,11 @@ export class ChiChiComponent implements AfterViewInit {
         scriptNode.connect(this.audioCtx.destination);
         this.audioSource.loop = true;
         this.audioSource.start();
-        //this.sound.setLoop(true);
-        //this.sound.play();
+        // this.sound.setLoop(true);
+        // this.sound.play();
         this.nesService.SetAudioBuffer(this.nesAudio);
 
-        //console.log(scriptNode.bufferSize);
+        // console.log(scriptNode.bufferSize);
 
         var w = 1;
         var h = 1;
@@ -186,14 +180,14 @@ void main()	{
 }`
         });
         this.paltext.needsUpdate = true;
-        //var material = new THREE.MeshBasicMaterial({ map: this.text });
+        // var material = new THREE.MeshBasicMaterial({ map: this.text });
 
         var cube = new THREE.Mesh(geometry, this.material);
 
         this.scene.add(cube);
-        //cube.rotateZ(2 & Math.PI);
+        // cube.rotateZ(2 & Math.PI);
         this.camera.position.z = 5.8;
-        //this.camera.lookAt(new THREE.Vector3(0,0,0));
+        // this.camera.lookAt(new THREE.Vector3(0,0,0));
         this.renderer = new THREE.WebGLRenderer();
         
 
@@ -228,9 +222,9 @@ void main()	{
     renderScene(): void
     {
         
-        //this.audioSource
+        // this.audioSource
         // this.nesService.wavBuffer = this.audioCtx.createBuffer(2, 32, 22050);
-        //if (this.nesService.soundEnabled ) {
+        // if (this.nesService.soundEnabled ) {
         //    let sound = new THREE.Audio(this.listener);
         //    //this.soundOver = false; 
         //    if (this.nesService.fillWavBuffer(sound.context)) {
@@ -244,10 +238,10 @@ void main()	{
         //        sound.play();
         //        //while (this.sound.isPlaying);
         //    }
-        //}
+        // }
         // debugger;
         this.text.needsUpdate = true;
-        //this.paltext.needsUpdate = true;
+        // this.paltext.needsUpdate = true;
     }
 
 }
