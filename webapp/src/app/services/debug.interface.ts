@@ -95,18 +95,13 @@ export class Debugger {
         private machine : Observable<any>;
         constructor(machine: Observable<any>) {
             this.machine = machine;
-            this.machine.filter((d, i) =>
-            {
-              return d.debug ? true : false;
-            }).subscribe((data) => {
-                const debug = data.debug;
-                this.currentCpuStatus = debug.currentCpuStatus;
-                this.currentPPUStatus = debug.currentPPUStatus;
+            this.machine.subscribe((data) => {
+                const debug = data.Cpu;
+                //this.currentCpuStatus = debug.currentCpuStatus;
+                //this.currentPPUStatus = debug.currentPPUStatus;
                 if (debug.InstructionHistory) {
-                    this.setInstructionPage(debug.InstructionHistory.Buffer, debug.InstructionHistory.Index);
-                    if (debug.InstructionHistory.Finish) {
-                        this.lastInstructions.update();
-                    }
+                    this.setInstructionPage(debug.InstructionHistory, debug.InstructionHistoryPointer);
+                    if (debug.flushHistory) this.lastInstructions.update();
                 }
 
             });
@@ -583,7 +578,7 @@ export class Debugger {
 
         public disassemble (inst : ChiChiNES.CPU2A03.Instruction): string
         {
-            if (!inst) return;
+            if (!inst || !inst.Parameters0) return '';
             var parms : string = "";
             parms = parms + inst.Parameters0.toString(16);
             parms = parms + inst.Parameters1.toString(16);

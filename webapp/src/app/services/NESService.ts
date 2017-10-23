@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import * as JSZip from 'jszip';
 import { AudioSettings } from "../../../workers/chichi/ChiChiTypes";
+import { WishboneMachine } from "./wishbone/wishbone";
+import { ChiChiCPPU } from "../../../workers/chichi/ChiChi.HWCore";
 
 class NesInfo {
     stateupdate = true;
@@ -56,7 +58,7 @@ export enum RunStatus {
 //    {
 //        //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
 //        const doodle1 = this.nes.Tiler.DoodleNameTable(nametable);
-//        const pal = ChiChiNES.PixelWhizzler.pal;
+//        const pal = ChiChiCPPU.pal;
 
 //        for (let i = 0; i <= doodle1.length; ++i) {
 //            const color = pal[doodle1[i]];
@@ -147,19 +149,9 @@ export class RomLoader {
 
 @Injectable()
 export class Emulator {
-    private myAudioSettings: AudioSettings = new AudioSettings();;
+    public wishbone = new WishboneMachine();
 
-    get audioSettings(): AudioSettings {
-        return this.myAudioSettings;
-    }
 
-    set audioSettings(value: AudioSettings) {
-        this.myAudioSettings = value;
-    }
-
-    sync() {
-        this.postNesMessage({ command: "audiosettings", settings: this.myAudioSettings });
-    }
     initNes: any;
    // private ready: boolean = false;
     
@@ -172,112 +164,26 @@ export class Emulator {
     public set soundEnabled(value: boolean) {
         this._soundEnabled = value;
         if (this._soundEnabled) {
-            this.postNesMessage({ command: "unmute" });
+            this.wishbone.postNesMessage({ command: "unmute" });
         } else {
-            this.postNesMessage({ command: "mute" });
+            this.wishbone.postNesMessage({ command: "mute" });
         }
 
     }
 
-    private romName: string;
-    public runStatus: RunStatus = RunStatus.Off;
     public debugger: Debugger ;
-    public controlPad: AngControlPad;
-    private framesRendered: number = 0;
-
-    private framesSubj = new Subject<number>();
-    public get framesPerSecond(): Observable<number> {
-        return this.framesSubj.asObservable();
-    }
-    public fps = 0;
-
-    private emuStateSubject: Subject<EmuState> = new Subject<EmuState>();
-
-    public get emuState() : Observable<EmuState> {
-        return this.emuStateSubject.asObservable();
-    }
 
     public grabRam(start: number, finish: number): number[] {
 
-        return [];
+        return this.wishbone.Cpu.PeekBytes(start, finish);
     }
 
     public DebugUpdateEvent: EventEmitter<DebugEventInfo> = new EventEmitter<DebugEventInfo>();
     public cartInfo: CartInfo = new CartInfo();
 
-    padOneState: number = 0;
 
     constructor() {
-        this.framesSubj.next(0);
-
-        this.emuStateSubject.next(new EmuState('', false, false, false));
-
-        this.initWebWorker();
-    }
-
-    // control pad
-    handleKeyDownEvent(event: KeyboardEvent) {
-        switch (event.keyCode) {
-            case 37: //left arrow
-                this.padOneState |= 64 & 0xFF;
-                break;
-            case 38: //up arrow	
-                this.padOneState |= 16 & 0xFF;
-                break;
-            case 39: //right arrow	39
-                this.padOneState |= 128 & 0xFF;
-                break;
-            case 40: //down arrow	40
-                this.padOneState |= 32 & 0xFF;
-                break;
-            case 90: //	z
-                this.padOneState |= 2 & 0xFF;
-                break;
-            case 88: //x
-                this.padOneState |= 1 & 0xFF;
-                break;
-            case 13: case 89: // enter
-                this.padOneState |= 8 & 0xFF;
-                break;
-            case 9: // tab
-                this.padOneState |= 4 & 0xFF;
-                break;
-        }
-        //debugger;
-        this.nesInterop[2] = this.padOneState & 0xFF;
-        //this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
-    }
-
-    handleKeyUpEvent(event: KeyboardEvent) {
-        switch (event.keyCode) {
-            case 37: //left arrow
-                this.padOneState &= ~64 & 0xFF;
-                break;
-            case 38: //up arrow	
-                this.padOneState &= ~16 & 0xFF;
-                break;
-            case 39: //right arrow	39
-                this.padOneState &= ~128 & 0xFF;
-                break;
-            case 40: //down arrow	40
-                this.padOneState &= ~32 & 0xFF;
-                break;
-            case 90: //	z
-                this.padOneState &= ~2 & 0xFF;
-                break;
-            case 88: //x
-                this.padOneState &= ~1 & 0xFF;
-                break;
-            case 13: // enter
-                this.padOneState &= ~8 & 0xFF;
-                break;
-            case 9: // tab
-                this.padOneState &= ~4 & 0xFF;
-                break;
-        }
-        this.nesInterop[2] = this.padOneState & 0xFF;
-
-        //this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
+        this.debugger = new Debugger(this.wishbone.asObservable());
     }
 
     get isDebugging(): boolean {
@@ -304,13 +210,15 @@ export class Emulator {
     vbuffer: Uint8Array;
 
     SetVideoBuffer(array: Uint8Array): void {
-        this.vbuffer = array;
+        //this.vbuffer = array;
+        this.wishbone.Cpu.byteOutBuffer = array;
         //this.machine.PPU.ByteOutBuffer = array;
     }
 
     abuffer: Float32Array;
     SetAudioBuffer(array: Float32Array): void {
-        this.abuffer = array;
+        //this.abuffer = array;
+        this.wishbone.WaveForms.SharedBuffer = array;
         //this.machine.PPU.ByteOutBuffer = array;
     }
 
@@ -321,35 +229,23 @@ export class Emulator {
 
     // rom loading
     LoadRom(rom: number[],  romName :string) {
-        this.postNesMessage({ command: "loadrom", rom: rom, name: romName });
-//        this.machine.LoadCart(rom);
-        this.romName = romName;
-        this.emuStateSubject.next(new EmuState(this.romName, false, false, false));
+        this.wishbone.Cart.CartName = romName;
+        this.wishbone.LoadCart(rom);
     }
 
     LoadNsf(rom: number[], romName: string) {
-        this.postNesMessage({ command: "loadnsf", rom: rom, name: romName });
+        this.wishbone.postNesMessage({ command: "loadnsf", rom: rom, name: romName });
         //        this.machine.LoadCart(rom);
-        this.romName = romName;
-        this.emuStateSubject.next(new EmuState(this.romName, false, false, false));
+        //this.emuStateSubject.next(new EmuState(romName, false, false, false));
     }
 
     // control
     StartEmulator(): void {
-        this.nesInterop[0] = 1;
-        setInterval(() => {
-            this.fps = this.nesInterop[1];
-            this.framesSubj.next(this.fps);
-        },500);
-        (<any>Atomics).store(this.nesInterop, 2, 1);
-        this.postNesMessage({ command: "run" });
+        this.wishbone.Run();
     }
 
     Continue(): void {
-        this.postNesMessage({ command: "continue" });
-    }
-    private runFunction(): void {
-        this.postNesMessage({ command: "run", debug: false });
+        this.wishbone.postNesMessage({ command: "continue" });
     }
 
 
@@ -359,21 +255,20 @@ export class Emulator {
     }
 
     StopEmulator(): void {
-        (<any>Atomics).store(this.nesInterop, 2, 0);
-        this.postNesMessage({ command: "stop" });
+        this.wishbone.PowerOff();
     }
 
     ResetEmulator(): void {
-        this.postNesMessage({ command: "reset", debug: true });
+        this.wishbone.Reset();
         //this.machine.Reset();
     }
 
     DebugStepFrame(): void {
-        this.postNesMessage({ command: "runframe", debug: true });
+        this.wishbone.postNesMessage({ command: "runframe", debug: true });
     }
 
     DebugStep(): void {
-        this.postNesMessage({ command: "step", debug: true });
+        this.wishbone.Step();
 
     }
 
@@ -392,64 +287,4 @@ export class Emulator {
 
     private oldOp: number = 0;
 
-    private postNesMessage(message: any) {
-        //this.oldOp = this.nesInterop[0] ;
-        //this.nesInterop[0] = 0;
-        this.worker.postMessage(message);
-    }
-
-    private postNesMessageAndStop(message: any) {
-        //this.oldOp = 0;
-        //this.nesInterop[0] = 0;
-        this.worker.postMessage(message);
-    }
-
-    public clearAudio(): void {
-        (<any>Atomics).store(this.nesInterop, 0, 1);
-        (<any>Atomics).wake(this.nesInterop, 0, 1);
-    }
-
-    private nesReady = false;
-    private initWebWorker() {
-        this.debugger = new Debugger(this.nesStateSubject.asObservable());
-        this.nesStateSubject.next(new NesInfo());
-
-        const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../assets/emulator.worker.bootstrap.js');
-
-        this.worker = new Worker(nesWorker);
-
-        this.worker.onmessage = (data: MessageEvent) => {
-            var d = data.data;
-            if (d === 'ready') {
-                this.nesReady = true;
-
-                var createCommand = 'create';
-                this.postNesMessage({ command: createCommand, vbuffer: this.vbuffer, abuffer: this.abuffer, iops: this.nesInterop });
-                return;
-            }
-            this.nesStateSubject.next(d);
-            if (d.frame) {
-                this.callback();
-                if (d.fps) this.framesSubj.next(d.fps);
-                this.fps = d.fps;
-            }
-            if (d.debug) {
-                //update debug info
-            }
-            if (d.stateupdate) {
-                //this.runStatus = data.data.runStatus;
-                if (data.data.cartInfo) {
-                    this.cartInfo = data.data.cartInfo;
-                }
-            }
-            if (d.sound) {
-                this._soundEnabled = d.sound.soundEnabled,
-                this.myAudioSettings = d.sound.settings
-            }
-            //console.log(data.data);
-        };
-        
-
-    }
-    
 }

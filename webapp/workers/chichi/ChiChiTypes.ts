@@ -27,20 +27,20 @@ export enum ChiChiCPPU_AddressingModes {
 }
 
 export class ChiChiInstruction {
-    AddressingMode: number;
-    frame: number;
-    time: number;
-    A: number;
-    X: number;
-    Y: number;
-    SR: number;
-    SP: number;
-    Address: number;
-    OpCode: number;
-    Parameters0: number;
-    Parameters1: number;
-    ExtraTiming: number;
-    Length: number;
+    AddressingMode: number = 0;
+    frame: number = 0;
+    time: number = 0;
+    A: number = 0;
+    X: number = 0;
+    Y: number = 0;
+    SR: number = 0;
+    SP: number = 0;
+    Address: number = 0;
+    OpCode: number = 0;
+    Parameters0: number = 0;
+    Parameters1: number = 0;
+    ExtraTiming: number = 0;
+    Length: number = 0;
 }
 
 export class ChiChiSprite {

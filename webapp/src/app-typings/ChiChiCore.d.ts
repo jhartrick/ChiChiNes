@@ -120,70 +120,35 @@ declare module ChiChiNES {
     }
     var InputHandler: InputHandlerFunc;
 
-    export interface INESCart extends ChiChiNES.IClockedMemoryMappedIOElement {
-        ChiChiNES$INESCart$Whizzler: ChiChiNES.CPU2A03;
+    export interface INESCart  {
         Whizzler: ChiChiNES.CPU2A03;
-        ChiChiNES$INESCart$CPU: ChiChiNES.CPU2A03;
         CPU: ChiChiNES.CPU2A03;
-        ChiChiNES$INESCart$ChrRom: any;
         ChrRom: any;
-        ChiChiNES$INESCart$ChrRamStart: number;
         ChrRamStart: number;
-        ChiChiNES$INESCart$PPUBankStarts: any;
         PPUBankStarts: any;
-        ChiChiNES$INESCart$ROMHashFunction: {(prg: any, chr: any): string};
         ROMHashFunction: {(prg: any, chr: any): string};
-        ChiChiNES$INESCart$CheckSum: string;
         CheckSum: string;
-        ChiChiNES$INESCart$SRAM: any;
         SRAM: any;
-        ChiChiNES$INESCart$Mirroring: ChiChiNES.NameTableMirroring;
         Mirroring: ChiChiNES.NameTableMirroring;
-        ChiChiNES$INESCart$CartName: string;
         CartName: string;
-        ChiChiNES$INESCart$NumberOfPrgRoms: number;
         NumberOfPrgRoms: number;
-        ChiChiNES$INESCart$NumberOfChrRoms: number;
         NumberOfChrRoms: number;
-        ChiChiNES$INESCart$MapperID: number;
         MapperID: number;
-        /**
-         * Used for bankswitching
-         *
-         * @instance
-         * @abstract
-         * @public
-         * @memberof ChiChiNES.INESCart
-         * @function ChiChiNES$INESCart$BankSwitchesChanged
-         * @type boolean
-         */
-        ChiChiNES$INESCart$BankSwitchesChanged: boolean;
         BankSwitchesChanged: boolean;
-        ChiChiNES$INESCart$BankStartCache: any;
         BankStartCache: any;
-        ChiChiNES$INESCart$CurrentBank: number;
         CurrentBank: number;
-        ChiChiNES$INESCart$UsesSRAM: boolean;
         UsesSRAM: boolean;
-        ChiChiNES$INESCart$LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void;
         LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void;
-        ChiChiNES$INESCart$InitializeCart(): void;
         InitializeCart(): void;
-        ChiChiNES$INESCart$UpdateScanlineCounter(): void;
         UpdateScanlineCounter(): void;
-        ChiChiNES$INESCart$WriteState(state: any): void;
         WriteState(state: any): void;
-        ChiChiNES$INESCart$ReadState(state: any): void;
         ReadState(state: any): void;
-        ChiChiNES$INESCart$GetPPUByte(clock: number, address: number): number;
+        GetByte(clock: number, address: number): number;
+        SetByte(clock: number, address: number, data: number): void;
         GetPPUByte(clock: number, address: number): number;
-        ChiChiNES$INESCart$SetPPUByte(clock: number, address: number, data: number): void;
         SetPPUByte(clock: number, address: number, data: number): void;
-        ChiChiNES$INESCart$ActualChrRomOffset(address: number): number;
         ActualChrRomOffset(address: number): number;
-        ChiChiNES$INESCart$UpdateBankStartCache(): number;
         UpdateBankStartCache(): number;
-        ChiChiNES$INESCart$ResetBankStartCache(): void;
         ResetBankStartCache(): void;
     }
 
@@ -446,7 +411,7 @@ declare module ChiChiNES {
         //FrameOn: boolean;
         //PPU_NameTableMemoryStart: number;
         CurrentFrame: any;
-        ChrRomHandler: ChiChiNES.INESCart;
+        ChrRomHandler: any;
 
         //PPU_IRQAsserted: boolean;
         //PPU_NextEventAt: number;
@@ -656,12 +621,14 @@ declare module ChiChiNES.BeepsBoops {
     var WavSharer: WavSharerFunc;
 
     export interface Bopper  {
+        audioSettings: any;
+
         SampleRate: number;
         Muted: boolean;
         InterruptRaised: boolean;
         EnableSquare0: boolean;
         EnableSquare1: boolean;
-        EnableTriangle: boolean;
+        enableTriangle: boolean;
         EnableNoise: boolean;
         NMIHandler: {(): void};
         IRQAsserted: boolean;

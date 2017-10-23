@@ -321,7 +321,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
     }
 
     //chichipig
-    class ChiChiCPPU implements ChiChiNES.CPU2A03 {
+   export class ChiChiCPPU implements ChiChiNES.CPU2A03 {
 
         readonly SRMasks_CarryMask = 0x01;
         readonly SRMasks_ZeroResultMask = 0x02;
@@ -362,7 +362,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
 
         // statics
         private static cpuTiming: number[] = [7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0];
-        private static pal: Uint32Array = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        public static pal: Uint32Array = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
         private static addressModes: number[] = [1, 12, 1, 0, 0, 4, 4, 0, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 4, 5, 5, 1, 1, 10, 1, 1, 8, 9, 9, 1, 8, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 9, 9, 9, 1, 1, 12, 1, 1, 1, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 1, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 11, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 15, 9, 9, 1, 7, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 1, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 8, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 9, 9, 10, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1];
         private _reset = false;
 
@@ -401,7 +401,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
 
         // system ram
         private _ramsBuffer = new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT);
-        private Rams = new Uint8Array(<any>this._ramsBuffer);// System.Array.init(vv, 0, System.Int32);
+        Rams = new Uint8Array(<any>this._ramsBuffer);// System.Array.init(vv, 0, System.Int32);
         private _stackPointer = 255;
 
         // debug helpers
@@ -417,9 +417,9 @@ import { ChiChiInputHandler } from  './ChiChiControl'
         }
 
 
-        private instructionHistoryPointer = 255;
-        private _instructionHistory = new Array<ChiChiInstruction>(256);//System.Array.init(256, null, ChiChiInstruction);
-
+        instructionHistoryPointer = 255;
+        _instructionHistory = new Array<ChiChiInstruction>(256);//System.Array.init(256, null, ChiChiInstruction);
+       
         public get InstructionHistory(): Array<any> {
             return this._instructionHistory;
         }
@@ -501,7 +501,9 @@ import { ChiChiInputHandler } from  './ChiChiControl'
             this.PPU_InitSprites();
             this._padOne = new ChiChiInputHandler();
             this._padTwo = new ChiChiInputHandler();
-
+            for (let i = 0; i < this._instructionHistory.length; ++i) {
+                this._instructionHistory[i] = new ChiChiInstruction();
+            }
             //this.vBuffer = System.Array.init(61440, 0, System.Byte);
 
             //ChiChiNES.CPU2A03.GetPalRGBA();
@@ -1567,11 +1569,75 @@ import { ChiChiInputHandler } from  './ChiChiControl'
         }
 
         PeekByte(address: number): number {
-            throw new Error('Method not implemented.');
+            var result = 0;
+            // check high byte, find appropriate handler
+            switch (address & 61440) {
+                case 0:
+                case 4096:
+                    if (address < 2048) {
+                        result = this.Rams[address];
+                    } else {
+                        result = address >> 8;
+                    }
+                    break;
+                case 8192:
+                case 12288:
+                    result = 0;
+                    //result = this.PPU_GetByte(this.clock, address);
+                    break;
+                case 16384:
+                    switch (address) {
+                        case 16406:
+                            result = this._padOne.GetByte(this.clock, address);
+                            break;
+                        case 16407:
+                            result = this._padTwo.GetByte(this.clock, address);
+                            break;
+                        case 16405:
+                            result = this.SoundBopper.GetByte(this.clock, address);
+                            break;
+                        default:
+                            // return open bus?
+                            result = address >> 8;
+                            break;
+                    }
+                    break;
+                case 20480:
+                    // ??
+                    result = address >> 8;
+                    break;
+                case 24576:
+                case 28672:
+                case 32768:
+                case 36864:
+                case 40960:
+                case 45056:
+                case 49152:
+                case 53248:
+                case 57344:
+                case 61440:
+                    // cart 
+                    result = 0;
+                    //result = this.Cart.GetByte(this.clock, address);
+                    break;
+                default:
+                    throw new Error("Bullshit!");
+            }
+            //if (_cheating && memoryPatches.ContainsKey(address))
+            //{
+
+            //    return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
+            //}
+
+            return result & 255;
         }
 
         PeekBytes(start: number, finish: number): number[] {
-            throw new Error('Method not implemented.');
+            var array = new Array<number>();
+            for (let i = 0; i < finish; ++i) {
+                if (i< this.Rams.length) array.push(this.Rams[i]);
+            }
+            return array;
         }
 
         SetByte(address: number, data: number): void {

@@ -52,6 +52,7 @@
     <Content Include="src\tsconfig.spec.json" />
     <TypeScriptCompile Include="src\app-typings\app_typings.d.ts" />
     <TypeScriptCompile Include="src\app-typings\ChiChiCore.d.ts" />
+    <TypeScriptCompile Include="src\app-typings\ChiChiTypes.d.ts" />
     <TypeScriptCompile Include="src\app\chichines.instructionhistory\chichines.instructionhistory.component.ts" />
     <TypeScriptCompile Include="src\app\chichines.memviewer\chichines.memviewer.component.ts" />
     <TypeScriptCompile Include="src\app\controlpanel\controlpanel.component.ts" />

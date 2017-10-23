@@ -23,16 +23,14 @@
       </div>
     </div>
     <div  >
-      <p>Loaded: {{ state?.romLoaded }}</p>
+      <p>Loaded: {{ wishbone.Cart.CartName }}</p>
        <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
-        <p>Mapper: {{ nesService.cartInfo.mapperId }}</p>
-        <p>Prg Roms: {{ nesService.cartInfo.prgRomCount }}</p>
-        <p>Chr Roms: {{ nesService.cartInfo.chrRomCount }}</p>
-
-
+        <p>Mapper: {{ wishbone.Cart.MapperID }}</p>
+        <p>Prg Roms: {{ wishbone.Cart.NumberOfPrgRoms }}</p>
+        <p>Chr Roms: {{ wishbone.Cart.NumberOfChrRoms }}</p>
     </div>
     <div>
-      FPS: {{ nesService.framesPerSecond | async }} {{ nesService.fps }}
+      FPS: {{ wishbone.fps }}
     </div>
 
   </mat-expansion-panel>
@@ -47,18 +45,18 @@
     </mat-panel-title>
   </mat-expansion-panel-header>
   <p>
-    <mat-button-toggle class="audio_button" value="nesService.audioSettings.enableSquare0" (change)="nesService.audioSettings.enableSquare0 = !(nesService.audioSettings.enableSquare0); nesService.sync()" [disabled]="!nesService.canStart">
+    <mat-button-toggle class="audio_button" value="enableSquare0" (change)="enableSquare0 = !(enableSquare0)" [disabled]="!nesService.canStart">
       Square 0
     </mat-button-toggle>
-    <mat-button-toggle class="audio_button" value="nesService.audioSettings.enableSquare1" (change)="nesService.audioSettings.enableSquare1 = !(nesService.audioSettings.enableSquare1); nesService.sync()" [disabled]="!nesService.canStart">
+    <mat-button-toggle class="audio_button" value="enableSquare1" (change)="enableSquare1 = !(enableSquare1)" [disabled]="!nesService.canStart">
       Square 1
     </mat-button-toggle>
   </p>
   <p>
-    <mat-button-toggle class="audio_button" value="nesService.audioSettings.enableTriangle" (change)="nesService.audioSettings.enableTriangle = !(nesService.audioSettings.enableTriangle); nesService.sync()" [disabled]="!nesService.canStart">
+    <mat-button-toggle class="audio_button" value="enableTriangle" (change)="enableTriangle = !(enableTriangle)" [disabled]="!nesService.canStart">
       Triangle
     </mat-button-toggle>
-    <mat-button-toggle class="audio_button" value="nesService.audioSettings.enableNoise" (change)="nesService.audioSettings.enableNoise = !(nesService.audioSettings.enableNoise); nesService.sync()" [disabled]="!nesService.canStart">
+    <mat-button-toggle class="audio_button" value="enableNoise" (change)="enableNoise = !(enableNoise)" [disabled]="!nesService.canStart">
       Noise
     </mat-button-toggle>
   </p>

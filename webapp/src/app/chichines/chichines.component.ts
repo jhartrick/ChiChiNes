@@ -3,11 +3,14 @@ import { Emulator } from 'app/services/NESService'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/catch'
 import * as THREE from 'three'
+import { AudioSettings } from "../../../workers/chichi/ChiChiTypes";
+import { WishBoneControlPad } from "../services/wishbone/wishbone";
 
 @Component({
     selector: 'chichi',
     templateUrl: './chichi.component.html',
-    styleUrls: ['./chichi.component.css']
+    styleUrls: ['./chichi.component.css'],
+    
 })
 
 export class ChiChiComponent implements AfterViewInit {
@@ -42,20 +45,24 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasTop: string = '0px';
 
 
+
+
     private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(1024 * Float32Array.BYTES_PER_ELEMENT);
     private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
 
-    constructor(private nesService: Emulator, cd: ChangeDetectorRef, private zone: NgZone) {
+
+
+    constructor(private nesService: Emulator, private cd: ChangeDetectorRef, private zone: NgZone) {
     }
 
     @HostListener('document:keydown', ['$event'])
     handleKeyDownEvent(event: KeyboardEvent) {
-        this.nesService.handleKeyDownEvent(event);
+        (<WishBoneControlPad>this.nesService.wishbone.PadOne).handleKeyDownEvent(event);
     }
 
     @HostListener('document:keyup', ['$event'])
     handleKeyUpEvent(event: KeyboardEvent) {
-        this.nesService.handleKeyUpEvent(event);
+        (<WishBoneControlPad>this.nesService.wishbone.PadOne).handleKeyUpEvent(event);
     }
 
     @HostListener('window:resize', ['$event'])
@@ -69,7 +76,7 @@ export class ChiChiComponent implements AfterViewInit {
             this.canvasLeft = '0px';            
             this.canvasTop = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetWidth * 3/4)) /2) + "px";
         }
-
+        this.cd.detectChanges();
        //console.log("Width: " + event.target.innerWidth);
     }
 
@@ -203,6 +210,7 @@ void main()	{
         this.nesService.SetVideoBuffer(this.vbuffer);
         this.nesService.SetCallbackFunction(() => this.renderScene());
         this.drawFrame();
+        this.cd.detach();
     }
 
     drawFrame(): void {

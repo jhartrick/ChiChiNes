@@ -6,6 +6,7 @@ class NesInfo {
     runStatus: any = {};
     cartInfo: any = {};
     sound: any = {};
+    Cpu: any = {}
     debug: any = {
         currentCpuStatus: {
             PC: 0,
@@ -50,7 +51,26 @@ export class tendoWrapper {
           };
           this.ready = true;
           this.machine.Cpu.FireDebugEvent = () => {
-              this.updateState();
+              var info = new NesInfo(); 
+              info.debug = {
+                  currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
+                      PC: 0,
+                      A: 0,
+                      X: 0,
+                      Y: 0,
+                      SP: 0,
+                      SR: 0
+                  },
+                  currentPPUStatus: this.machine.Cpu.GetPPUStatus ? this.machine.Cpu.GetPPUStatus() : {},
+                  InstructionHistory: {
+                      Buffer: this.machine.Cpu.InstructionHistory.slice(0),
+                      Index: this.machine.Cpu.InstructionHistoryPointer,
+                      Finish: false
+                  }
+
+              };
+              postMessage(info);
+              //this.updateState();
           };
           this.machine.Cpu.Debugging = false;
       }
@@ -61,6 +81,9 @@ export class tendoWrapper {
         let info = new NesInfo();
 
         if (this.machine && this.machine.Cart) {
+            info.Cpu = {
+                Rams: this.machine.Cpu.Rams
+            }
             info.cartInfo = {
                 mapperId: this.machine.Cart.MapperID,
                 name: this.cartName,
@@ -141,7 +164,7 @@ export class tendoWrapper {
                     this.runTimeout++;
                 }
             }
-            if (this.iops[2] === 0) {
+            if (this.iops[0] === 0) {
                 this.runStatus = RunningStatuses.Paused;
             }
         //this.runInnerLoop();
@@ -150,8 +173,6 @@ export class tendoWrapper {
     }
 
     run(reset: boolean) {
-          this.runStatus = RunningStatuses.Running
-
           var framesRendered = 0;
           const machine = this.machine;
 
@@ -160,6 +181,7 @@ export class tendoWrapper {
           }
           machine.Cpu.Debugging = false;
           this.startTime = new Date().getTime();
+          clearInterval(this.interval);
           this.interval = setInterval(() => {
               this.runInnerLoop();
           }, 17);

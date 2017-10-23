@@ -955,6 +955,20 @@ define("chichi/ChiChiTypes", ["require", "exports"], function (require, exports)
     })(ChiChiCPPU_AddressingModes = exports.ChiChiCPPU_AddressingModes || (exports.ChiChiCPPU_AddressingModes = {}));
     var ChiChiInstruction = /** @class */ (function () {
         function ChiChiInstruction() {
+            this.AddressingMode = 0;
+            this.frame = 0;
+            this.time = 0;
+            this.A = 0;
+            this.X = 0;
+            this.Y = 0;
+            this.SR = 0;
+            this.SP = 0;
+            this.Address = 0;
+            this.OpCode = 0;
+            this.Parameters0 = 0;
+            this.Parameters1 = 0;
+            this.ExtraTiming = 0;
+            this.Length = 0;
         }
         return ChiChiInstruction;
     }());
@@ -2839,6 +2853,9 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
             this.PPU_InitSprites();
             this._padOne = new ChiChiControl_1.ChiChiInputHandler();
             this._padTwo = new ChiChiControl_1.ChiChiInputHandler();
+            for (var i = 0; i < this._instructionHistory.length; ++i) {
+                this._instructionHistory[i] = new ChiChiTypes_2.ChiChiInstruction();
+            }
             //this.vBuffer = System.Array.init(61440, 0, System.Byte);
             //ChiChiNES.CPU2A03.GetPalRGBA();
         }
@@ -3928,10 +3945,74 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
             return result & 255;
         };
         ChiChiCPPU.prototype.PeekByte = function (address) {
-            throw new Error('Method not implemented.');
+            var result = 0;
+            // check high byte, find appropriate handler
+            switch (address & 61440) {
+                case 0:
+                case 4096:
+                    if (address < 2048) {
+                        result = this.Rams[address];
+                    }
+                    else {
+                        result = address >> 8;
+                    }
+                    break;
+                case 8192:
+                case 12288:
+                    result = 0;
+                    //result = this.PPU_GetByte(this.clock, address);
+                    break;
+                case 16384:
+                    switch (address) {
+                        case 16406:
+                            result = this._padOne.GetByte(this.clock, address);
+                            break;
+                        case 16407:
+                            result = this._padTwo.GetByte(this.clock, address);
+                            break;
+                        case 16405:
+                            result = this.SoundBopper.GetByte(this.clock, address);
+                            break;
+                        default:
+                            // return open bus?
+                            result = address >> 8;
+                            break;
+                    }
+                    break;
+                case 20480:
+                    // ??
+                    result = address >> 8;
+                    break;
+                case 24576:
+                case 28672:
+                case 32768:
+                case 36864:
+                case 40960:
+                case 45056:
+                case 49152:
+                case 53248:
+                case 57344:
+                case 61440:
+                    // cart 
+                    result = 0;
+                    //result = this.Cart.GetByte(this.clock, address);
+                    break;
+                default:
+                    throw new Error("Bullshit!");
+            }
+            //if (_cheating && memoryPatches.ContainsKey(address))
+            //{
+            //    return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
+            //}
+            return result & 255;
         };
         ChiChiCPPU.prototype.PeekBytes = function (start, finish) {
-            throw new Error('Method not implemented.');
+            var array = new Array();
+            for (var i = 0; i < finish; ++i) {
+                if (i < this.Rams.length)
+                    array.push(this.Rams[i]);
+            }
+            return array;
         };
         ChiChiCPPU.prototype.SetByte = function (address, data) {
             // check high byte, find appropriate handler
@@ -4677,6 +4758,7 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
         ChiChiCPPU.addressModes = [1, 12, 1, 0, 0, 4, 4, 0, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 4, 5, 5, 1, 1, 10, 1, 1, 8, 9, 9, 1, 8, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 9, 9, 9, 1, 1, 12, 1, 1, 1, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 1, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 11, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 15, 9, 9, 1, 7, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 1, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 8, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 9, 9, 10, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1];
         return ChiChiCPPU;
     }());
+    exports.ChiChiCPPU = ChiChiCPPU;
 });
 define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi/ChiChiTypes"], function (require, exports, ChiChi_HWCore_1, ChiChiTypes_3) {
     "use strict";
@@ -4687,6 +4769,7 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             this.runStatus = {};
             this.cartInfo = {};
             this.sound = {};
+            this.Cpu = {};
             this.debug = {
                 currentCpuStatus: {
                     PC: 0,
@@ -4724,7 +4807,25 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             };
             this.ready = true;
             this.machine.Cpu.FireDebugEvent = function () {
-                _this.updateState();
+                var info = new NesInfo();
+                info.debug = {
+                    currentCpuStatus: _this.machine.Cpu.GetStatus ? _this.machine.Cpu.GetStatus() : {
+                        PC: 0,
+                        A: 0,
+                        X: 0,
+                        Y: 0,
+                        SP: 0,
+                        SR: 0
+                    },
+                    currentPPUStatus: _this.machine.Cpu.GetPPUStatus ? _this.machine.Cpu.GetPPUStatus() : {},
+                    InstructionHistory: {
+                        Buffer: _this.machine.Cpu.InstructionHistory.slice(0),
+                        Index: _this.machine.Cpu.InstructionHistoryPointer,
+                        Finish: false
+                    }
+                };
+                postMessage(info);
+                //this.updateState();
             };
             this.machine.Cpu.Debugging = false;
         };
@@ -4732,6 +4833,9 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             var machine = this.machine;
             var info = new NesInfo();
             if (this.machine && this.machine.Cart) {
+                info.Cpu = {
+                    Rams: this.machine.Cpu.Rams
+                };
                 info.cartInfo = {
                     mapperId: this.machine.Cart.MapperID,
                     name: this.cartName,
@@ -4803,7 +4907,7 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
                     this.runTimeout++;
                 }
             }
-            if (this.iops[2] === 0) {
+            if (this.iops[0] === 0) {
                 this.runStatus = ChiChiTypes_3.RunningStatuses.Paused;
             }
             //this.runInnerLoop();
@@ -4819,6 +4923,7 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             }
             machine.Cpu.Debugging = false;
             this.startTime = new Date().getTime();
+            clearInterval(this.interval);
             this.interval = setInterval(function () {
                 _this.runInnerLoop();
             }, 17);

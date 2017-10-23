@@ -3,9 +3,9 @@ var self = this;
 require({
     baseUrl: "./assets"
 },
-    ["require", "chichi/ChiChi.HWCore", "emulator.worker"],
+    ["require", "emulator.worker"],
 
-    function (require, chichi, tendo) {
+    function (require, tendo) {
         var tend = new tendo.tendoWrapper();
         onmessage = (e) => {
             try {

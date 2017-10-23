@@ -24,7 +24,7 @@ export class ChiChiInputHandler implements ChiChiNES.InputHandler {
 
     }
 
- class ChiChiControlPad implements ChiChiNES.IControlPad {
+  class ChiChiControlPad implements ChiChiNES.IControlPad {
 
         currentByte: number = 0;
         readNumber: number = 0;
