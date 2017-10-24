@@ -1,12 +1,15 @@
 ﻿import { ChiChiMachine } from './chichi/ChiChi.HWCore';
 import { RunningStatuses } from './chichi/ChiChiTypes'
+import { BaseCart } from "./chichi/ChiChiCarts";
 
 class NesInfo {
+    bufferupdate = false;
     stateupdate = true;
     runStatus: any = {};
     cartInfo: any = {};
     sound: any = {};
-    Cpu: any = {}
+    Cpu: any = {};
+    Cart: any = {};
     debug: any = {
         currentCpuStatus: {
             PC: 0,
@@ -28,7 +31,7 @@ export class tendoWrapper {
     frameFinished: boolean = false;
     ready: boolean = false;
     framesPerSecond: number = 0;
-    interval: number;
+    interval: any;
     runStatus: RunningStatuses;
     iops = new Array(16);
     machine: ChiChiMachine;
@@ -75,14 +78,46 @@ export class tendoWrapper {
           this.machine.Cpu.Debugging = false;
       }
 
+    updateBuffers() {
+        const machine = this.machine;
+
+        let info = new NesInfo();
+        info.bufferupdate = true;
+        info.stateupdate = false;
+        if (this.machine && this.machine.Cart) {
+
+
+
+            info.Cpu = {
+                Rams: this.machine.Cpu.Rams,
+            }
+            info.Cart = {
+                //buffers
+                chrRom: (<any>this.machine.Cart).chrRom,
+                prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
+                ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
+                bankStartCache: (<any>this.machine.Cart).bankStartCache,
+            }
+        }
+
+        postMessage(info);
+    }
+
+
     updateState() {
-        const machine = this.machine;    
+        const machine : ChiChiMachine = this.machine;    
 
         let info = new NesInfo();
 
         if (this.machine && this.machine.Cart) {
+
+
+
             info.Cpu = {
-                Rams: this.machine.Cpu.Rams
+                //Rams: this.machine.Cpu.Rams,
+                status: this.machine.Cpu.GetStatus(),
+                ppuStatus: this.machine.Cpu.GetPPUStatus(),
+                backgroundPatternTableIndex: this.machine.Cpu.backgroundPatternTableIndex
             }
             info.cartInfo = {
                 mapperId: this.machine.Cart.MapperID,
@@ -90,7 +125,26 @@ export class tendoWrapper {
                 prgRomCount: this.machine.Cart.NumberOfPrgRoms,
                 chrRomCount: this.machine.Cart.NumberOfChrRoms
             };
+            info.Cart = {
+                //buffers
+                //chrRom: (<any>this.machine.Cart).chrRom,
+                //prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
+                //ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
+                //bankStartCache: (<any>this.machine.Cart).bankStartCache,
+
+                CurrentBank: (<any>this.machine.Cart).CurrentBank,
+                // integers
+                current8: (<any>this.machine.Cart).current8,
+                currentA: (<any>this.machine.Cart).currentA,
+                currentC: (<any>this.machine.Cart).currentC,
+                currentE: (<any>this.machine.Cart).currentE,
+                bank8start: (<any>this.machine.Cart).bank8start,
+                bankAstart: (<any>this.machine.Cart).bankAstart,
+                bankCstart: (<any>this.machine.Cart).bankCstart,
+                bankEstart: (<any>this.machine.Cart).bankEstart
+            }
         }
+
         if (machine) {
             info.sound = {
                 soundEnabled: machine.EnableSound,
@@ -145,7 +199,6 @@ export class tendoWrapper {
 
       }
 
-
     private runInnerLoop() {
             this.machine.RunFrame();
             this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
@@ -154,6 +207,8 @@ export class tendoWrapper {
 
             this.flushAudio();
             if ((this.framesRendered++) === 60) {
+                this.updateState();
+
                 this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
                 this.framesRendered = 0; this.startTime = new Date().getTime();
                 this.iops[1] = this.framesPerSecond;
@@ -184,10 +239,9 @@ export class tendoWrapper {
           clearInterval(this.interval);
           this.interval = setInterval(() => {
               this.runInnerLoop();
-          }, 17);
-          //while (this.runStatus === RunningStatuses.Running) {
-          //  this.runInnerLoop();
-          //}
+          },16);
+
+
           this.runStatus = machine.RunState;// runStatuses.Running;
       }
 
@@ -234,10 +288,12 @@ export class tendoWrapper {
 
                 this.stop();
                 this.machine.LoadCart(event.data.rom);
+                this.updateBuffers();
                break;
             case 'loadnsf':
                 this.stop();
                 this.machine.LoadNSF(event.data.rom);
+                this.updateBuffers();
                 break;
             case 'audiosettings':
                 this.machine.SoundBopper.audioSettings = event.data.settings;

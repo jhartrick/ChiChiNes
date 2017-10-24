@@ -1,7 +1,7 @@
 ﻿import { BaseCart, NesCart, MMC1Cart, MMC3Cart, NsfCart } from './ChiChiCarts'
 import { WavSharer, ChiChiBopper } from './ChiChiAudio'
-import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses } from './ChiChiTypes'
-import { ChiChiInputHandler } from  './ChiChiControl'
+import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
+import { ChiChiInputHandler } from './ChiChiControl'
 
     export class iNESFileHandler implements ChiChiNES.ROMLoader.iNESFileHandler {
 
@@ -400,7 +400,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
         private __frameFinished = true;
 
         public get PatternTableIndex() : number {
-            return this._backgroundPatternTableIndex;
+            return this.backgroundPatternTableIndex;
         }
 
         // system ram
@@ -434,7 +434,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
 
         // ppu events
         // ppu variables 
-        private _backgroundPatternTableIndex: number=0;
+        backgroundPatternTableIndex: number=0;
 
         //private PPU_HandleVBlankIRQ: boolean;
 
@@ -1163,11 +1163,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
                     this._indexRegisterY = this.DecodeOperand();
                     this.SetZNFlags(this._indexRegisterY);
                     break;
-                case 74:
-                case 70:
-                case 86:
-                case 78:
-                case 94:
+                case 74: case 70: case 86: case 78: case 94:
                     //LSR();
                     data = this.DecodeOperand();
                     //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
@@ -1181,14 +1177,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
                         this.SetByte(this.DecodeAddress(), data);
                     }
                     break;
-                case 234:
-                case 26:
-                case 58:
-                case 90:
-                case 122:
-                case 218:
-                case 250:
-                case 137:
+                case 234: case 26: case 58: case 90: case 122: case 218: case 250: case 137:
                     //case 0x04:
                     //case 0x14:
                     //case 0x34:
@@ -1801,9 +1790,9 @@ import { ChiChiInputHandler } from  './ChiChiControl'
         }
         UpdatePPUControlByte0(): void {
             if ((this._PPUControlByte0 & 16)) {
-                this._backgroundPatternTableIndex = 4096;
+                this.backgroundPatternTableIndex = 4096;
             } else {
-                this._backgroundPatternTableIndex = 0;
+                this.backgroundPatternTableIndex = 0;
             }
         }
         PPU_SetByte(Clock: number, address: number, data: number): void {
@@ -1829,7 +1818,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
                     this._PPUControlByte0 = data;
                     this._openBus = data;
                     this.nameTableBits = this._PPUControlByte0 & 3;
-                    this._backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
+                    this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
                     // if we toggle /vbl we can throw multiple NMIs in a vblank period
                     //if ((data & 0x80) == 0x80 && NMIHasBeenThrownThisFrame)
                     //{
@@ -2262,7 +2251,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
 
             let patternTableYOffset = this.yPosition & 7;
 
-            let patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+            let patternID = this.backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
 
             this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
             this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
@@ -2366,7 +2355,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
 
                             let patternTableYOffset = this.yPosition & 7;
 
-                            let patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+                            let patternID = this.backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
 
                             this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
                             this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
@@ -2457,7 +2446,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
         }
 
 
-        GetStatus(): any {
+        GetStatus(): CpuStatus {
             return {
                 PC: this._programCounter,
                 A: this._accumulator,
@@ -2468,7 +2457,7 @@ import { ChiChiInputHandler } from  './ChiChiControl'
             }
         }
 
-        GetPPUStatus(): any {
+        GetPPUStatus(): PpuStatus {
             return {
                 status: this._PPUStatus,
                 controlByte0: this._PPUControlByte0,

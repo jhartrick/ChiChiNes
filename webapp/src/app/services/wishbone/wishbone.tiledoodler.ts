@@ -17,7 +17,6 @@ export class TileDoodler {
                     this.currentPatternTableEntries[pt][x][y] = new Uint8Array(8);
                     this.currentPatternTableEntries[pt][x][y].fill(0);
                 }
-
             }
         }
 
@@ -36,8 +35,8 @@ export class TileDoodler {
                 const result = new Uint8Array(64); // System.Array.init(64, 0, System.Int32);
                 result.fill(0);
 
-                actualAddress = new Uint8Array(8); // 8, 0, System.Int32);
-                actualAddress.fill(0);
+                //actualAddress = new Uint8Array(8); // 8, 0, System.Int32);
+                //actualAddress.fill(0);
 
                 for (let  i = 0; i < 8; i++) {
                     const entryLoc = (PatternTable + (TileIndex << 4))  + i;
@@ -99,7 +98,6 @@ export class TileDoodler {
                         }
                     }
                 }
-
             }
             return result;
         }
@@ -453,7 +451,7 @@ export class TileDoodler {
     DoodleNameTable (NameTable): Int32Array {
         //  a doodle returns an Int32Array containing RGBA values
         const result = new Int32Array(61440);
-
+        //debugger;
         for (let i = 0; i < 32; i = (i + 1) | 0) {
             for (let j = 0; j < 30; j = (j + 1) | 0) {
 
@@ -469,7 +467,7 @@ export class TileDoodler {
         return result;
     }
 
-    DrawTile (destBuffer: Int32Array, width, height, tile, xPos, yPos) {
+    DrawTile(destBuffer: Int32Array, width: number, height: number, tile: Uint8Array, xPos: number, yPos: number) {
         for (let j = 0; j < 8; j++) {
             for (let i = 0; i < 8; i++) {
                 const xPosition = (xPos + 8) - i;
@@ -480,7 +478,7 @@ export class TileDoodler {
                 if (((yPosition + xPosition) | 0) >= destBuffer.length) {
                     break;
                 }
-                 destBuffer[yPosition + xPosition] =  ChiChiCPPU.pal[ tile[(j * 8) + i ]];
+                 destBuffer[yPosition + xPosition] =   tile[(j * 8) + i];
             }
         }
     }

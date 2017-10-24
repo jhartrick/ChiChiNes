@@ -14,6 +14,11 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
     var BaseCart = /** @class */ (function () {
         //ChrRamStart: number;
         function BaseCart() {
+            var _this = this;
+            // shared components
+            this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
+            this.ppuBankStarts = new Uint32Array(new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
+            this.bankStartCache = new Uint32Array(new SharedArrayBuffer(4096 * Uint32Array.BYTES_PER_ELEMENT));
             this.iNesHeader = new Uint8Array(16);
             this.romControlBytes = new Uint8Array(2);
             this.nesCart = null;
@@ -34,13 +39,12 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
             this.bankAstart = 0;
             this.bankCstart = 0;
             this.bankEstart = 0;
-            this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192));
             this._ROMHashfunction = null;
             this.checkSum = null;
             this.mirroring = -1;
-            this.updateIRQ = null;
-            this.ppuBankStarts = new Array(16);
-            this.bankStartCache = new Array(4096);
+            this.updateIRQ = function () {
+                _this.NMIHandler();
+            };
             this.bankSwitchesChanged = false;
             this.oneScreenOffset = 0;
             this.irqRaised = false;
@@ -146,7 +150,8 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
                 chrRomData = new Array(32768); //System.Array.init(32768, 0, System.Byte);
                 chrRomData.fill(0);
             }
-            this.chrRom = new Uint8Array(chrRomData.length + 4096); //     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
+            var chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 4096) * Uint8Array.BYTES_PER_ELEMENT);
+            this.chrRom = new Uint8Array(chrRomBuffer); //     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
             this.chrRamStart = chrRomData.length;
             BaseCart.arrayCopy(chrRomData, 0, this.chrRom, 0, chrRomData.length);
             this.prgRomCount = this.iNesHeader[4];
@@ -276,7 +281,7 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
         BaseCart.prototype.ActualChrRomOffset = function (address) {
             var bank = address >> 10 | 0;
             //int newAddress = ppuBankStarts[bank] + (address & 0x3FF);
-            var newAddress = (this.bankStartCache[(this.CurrentBank * 16) + bank | 0] + (address & 1023)) | 0;
+            var newAddress = (this.bankStartCache[(this.CurrentBank * 16) + bank] + (address & 1023));
             return newAddress;
         };
         BaseCart.prototype.Mirror = function (clockNum, mirroring) {
@@ -348,15 +353,13 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
     var NesCart = /** @class */ (function (_super) {
         __extends(NesCart, _super);
         function NesCart() {
-            var _this = _super !== null && _super.apply(this, arguments) || this;
-            _this.prevBSSrc = new Uint8Array(8);
-            return _this;
+            return _super !== null && _super.apply(this, arguments) || this;
         }
         //PPUBankStarts: any;
         NesCart.prototype.InitializeCart = function () {
-            for (var i = 0; i < 8; i = (i + 1) | 0) {
-                this.prevBSSrc[i] = -1;
-            }
+            //for (var i = 0; i < 8; i = (i + 1) | 0) {
+            //    this.prevBSSrc[i] = -1;
+            //}
             //SRAMEnabled = SRAMCanSave;
             switch (this.mapperId) {
                 case 0:
@@ -952,6 +955,33 @@ define("chichi/ChiChiTypes", ["require", "exports"], function (require, exports)
         ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectZeroPage"] = 14] = "IndirectZeroPage";
         ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectAbsoluteX"] = 15] = "IndirectAbsoluteX";
     })(ChiChiCPPU_AddressingModes = exports.ChiChiCPPU_AddressingModes || (exports.ChiChiCPPU_AddressingModes = {}));
+    var CpuStatus = /** @class */ (function () {
+        function CpuStatus() {
+            this.PC = 0;
+            this.A = 0;
+            this.X = 0;
+            this.Y = 0;
+            this.SP = 0;
+            this.SR = 0;
+        }
+        return CpuStatus;
+    }());
+    exports.CpuStatus = CpuStatus;
+    var PpuStatus = /** @class */ (function () {
+        function PpuStatus() {
+            this.status = 0;
+            this.controlByte0 = 0;
+            this.controlByte1 = 0;
+            this.nameTableStart = 0;
+            this.currentTile = 0;
+            this.lockedVScroll = 0;
+            this.lockedHScroll = 0;
+            this.X = 0;
+            this.Y = 0;
+        }
+        return PpuStatus;
+    }());
+    exports.PpuStatus = PpuStatus;
     var ChiChiInstruction = /** @class */ (function () {
         function ChiChiInstruction() {
             this.AddressingMode = 0;
@@ -2805,6 +2835,15 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
             this._debugging = false;
             this.instructionHistoryPointer = 255;
             this._instructionHistory = new Array(256); //System.Array.init(256, null, ChiChiInstruction);
+            // ppu events
+            // ppu variables 
+            this.backgroundPatternTableIndex = 0;
+            //private PPU_HandleVBlankIRQ: boolean;
+            this._PPUAddress = 0;
+            this._PPUStatus = 0;
+            this._PPUControlByte0 = 0;
+            this._PPUControlByte1 = 0;
+            this._spriteAddress = 0;
             this.currentXPosition = 0;
             this.currentYPosition = 0;
             this._hScroll = 0;
@@ -2858,6 +2897,13 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
             //this.vBuffer = System.Array.init(61440, 0, System.Byte);
             //ChiChiNES.CPU2A03.GetPalRGBA();
         }
+        Object.defineProperty(ChiChiCPPU.prototype, "PatternTableIndex", {
+            get: function () {
+                return this.backgroundPatternTableIndex;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(ChiChiCPPU.prototype, "Debugging", {
             get: function () {
                 return this._debugging;
@@ -4167,10 +4213,10 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
         };
         ChiChiCPPU.prototype.UpdatePPUControlByte0 = function () {
             if ((this._PPUControlByte0 & 16)) {
-                this._backgroundPatternTableIndex = 4096;
+                this.backgroundPatternTableIndex = 4096;
             }
             else {
-                this._backgroundPatternTableIndex = 0;
+                this.backgroundPatternTableIndex = 0;
             }
         };
         ChiChiCPPU.prototype.PPU_SetByte = function (Clock, address, data) {
@@ -4191,7 +4237,7 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
                     this._PPUControlByte0 = data;
                     this._openBus = data;
                     this.nameTableBits = this._PPUControlByte0 & 3;
-                    this._backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
+                    this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
                     // if we toggle /vbl we can throw multiple NMIs in a vblank period
                     //if ((data & 0x80) == 0x80 && NMIHasBeenThrownThisFrame)
                     //{
@@ -4585,7 +4631,7 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
             var tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
             var TileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
             var patternTableYOffset = this.yPosition & 7;
-            var patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+            var patternID = this.backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
             this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
             this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
             this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
@@ -4673,7 +4719,7 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
                             var tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
                             var TileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
                             var patternTableYOffset = this.yPosition & 7;
-                            var patternID = this._backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+                            var patternID = this.backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
                             this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
                             this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
                             this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
@@ -4728,6 +4774,16 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
         ChiChiCPPU.prototype.UpdatePixelInfo = function () {
             this.nameTableMemoryStart = this.nameTableBits * 0x400;
         };
+        ChiChiCPPU.prototype.VidRAM_GetNTByte = function (address) {
+            var result = 0;
+            if (address >= 0x2000 && address < 0x3000) {
+                result = this.chrRomHandler.GetPPUByte(0, address);
+            }
+            else {
+                result = this.chrRomHandler.GetPPUByte(0, address);
+            }
+            return result;
+        };
         ChiChiCPPU.prototype.GetStatus = function () {
             return {
                 PC: this._programCounter,
@@ -4764,11 +4820,13 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
     Object.defineProperty(exports, "__esModule", { value: true });
     var NesInfo = /** @class */ (function () {
         function NesInfo() {
+            this.bufferupdate = false;
             this.stateupdate = true;
             this.runStatus = {};
             this.cartInfo = {};
             this.sound = {};
             this.Cpu = {};
+            this.Cart = {};
             this.debug = {
                 currentCpuStatus: {
                     PC: 0,
@@ -4828,18 +4886,57 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             };
             this.machine.Cpu.Debugging = false;
         };
+        tendoWrapper.prototype.updateBuffers = function () {
+            var machine = this.machine;
+            var info = new NesInfo();
+            info.bufferupdate = true;
+            info.stateupdate = false;
+            if (this.machine && this.machine.Cart) {
+                info.Cpu = {
+                    Rams: this.machine.Cpu.Rams,
+                };
+                info.Cart = {
+                    //buffers
+                    chrRom: this.machine.Cart.chrRom,
+                    prgRomBank6: this.machine.Cart.prgRomBank6,
+                    ppuBankStarts: this.machine.Cart.ppuBankStarts,
+                    bankStartCache: this.machine.Cart.bankStartCache,
+                };
+            }
+            postMessage(info);
+        };
         tendoWrapper.prototype.updateState = function () {
             var machine = this.machine;
             var info = new NesInfo();
             if (this.machine && this.machine.Cart) {
                 info.Cpu = {
-                    Rams: this.machine.Cpu.Rams
+                    //Rams: this.machine.Cpu.Rams,
+                    status: this.machine.Cpu.GetStatus(),
+                    ppuStatus: this.machine.Cpu.GetPPUStatus(),
+                    backgroundPatternTableIndex: this.machine.Cpu.backgroundPatternTableIndex
                 };
                 info.cartInfo = {
                     mapperId: this.machine.Cart.MapperID,
                     name: this.cartName,
                     prgRomCount: this.machine.Cart.NumberOfPrgRoms,
                     chrRomCount: this.machine.Cart.NumberOfChrRoms
+                };
+                info.Cart = {
+                    //buffers
+                    //chrRom: (<any>this.machine.Cart).chrRom,
+                    //prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
+                    //ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
+                    //bankStartCache: (<any>this.machine.Cart).bankStartCache,
+                    CurrentBank: this.machine.Cart.CurrentBank,
+                    // integers
+                    current8: this.machine.Cart.current8,
+                    currentA: this.machine.Cart.currentA,
+                    currentC: this.machine.Cart.currentC,
+                    currentE: this.machine.Cart.currentE,
+                    bank8start: this.machine.Cart.bank8start,
+                    bankAstart: this.machine.Cart.bankAstart,
+                    bankCstart: this.machine.Cart.bankCstart,
+                    bankEstart: this.machine.Cart.bankEstart
                 };
             }
             if (machine) {
@@ -4895,6 +4992,7 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             this.framesPerSecond = 0;
             this.flushAudio();
             if ((this.framesRendered++) === 60) {
+                this.updateState();
                 this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
                 this.framesRendered = 0;
                 this.startTime = new Date().getTime();
@@ -4924,10 +5022,7 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             clearInterval(this.interval);
             this.interval = setInterval(function () {
                 _this.runInnerLoop();
-            }, 17);
-            //while (this.runStatus === RunningStatuses.Running) {
-            //  this.runInnerLoop();
-            //}
+            }, 16);
             this.runStatus = machine.RunState; // runStatuses.Running;
         };
         tendoWrapper.prototype.runFrame = function () {
@@ -4967,10 +5062,12 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
                     this.machine.EnableSound = false;
                     this.stop();
                     this.machine.LoadCart(event.data.rom);
+                    this.updateBuffers();
                     break;
                 case 'loadnsf':
                     this.stop();
                     this.machine.LoadNSF(event.data.rom);
+                    this.updateBuffers();
                     break;
                 case 'audiosettings':
                     this.machine.SoundBopper.audioSettings = event.data.settings;

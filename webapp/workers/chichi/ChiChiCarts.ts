@@ -28,6 +28,12 @@
         }
     }
 
+    // shared components
+
+    prgRomBank6 = new Uint8Array(<any>new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
+    ppuBankStarts: Uint32Array = new Uint32Array(<any>new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
+    bankStartCache = new Uint32Array(<any>new SharedArrayBuffer(4096 * Uint32Array.BYTES_PER_ELEMENT));
+
     private iNesHeader = new Uint8Array(16);
 
     private romControlBytes = new Uint8Array(2);
@@ -48,18 +54,19 @@
     chrRomCount = 0;
     mapperId = 0;
 
-
     bank8start = 0;
     bankAstart = 0;
     bankCstart = 0;
     bankEstart = 0;
-    prgRomBank6 = new Uint8Array(<any>new SharedArrayBuffer(8192));
+
+
     private _ROMHashfunction: any = null;
     checkSum: any = null;
     private mirroring = -1;
-    updateIRQ: () => void = null;
-    ppuBankStarts: number[] = new Array<number>(16);
-    private bankStartCache = new Array<number>(4096);
+    updateIRQ: () => void = () => {
+        this.NMIHandler();
+    };
+
     bankSwitchesChanged = false;
     oneScreenOffset = 0
 
@@ -89,7 +96,7 @@
     CPU: ChiChiNES.CPU2A03;
     SRAM: any;
     CartName: string;
-    NMIHandler: () => void;
+    NMIHandler: () => {};
     //IRQAsserted: boolean;
     //NextEventAt: number;
     //PpuBankStarts: any;
@@ -156,8 +163,8 @@
             chrRomData.fill(0);
         }
 
-
-        this.chrRom = new Uint8Array(chrRomData.length + 4096);//     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
+        const chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 4096) * Uint8Array.BYTES_PER_ELEMENT)
+        this.chrRom = new Uint8Array(<any>chrRomBuffer);//     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
 
         this.chrRamStart = chrRomData.length;
 
@@ -317,7 +324,7 @@
     ActualChrRomOffset(address: number): number {
         var bank = address >> 10 | 0;
         //int newAddress = ppuBankStarts[bank] + (address & 0x3FF);
-        var newAddress = (this.bankStartCache[(this.CurrentBank * 16) + bank | 0] + (address & 1023)) | 0;
+        var newAddress = (this.bankStartCache[(this.CurrentBank * 16) + bank ] + (address & 1023));
 
         return newAddress;
     }
@@ -401,7 +408,7 @@
 }
 
 export class NesCart extends BaseCart implements ChiChiNES.CPU.NESCart {
-    prevBSSrc = new Uint8Array(8);
+   // prevBSSrc = new Uint8Array(8);
 
     irqRaised: boolean;
     Debugging: boolean;
@@ -417,11 +424,10 @@ export class NesCart extends BaseCart implements ChiChiNES.CPU.NESCart {
     NumberOfChrRoms: number;
     //MapperID: number;
     Mirroring: ChiChiNES.NameTableMirroring;
-    NMIHandler: () => void;
     IRQAsserted: boolean;
     NextEventAt: number;
     //PpuBankStarts: any;
-    BankStartCache: any;
+    //BankStartCache: any;
     CurrentBank: number;
     BankSwitchesChanged: boolean;
     OneScreenOffset: number;
@@ -431,9 +437,9 @@ export class NesCart extends BaseCart implements ChiChiNES.CPU.NESCart {
 
     InitializeCart(): void {
 
-        for (var i = 0; i < 8; i = (i + 1) | 0) {
-            this.prevBSSrc[i] = -1;
-        }
+        //for (var i = 0; i < 8; i = (i + 1) | 0) {
+        //    this.prevBSSrc[i] = -1;
+        //}
         //SRAMEnabled = SRAMCanSave;
 
 

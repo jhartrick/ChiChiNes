@@ -1,14 +1,16 @@
 ﻿import { ChiChiBopper, WavSharer } from "../../../../workers/chichi/ChiChiAudio";
 import { ChiChiCPPU, ChiChiMachine, iNESFileHandler } from "../../../../workers/chichi/ChiChi.HWCore";
-import { AudioSettings } from "../../../../workers/chichi/ChiChiTypes";
+import { AudioSettings, PpuStatus } from "../../../../workers/chichi/ChiChiTypes";
 import { ChiChiInputHandler } from '../../../../workers/chichi/ChiChiControl'
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { TileDoodler } from "./wishbone.tiledoodler";
+import { BaseCart } from "../../../../workers/chichi/ChiChiCarts";
+import { CpuStatus } from "../debug.interface";
 
 class WishboneCart implements ChiChiNES.INESCart {
 
-    realCart: ChiChiNES.BaseCart = null;
+    realCart: BaseCart = null;
 
     Whizzler: ChiChiNES.CPU2A03;
     CPU: ChiChiNES.CPU2A03;
@@ -249,6 +251,8 @@ export class WishBoneControlPad implements ChiChiNES.IControlPad {
 }
 
 export class WishboneMachine implements ChiChiNES.NESMachine {
+    ppuStatus: PpuStatus = new PpuStatus();
+    cpuStatus: CpuStatus = new CpuStatus();
     fps: number = 0;
     nesReady: boolean;
     tileDoodler: TileDoodler;
@@ -353,10 +357,43 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
     }
 
     Sync(data: any) {
-        this.SoundBopper.audioSettings = data.sound.settings;
-        if (data.Cpu.Rams) {
-            this.Cpu.Rams = data.Cpu.Rams;
+        if (data.bufferupdate) {
+            if (data.Cpu.Rams) {
+                this.Cpu.Rams = data.Cpu.Rams;
+            }
+            if (data.Cart && this.Cart.realCart) {
+
+                this.Cart.realCart.prgRomBank6 = data.Cart.prgRomBank6;
+                this.Cart.realCart.ppuBankStarts = data.Cart.ppuBankStarts;
+                this.Cart.realCart.bankStartCache = data.Cart.bankStartCache;
+                this.Cart.realCart.chrRom = data.Cart.chrRom;
+            }
         }
+        if (data.stateupdate) {
+            if (data.Cpu) {
+                this.Cpu.backgroundPatternTableIndex = data.Cpu.backgroundPatternTableIndex;
+                this.cpuStatus = data.Cpu.status;
+                this.ppuStatus = data.Cpu.ppuStatus;
+
+            }
+            if (data.Cart && this.Cart.realCart) {
+
+                this.Cart.realCart.CurrentBank = data.Cart.CurrentBank;
+                this.Cart.realCart.current8 = data.Cart.current8;
+                this.Cart.realCart.currentA = data.Cart.currentA;
+                this.Cart.realCart.currentC = data.Cart.currentC;
+                this.Cart.realCart.currentE = data.Cart.currentE;
+
+                this.Cart.realCart.bank8start = data.Cart.bank8start;
+                this.Cart.realCart.bankAstart = data.Cart.bankAstart;
+                this.Cart.realCart.bankCstart = data.Cart.bankCstart;
+                this.Cart.realCart.bankEstart = data.Cart.bankEstart;
+
+            }
+        }
+
+        this.SoundBopper.audioSettings = data.sound.settings;
+
         if (data.debug && data.debug.InstructionHistory) {
             this.Cpu._instructionHistory = data.debug.InstructionHistory.Buffer;
             this.Cpu.instructionHistoryPointer = data.debug.InstructionHistory.Index;

@@ -22,7 +22,7 @@
         <div class="mat-button-toggle-focus-overlay"></div>
       </div>
     </div>
-    <div  >
+    <div *ngIf="wishbone.Cart.MapperID > 0" >
       <p>Loaded: {{ wishbone.Cart.CartName }}</p>
        <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
         <p>Mapper: {{ wishbone.Cart.MapperID }}</p>

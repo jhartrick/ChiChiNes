@@ -91,6 +91,16 @@ export class CpuStatus {
 }
 
 export class Debugger {
+        static SRMasks_CarryMask = 0x01;
+        static SRMasks_ZeroResultMask = 0x02;
+        static SRMasks_InterruptDisableMask = 0x04;
+        static SRMasks_DecimalModeMask = 0x08;
+        static SRMasks_BreakCommandMask = 0x10;
+        static SRMasks_ExpansionMask = 0x20;
+        static SRMasks_OverflowMask = 0x40;
+        static SRMasks_NegativeResultMask = 0x80;
+
+
         currentPPUStatus: any;
         private machine : Observable<any>;
         constructor(machine: Observable<any>) {
@@ -136,25 +146,26 @@ export class Debugger {
             //};
         }
 
-        public decodedStatusRegister: string;
+        public decodedStatusRegister: string='';
 
-        private decodeCpuStatusRegister(sr: number): void {
+        static decodeCpuStatusRegister(sr: number): string {
             var result: string = '';
-            result += ' N:' + (sr & ChiChiNES.CPUStatusMasks.NegativeResultMask ? '1' : '0');
+            result += ' N:' + (sr & Debugger.SRMasks_NegativeResultMask ? '1' : '0');
 
-            result += ' O:' + (sr & ChiChiNES.CPUStatusMasks.OverflowMask ? '1' : '0');
+            result += ' O:' + (sr & Debugger.SRMasks_OverflowMask ? '1' : '0');
 
-            result += ' E:' + (sr & ChiChiNES.CPUStatusMasks.ExpansionMask ? '1' : '0');
+            result += ' E:' + (sr & Debugger.SRMasks_ExpansionMask ? '1' : '0');
 
-            result += ' B:' + (sr & ChiChiNES.CPUStatusMasks.BreakCommandMask ? '1' : '0');
-            result += ' D:' + (sr & ChiChiNES.CPUStatusMasks.DecimalModeMask ? '1' : '0');
+            result += ' B:' + (sr & Debugger.SRMasks_BreakCommandMask ? '1' : '0');
+            result += ' D:' + (sr & Debugger.SRMasks_DecimalModeMask ? '1' : '0');
 
-            result += ' I:' + (sr & ChiChiNES.CPUStatusMasks.InterruptDisableMask ? '1' : '0');
+            result += ' I:' + (sr & Debugger.SRMasks_InterruptDisableMask ? '1' : '0');
 
-            result += ' Z:' + (sr & ChiChiNES.CPUStatusMasks.ZeroResultMask ? '1' : '0');
+            result += ' Z:' + (sr & Debugger.SRMasks_ZeroResultMask ? '1' : '0');
 
-            result += ' C:' + (sr & ChiChiNES.CPUStatusMasks.CarryMask ? '1' : '0');
-            this.decodedStatusRegister = result;
+            result += ' C:' + (sr & Debugger.SRMasks_CarryMask ? '1' : '0');
+            
+            return result;
         }
 
         public appendInstructionPage() {

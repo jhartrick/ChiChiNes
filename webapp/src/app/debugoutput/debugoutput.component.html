@@ -3,20 +3,18 @@
   <button mat-button (click)="nes.DebugStepFrame()">StepFrame</button>
   <button mat-button (click)="nes.Continue()">Continue</button>
 </div>
-<div class="cpuStatus">
-  <p>
-    PC: {{ nes.debugger.currentCpuStatus.PC }} A: {{ nes.debugger.currentCpuStatus.A }} X: {{ nes.debugger.currentCpuStatus.X }} Y: {{ nes.debugger.currentCpuStatus.Y }} SP: {{ nes.debugger.currentCpuStatus.SP }}
-  </p>
-  <p>
-    SR: {{ nes.debugger.decodedStatusRegister }}
-  </p>
-</div>
+<p class="cpuStatus" [cpuStatus]="nes.wishbone.cpuStatus">
+</p>
+<p>
+  SR: {{ decodedStatusRegister }}
+</p>
+
 <div class="ppuStatus">
-  <p>
-    X: {{ nes.debugger.currentPPUStatus?.X }} Y: {{ nes.debugger.currentPPUStatus?.Y }} Name Table: {{ nes.debugger.currentPPUStatus?.nameTableStart }} Tile: {{ nes.debugger.currentPPUStatus?.currentTile }} Status: {{ nes.debugger.currentPPUStatus?.status }}
+  <p [ppuStatus]="nes.wishbone.ppuStatus">
+    
   </p>
   <p>
-    locked hscroll: {{ nes.debugger.currentPPUStatus?.lockedHScroll }} locked vscroll: {{ nes.debugger.currentPPUStatus?.lockedVScroll }} 
+    locked hscroll: {{ nes.wishbone.ppuStatus?.lockedHScroll }} locked vscroll: {{ nes.wishbone.ppuStatus?.lockedVScroll }} 
   </p>
 </div>
 

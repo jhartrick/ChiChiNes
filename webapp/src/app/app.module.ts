@@ -10,7 +10,7 @@ import { Emulator , RomLoader } from './services/NESService'
 import { AppComponent } from './app.component';
 import { ChiChiComponent } from './chichines/chichines.component';
 import { ControlPanelComponent, PowerStatusComponent } from './controlpanel/controlpanel.component';
-import { DebugOutputComponent } from './debugoutput/debugoutput.component';
+import { DebugOutputComponent, CpuStatusComponent, PpuStatusComponent } from './debugoutput/debugoutput.component';
 import { MemViewerComponent, MyTrComponent, AsciiPipe } from './chichines.memviewer/chichines.memviewer.component';
 import { InstructionHistoryComponent } from './chichines.instructionhistory/chichines.instructionhistory.component';
 
@@ -24,7 +24,9 @@ import { InstructionHistoryComponent } from './chichines.instructionhistory/chic
       MyTrComponent,
       InstructionHistoryComponent,
       AsciiPipe,
-      PowerStatusComponent
+      PowerStatusComponent,
+      CpuStatusComponent,
+      PpuStatusComponent
   ],
   imports: [
       BrowserModule, 

@@ -65,7 +65,7 @@
     <TypeScriptCompile Include="src\app\services\debug.interface.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="src\app\services\wishbone\wishbone.tiledoodler.txt" />
+    <TypeScriptCompile Include="src\app\services\wishbone\wishbone.tiledoodler.ts" />
     <TypeScriptCompile Include="src\app\services\wishbone\wishbone.ts" />
     <TypeScriptCompile Include="src\main.ts" />
     <TypeScriptCompile Include="src\polyfills.ts" />

@@ -26,6 +26,27 @@ export enum ChiChiCPPU_AddressingModes {
     IndirectAbsoluteX
 }
 
+export class CpuStatus {
+    PC = 0;
+    A = 0;
+    X = 0;
+    Y = 0;
+    SP = 0;
+    SR = 0;
+}
+
+export class PpuStatus {
+    status = 0;
+    controlByte0 = 0;
+    controlByte1 = 0;
+    nameTableStart = 0;
+    currentTile = 0;
+    lockedVScroll = 0;
+    lockedHScroll = 0;
+    X = 0;
+    Y = 0;
+}
+
 export class ChiChiInstruction {
     AddressingMode: number = 0;
     frame: number = 0;
