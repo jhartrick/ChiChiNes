@@ -90,6 +90,7 @@ export class tendoWrapper {
 
             info.Cpu = {
                 Rams: this.machine.Cpu.Rams,
+                spriteRAM: this.machine.Cpu.spriteRAM
             }
             info.Cart = {
                 //buffers

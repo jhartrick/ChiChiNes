@@ -349,7 +349,7 @@ import { ChiChiInputHandler } from './ChiChiControl'
 
         public LastcpuClock: number = 0;
 
-        private unpackedSprites: ChiChiSprite[];
+        unpackedSprites: ChiChiSprite[];
         private chrRomHandler: ChiChiNES.INESCart;
 
         private spriteChanges: boolean = false;
@@ -403,6 +403,14 @@ import { ChiChiInputHandler } from './ChiChiControl'
             return this.backgroundPatternTableIndex;
         }
 
+        public get SpritePatternTableIndex() : number
+        {
+            let spritePatternTable = 0;
+            if ((this._PPUControlByte0 & 8) === 8) {
+                spritePatternTable = 4096;
+            }   
+            return spritePatternTable;
+        }
         // system ram
         private _ramsBuffer = new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT);
         Rams = new Uint8Array(<any>this._ramsBuffer);// System.Array.init(vv, 0, System.Int32);
@@ -475,7 +483,8 @@ import { ChiChiInputHandler } from './ChiChiControl'
 
         private xNTXor = 0; private yNTXor = 0;
 
-        private spriteRAM = new Uint8Array(256);// System.Array.init(256, 0, System.Int32);
+        private spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
+         spriteRAM = new Uint8Array(<any>this.spriteRAMBuffer);// System.Array.init(256, 0, System.Int32);
         private spritesOnLine = new Array<number>(512);// System.Array.init(512, 0, System.Int32);
         private currentTileIndex = 0;
         private fetchTile = true;

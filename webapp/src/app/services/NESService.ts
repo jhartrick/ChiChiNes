@@ -54,6 +54,21 @@ export class Tiler {
    constructor(private nes: WishboneMachine) { }
    patternTables: Uint8ClampedArray[] = new Array<Uint8ClampedArray>(2);
 
+    DoodleSprite(spritenum: number, outbuf: Uint8ClampedArray): void
+    {
+        const patternTable = this.nes.Cpu.SpritePatternTableIndex;
+        const sprite = this.nes.Cpu.unpackedSprites[spritenum];
+        const doodle1 = this.nes.tileDoodler.GetSprite(patternTable, sprite.TileIndex, sprite.AttributeByte, sprite.FlipX, sprite.FlipY);
+        const pal = ChiChiCPPU.pal;
+        for (let i = 0; i <= doodle1.length; ++i) {
+            const color = pal[doodle1[i]];
+            outbuf[i * 4] = (color >> 0) & 0xFF;
+            outbuf[(i * 4) + 1] = (color >> 9) & 0xFF;
+            outbuf[(i * 4) + 2] = (color >> 16 ) & 0xFF;
+            outbuf[(i * 4) + 3] =  0xFF;
+        }
+    }
+
    DoodleNameTable(nametable: number, outbuf:  Uint8ClampedArray ): void
    {
        //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));

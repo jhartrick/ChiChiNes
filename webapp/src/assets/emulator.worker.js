@@ -2872,7 +2872,8 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
             this._maxSpritesPerScanline = 64;
             this.xNTXor = 0;
             this.yNTXor = 0;
-            this.spriteRAM = new Uint8Array(256); // System.Array.init(256, 0, System.Int32);
+            this.spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
+            this.spriteRAM = new Uint8Array(this.spriteRAMBuffer); // System.Array.init(256, 0, System.Int32);
             this.spritesOnLine = new Array(512); // System.Array.init(512, 0, System.Int32);
             this.currentTileIndex = 0;
             this.fetchTile = true;
@@ -2900,6 +2901,17 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
         Object.defineProperty(ChiChiCPPU.prototype, "PatternTableIndex", {
             get: function () {
                 return this.backgroundPatternTableIndex;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(ChiChiCPPU.prototype, "SpritePatternTableIndex", {
+            get: function () {
+                var spritePatternTable = 0;
+                if ((this._PPUControlByte0 & 8) === 8) {
+                    spritePatternTable = 4096;
+                }
+                return spritePatternTable;
             },
             enumerable: true,
             configurable: true
@@ -4894,6 +4906,7 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             if (this.machine && this.machine.Cart) {
                 info.Cpu = {
                     Rams: this.machine.Cpu.Rams,
+                    spriteRAM: this.machine.Cpu.spriteRAM
                 };
                 info.Cart = {
                     //buffers

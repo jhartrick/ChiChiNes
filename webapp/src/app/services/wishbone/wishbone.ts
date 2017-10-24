@@ -356,10 +356,16 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
         this.postNesMessage({ command: 'audiosettings', settings: this.SoundBopper.audioSettings });
     }
 
+
     Sync(data: any) {
         if (data.bufferupdate) {
             if (data.Cpu.Rams) {
                 this.Cpu.Rams = data.Cpu.Rams;
+                this.Cpu.spriteRAM = data.Cpu.spriteRAM;
+                for (let i = 0; i < this.Cpu.unpackedSprites.length; ++i) {
+                    this.Cpu.unpackedSprites[i].Changed = true;
+                }
+                this.Cpu.PPU_UnpackSprites();
             }
             if (data.Cart && this.Cart.realCart) {
 
