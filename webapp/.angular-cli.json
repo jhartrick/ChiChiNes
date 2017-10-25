@@ -9,8 +9,6 @@
       "outDir": "dist",
       "assets": [
         "assets",
-        "./workers/chichi",
-        "./node_modules/requirejs/require.js",
         "favicon.ico"
       ],
       "index": "index.html",
@@ -24,9 +22,7 @@
         "styles.css"
       ],
       "scripts": [
-        "../node_modules/jszip/dist/jszip.min.js",
-        "app/emu/bridge.min.js",
-        "app/emu/ChiChiCore.js"
+        "../node_modules/jszip/dist/jszip.min.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {
