@@ -22,18 +22,44 @@
         <div class="mat-button-toggle-focus-overlay"></div>
       </div>
     </div>
-    <div  >
-      FPS: {{ nesService.framesPerSecond | async }} {{ nesService.fps }}
-      <p>Loaded: {{ state?.romLoaded }}</p>
+    <div *ngIf="wishbone.Cart.MapperID > 0" >
+      <p>Loaded: {{ wishbone.Cart.CartName }}</p>
        <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
-        <p>Mapper: {{ nesService.cartInfo.mapperId }}</p>
-        <p>Prg Roms: {{ nesService.cartInfo.prgRomCount }}</p>
-        <p>Chr Roms: {{ nesService.cartInfo.chrRomCount }}</p>
-      <mat-button-toggle value="nesService.soundEnabled" (change)="nesService.soundEnabled = !nesService.soundEnabled" [disabled]="!nesService.canStart">
-        {{ nesService.soundEnabled ? 'sound on' : 'sound off' }}
-      </mat-button-toggle>
-
+        <p>Mapper: {{ wishbone.Cart.MapperID }}</p>
+        <p>Prg Roms: {{ wishbone.Cart.NumberOfPrgRoms }}</p>
+        <p>Chr Roms: {{ wishbone.Cart.NumberOfChrRoms }}</p>
     </div>
+    <div>
+      FPS: {{ wishbone.fps }}
+    </div>
+
+  </mat-expansion-panel>
+<mat-button-toggle value="nesService.soundEnabled" (change)="nesService.soundEnabled = !nesService.soundEnabled" [disabled]="!nesService.canStart">
+  {{ nesService.soundEnabled ? 'sound on' : 'sound off' }}
+</mat-button-toggle>
+
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      Audio Settings
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <p>
+    <mat-button-toggle class="audio_button" value="enableSquare0" (change)="enableSquare0 = !(enableSquare0)" [disabled]="!nesService.canStart">
+      Square 0
+    </mat-button-toggle>
+    <mat-button-toggle class="audio_button" value="enableSquare1" (change)="enableSquare1 = !(enableSquare1)" [disabled]="!nesService.canStart">
+      Square 1
+    </mat-button-toggle>
+  </p>
+  <p>
+    <mat-button-toggle class="audio_button" value="enableTriangle" (change)="enableTriangle = !(enableTriangle)" [disabled]="!nesService.canStart">
+      Triangle
+    </mat-button-toggle>
+    <mat-button-toggle class="audio_button" value="enableNoise" (change)="enableNoise = !(enableNoise)" [disabled]="!nesService.canStart">
+      Noise
+    </mat-button-toggle>
+  </p>
   </mat-expansion-panel>
 
   <button mat-button (click)="showDebugger()">Open Debugger</button>

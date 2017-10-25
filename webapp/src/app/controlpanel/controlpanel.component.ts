@@ -1,7 +1,9 @@
-﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef } from '@angular/core';
-import { Emulator, EmuState, RomLoader } from 'app/services/NESService'
+﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Emulator, EmuState, RomLoader } from '../services/NESService'
 import { Observable } from 'rxjs';
 import * as JSZip from 'jszip';
+import { AudioSettings } from "../../../workers/chichi/ChiChiTypes";
+import { WishboneMachine } from "../services/wishbone/wishbone";
 
 @Component({
     selector: 'chichi-status',
@@ -12,18 +14,13 @@ export class PowerStatusComponent {
     @Input('emuState') emuState: Observable<any>;
 
     constructor() {
-        
-        //this.emuState.subscribe(data => this.state = data);
     }
 }
-
-
 
 @Component({
   selector: 'controlpanel',
   templateUrl: './controlpanel.component.html',
-  styleUrls: ['./controlpanel.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush 
+  styleUrls: ['./controlpanel.component.css']
 })
 
 export class ControlPanelComponent {
@@ -32,31 +29,80 @@ export class ControlPanelComponent {
     currentFilename: string;
     state: EmuState;
     framesPerSecond: number;
+    audioSettings: AudioSettings = new AudioSettings();
 
-    constructor(public nesService: Emulator, private cd: ChangeDetectorRef, private romLoader: RomLoader) {
-        this.powerstate = 'OFF';
-        this.nesService.emuState.subscribe(d => {
-            this.state = new EmuState(d.romLoaded, d.powerState, d.paused, d.debugging);
-            this.cd.markForCheck();
-        });
+    wishbone: WishboneMachine;
+
+    get enableSquare0(): boolean {
+        return this.audioSettings.enableSquare0;
     }
 
+    set enableSquare0(value: boolean) {
+        this.audioSettings.enableSquare0 = value;
+        this.wishbone.SoundBopper.audioSettings = this.audioSettings;
+        this.wishbone.RequestSync();
+    }
+
+    get enableSquare1(): boolean {
+        return this.audioSettings.enableSquare1;
+    }
+
+    set enableSquare1(value: boolean) {
+        this.audioSettings.enableSquare1 = value;
+        this.wishbone.SoundBopper.audioSettings = this.audioSettings;
+        this.wishbone.RequestSync();
+    }
+
+    get enableTriangle(): boolean {
+        return this.audioSettings.enableTriangle;
+    }
+
+    set enableTriangle(value: boolean) {
+        this.audioSettings.enableTriangle = value;
+        this.wishbone.SoundBopper.audioSettings = this.audioSettings;
+        this.wishbone.RequestSync();
+    }
+
+    get enableNoise(): boolean {
+        return this.audioSettings.enableNoise;
+    }
+
+    set enableNoise(value: boolean) {
+        this.audioSettings.enableNoise = value;
+        this.wishbone.SoundBopper.audioSettings = this.audioSettings;
+        this.wishbone.RequestSync();
+    }
+    
+    constructor(public nesService: Emulator, cd: ChangeDetectorRef, private romLoader: RomLoader, private ngZone : NgZone) {
+        this.powerstate = 'OFF';
+        this.wishbone = nesService.wishbone;
+        this.wishbone.asObservable().subscribe((machine) => {
+            if (machine && machine.SoundBopper) {
+                this.audioSettings = machine.SoundBopper.audioSettings;
+            }
+            cd.markForCheck();
+        });
+    }
 
     handleFile(e: Event) {
         const files: FileList = (<HTMLInputElement>e.target).files;
         this.romLoader.loadRom(files).subscribe((rom) => {
             this.poweroff();
-            this.nesService.LoadRom(rom.data, rom.name);
+            if (rom.nsf) {
+                this.nesService.LoadNsf(rom.data, rom.name);
+            } else {
+                this.nesService.LoadRom(rom.data, rom.name);
+            }
         });
     }
 
     poweron() {
-        this.nesService.StartEmulator();
+        this.wishbone.Run();
         this.powerstate = 'ON';
     }
 
     poweroff() {
-        this.nesService.StopEmulator();
+        this.wishbone.PowerOff();
         this.powerstate = 'OFF';
     }
 
@@ -65,8 +111,9 @@ export class ControlPanelComponent {
     }
 
     reset(): void {
-        this.nesService.ResetEmulator();
+        this.wishbone.Reset();
     }
+
     powertoggle() {
         if (this.powerstate == 'OFF') {
             this.poweron();

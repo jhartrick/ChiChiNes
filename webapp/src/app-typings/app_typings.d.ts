@@ -7,3 +7,6 @@ interface FileReaderEvent extends Event {
     target: FileReaderEventTarget;
     getMessage(): string;
 }
+
+
+declare var Atomics: any;

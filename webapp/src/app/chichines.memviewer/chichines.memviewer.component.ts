@@ -29,10 +29,14 @@ export class AsciiPipe implements PipeTransform {
 @Component({
     styleUrls: ['./chichines.memviewer.component.css'],
     selector: '[myTr]',
-    template: `<td *ngFor="let item of row">{{item | ascii: showAscii}}</td>`
+    template: `<td>{{ lineAddress() }}:</td><td *ngFor="let item of row">{{item | ascii: showAscii}}</td>`
 })
 export class MyTrComponent {
     @Input('myTr') row;
+    @Input('myIndex') myIndex;
+    lineAddress() {
+        return '0x' + ((this.myIndex * 16).toString(16)).padStart(4, '0');
+    }
     @Input('showAscii') showAscii: string;
 }
 
@@ -42,9 +46,9 @@ export class MyTrComponent {
   styleUrls: ['./chichines.memviewer.component.css']
 })
 export class MemViewerComponent implements OnInit {
-    _data = [[1, 2, 3], [11, 12, 13]];
+    _data = new Array<Uint8Array>();// [[1, 2, 3], [11, 12, 13]];
 
-    get data(): number[][] {
+    get data(): Array<Uint8Array> {
         return this._data;
     }
     hexMode: boolean = true;
@@ -74,12 +78,11 @@ export class MemViewerComponent implements OnInit {
     }
 
     public look(): void {
-        var ram = this.nes.grabRam(this._ramStart, this._ramStart + 0x7FF);
+        let ram = new Uint8Array(this.nes.wishbone.Cpu.Rams.slice(0));//.grabRam(this._ramStart, this._ramStart + 0x7FF);
         var chunks = 0x7FF / 16;
-        var data = new Array<number[]>();
+        var data = new Array<Uint8Array>();
         for (var i = 0; i < chunks ; ++i) {
             data.push(ram.slice(i * this.pageSize, i * this.pageSize + this.pageSize));
-            
         }
         this._data = data;
     }

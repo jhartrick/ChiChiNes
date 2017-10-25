@@ -22,19 +22,10 @@
   <ItemGroup>
     <Compile Include="config\helper.js" />
     <Compile Include="config\webpack.worker.js" />
-    <Compile Include="src\app\emu\bridge.js" />
-    <Compile Include="src\app\emu\bridge.meta.js" />
-    <Compile Include="src\app\emu\bridge.meta.min.js" />
-    <Compile Include="src\app\emu\bridge.min.js" />
-    <Compile Include="src\app\emu\ChiChiCore.js" />
-    <Compile Include="src\app\emu\ChiChiCore.meta.js" />
-    <Compile Include="src\app\emu\ChiChiCore.meta.min.js" />
-    <Compile Include="src\app\emu\ChiChiCore.min.js" />
-    <Compile Include="src\assets\workers\emulator.worker.ff" />
-    <Compile Include="workers\bridge.js" />
-    <Compile Include="workers\ChiChiCore.js" />
-    <Compile Include="workers\emulator.jsworker.js" />
-    <Compile Include="workers\worker.js" />
+    <Compile Include="src\assets\emulator.worker.bootstrap.js" />
+    <Compile Include="src\assets\emulator.worker.js" />
+    <Compile Include="src\assets\require.js" />
+    <Compile Include="workers\emulator.worker.bootstrap.js" />
     <Content Include=".angular-cli.json" />
     <Content Include="package.json" />
     <Content Include="src\app\chichines.instructionhistory\chichines.instructionhistory.component.css" />
@@ -45,15 +36,10 @@
     <Content Include="src\app\controlpanel\controlpanel.component.html" />
     <Content Include="src\app\debugoutput\debugoutput.component.css" />
     <Content Include="src\app\debugoutput\debugoutput.component.html" />
-    <Content Include="src\app\emu\bridge.log" />
-    <Content Include="src\app\emu\bridge.report.log" />
-    <Content Include="src\app\emu\bridge1.log" />
-    <Content Include="src\app\emu\dk.nes" />
-    <Content Include="src\app\emu\index.html" />
-    <Content Include="src\app\emu\index.min.html" />
-    <Content Include="src\app\emu\pal.rgba" />
-    <Content Include="src\app\emu\web.config" />
-    <Content Include="src\assets\nestest.nes" />
+    <Content Include="src\app\debugoutput\nametableviewer\nametableviewer.component.css" />
+    <Content Include="src\app\debugoutput\nametableviewer\nametableviewer.component.html" />
+    <Content Include="src\app\debugoutput\spriteviewer\spriteviewer.component.css" />
+    <Content Include="src\app\debugoutput\spriteviewer\spriteviewer.component.html" />
     <Content Include="tsconfig.json" />
     <Content Include="tslint.json" />
     <Content Include="README.md" />
@@ -61,7 +47,6 @@
     <Compile Include="protractor.conf.js" />
     <Content Include="e2e\tsconfig.e2e.json" />
     <Content Include="workers\tsconfig.json" />
-    <Content Include="workers\worker.map" />
     <TypeScriptCompile Include="e2e\app.e2e-spec.ts" />
     <TypeScriptCompile Include="e2e\app.po.ts" />
     <Content Include="src\index.html" />
@@ -70,19 +55,24 @@
     <Content Include="src\tsconfig.app.json" />
     <Content Include="src\tsconfig.spec.json" />
     <TypeScriptCompile Include="src\app-typings\app_typings.d.ts" />
+    <TypeScriptCompile Include="src\app-typings\ChiChiCore.d.ts" />
+    <TypeScriptCompile Include="src\app-typings\ChiChiTypes.d.ts" />
     <TypeScriptCompile Include="src\app\chichines.instructionhistory\chichines.instructionhistory.component.ts" />
     <TypeScriptCompile Include="src\app\chichines.memviewer\chichines.memviewer.component.ts" />
     <TypeScriptCompile Include="src\app\controlpanel\controlpanel.component.ts" />
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.spec.ts" />
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.ts" />
-    <TypeScriptCompile Include="src\app\emu\bridge.d.ts" />
-    <TypeScriptCompile Include="src\app\emu\ChiChiCore.d.ts" />
+    <TypeScriptCompile Include="src\app-typings\bridge.d.ts" />
+    <TypeScriptCompile Include="src\app\debugoutput\nametableviewer\nametableviewer.component.ts" />
+    <TypeScriptCompile Include="src\app\debugoutput\spriteviewer\spriteviewer.component.ts" />
     <TypeScriptCompile Include="src\app\services\chichines.service.controlpad.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\app\services\debug.interface.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\app\services\wishbone\wishbone.tiledoodler.ts" />
+    <TypeScriptCompile Include="src\app\services\wishbone\wishbone.ts" />
     <TypeScriptCompile Include="src\main.ts" />
     <TypeScriptCompile Include="src\polyfills.ts" />
     <TypeScriptCompile Include="src\app\services\NESService.ts">
@@ -113,6 +103,15 @@
     <TypeScriptCompile Include="src\app\chichines\chichines.component.ts" />
     <TypeScriptCompile Include="src\environments\environment.prod.ts" />
     <TypeScriptCompile Include="src\environments\environment.ts" />
+    <TypeScriptCompile Include="workers\chichi\ChiChi.HWCore.ts" />
+    <TypeScriptCompile Include="workers\chichi\ChiChiAudio.ts" />
+    <TypeScriptCompile Include="workers\chichi\ChiChiCarts.ts" />
+    <TypeScriptCompile Include="workers\chichi\ChiChiControl.ts" />
+    <TypeScriptCompile Include="workers\chichi\ChiChiNfsPlayer.ts" />
+    <TypeScriptCompile Include="workers\chichi\ChiChiTypes.ts" />
+    <TypeScriptCompile Include="workers\emulator.worker.ts" />
+    <TypeScriptCompile Include="workers\types\ChiChiCore.d.ts" />
+    <TypeScriptCompile Include="workers\types\ChiChiTypes.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin" />
@@ -131,15 +130,19 @@
     <Folder Include="src\app\chichines.instructionhistory\" />
     <Folder Include="src\app\chichines.memviewer\" />
     <Folder Include="src\app\debugoutput\" />
-    <Folder Include="src\app\emu\" />
     <Folder Include="src\app\chichines\" />
     <Folder Include="src\app\controlpanel\" />
+    <Folder Include="src\app\debugoutput\nametableviewer\" />
+    <Folder Include="src\app\debugoutput\spriteviewer\" />
+    <Folder Include="src\app\services\wishbone\" />
     <Folder Include="src\assets" />
-    <Folder Include="src\assets\workers\" />
+    <Folder Include="src\assets\chichi\" />
     <Folder Include="src\environments" />
     <Folder Include="src\app\services\" />
     <Folder Include="src\app-typings\" />
     <Folder Include="workers\" />
+    <Folder Include="workers\chichi\" />
+    <Folder Include="workers\types\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <!--Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them.-->

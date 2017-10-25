@@ -26,7 +26,7 @@ export class InstructionHistoryDatabase {
   /** Stream that emits whenever the data has been modified. */
   dataChange: BehaviorSubject<DecodedInstruction[]> = new BehaviorSubject<DecodedInstruction[]>([]);
   get data(): DecodedInstruction[] { return this.dataChange.value; }
-  length: number;
+  length: number=0;
 
   constructor() {
   }
@@ -44,8 +44,8 @@ export class InstructionHistoryDatabase {
   update() {
       const copiedData = this.bufData;
       this.length = copiedData.length;
-    this.dataChange.next(copiedData);
-    this.bufData  = new Array<DecodedInstruction>() ;
+      this.dataChange.next(copiedData);
+      this.bufData  = new Array<DecodedInstruction>();
   }
 }
 
@@ -90,64 +90,86 @@ export class CpuStatus {
     SR: number = 0;
 }
 
-
 export class Debugger {
+        static SRMasks_CarryMask = 0x01;
+        static SRMasks_ZeroResultMask = 0x02;
+        static SRMasks_InterruptDisableMask = 0x04;
+        static SRMasks_DecimalModeMask = 0x08;
+        static SRMasks_BreakCommandMask = 0x10;
+        static SRMasks_ExpansionMask = 0x20;
+        static SRMasks_OverflowMask = 0x40;
+        static SRMasks_NegativeResultMask = 0x80;
 
-    constructor(private machine: ChiChiNES.NESMachine) {
-        this.machine.Cpu.FireDebugEvent = (event) => {
-            this.appendInstructionPage();
+
+        currentPPUStatus: any;
+        private machine : Observable<any>;
+        constructor(machine: Observable<any>) {
+            this.machine = machine;
+            this.machine.subscribe((data) => {
+                const debug = data.Cpu;
+                //this.currentCpuStatus = debug.currentCpuStatus;
+                //this.currentPPUStatus = debug.currentPPUStatus;
+                if (debug.InstructionHistory) {
+                    this.setInstructionPage(debug.InstructionHistory, debug.InstructionHistoryPointer);
+                    if (debug.flushHistory) this.lastInstructions.update();
+                }
+
+            });
+            //this.machine.Cpu.FireDebugEvent = (event) => {
+            //    this.appendInstructionPage();
+            //}
         }
-    }
 
-    public currentCpuStatus: CpuStatus = {
-        PC: 0,
-        A: 0,
-        X: 0,
-        Y: 0,
-        SP: 0,
-        SR: 0
-    }; 
+        public currentCpuStatus: CpuStatus = {
+            PC: 0,
+            A: 0,
+            X: 0,
+            Y: 0,
+            SP: 0,
+            SR: 0
+        }; 
 
         public lastInstructions: InstructionHistoryDatabase= new InstructionHistoryDatabase(); 
 
         public doUpdate() {
-            this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
+            //this.setInstructionPage(this.machine.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
 
-            this.lastInstructions.update();
-            this.decodeCpuStatusRegister(this.machine.Cpu.StatusRegister);
-            this.currentCpuStatus = {
-                PC: this.machine.Cpu.ProgramCounter,
-                A: this.machine.Cpu.Accumulator,
-                X: this.machine.Cpu.IndexRegisterX,
-                Y: this.machine.Cpu.IndexRegisterY,
-                SP: this.machine.Cpu.StackPointer,
-                SR: this.machine.Cpu.StatusRegister
-            };
+            //this.lastInstructions.update();
+            //this.decodeCpuStatusRegister(this.machine.Cpu.StatusRegister);
+            //this.currentCpuStatus = {
+            //    PC: this.machine.Cpu.ProgramCounter,
+            //    A: this.machine.Cpu.Accumulator,
+            //    X: this.machine.Cpu.IndexRegisterX,
+            //    Y: this.machine.Cpu.IndexRegisterY,
+            //    SP: this.machine.Cpu.StackPointer,
+            //    SR: this.machine.Cpu.StatusRegister
+            //};
         }
 
-        public decodedStatusRegister: string;
+        public decodedStatusRegister: string='';
 
-        private decodeCpuStatusRegister(sr: number): void {
+        static decodeCpuStatusRegister(sr: number): string {
             var result: string = '';
-            result += ' N:' + (sr & ChiChiNES.CPUStatusMasks.NegativeResultMask ? '1' : '0');
+            result += ' N:' + (sr & Debugger.SRMasks_NegativeResultMask ? '1' : '0');
 
-            result += ' O:' + (sr & ChiChiNES.CPUStatusMasks.OverflowMask ? '1' : '0');
+            result += ' O:' + (sr & Debugger.SRMasks_OverflowMask ? '1' : '0');
 
-            result += ' E:' + (sr & ChiChiNES.CPUStatusMasks.ExpansionMask ? '1' : '0');
+            result += ' E:' + (sr & Debugger.SRMasks_ExpansionMask ? '1' : '0');
 
-            result += ' B:' + (sr & ChiChiNES.CPUStatusMasks.BreakCommandMask ? '1' : '0');
-            result += ' D:' + (sr & ChiChiNES.CPUStatusMasks.DecimalModeMask ? '1' : '0');
+            result += ' B:' + (sr & Debugger.SRMasks_BreakCommandMask ? '1' : '0');
+            result += ' D:' + (sr & Debugger.SRMasks_DecimalModeMask ? '1' : '0');
 
-            result += ' I:' + (sr & ChiChiNES.CPUStatusMasks.InterruptDisableMask ? '1' : '0');
+            result += ' I:' + (sr & Debugger.SRMasks_InterruptDisableMask ? '1' : '0');
 
-            result += ' Z:' + (sr & ChiChiNES.CPUStatusMasks.ZeroResultMask ? '1' : '0');
+            result += ' Z:' + (sr & Debugger.SRMasks_ZeroResultMask ? '1' : '0');
 
-            result += ' C:' + (sr & ChiChiNES.CPUStatusMasks.CarryMask ? '1' : '0');
-            this.decodedStatusRegister = result;
+            result += ' C:' + (sr & Debugger.SRMasks_CarryMask ? '1' : '0');
+            
+            return result;
         }
 
         public appendInstructionPage() {
-            this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
+        //    this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
         }
 
         private setInstructionPage(inst : ChiChiNES.CPU2A03.Instruction[], start: number, frameNumber?: number) : void {
@@ -567,7 +589,7 @@ export class Debugger {
 
         public disassemble (inst : ChiChiNES.CPU2A03.Instruction): string
         {
-            if (!inst) return;
+            if (!inst || !inst.OpCode) return '';
             var parms : string = "";
             parms = parms + inst.Parameters0.toString(16);
             parms = parms + inst.Parameters1.toString(16);
