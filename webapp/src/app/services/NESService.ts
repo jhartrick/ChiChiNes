@@ -131,9 +131,9 @@ export class RomLoader {
         if (file.name.endsWith('.zip')) {
             return this.loadZipRom(files);
         }
-        //if (file.name.endsWith('.nsf')) {
-        //    return this.loadNsf(files);
-        //}
+        if (file.name.endsWith('.nsf')) {
+            return this.loadNsf(files);
+        }
         if (file.name.endsWith('.nes')) {
             const romLoader = new Observable<RomFile>(observer => {
                 const fileReader: FileReader = new FileReader();

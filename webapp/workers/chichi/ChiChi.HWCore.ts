@@ -141,11 +141,11 @@ import { ChiChiInputHandler } from './ChiChiControl'
         private frameOn = false;
         private totalCPUClocks = 0;
 
-        constructor() {
+        constructor(cpu? : ChiChiCPPU) {
             var wavSharer = new WavSharer();
             this.SoundBopper = new ChiChiBopper(wavSharer);
             this.WaveForms = wavSharer;
-            this.Cpu = new ChiChiCPPU(this.SoundBopper);
+            this.Cpu = cpu ? cpu : new ChiChiCPPU(this.SoundBopper);
             this.Cpu.frameFinished = () => { this.FrameFinished(); };
         }
 
@@ -371,8 +371,8 @@ import { ChiChiInputHandler } from './ChiChiControl'
         private _ticks = 0;
 
         // CPU Status
-        private _statusRegister = 0;
-        private _programCounter = 0;
+        _statusRegister = 0;
+        _programCounter = 0;
 
         private _handleNMI: boolean = false;
         private _handleIRQ: boolean = false;
@@ -381,9 +381,10 @@ import { ChiChiInputHandler } from './ChiChiControl'
         private _addressBus = 0;
         private _dataBus = 0;
         private _operationCounter = 0;
-        private _accumulator = 0;
-        private _indexRegisterX = 0;
-        private _indexRegisterY = 0;
+
+        _accumulator = 0;
+        _indexRegisterX = 0;
+        _indexRegisterY = 0;
 
         // Current Instruction
         private _currentInstruction_AddressingMode = ChiChiCPPU_AddressingModes.Bullshit;
@@ -406,7 +407,7 @@ import { ChiChiInputHandler } from './ChiChiControl'
         public get SpritePatternTableIndex() : number
         {
             let spritePatternTable = 0;
-            if ((this._PPUControlByte0 & 8) === 8) {
+            if ((this._PPUControlByte0 & 32) === 32) {
                 spritePatternTable = 4096;
             }   
             return spritePatternTable;
@@ -448,7 +449,7 @@ import { ChiChiInputHandler } from './ChiChiControl'
 
         private _PPUAddress: number = 0;
         private _PPUStatus: number = 0;
-        private _PPUControlByte0: number = 0; private _PPUControlByte1: number = 0;
+         _PPUControlByte0: number = 0;  _PPUControlByte1: number = 0;
         private _spriteAddress: number = 0;
 
 
@@ -475,7 +476,7 @@ import { ChiChiInputHandler } from './ChiChiControl'
         //private framePalette = System.Array.init(256, 0, System.Int32);
         private nameTableBits = 0;
         private vidRamIsRam = true;
-        private _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
+        _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
         private _openBus = 0;
         private sprite0scanline = 0;
         private sprite0x = 0;
@@ -801,7 +802,7 @@ import { ChiChiInputHandler } from './ChiChiControl'
             this.Rams[10] = 223;
             this.Rams[15] = 191;
 
-            this._programCounter = this.Cart.runNsfAt ? this.Cart.runNsfAt :  this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
+            this._programCounter =  this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
         }
 
         GetState(outStream: any): void {

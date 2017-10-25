@@ -434,59 +434,72 @@ define("chichi/ChiChiCarts", ["require", "exports"], function (require, exports)
             var _this = _super !== null && _super.apply(this, arguments) || this;
             _this.loadNsfAt = 0;
             _this.bank_select = 0;
-            _this.rams = new Uint8Array(0x3000);
+            _this.rams = new Uint8Array(0xFFFFFFFF);
             return _this;
         }
         NsfCart.prototype.InitializeCart = function () {
-            this.SetupBankStarts(0, 1, 3, 4);
-            this.rams.fill(0);
         };
         NsfCart.prototype.GetPPUByte = function (clock, address) {
             return 0;
         };
+        NsfCart.prototype.GetByte = function (clock, address) {
+            return this.rams[address];
+        };
         NsfCart.prototype.__SetByte = function (address, data) {
             var bank = 0;
-            switch (address & 57344) {
-                case 24576:
-                    return this.prgRomBank6[address & 8191];
-                case 32768:
-                    bank = this.bank8start;
-                    break;
-                case 40960:
-                    bank = this.bankAstart;
-                    break;
-                case 49152:
-                    bank = this.bankCstart;
-                    break;
-                case 57344:
-                    bank = this.bankEstart;
-                    break;
-            }
-            // if cart is half sized, adjust
-            if (((bank + (address & 8191)) | 0) > this.nesCart.length) {
-                throw new Error("THis is broken!");
-            }
-            this.nesCart[((bank + (address & 8191)) | 0)] = data;
+            this.rams[address] = data;
         };
         NsfCart.prototype.LoadNSFFile = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
             this.mapperId = -1;
+            //        $000    5   STRING  'N', 'E', 'S', 'M', $1A(denotes an NES sound format file)
+            //        $005    1   BYTE    Version number (currently $01)
+            //        $006    1   BYTE    Total songs   (1 = 1 song, 2 = 2 songs, etc)
+            //        $007    1   BYTE    Starting song (1 = 1st song, 2 = 2nd song, etc)
+            //        $008    2   WORD    (lo, hi) load address of data ($8000 - FFFF)
+            //        $00A    2   WORD    (lo, hi) init address of data ($8000 - FFFF)
+            //        $00C    2   WORD    (lo, hi) play address of data ($8000 - FFFF)
+            //        $00E    32  STRING  The name of the song, null terminated
+            //        $02E    32  STRING  The artist, if known, null terminated
+            //        $04E    32  STRING  The copyright holder, null terminated
+            //        $06E    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, NTSC(see text)
+            //        $070    8   BYTE    Bankswitch init values (see text, and FDS section)
+            //        $078    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, PAL(see text)
+            //        $07A    1   BYTE    PAL/ NTSC bits
+            //        bit 0: if clear, this is an NTSC tune
+            //        bit 0: if set, this is a PAL tune
+            //        bit 1: if set, this is a dual PAL/ NTSC tune
+            //        bits 2- 7: not used.they * must * be 0
+            //        $07B    1   BYTE    Extra Sound Chip Support
+            //        bit 0: if set, this song uses VRC6 audio
+            //        bit 1: if set, this song uses VRC7 audio
+            //        bit 2: if set, this song uses FDS audio
+            //        bit 3: if set, this song uses MMC5 audio
+            //        bit 4: if set, this song uses Namco 163 audio
+            //        bit 5: if set, this song uses Sunsoft 5B audio
+            //        bits 6, 7: future expansion: they * must * be 0
+            //        $07C    1   BYTE    Extra Sound Chip Support (Cont.)
+            //        bits 0- 3: future expansion: they * must * be 0
+            //        bits 4- 7: unavailable(conflicts with NSF2 backwards compatibility)
+            //        $07D    3   ----    3 extra bytes for expansion (must be $00)
+            //        $080    nnn ----    The music program/ data follows until end of file
+            this.prgRomCount = prgRoms;
+            this.chrRomCount = chrRoms;
+            this.SetupBankStarts(0, 1, 3, 4);
+            this.songCount = header[0x06];
+            this.firstSong = header[0x07];
             this.loadNsfAt = (header[0x09] << 8) + header[0x08];
             this.initNsfAt = (header[0x0B] << 8) + header[0x0A];
             this.runNsfAt = (header[0x0D] << 8) + header[0x0C];
-            //System.Array.copy(header, 0, this.iNesHeader, 0, header.length);
-            this.prgRomCount = prgRoms;
-            this.chrRomCount = chrRoms;
-            //  this.nesCart = System.Array.init(prgRomData.length, 0, System.Byte);
-            // System.Array.copy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
-            this.nesCart = new Uint8Array(32768); //System.Array.init(32768, 0, System.Byte);
-            this.nesCart.fill(0);
-            // chrRom is going to be RAM
-            chrRomData = new Array(32768); //System.Array.init(32768, 0, System.Byte);
-            chrRomData.fill(0);
+            this.songName = header.slice(0x0E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
+            this.artist = header.slice(0x02E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
+            this.copyright = header.slice(0x4E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
             var address = this.loadNsfAt;
             for (var i = 0; i < prgRomData.length - 0x80; ++i) {
                 this.__SetByte(address + i, prgRomData[0x80 + i]);
             }
+            // set init code at reset spot
+            this.__SetByte(0xFFFC, header[0x0A]);
+            this.__SetByte(0xFFFD, header[0x0B]); // << 8)
             this.prgRomCount = prgRomData.length / 1024;
             this.chrRomCount = 0; //this.iNesHeader[5];
             this.SRAMEnabled = true;
@@ -2607,7 +2620,7 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
     exports.iNESFileHandler = iNESFileHandler;
     //machine wrapper
     var ChiChiMachine = /** @class */ (function () {
-        function ChiChiMachine() {
+        function ChiChiMachine(cpu) {
             var _this = this;
             this.frameJustEnded = true;
             this.frameOn = false;
@@ -2616,7 +2629,7 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
             var wavSharer = new ChiChiAudio_1.WavSharer();
             this.SoundBopper = new ChiChiAudio_1.ChiChiBopper(wavSharer);
             this.WaveForms = wavSharer;
-            this.Cpu = new ChiChiCPPU(this.SoundBopper);
+            this.Cpu = cpu ? cpu : new ChiChiCPPU(this.SoundBopper);
             this.Cpu.frameFinished = function () { _this.FrameFinished(); };
         }
         ChiChiMachine.prototype.Drawscreen = function () {
@@ -2908,7 +2921,7 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
         Object.defineProperty(ChiChiCPPU.prototype, "SpritePatternTableIndex", {
             get: function () {
                 var spritePatternTable = 0;
-                if ((this._PPUControlByte0 & 8) === 8) {
+                if ((this._PPUControlByte0 & 32) === 32) {
                     spritePatternTable = 4096;
                 }
                 return spritePatternTable;
@@ -3185,7 +3198,7 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
             this.Rams[9] = 239;
             this.Rams[10] = 223;
             this.Rams[15] = 191;
-            this._programCounter = this.Cart.runNsfAt ? this.Cart.runNsfAt : this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
+            this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
         };
         ChiChiCPPU.prototype.GetState = function (outStream) {
             //throw new Error('Method not implemented.');
@@ -4827,7 +4840,100 @@ define("chichi/ChiChi.HWCore", ["require", "exports", "chichi/ChiChiCarts", "chi
     }());
     exports.ChiChiCPPU = ChiChiCPPU;
 });
-define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi/ChiChiTypes"], function (require, exports, ChiChi_HWCore_1, ChiChiTypes_3) {
+define("chichi/ChiChiNfsPlayer", ["require", "exports", "chichi/ChiChi.HWCore"], function (require, exports, ChiChi_HWCore_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var ChiChiNsfMachine = /** @class */ (function (_super) {
+        __extends(ChiChiNsfMachine, _super);
+        function ChiChiNsfMachine() {
+            var _this = _super.call(this) || this;
+            _this.Cpu = new ChiChiNsfCPPU(_this.SoundBopper);
+            _this.Cpu.frameFinished = function () { _this.FrameFinished(); };
+            return _this;
+        }
+        return ChiChiNsfMachine;
+    }(ChiChi_HWCore_1.ChiChiMachine));
+    exports.ChiChiNsfMachine = ChiChiNsfMachine;
+    var ChiChiNsfCPPU = /** @class */ (function (_super) {
+        __extends(ChiChiNsfCPPU, _super);
+        function ChiChiNsfCPPU() {
+            var _this = _super !== null && _super.apply(this, arguments) || this;
+            _this.runNsfAt = 0;
+            _this.loadNsfAt = 0;
+            _this.initNsfAt = 0;
+            _this.firstSong = 0;
+            _this.songCount = 0;
+            return _this;
+        }
+        ChiChiNsfCPPU.prototype.__SetByte = function (address, data) {
+            var bank = 0;
+            this.Rams[address] = data;
+        };
+        ChiChiNsfCPPU.prototype.LoadNSFFile = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
+            var ramsBuffer = new SharedArrayBuffer(0xFFFF * Uint8Array.BYTES_PER_ELEMENT);
+            this.Rams = new Uint8Array(ramsBuffer); // System.Array.init(vv, 0, System.Int32);
+            this.Rams.fill(0);
+            //        $000    5   STRING  'N', 'E', 'S', 'M', $1A(denotes an NES sound format file)
+            //        $005    1   BYTE    Version number (currently $01)
+            //        $006    1   BYTE    Total songs   (1 = 1 song, 2 = 2 songs, etc)
+            //        $007    1   BYTE    Starting song (1 = 1st song, 2 = 2nd song, etc)
+            //        $008    2   WORD    (lo, hi) load address of data ($8000 - FFFF)
+            //        $00A    2   WORD    (lo, hi) init address of data ($8000 - FFFF)
+            //        $00C    2   WORD    (lo, hi) play address of data ($8000 - FFFF)
+            //        $00E    32  STRING  The name of the song, null terminated
+            //        $02E    32  STRING  The artist, if known, null terminated
+            //        $04E    32  STRING  The copyright holder, null terminated
+            //        $06E    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, NTSC(see text)
+            //        $070    8   BYTE    Bankswitch init values (see text, and FDS section)
+            //        $078    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, PAL(see text)
+            //        $07A    1   BYTE    PAL/ NTSC bits
+            //        bit 0: if clear, this is an NTSC tune
+            //        bit 0: if set, this is a PAL tune
+            //        bit 1: if set, this is a dual PAL/ NTSC tune
+            //        bits 2- 7: not used.they * must * be 0
+            //        $07B    1   BYTE    Extra Sound Chip Support
+            //        bit 0: if set, this song uses VRC6 audio
+            //        bit 1: if set, this song uses VRC7 audio
+            //        bit 2: if set, this song uses FDS audio
+            //        bit 3: if set, this song uses MMC5 audio
+            //        bit 4: if set, this song uses Namco 163 audio
+            //        bit 5: if set, this song uses Sunsoft 5B audio
+            //        bits 6, 7: future expansion: they * must * be 0
+            //        $07C    1   BYTE    Extra Sound Chip Support (Cont.)
+            //        bits 0- 3: future expansion: they * must * be 0
+            //        bits 4- 7: unavailable(conflicts with NSF2 backwards compatibility)
+            //        $07D    3   ----    3 extra bytes for expansion (must be $00)
+            //        $080    nnn ----    The music program/ data follows until end of file
+            this.songCount = header[0x06];
+            this.firstSong = header[0x07];
+            this.loadNsfAt = (header[0x09] << 8) + header[0x08];
+            this.initNsfAt = (header[0x0B] << 8) + header[0x0A];
+            this.runNsfAt = (header[0x0D] << 8) + header[0x0C];
+            this.songName = header.slice(0x0E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
+            this.artist = header.slice(0x02E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
+            this.copyright = header.slice(0x4E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
+            var address = this.loadNsfAt;
+            for (var i = 0; i < prgRomData.length - 0x80; ++i) {
+                this.__SetByte(address + i, prgRomData[0x80 + i]);
+            }
+            this.InitNsf();
+        };
+        ChiChiNsfCPPU.prototype.InitNsf = function () {
+            this.SetByte(0x4017, 0x40);
+            this._accumulator = this.firstSong;
+            this._indexRegisterX = 0;
+            this._programCounter = this.initNsfAt;
+            debugger;
+            while (this._programCounter != this.runNsfAt) {
+                this.Step();
+            }
+            console.log("ready to play");
+        };
+        return ChiChiNsfCPPU;
+    }(ChiChi_HWCore_1.ChiChiCPPU));
+    exports.ChiChiNsfCPPU = ChiChiNsfCPPU;
+});
+define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi/ChiChiTypes", "chichi/ChiChiNfsPlayer"], function (require, exports, ChiChi_HWCore_2, ChiChiTypes_3, ChiChiNfsPlayer_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var NesInfo = /** @class */ (function () {
@@ -4865,11 +4971,42 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
             this.iops = new Array(16);
             this.cartName = 'unk';
             this.sharedAudioBufferPos = 0;
-            this.machine = new ChiChi_HWCore_1.ChiChiMachine();
+            this.machine = new ChiChi_HWCore_2.ChiChiMachine();
         }
+        tendoWrapper.prototype.createNsfMachine = function () {
+            var _this = this;
+            this.machine = new ChiChiNfsPlayer_1.ChiChiNsfMachine();
+            this.machine.Drawscreen = function () {
+                // flush audio
+                // globals.postMessage({ frame: true, fps: framesPerSecond });
+            };
+            this.ready = true;
+            this.machine.Cpu.FireDebugEvent = function () {
+                var info = new NesInfo();
+                info.debug = {
+                    currentCpuStatus: _this.machine.Cpu.GetStatus ? _this.machine.Cpu.GetStatus() : {
+                        PC: 0,
+                        A: 0,
+                        X: 0,
+                        Y: 0,
+                        SP: 0,
+                        SR: 0
+                    },
+                    currentPPUStatus: _this.machine.Cpu.GetPPUStatus ? _this.machine.Cpu.GetPPUStatus() : {},
+                    InstructionHistory: {
+                        Buffer: _this.machine.Cpu.InstructionHistory.slice(0),
+                        Index: _this.machine.Cpu.InstructionHistoryPointer,
+                        Finish: false
+                    }
+                };
+                postMessage(info);
+                //this.updateState();
+            };
+            this.machine.Cpu.Debugging = false;
+        };
         tendoWrapper.prototype.createMachine = function () {
             var _this = this;
-            this.machine = new ChiChi_HWCore_1.ChiChiMachine();
+            this.machine = new ChiChi_HWCore_2.ChiChiMachine();
             this.machine.Drawscreen = function () {
                 // flush audio
                 // globals.postMessage({ frame: true, fps: framesPerSecond });
@@ -4926,7 +5063,9 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
                     //Rams: this.machine.Cpu.Rams,
                     status: this.machine.Cpu.GetStatus(),
                     ppuStatus: this.machine.Cpu.GetPPUStatus(),
-                    backgroundPatternTableIndex: this.machine.Cpu.backgroundPatternTableIndex
+                    backgroundPatternTableIndex: this.machine.Cpu.backgroundPatternTableIndex,
+                    _PPUControlByte0: this.machine.Cpu._PPUControlByte0,
+                    _PPUControlByte1: this.machine.Cpu._PPUControlByte1
                 };
                 info.cartInfo = {
                     mapperId: this.machine.Cart.MapperID,
@@ -5072,14 +5211,15 @@ define("emulator.worker", ["require", "exports", "chichi/ChiChi.HWCore", "chichi
                     this.iops = event.data.iops;
                     break;
                 case 'loadrom':
-                    this.machine.EnableSound = false;
                     this.stop();
+                    //this.createMachine();
+                    this.machine.EnableSound = false;
                     this.machine.LoadCart(event.data.rom);
                     this.updateBuffers();
                     break;
                 case 'loadnsf':
                     this.stop();
-                    this.machine.LoadNSF(event.data.rom);
+                    this.createNsfMachine();
                     this.updateBuffers();
                     break;
                 case 'audiosettings':

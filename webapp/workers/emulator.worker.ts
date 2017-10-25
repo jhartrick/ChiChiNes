@@ -1,6 +1,7 @@
 ﻿import { ChiChiMachine } from './chichi/ChiChi.HWCore';
 import { RunningStatuses } from './chichi/ChiChiTypes'
 import { BaseCart } from "./chichi/ChiChiCarts";
+import { ChiChiNsfMachine, ChiChiNsfCPPU } from "./chichi/ChiChiNfsPlayer";
 
 class NesInfo {
     bufferupdate = false;
@@ -44,6 +45,40 @@ export class tendoWrapper {
         this.machine = new ChiChiMachine();
 
     }
+
+    createNsfMachine() {
+
+        this.machine = new ChiChiNsfMachine();
+        this.machine.Drawscreen = () => {
+            // flush audio
+            // globals.postMessage({ frame: true, fps: framesPerSecond });
+        };
+        this.ready = true;
+        this.machine.Cpu.FireDebugEvent = () => {
+            var info = new NesInfo();
+            info.debug = {
+                currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
+                    PC: 0,
+                    A: 0,
+                    X: 0,
+                    Y: 0,
+                    SP: 0,
+                    SR: 0
+                },
+                currentPPUStatus: this.machine.Cpu.GetPPUStatus ? this.machine.Cpu.GetPPUStatus() : {},
+                InstructionHistory: {
+                    Buffer: this.machine.Cpu.InstructionHistory.slice(0),
+                    Index: this.machine.Cpu.InstructionHistoryPointer,
+                    Finish: false
+                }
+
+            };
+            postMessage(info);
+            //this.updateState();
+        };
+        this.machine.Cpu.Debugging = false;
+    }
+
 
     createMachine() {
 
@@ -118,7 +153,9 @@ export class tendoWrapper {
                 //Rams: this.machine.Cpu.Rams,
                 status: this.machine.Cpu.GetStatus(),
                 ppuStatus: this.machine.Cpu.GetPPUStatus(),
-                backgroundPatternTableIndex: this.machine.Cpu.backgroundPatternTableIndex
+                backgroundPatternTableIndex: this.machine.Cpu.backgroundPatternTableIndex,
+                _PPUControlByte0: this.machine.Cpu._PPUControlByte0,
+                _PPUControlByte1:  this.machine.Cpu._PPUControlByte1
             }
             info.cartInfo = {
                 mapperId: this.machine.Cart.MapperID,
@@ -285,16 +322,18 @@ export class tendoWrapper {
                 this.iops = event.data.iops;
                 break;
             case 'loadrom':
+                this.stop();
+                //this.createMachine();
                 this.machine.EnableSound = false;
 
-                this.stop();
                 this.machine.LoadCart(event.data.rom);
                 this.updateBuffers();
                break;
             case 'loadnsf':
                 this.stop();
-                this.machine.LoadNSF(event.data.rom);
+                this.createNsfMachine();
                 this.updateBuffers();
+
                 break;
             case 'audiosettings':
                 this.machine.SoundBopper.audioSettings = event.data.settings;

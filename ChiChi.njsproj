@@ -36,6 +36,10 @@
     <Content Include="src\app\controlpanel\controlpanel.component.html" />
     <Content Include="src\app\debugoutput\debugoutput.component.css" />
     <Content Include="src\app\debugoutput\debugoutput.component.html" />
+    <Content Include="src\app\debugoutput\nametableviewer\nametableviewer.component.css" />
+    <Content Include="src\app\debugoutput\nametableviewer\nametableviewer.component.html" />
+    <Content Include="src\app\debugoutput\spriteviewer\spriteviewer.component.css" />
+    <Content Include="src\app\debugoutput\spriteviewer\spriteviewer.component.html" />
     <Content Include="tsconfig.json" />
     <Content Include="tslint.json" />
     <Content Include="README.md" />
@@ -59,6 +63,8 @@
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.spec.ts" />
     <TypeScriptCompile Include="src\app\debugoutput\debugoutput.component.ts" />
     <TypeScriptCompile Include="src\app-typings\bridge.d.ts" />
+    <TypeScriptCompile Include="src\app\debugoutput\nametableviewer\nametableviewer.component.ts" />
+    <TypeScriptCompile Include="src\app\debugoutput\spriteviewer\spriteviewer.component.ts" />
     <TypeScriptCompile Include="src\app\services\chichines.service.controlpad.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
@@ -101,6 +107,7 @@
     <TypeScriptCompile Include="workers\chichi\ChiChiAudio.ts" />
     <TypeScriptCompile Include="workers\chichi\ChiChiCarts.ts" />
     <TypeScriptCompile Include="workers\chichi\ChiChiControl.ts" />
+    <TypeScriptCompile Include="workers\chichi\ChiChiNfsPlayer.ts" />
     <TypeScriptCompile Include="workers\chichi\ChiChiTypes.ts" />
     <TypeScriptCompile Include="workers\emulator.worker.ts" />
     <TypeScriptCompile Include="workers\types\ChiChiCore.d.ts" />
@@ -125,6 +132,8 @@
     <Folder Include="src\app\debugoutput\" />
     <Folder Include="src\app\chichines\" />
     <Folder Include="src\app\controlpanel\" />
+    <Folder Include="src\app\debugoutput\nametableviewer\" />
+    <Folder Include="src\app\debugoutput\spriteviewer\" />
     <Folder Include="src\app\services\wishbone\" />
     <Folder Include="src\assets" />
     <Folder Include="src\assets\chichi\" />

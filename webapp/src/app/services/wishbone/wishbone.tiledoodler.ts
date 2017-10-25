@@ -70,12 +70,11 @@ export class TileDoodler {
                 let patternEntry = 0;
                 let patternEntryBit2 = 0;
                 if (flipY) {
-                    patternEntry = this.ppu.VidRAM_GetNTByte(((PatternTable + (TileIndex * 16))  + 7)  - i );
-                    patternEntryBit2 = this.ppu.VidRAM_GetNTByte((((PatternTable + (TileIndex * 16))  + 7)  - i) + 8);
+                    patternEntry = this.ppu.chrRomHandler.GetPPUByte(0, ((PatternTable + (TileIndex * 16)) + 7) - i );
+                    patternEntryBit2 = this.ppu.chrRomHandler.GetPPUByte(0, (((PatternTable + (TileIndex * 16)) + 7) - i) + 8);
                 } else {
-
-                    patternEntry = this.ppu.VidRAM_GetNTByte((PatternTable + (TileIndex * 16))  + i);
-                    patternEntryBit2 = this.ppu.VidRAM_GetNTByte(((PatternTable + (TileIndex * 16)) + i) + 8);
+                    patternEntry = this.ppu.chrRomHandler.GetPPUByte(0, (PatternTable + (TileIndex * 16)) + i);
+                    patternEntryBit2 = this.ppu.chrRomHandler.GetPPUByte(0, ((PatternTable + (TileIndex * 16)) + i) + 8);
                 }
                 if (flipX) {
                     for (let bit = 7; bit >= 0; bit-- ) {
@@ -99,7 +98,7 @@ export class TileDoodler {
                     }
                 }
             }
-            return result;
+            return result.map((val) => { return this.ppu._palette[val]; });
         }
 
     //         TryGetSprite: function (result, PatternTable, TileIndex, attributeByte, flipX, flipY) {

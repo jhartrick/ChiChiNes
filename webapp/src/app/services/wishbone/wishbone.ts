@@ -380,6 +380,8 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
                 this.Cpu.backgroundPatternTableIndex = data.Cpu.backgroundPatternTableIndex;
                 this.cpuStatus = data.Cpu.status;
                 this.ppuStatus = data.Cpu.ppuStatus;
+                this.Cpu._PPUControlByte0 = data.Cpu._PPUControlByte0;
+                this.Cpu._PPUControlByte1 = data.Cpu._PPUControlByte1;
 
             }
             if (data.Cart && this.Cart.realCart) {

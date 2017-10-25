@@ -41,7 +41,7 @@ export class SpriteViewerComponent {
         requestAnimationFrame(() => {
             for (let i = 0; i < 8; ++i) {
                 for (let j = 0; j < 8; ++j) {
-                    this.doDoodle(this.tileDoodle.nativeElement.getContext('2d'), (i * 8 + j), i * 8, j* 8);
+                    this.doDoodle(this.tileDoodle.nativeElement.getContext('2d'), ((i * 8) + j), i * 8, j* 8);
                 }
             }
         });
