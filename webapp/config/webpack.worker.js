@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 const webpack = require('webpack');
 const path = require('path');
@@ -23,7 +23,7 @@ const WatchIgnorePlugin = require('webpack/lib/WatchIgnorePlugin');
 
 module.exports = {
   entry: {
-    'emulator.worker': './workers/emulator.webworker.ts'
+    'emulator.worker': 'workers/emulator.webworker.ts'
   },
   output: {
     path: helper.getRoot('workers'),
