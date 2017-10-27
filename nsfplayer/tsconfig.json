@@ -1,23 +1,19 @@
-﻿{
+{
   "compileOnSave": false,
   "compilerOptions": {
-    //"outDir": "../src/assets/",
-    "outFile": "../src/assets/emulator.worker.js",
-    "sourceMap": false,
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
-    "module": "commonjs",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es5",
-    "noImplicitAny": true,
-    "suppressImplicitAnyIndexErrors": true,
     "typeRoots": [
       "node_modules/@types"
     ],
     "lib": [
-      "webworker",
-      "es2017"
+      "es2017",
+      "dom"
     ]
   }
 }

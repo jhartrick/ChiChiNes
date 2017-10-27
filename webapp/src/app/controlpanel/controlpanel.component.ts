@@ -2,7 +2,7 @@
 import { Emulator, EmuState, RomLoader } from '../services/NESService'
 import { Observable } from 'rxjs';
 import * as JSZip from 'jszip';
-import { AudioSettings } from "../../../workers/chichi/ChiChiTypes";
+import { AudioSettings } from "chichi";
 import { WishboneMachine } from "../services/wishbone/wishbone";
 
 @Component({

@@ -1,27 +1,29 @@
-﻿import { ChiChiCPPU, ChiChiMachine } from "./ChiChi.HWCore";
+﻿import { ChiChiCPPU, ChiChiMachine } from "./ChiChiMachine";
 
 export class ChiChiNsfMachine extends ChiChiMachine
 {
+
+    Cpu: ChiChiNsfCPPU;
     constructor() {
         super();
         this.Cpu = new ChiChiNsfCPPU(this.SoundBopper);
         this.Cpu.frameFinished = () => { this.FrameFinished(); };
     }
-}
 
+    LoadNsf(rom: number[]) {
+        this.Cpu.LoadNsf(rom);
+    }
+}
 
 export class ChiChiNsfCPPU extends ChiChiCPPU
 {
     copyright: string;
     artist: string;
     songName: string;
-
     runNsfAt: number = 0;
     loadNsfAt: number = 0;
     initNsfAt: number = 0;
-
     firstSong: number = 0;
-
     songCount: number = 0;
 
     __SetByte(address: number, data: number) {
@@ -29,9 +31,14 @@ export class ChiChiNsfCPPU extends ChiChiCPPU
         this.Rams[address] = data;
     }
 
-    LoadNSFFile(header: number[], prgRoms: number, chrRoms: number, prgRomData: number[], chrRomData: number[], chrRomOffset: number): void {
+    GetByte(address: number) : number {
+        return this.Rams[address];
+    }
 
-        const ramsBuffer = new SharedArrayBuffer(0xFFFF * Uint8Array.BYTES_PER_ELEMENT);
+    LoadNsf(nsfFile: number[]): void {
+        const header = nsfFile.slice(0, 16);
+
+        const ramsBuffer = new SharedArrayBuffer(0x10000 * Uint8Array.BYTES_PER_ELEMENT);
         this.Rams = new Uint8Array(<any>ramsBuffer);// System.Array.init(vv, 0, System.Int32);
         this.Rams.fill(0);
         //        $000    5   STRING  'N', 'E', 'S', 'M', $1A(denotes an NES sound format file)
@@ -79,8 +86,9 @@ export class ChiChiNsfCPPU extends ChiChiCPPU
         this.copyright = header.slice(0x4E, 0x0e + 32).map((v) => { return String.fromCharCode(v); }).join('').trim();
 
         let address = this.loadNsfAt;
-        for (let i = 0; i < prgRomData.length - 0x80; ++i) {
-            this.__SetByte(address + i, prgRomData[0x80 + i]);
+        nsfFile = nsfFile.slice(16, nsfFile.length);
+        for (let i = 0; i < nsfFile.length - 0x80; ++i) {
+            this.__SetByte(address + i, nsfFile[0x80 + i]);
         }
         this.InitNsf();
     }

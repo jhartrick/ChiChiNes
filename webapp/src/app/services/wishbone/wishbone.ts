@@ -1,109 +1,11 @@
-﻿import { ChiChiBopper, WavSharer } from "../../../../workers/chichi/ChiChiAudio";
-import { ChiChiCPPU, ChiChiMachine, iNESFileHandler } from "../../../../workers/chichi/ChiChi.HWCore";
-import { AudioSettings, PpuStatus } from "../../../../workers/chichi/ChiChiTypes";
-import { ChiChiInputHandler } from '../../../../workers/chichi/ChiChiControl'
+﻿import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart,  ChiChiInputHandler, 
+    AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler  } from 'chichi'
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
-import { TileDoodler } from "./wishbone.tiledoodler";
-import { BaseCart } from "../../../../workers/chichi/ChiChiCarts";
-import { CpuStatus } from "../debug.interface";
+import { TileDoodler } from './wishbone.tiledoodler';
+import { WishboneCart } from './wishbone.cart';
 
-class WishboneCart implements ChiChiNES.INESCart {
-
-    realCart: BaseCart = null;
-
-    Whizzler: ChiChiNES.CPU2A03;
-    CPU: ChiChiNES.CPU2A03;
-    ChrRom: any;
-    ChrRamStart: number;
-    PPUBankStarts: any;
-    ROMHashFunction: (prg: any, chr: any) => string;
-    CheckSum: string;
-    SRAM: any;
-    Mirroring: ChiChiNES.NameTableMirroring;
-    CartName: string;
-
-    get NumberOfPrgRoms(): number {
-        return this.realCart ? this.realCart.NumberOfPrgRoms : -1;
-    }
-    
-    get NumberOfChrRoms(): number {
-        return this.realCart ? this.realCart.NumberOfChrRoms : -1;
-    }
-
-    get MapperID(): number {
-        return this.realCart ? this.realCart.MapperID : -1;
-    }
-
-    BankSwitchesChanged: boolean;
-    BankStartCache: any;
-    CurrentBank: number;
-
-    UsesSRAM: boolean;
-
-    LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void {
-        throw new Error('Method not implemented.');
-    }
-    InitializeCart(): void {
-        throw new Error('Method not implemented.');
-    }
-    UpdateScanlineCounter(): void {
-        throw new Error('Method not implemented.');
-    }
-    WriteState(state: any): void {
-        throw new Error('Method not implemented.');
-    }
-    ReadState(state: any): void {
-        throw new Error('Method not implemented.');
-    }
-    ActualChrRomOffset(address: number): number {
-        throw new Error('Method not implemented.');
-    }
-    UpdateBankStartCache(): number {
-        throw new Error('Method not implemented.');
-    }
-    ResetBankStartCache(): void {
-        throw new Error('Method not implemented.');
-    }
-
-    NMIHandler: () => void;
-
-    IRQAsserted: boolean;
-
-    NextEventAt: number;
-
-    GetPPUByte(clock: number, address: number): number {
-        if (this.realCart)
-            return this.realCart.GetPPUByte(clock, address);
-        else
-            return 0;
-    }
-
-    SetPPUByte(clock: number, address: number, data: number): void {
-        throw new Error('Method not implemented.');
-    }
-
-    GetByte(Clock: number, address: number): number {
-        if (this.realCart) {
-            return this.realCart.GetByte(Clock, address);
-        } else  {
-            return 0;
-        }
-    }
-    SetByte(Clock: number, address: number, data: number): void {
-        throw new Error('Method not implemented.');
-    }
-
-    HandleEvent(Clock: number): void {
-        throw new Error('Method not implemented.');
-    }
-    ResetClock(Clock: number): void {
-        throw new Error('Method not implemented.');
-    }
-
-}
-
-class WishBopper implements ChiChiNES.BeepsBoops.Bopper {
+class WishBopper  {
 
     audioSettings: AudioSettings = new AudioSettings();
     EnableNoise: boolean = true;
@@ -159,7 +61,7 @@ class WishBopper implements ChiChiNES.BeepsBoops.Bopper {
 
 }
 
-export class WishBoneControlPad implements ChiChiNES.IControlPad {
+export class WishBoneControlPad {
     constructor(private machine: WishboneMachine) {
     }
 
@@ -250,7 +152,7 @@ export class WishBoneControlPad implements ChiChiNES.IControlPad {
     }
 }
 
-export class WishboneMachine implements ChiChiNES.NESMachine {
+export class WishboneMachine  {
     ppuStatus: PpuStatus = new PpuStatus();
     cpuStatus: CpuStatus = new CpuStatus();
     fps: number = 0;
@@ -436,7 +338,7 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
 
     Cart: WishboneCart;
 
-    SoundBopper: ChiChiNES.BeepsBoops.Bopper;
+    SoundBopper: WishBopper;
     WaveForms: any;
     EnableSound: boolean;
     FrameCount: number;
@@ -505,6 +407,10 @@ export class WishboneMachine implements ChiChiNES.NESMachine {
 }
 
 class WishboneCPPU extends ChiChiCPPU {
+    constructor(soundBopper: WishBopper) {
+
+        super(soundBopper);
+    }
     flushHistory = false;
 
 

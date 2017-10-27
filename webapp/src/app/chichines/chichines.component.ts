@@ -3,7 +3,7 @@ import { Emulator } from 'app/services/NESService';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 import * as THREE from 'three';
-import { AudioSettings } from '../../../workers/chichi/ChiChiTypes';
+import { AudioSettings } from 'chichi';
 import { WishBoneControlPad } from '../services/wishbone/wishbone';
 
 @Component({

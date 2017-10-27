@@ -3,7 +3,7 @@ import { Emulator } from '../services/NESService';
 import { DecodedInstruction, InstructionHistoryDatabase, DebugInstructionDataSource } from '../services/debug.interface';
 import { MatPaginator } from '@angular/material';
 
-import { CpuStatus, PpuStatus } from "../../../workers/chichi/ChiChiTypes";
+import { CpuStatus, PpuStatus } from "chichi";
 import { WishboneMachine } from "../services/wishbone/wishbone";
 import { Observable } from "rxjs/Observable";
 

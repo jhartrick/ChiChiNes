@@ -1,4 +1,4 @@
-﻿import { ChiChiCPPU } from "../../../../workers/chichi/ChiChi.HWCore";
+﻿import { ChiChiCPPU } from "chichi";
 
 export class TileDoodler {
     static powersOfTwo = [1, 2, 4, 8, 6, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192];

@@ -16,6 +16,12 @@ import { InstructionHistoryComponent } from './chichines.instructionhistory/chic
 import { NameTableViewerComponent } from './debugoutput/nametableviewer/nametableviewer.component';
 import { SpriteViewerComponent } from './debugoutput/spriteviewer/spriteviewer.component';
 
+
+import {
+    CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart, ChiChiInputHandler,
+    AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler
+} from 'chichi'
+
 @NgModule({
   declarations: [
       AppComponent,

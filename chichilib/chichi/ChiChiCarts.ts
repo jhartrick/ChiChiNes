@@ -1,4 +1,4 @@
-﻿export class BaseCart implements ChiChiNES.BaseCart {
+﻿export class BaseCart  {
     // compatible with .net array.copy method
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
         if (!dest) {
@@ -70,7 +70,6 @@
     bankSwitchesChanged = false;
     oneScreenOffset = 0
 
-    Mirroring: ChiChiNES.NameTableMirroring;
 
 
     // external api
@@ -407,7 +406,7 @@
 
 }
 
-export class NesCart extends BaseCart implements ChiChiNES.CPU.NESCart {
+export class NesCart extends BaseCart {
    // prevBSSrc = new Uint8Array(8);
 
     irqRaised: boolean;
@@ -616,7 +615,7 @@ export class NsfCart extends BaseCart {copyright: string;
 
 }
 
-export class MMC1Cart extends BaseCart implements ChiChiNES.NesCartMMC1 {
+export class MMC1Cart extends BaseCart  {
     lastClock: number = 0;
     sequence = 0;
     accumulator = 0;
@@ -787,7 +786,7 @@ export class MMC1Cart extends BaseCart implements ChiChiNES.NesCartMMC1 {
 
 }
 
-export class MMC3Cart extends BaseCart implements ChiChiNES.NesCartMMC3 {
+export class MMC3Cart extends BaseCart {
     private _registers = new Uint8Array(4);
     private chr2kBank0 = 0;
     private chr2kBank1 = 1;

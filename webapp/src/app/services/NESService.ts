@@ -4,9 +4,8 @@ import { AngControlPad } from './chichines.service.controlpad';
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import * as JSZip from 'jszip';
-import { AudioSettings } from "../../../workers/chichi/ChiChiTypes";
 import { WishboneMachine } from "./wishbone/wishbone";
-import { ChiChiCPPU } from "../../../workers/chichi/ChiChi.HWCore";
+import { ChiChiCPPU, AudioSettings } from 'chichi';
 
 class NesInfo {
     stateupdate = true;

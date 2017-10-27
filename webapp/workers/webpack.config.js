@@ -20,15 +20,18 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 // const DashboardPlugin = require('webpack-dashboard/plugin');
 // const resolveNgRoute = require('@angularclass/resolve-angular-routes');
 const WatchIgnorePlugin = require('webpack/lib/WatchIgnorePlugin');
+ const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
 module.exports = {
   entry: {
-    'emulator.worker': 'workers/emulator.webworker.ts'
+    'emulator.worker': './emulator.worker.ts'
   },
   output: {
     path: helper.getRoot('workers'),
     filename: "[name].js",
     sourceMapFilename: '[name].map',
+    library: 'emulator.worker',
+    libraryTarget: 'umd'
   },
   devtool: 'source-map',
   resolve: {
@@ -46,10 +49,7 @@ module.exports = {
         //helper.getRoot('src/app'),
         //helper.getRoot('src/vendor'),
         helper.getRoot('node_modules')
-    ],
-    alias: {
-      'lodash': helper.getRoot('node_modules/lodash/index.js')
-    },
+    ]
 
   },
   module: {
@@ -92,6 +92,7 @@ module.exports = {
     new WatchIgnorePlugin([
        helper.getRoot('src/workers/*.js')
     ]),
+    new UglifyJSPlugin()
   ],
   node: {
     global: true,

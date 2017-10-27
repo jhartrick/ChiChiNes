@@ -1,8 +1,8 @@
 ﻿{
   "compileOnSave": false,
   "compilerOptions": {
-    //"outDir": "../src/assets/",
-    "outFile": "../src/assets/emulator.worker.js",
+    "outDir": "../dist/chichi",
+    //"outFile": "../dist/chichi.js",
     "sourceMap": false,
     "declaration": false,
     "moduleResolution": "node",
@@ -13,10 +13,11 @@
     "noImplicitAny": true,
     "suppressImplicitAnyIndexErrors": true,
     "typeRoots": [
-      "node_modules/@types"
+      "node_modules/@types",
+      "types"
     ],
     "lib": [
-      "webworker",
+      "dom",
       "es2017"
     ]
   }
