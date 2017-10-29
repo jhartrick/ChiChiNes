@@ -1,7 +1,7 @@
 ﻿import { AudioSettings } from './ChiChiTypes'
 
 // shared buffer to get sound out
-export class WavSharer implements ChiChiNES.BeepsBoops.WavSharer {
+export class WavSharer  {
     bufferWasRead: boolean;
     static sample_size = 1;
 
@@ -50,7 +50,7 @@ export class WavSharer implements ChiChiNES.BeepsBoops.WavSharer {
 
 
 //apu classes
-class blip_buffer_t implements ChiChiNES.BeepsBoops.Blip.blip_buffer_t {
+class blip_buffer_t  {
     constructor(public size: number) {
         this.samples = new Array<number>(size);
         this.samples.fill(0);
@@ -64,7 +64,7 @@ class blip_buffer_t implements ChiChiNES.BeepsBoops.Blip.blip_buffer_t {
     arrayLength = 0;
 }
 
-class Blip implements ChiChiNES.BeepsBoops.Blip {
+class Blip  {
     static time_unit = 2097152;
     static buf_extra = 18;
     static phase_count = 32;
@@ -481,7 +481,7 @@ class Blip implements ChiChiNES.BeepsBoops.Blip {
         const outPtr = (this.BlipBuffer.avail + (fixedTime >> Blip.time_bits));
 
         const phase_shift = 16;
-        //const phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((ChiChiNES.BeepsBoops.Blip.phase_count - 1))));
+        //const phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((Blip.phase_count - 1))));
         const phase = (fixedTime >> phase_shift & (Blip.phase_count - 1)) >>> 0;
 
         const inStep = phase; // bl_step[phase];
@@ -547,7 +547,7 @@ class QueuedPort {
 
 }
 
-class DMCChannel implements ChiChiNES.BeepsBoops.DMCChannel {
+class DMCChannel  {
     Length: number;
     DutyCycle: number;
     Period: number;
@@ -559,7 +559,7 @@ class DMCChannel implements ChiChiNES.BeepsBoops.DMCChannel {
     Gain: number;
     SweepComplement: boolean;
 
-    constructor(bleeper: ChiChiNES.BeepsBoops.Blip, chan: number) {
+    constructor(bleeper: Blip, chan: number) {
 
     }
 
@@ -586,7 +586,7 @@ class DMCChannel implements ChiChiNES.BeepsBoops.DMCChannel {
 
 }
 
-class NoiseChannel implements ChiChiNES.BeepsBoops.NoiseChannel {
+class NoiseChannel {
     private _bleeper: any = null;
     private _chan = 0;
     private NoisePeriods = [4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068];
@@ -605,7 +605,7 @@ class NoiseChannel implements ChiChiNES.BeepsBoops.NoiseChannel {
     private _envTimer = 0;
     private _envStart = false;
 
-    constructor(bleeper: ChiChiNES.BeepsBoops.Blip, chan: number) {
+    constructor(bleeper: Blip, chan: number) {
         this._bleeper = bleeper;
         this._chan = chan;
         this._enabled = true;
@@ -768,7 +768,7 @@ class NoiseChannel implements ChiChiNES.BeepsBoops.NoiseChannel {
     }
 }
 
-class TriangleChannel implements ChiChiNES.BeepsBoops.TriangleChannel {
+class TriangleChannel {
     private _bleeper: Blip = null;
     private _chan = 0;
     private LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
@@ -937,7 +937,7 @@ class TriangleChannel implements ChiChiNES.BeepsBoops.TriangleChannel {
 
 }
 
-class SquareChannel implements ChiChiNES.BeepsBoops.SquareChannel {
+class SquareChannel {
     Length: number;
     private _chan = 0;
     private _bleeper: Blip = null;
@@ -1178,7 +1178,7 @@ class SquareChannel implements ChiChiNES.BeepsBoops.SquareChannel {
     }
 }
 
-export class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
+export class ChiChiBopper {
 
     set audioSettings(value: AudioSettings) {
         //this._sampleRate = value.sampleRate;
@@ -1223,7 +1223,7 @@ export class ChiChiBopper implements ChiChiNES.BeepsBoops.Bopper {
     private muted = false;
     private lastFrameHit = 0;
 
-    constructor(private writer: WavSharer) {
+    constructor(public writer: WavSharer) {
         this.RebuildSound();
     }
     get SampleRate(): number {

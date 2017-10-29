@@ -15,6 +15,8 @@
     <EnableTypeScript>true</EnableTypeScript>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">14.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <ToolsVersionPromptShown>0.0</ToolsVersionPromptShown>
+    <TypeScriptToolsVersion>2.3</TypeScriptToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
@@ -25,23 +27,24 @@
     <Content Include="workers\tsconfig.json" />
     <Content Include="workers\tslint.json" />
     <TypeScriptCompile Include="chichi\ChiChi.ts" />
-    <TypeScriptCompile Include="workers\emulator.worker.ts" />
+    <TypeScriptCompile Include="chichi\ChiChiPPU.ts" />
     <TypeScriptCompile Include="chichi\ChiChiMachine.ts" />
     <TypeScriptCompile Include="chichi\ChiChiAudio.ts" />
     <TypeScriptCompile Include="chichi\ChiChiCarts.ts" />
     <TypeScriptCompile Include="chichi\ChiChiControl.ts" />
     <TypeScriptCompile Include="chichi\ChiChiNsfMachine.ts" />
     <TypeScriptCompile Include="chichi\ChiChiTypes.ts" />
-    <TypeScriptCompile Include="chichi\types\ChiChiCore.d.ts" />
-    <TypeScriptCompile Include="chichi\types\ChiChiTypes.d.ts" />
+    <TypeScriptCompile Include="debugger\types\ChiChiCore.d.ts" />
+    <TypeScriptCompile Include="debugger\types\ChiChiTypes.d.ts" />
     <TypeScriptCompile Include="workers\types\ChiChiCore.d.ts" />
     <TypeScriptCompile Include="workers\types\ChiChiTypes.d.ts" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="debugger\types\" />
     <Folder Include="lib\" />
+    <Folder Include="debugger\" />
     <Folder Include="workers" />
     <Folder Include="chichi\" />
-    <Folder Include="chichi\types\" />
     <Folder Include="workers\types\" />
   </ItemGroup>
   <ItemGroup>

@@ -1,10 +1,11 @@
-﻿import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Emulator } from 'app/services/NESService';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Emulator } from '../services/NESService';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 import * as THREE from 'three';
 import { AudioSettings } from 'chichi';
 import { WishBoneControlPad } from '../services/wishbone/wishbone';
+import { ChiChiThreeJSAudio } from '../three/chichi.audio';
 
 @Component({
     selector: 'chichi',
@@ -43,9 +44,6 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasLeft: string = '0px';
     public canvasTop: string = '0px';
 
-    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(1024 * Float32Array.BYTES_PER_ELEMENT);
-    private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
-
     constructor(private nesService: Emulator, private cd: ChangeDetectorRef, private zone: NgZone) {
     }
 
@@ -78,62 +76,12 @@ export class ChiChiComponent implements AfterViewInit {
         
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-        this.listener = new THREE.AudioListener();
-        this.camera.add( this.listener );
-
-        this.sound = new THREE.Audio(this.listener);
-        this.audioCtx = this.sound.context;
         
-        this.audioSource = this.audioCtx.createBufferSource();
-        
-        this.sound.setNodeSource(this.audioSource);
-        this.audioSource.buffer = this.audioCtx.createBuffer(1, 1024, 44100);
-        var scriptNode = this.audioCtx.createScriptProcessor(1024, 1, 1);
+        var x  = new ChiChiThreeJSAudio(this.nesService.wishbone);
 
-        this.audioSource.connect(scriptNode);
-        scriptNode.onaudioprocess = (audioProcessingEvent) => {
-            if (this.nesService.soundEnabled) {
-                // The input buffer is the song we loaded earlier
-                var inputBuffer = audioProcessingEvent.inputBuffer;
-
-                // The output buffer contains the samples that will be modified and played
-                var outputBuffer = audioProcessingEvent.outputBuffer;
-                // Loop through the output channels (in this case there is only one)
-                for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
-                    var inputData = inputBuffer.getChannelData(channel);
-                    let outputData = outputBuffer.getChannelData(channel);
-
-                    // Loop through the 4096 samples
-                    for (var sample = 0; sample < inputBuffer.length; sample++) {
-                        let pos = ((sample / inputBuffer.length) * this.nesAudio.length) | 0;
-                        // make output equal to the same as the input
-                        outputData[sample] = this.nesAudio[pos];
-
-                        // add noise to each output sample
-                        //outputData[sample] += ((Math.random() * 2) - 1) * 0.2;
-                    }
-                }
-            } else {
-                var outputBuffer = audioProcessingEvent.outputBuffer;
-                for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
-                    var outputData = outputBuffer.getChannelData(channel);
-
-                    // Loop through the 4096 samples
-                    for (var sample = 0; sample < outputBuffer.length; sample++) {
-                        outputData[sample] = 0;
-                    }
-                }
-
-            }
-           // this.nesService.clearAudio();
-        }
-
-        scriptNode.connect(this.audioCtx.destination);
-        this.audioSource.loop = true;
-        this.audioSource.start();
-        // this.sound.setLoop(true);
-        // this.sound.play();
-        this.nesService.SetAudioBuffer(this.nesAudio);
+        this.zone.runOutsideAngular(()=>{
+            this.camera.add( x.setupAudio());
+        });
 
         // console.log(scriptNode.bufferSize);
 
@@ -159,25 +107,26 @@ export class ChiChiComponent implements AfterViewInit {
             },
             vertexShader: 
 `
-    varying vec2 v_texCoord;
-    void main()
-    {
-        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-        v_texCoord = uv.st;
-    }
+varying vec2 v_texCoord;
+void main()
+{
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    v_texCoord = uv.st;
+}
 `,
             fragmentShader: 
-`uniform sampler2D myTexture;
+`
+uniform sampler2D myTexture;
 uniform sampler2D myPalette;
 varying vec2 v_texCoord;
- 
 
 void main()	{
   vec2 texCoord = vec2(v_texCoord.s, 1.0 - v_texCoord.t);
   vec4 color = texture2D(myTexture, texCoord);
   vec4 finalColor = texture2D(myPalette,vec2(color.r,0.5));
   gl_FragColor = vec4(finalColor.rgb, 1.0); 
-}`
+}
+`
         });
         this.paltext.needsUpdate = true;
         // var material = new THREE.MeshBasicMaterial({ map: this.text });
@@ -203,17 +152,17 @@ void main()	{
         this.setupScene();
         this.nesService.SetVideoBuffer(this.vbuffer);
         this.nesService.SetCallbackFunction(() => this.renderScene());
-        this.drawFrame();
+        this.zone.runOutsideAngular(() => {
+          this.drawFrame();
+        });
         this.cd.detach();
     }
 
     drawFrame(): void {
-        this.zone.runOutsideAngular(() => {
-            requestAnimationFrame(() => {
-                this.renderer.render(this.scene, this.camera);
-                this.text.needsUpdate = true;
-                this.drawFrame();
-            });
+        requestAnimationFrame(() => {
+            this.renderer.render(this.scene, this.camera);
+            this.text.needsUpdate = true;
+            this.drawFrame();
         });
     }
 
@@ -221,27 +170,7 @@ void main()	{
 
     renderScene(): void
     {
-        
-        // this.audioSource
-        // this.nesService.wavBuffer = this.audioCtx.createBuffer(2, 32, 22050);
-        // if (this.nesService.soundEnabled ) {
-        //    let sound = new THREE.Audio(this.listener);
-        //    //this.soundOver = false; 
-        //    if (this.nesService.fillWavBuffer(sound.context)) {
-        //        sound.setBuffer(this.nesService.wavBuffer);
-        //        //this.audioSource.onended = () => {
-        //        //    console.log('buffer played');
-        //        //    this.soundOver = true;
-        //        //}
-        //        //this.sound.setLoop(false);
-        //        sound.playbackRate = 1.0;//this.nesService.framesPerSecond / 60; 
-        //        sound.play();
-        //        //while (this.sound.isPlaying);
-        //    }
-        // }
-        // debugger;
         this.text.needsUpdate = true;
-        // this.paltext.needsUpdate = true;
     }
 
 }

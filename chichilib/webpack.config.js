@@ -1,7 +1,10 @@
 module.exports = {
-    entry: './chichi/ChiChi.ts',
+    entry: {
+        chichi: './chichi/ChiChi.ts',
+        debugger: './debugger/debug.interface.ts'
+    },
     output: {
-        filename: 'chichi.js',
+        filename: '[name].js',
         library: 'chichi',
         libraryTarget: 'commonjs2'
     },

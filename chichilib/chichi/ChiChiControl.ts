@@ -1,12 +1,12 @@
 ﻿    //input classes
-export class ChiChiInputHandler implements ChiChiNES.InputHandler {
+export class ChiChiInputHandler {
         IsZapper: boolean;
-        ControlPad: ChiChiNES.IControlPad = new ChiChiControlPad();
+        ControlPad = new ChiChiControlPad();
         CurrentByte: number;
         NMIHandler: () => void;
         IRQAsserted: boolean;
         NextEventAt: number;
-        controlPad_NextControlByteSet(sender: any, e: ChiChiNES.ControlByteEventArgs): void {
+        controlPad_NextControlByteSet(sender: any, e: any): void {
             // throw new Error("Method not implemented.");
         }
         GetByte(clock: number, address: number): number {
@@ -24,7 +24,7 @@ export class ChiChiInputHandler implements ChiChiNES.InputHandler {
 
     }
 
-  class ChiChiControlPad implements ChiChiNES.IControlPad {
+  export class ChiChiControlPad {
 
         currentByte: number = 0;
         readNumber: number = 0;

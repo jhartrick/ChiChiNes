@@ -1,7 +1,4 @@
-﻿//import { ChiChiMachine } from './chichi/ChiChi.HWCore';
-//import { RunningStatuses } from './chichi/ChiChiTypes'
-//import { BaseCart } from "./chichi/ChiChiCarts";
-//import { ChiChiNsfMachine, ChiChiNsfCPPU } from "./chichi/ChiChiNfsPlayer";
+declare var Atomics: any;
 import { ChiChiMachine, RunningStatuses } from 'chichi'
 
 class NesInfo {
@@ -35,7 +32,7 @@ export class tendoWrapper {
     framesPerSecond: number = 0;
     interval: any;
     runStatus: RunningStatuses;
-    iops = new Array(16);
+    iops = new Int32Array(16);
     machine: ChiChiMachine;
     cartName: string = 'unk';
 
@@ -44,9 +41,7 @@ export class tendoWrapper {
 
     constructor() {
         this.machine = new ChiChiMachine();
-
     }
-
 
     createMachine() {
           this.machine = new ChiChiMachine();
@@ -55,7 +50,7 @@ export class tendoWrapper {
               // globals.postMessage({ frame: true, fps: framesPerSecond });
           };
           this.ready = true;
-          this.machine.Cpu.FireDebugEvent = () => {
+          this.machine.Cpu.addDebugEvent(() => {
               var info = new NesInfo(); 
               info.debug = {
                   currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
@@ -66,7 +61,7 @@ export class tendoWrapper {
                       SP: 0,
                       SR: 0
                   },
-                  currentPPUStatus: this.machine.Cpu.GetPPUStatus ? this.machine.Cpu.GetPPUStatus() : {},
+                  currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
                   InstructionHistory: {
                       Buffer: this.machine.Cpu.InstructionHistory.slice(0),
                       Index: this.machine.Cpu.InstructionHistoryPointer,
@@ -76,7 +71,7 @@ export class tendoWrapper {
               };
               postMessage(info);
               //this.updateState();
-          };
+          });
           this.machine.Cpu.Debugging = false;
       }
 
@@ -89,7 +84,7 @@ export class tendoWrapper {
         if (this.machine && this.machine.Cart) {
             info.Cpu = {
                 Rams: this.machine.Cpu.Rams,
-                spriteRAM: this.machine.Cpu.spriteRAM
+                spriteRAM: this.machine.Cpu.ppu.spriteRAM
             }
             info.Cart = {
                 //buffers
@@ -103,7 +98,6 @@ export class tendoWrapper {
         postMessage(info);
     }
 
-
     updateState() {
         const machine : ChiChiMachine = this.machine;    
 
@@ -116,10 +110,10 @@ export class tendoWrapper {
             info.Cpu = {
                 //Rams: this.machine.Cpu.Rams,
                 status: this.machine.Cpu.GetStatus(),
-                ppuStatus: this.machine.Cpu.GetPPUStatus(),
-                backgroundPatternTableIndex: this.machine.Cpu.backgroundPatternTableIndex,
-                _PPUControlByte0: this.machine.Cpu._PPUControlByte0,
-                _PPUControlByte1:  this.machine.Cpu._PPUControlByte1
+                ppuStatus: this.machine.Cpu.ppu.GetPPUStatus(),
+                backgroundPatternTableIndex: this.machine.Cpu.ppu.backgroundPatternTableIndex,
+                _PPUControlByte0: this.machine.Cpu.ppu._PPUControlByte0,
+                _PPUControlByte1:  this.machine.Cpu.ppu._PPUControlByte1
             }
             info.cartInfo = {
                 mapperId: this.machine.Cart.MapperID,
@@ -162,7 +156,7 @@ export class tendoWrapper {
                         SP: 0,
                         SR: 0
                     },
-                    currentPPUStatus: this.machine.Cpu.GetPPUStatus ? this.machine.Cpu.GetPPUStatus() : {},
+                    currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
                     InstructionHistory: {
                         Buffer: this.machine.Cpu.InstructionHistory.slice(0),
                         Index: this.machine.Cpu.InstructionHistoryPointer,
@@ -183,23 +177,28 @@ export class tendoWrapper {
         this.machine.PowerOff();
         this.runStatus = this.machine.RunState;
     }
-
+    audioBytesWritten : number = 0;
     private flushAudio() {
     //  debugger;
           const len = this.machine.WaveForms.SharedBufferLength / 2;
           for (let i = 0; i < len; ++i) {
-              if (this.sharedAudioBufferPos + i > this.sharedAudioBuffer.length) {
-                  this.sharedAudioBufferPos = 0;
-                  this.iops[0] = 0;
-                  //Atomics.wait(this.iops, 0, 0);
-                  return;
-              }
-              this.sharedAudioBuffer[this.sharedAudioBufferPos + i] = this.machine.WaveForms.SharedBuffer[i];
-          }
-          this.sharedAudioBufferPos += len;
 
 
-      }
+            this.sharedAudioBufferPos++;
+            if (this.sharedAudioBufferPos >= this.sharedAudioBuffer.length) {
+                this.sharedAudioBufferPos = 0;
+            }
+            this.sharedAudioBuffer[this.sharedAudioBufferPos ] = this.machine.WaveForms.SharedBuffer[i];
+            
+            this.audioBytesWritten++;
+        }
+        while (this.audioBytesWritten >= this.sharedAudioBuffer.length /2) {
+            <any>Atomics.store(this.iops, 3, this.audioBytesWritten);
+            <any>Atomics.wait(this.iops, 3, this.audioBytesWritten);
+            this.audioBytesWritten = <any>Atomics.load(this.iops, 3);
+        }
+
+    }
 
     private runInnerLoop() {
             this.machine.RunFrame();
@@ -215,21 +214,20 @@ export class tendoWrapper {
                 this.framesRendered = 0; this.startTime = new Date().getTime();
                 this.iops[1] = this.framesPerSecond;
 
-                if (this.framesPerSecond < 60 && this.runTimeout > 0) {
-                    this.runTimeout--;
-                } else if (this.runTimeout < 50) {
-                    this.runTimeout++;
-                }
+                // if (this.framesPerSecond < 60 && this.runTimeout > 0) {
+                //     this.runTimeout--;
+                // } else if (this.runTimeout < 50) {
+                //     this.runTimeout++;
+                // }
             }
-            if (this.iops[0] === 0) {
-                this.runStatus = RunningStatuses.Paused;
-            }
+
         //this.runInnerLoop();
         //setTimeout(() => { this.runInnerLoop(); }, this.runTimeout); 
 
     }
 
     run(reset: boolean) {
+        this.iops[3] = 12312312;
           var framesRendered = 0;
           const machine = this.machine;
 
@@ -240,8 +238,11 @@ export class tendoWrapper {
           this.startTime = new Date().getTime();
           clearInterval(this.interval);
           this.interval = setInterval(() => {
-              this.runInnerLoop();
-          },16);
+            this.iops[0]=1;
+            while(this.iops[0]==1) {  
+                this.runInnerLoop();
+            }
+          },1);
 
 
           this.runStatus = machine.RunState;// runStatuses.Running;
@@ -280,7 +281,7 @@ export class tendoWrapper {
         switch (event.data.command) {
             case 'create':
                 this.createMachine();
-                this.machine.Cpu.byteOutBuffer = event.data.vbuffer;
+                this.machine.Cpu.ppu.byteOutBuffer = event.data.vbuffer;
                 this.sharedAudioBuffer = event.data.abuffer;
                 this.sharedAudioBufferPos = 0;
                 this.iops = event.data.iops;

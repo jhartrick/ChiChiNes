@@ -34,7 +34,7 @@
     </div>
 
   </mat-expansion-panel>
-<mat-button-toggle value="nesService.soundEnabled" (change)="nesService.soundEnabled = !nesService.soundEnabled" [disabled]="!nesService.canStart">
+<mat-button-toggle value="wishbone.EnableSound" (change)="wishbone.EnableSound = !wishbone.EnableSound" [disabled]="!nesService.canStart">
   {{ nesService.soundEnabled ? 'sound on' : 'sound off' }}
 </mat-button-toggle>
 

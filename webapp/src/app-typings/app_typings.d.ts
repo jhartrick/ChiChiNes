@@ -8,5 +8,4 @@ interface FileReaderEvent extends Event {
     getMessage(): string;
 }
 
-
 declare var Atomics: any;

@@ -27,7 +27,7 @@ module.exports = {
     'emulator.worker': './emulator.worker.ts'
   },
   output: {
-    path: helper.getRoot('workers'),
+    path: helper.getRoot('src/assets'),
     filename: "[name].js",
     sourceMapFilename: '[name].map',
     library: 'emulator.worker',
@@ -91,8 +91,7 @@ module.exports = {
   plugins: [
     new WatchIgnorePlugin([
        helper.getRoot('src/workers/*.js')
-    ]),
-    new UglifyJSPlugin()
+    ])
   ],
   node: {
     global: true,

@@ -40,7 +40,7 @@ export class ControlPanelComponent {
     set enableSquare0(value: boolean) {
         this.audioSettings.enableSquare0 = value;
         this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-        this.wishbone.RequestSync();
+        //this.wishbone.RequestSync();
     }
 
     get enableSquare1(): boolean {
@@ -50,7 +50,7 @@ export class ControlPanelComponent {
     set enableSquare1(value: boolean) {
         this.audioSettings.enableSquare1 = value;
         this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-        this.wishbone.RequestSync();
+       // this.wishbone.RequestSync();
     }
 
     get enableTriangle(): boolean {
@@ -60,7 +60,7 @@ export class ControlPanelComponent {
     set enableTriangle(value: boolean) {
         this.audioSettings.enableTriangle = value;
         this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-        this.wishbone.RequestSync();
+        //this.wishbone.RequestSync();
     }
 
     get enableNoise(): boolean {
@@ -70,7 +70,7 @@ export class ControlPanelComponent {
     set enableNoise(value: boolean) {
         this.audioSettings.enableNoise = value;
         this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-        this.wishbone.RequestSync();
+       // this.wishbone.RequestSync();
     }
     
     constructor(public nesService: Emulator, cd: ChangeDetectorRef, private romLoader: RomLoader, private ngZone : NgZone) {

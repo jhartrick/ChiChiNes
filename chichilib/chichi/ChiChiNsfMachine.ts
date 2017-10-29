@@ -1,12 +1,16 @@
 ﻿import { ChiChiCPPU, ChiChiMachine } from "./ChiChiMachine";
+import { ChiChiPPU } from "./ChiChiPPU";
 
 export class ChiChiNsfMachine extends ChiChiMachine
 {
 
     Cpu: ChiChiNsfCPPU;
+    ppu: ChiChiPPU;
     constructor() {
         super();
-        this.Cpu = new ChiChiNsfCPPU(this.SoundBopper);
+        this.ppu = new ChiChiPPU();
+        this.Cpu = new ChiChiNsfCPPU(this.SoundBopper, this.ppu);
+        this.Cpu.ppu = this.ppu;
         this.Cpu.frameFinished = () => { this.FrameFinished(); };
     }
 
@@ -17,6 +21,8 @@ export class ChiChiNsfMachine extends ChiChiMachine
 
 export class ChiChiNsfCPPU extends ChiChiCPPU
 {
+
+
     copyright: string;
     artist: string;
     songName: string;

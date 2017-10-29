@@ -8,16 +8,19 @@ import { MatPaginator } from '@angular/material';
     templateUrl: './chichines.instructionhistory.component.html',
     styleUrls: ['./chichines.instructionhistory.component.css']
 })
+
 export class InstructionHistoryComponent {
     @ViewChild(MatPaginator) paginator: MatPaginator;
+
     public instructions: string[];
+
     get dataLength(): number {
         return this.nes.debugger.lastInstructions.length | 0;
     }
+
     public dbgDataSource: DebugInstructionDataSource;
 
     constructor(public nes: Emulator) { }
-
 
     ngOnInit(): void {
         //   debugger;

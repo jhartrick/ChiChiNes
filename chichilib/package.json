@@ -1,6 +1,6 @@
 {
   "name": "chichi",
-  "version": "0.0.43",
+  "version": "0.0.44",
   "license": "MIT",
   "scripts": {
     "start": "webpack-dev-server --open --config webpack.config.js",
@@ -8,10 +8,13 @@
   },
   "private": true,
   "main": "chichi.js",
-  "types":  "lib/chichi.d.ts",
+  "types": "lib/ChiChi.d.ts",
   "dependencies": {
     "ts-loader": "^3.0.5"
   },
-  "files": [ "chichi.js", "lib" ],
+  "files": [
+    "chichi.js",
+    "lib"
+  ],
   "devDependencies": {}
 }

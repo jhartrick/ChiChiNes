@@ -1,4 +1,13 @@
-﻿export class BaseCart  {
+﻿import { ChiChiPPU, ChiChiCPPU } from "./ChiChi";
+
+export enum NameTableMirroring {
+    OneScreen = 0,
+    Vertical = 1,
+    Horizontal = 2,
+    FourScreen = 3
+}
+
+export class BaseCart  {
     // compatible with .net array.copy method
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
         if (!dest) {
@@ -89,13 +98,12 @@
     Debugging: boolean;
     DebugEvents: any = null;
     ROMHashFunction: (prg: any, chr: any) => string;
-    Whizzler: ChiChiNES.CPU2A03;
-    IrqRaised: boolean;
+    Whizzler: ChiChiPPU;
     CheckSum: string;
-    CPU: ChiChiNES.CPU2A03;
+    CPU: ChiChiCPPU;
     SRAM: any;
     CartName: string;
-    NMIHandler: () => {};
+    NMIHandler: () => void;
     //IRQAsserted: boolean;
     //NextEventAt: number;
     //PpuBankStarts: any;
@@ -406,6 +414,7 @@
 
 }
 
+
 export class NesCart extends BaseCart {
    // prevBSSrc = new Uint8Array(8);
 
@@ -416,13 +425,12 @@ export class NesCart extends BaseCart {
     //Whizzler: ChiChiNES.CPU2A03;
     IrqRaised: boolean;
     CheckSum: string;
-    CPU: ChiChiNES.CPU2A03;
     SRAM: any;
     CartName: string;
     NumberOfPrgRoms: number;
     NumberOfChrRoms: number;
     //MapperID: number;
-    Mirroring: ChiChiNES.NameTableMirroring;
+    Mirroring: NameTableMirroring;
     IRQAsserted: boolean;
     NextEventAt: number;
     //PpuBankStarts: any;
@@ -717,7 +725,7 @@ export class MMC1Cart extends BaseCart  {
     SetMMC1ChrBanking(clock: number) {
         //	bit 4 - sets 8KB or 4KB CHRROM switching mode
         // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
-        this.CPU.DrawTo(clock);
+        this.Whizzler.DrawTo(clock);
         if ((this._registers[0] & 16) === 16) {
             this.CopyBanks(0, this._registers[1], 1);
             this.CopyBanks(1, this._registers[2], 1);
@@ -728,7 +736,7 @@ export class MMC1Cart extends BaseCart  {
         }
         this.bankSwitchesChanged = true;
 
-        this.CPU.UpdatePixelInfo();
+        this.Whizzler.UpdatePixelInfo();
     }
 
     SetMMC1PrgBanking() {
@@ -762,7 +770,7 @@ export class MMC1Cart extends BaseCart  {
     SetMMC1Mirroring(clock: number) {
         //bit 1 - toggles between H/V and "one-screen" mirroring
         //0 = one-screen mirroring, 1 = H/V mirroring
-        this.CPU.DrawTo(clock);
+        this.Whizzler.DrawTo(clock);
         switch (this._registers[0] & 3) {
             case 0:
                 this.oneScreenOffset = 0;
@@ -780,7 +788,179 @@ export class MMC1Cart extends BaseCart  {
                 break;
         }
         this.bankSwitchesChanged = true;
-        this.CPU.UpdatePixelInfo();
+        this.Whizzler.UpdatePixelInfo();
+    }
+
+
+}
+
+export class MMC2Cart extends BaseCart {
+
+    lastClock: number = 0;
+    sequence = 0;
+    accumulator = 0;
+    bank_select = 0;
+    _registers = new Array<number>(4);
+    lastwriteAddress = 0;
+
+    InitializeCart() {
+
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 4);
+        }
+        this._registers[0] = 12;
+        this._registers[1] = 0;
+        this._registers[2] = 0;
+        this._registers[3] = 0;
+
+        this.SetupBankStarts(0, 1, ((this.prgRomCount * 2 - 2) | 0), ((this.prgRomCount * 2 - 1) | 0));
+
+        this.sequence = 0;
+        this.accumulator = 0;
+    }
+
+    MaskBankAddress$1(bank: number) {
+        if (bank >= (this.prgRomCount << 1)) {
+            var i;
+            i = 255;
+            while ((bank & i) >= this.prgRomCount * 2) {
+
+                i = (i >> 1) & 255;
+            }
+
+            return (bank & i);
+        } else {
+            return bank;
+        }
+    }
+
+    CopyBanks(dest: number, src: number, numberOf4kBanks: number) {
+        if (this.chrRomCount > 0) {
+            var oneKdest = dest * 4;
+            var oneKsrc = src * 4;
+            //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+            //  setup ppuBankStarts in 0x400 block chunks 
+            for (var i = 0; i < (numberOf4kBanks << 2); i = (i + 1) | 0) {
+                this.ppuBankStarts[((oneKdest + i) | 0)] = (((oneKsrc + i) | 0)) << 10;
+            }
+
+            //Array.Copy(chrRom, src * 0x1000, whizzler.cartCopyVidRAM, dest * 0x1000, numberOf4kBanks * 0x1000);
+        }
+        this.UpdateBankStartCache();
+    }
+
+    SetByte(clock: number, address: number, val: number) {
+        // if write is to a different register, reset
+        this.lastClock = clock;
+        switch (address & 61440) {
+            case 24576:
+            case 28672:
+                this.prgRomBank6[address & 8191] = val & 255;
+                break;
+            default:
+                this.lastwriteAddress = address;
+                if ((val & 128) === 128) {
+                    this._registers[0] = this._registers[0] | 12;
+                    this.accumulator = 0; // _registers[(address / 0x2000) & 3];
+                    this.sequence = 0;
+                } else {
+                    if ((val & 1) === 1) {
+                        this.accumulator = this.accumulator | (1 << this.sequence);
+                    }
+                    this.sequence = (this.sequence + 1) | 0;
+                }
+                if (this.sequence === 5) {
+                    var regnum = (address & 32767) >> 13;
+                    this._registers[(address & 32767) >> 13] = this.accumulator;
+                    this.sequence = 0;
+                    this.accumulator = 0;
+
+                    switch (regnum) {
+                        case 0:
+                            this.SetMMC2Mirroring(clock);
+                            break;
+                        case 1:
+                        case 2:
+                            this.SetMMC2ChrBanking(clock);
+                            break;
+                        case 3:
+                            this.SetMMC2PrgBanking();
+                            break;
+                    }
+
+                }
+                break;
+        }
+
+    }
+
+    SetMMC2ChrBanking(clock: number) {
+        //	bit 4 - sets 8KB or 4KB CHRROM switching mode
+        // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
+        this.Whizzler.DrawTo(clock);
+        if ((this._registers[0] & 16) === 16) {
+            this.CopyBanks(0, this._registers[1], 1);
+            this.CopyBanks(1, this._registers[2], 1);
+        } else {
+            //CopyBanks(0, _registers[1], 2);
+            this.CopyBanks(0, this._registers[1], 1);
+            this.CopyBanks(1, ((this._registers[1] + 1) | 0), 1);
+        }
+        this.bankSwitchesChanged = true;
+
+        this.Whizzler.UpdatePixelInfo();
+    }
+
+    SetMMC2PrgBanking() {
+        let reg = 0;
+        if (this.prgRomCount === 32) {
+            this.bank_select = (this._registers[1] & 16) << 1;
+
+        } else {
+            this.bank_select = 0;
+        }
+
+
+        if ((this._registers[0] & 8) === 0) {
+            reg = (4 * ((this._registers[3] >> 1) & 15) + this.bank_select) | 0;
+            this.SetupBankStarts(reg, ((reg + 1) | 0), ((reg + 2) | 0), ((reg + 3) | 0));
+        } else {
+            reg = (2 * (this._registers[3]) + this.bank_select) | 0;
+            //bit 2 - toggles between low PRGROM area switching and high
+            //PRGROM area switching
+            //0 = high PRGROM switching, 1 = low PRGROM switching
+            if ((this._registers[0] & 4) === 4) {
+                // select 16k bank in register 3 (setupbankstarts switches 8k banks)
+                this.SetupBankStarts(reg, ((reg + 1) | 0), (((this.prgRomCount << 1) - 2) | 0), (((this.prgRomCount << 1) - 1) | 0));
+                //SetupBanks(reg8, reg8 + 1, 0xFE, 0xFF);
+            } else {
+                this.SetupBankStarts(0, 1, reg, ((reg + 1) | 0));
+            }
+        }
+    }
+
+    SetMMC2Mirroring(clock: number) {
+        //bit 1 - toggles between H/V and "one-screen" mirroring
+        //0 = one-screen mirroring, 1 = H/V mirroring
+        this.Whizzler.DrawTo(clock);
+        switch (this._registers[0] & 3) {
+            case 0:
+                this.oneScreenOffset = 0;
+                this.Mirror(clock, 0);
+                break;
+            case 1:
+                this.oneScreenOffset = 1024;
+                this.Mirror(clock, 0);
+                break;
+            case 2:
+                this.Mirror(clock, 1); // vertical
+                break;
+            case 3:
+                this.Mirror(clock, 2); // horizontal
+                break;
+        }
+        this.bankSwitchesChanged = true;
+        this.Whizzler.UpdatePixelInfo();
     }
 
 

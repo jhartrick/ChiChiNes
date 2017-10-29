@@ -20,7 +20,6 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <ItemGroup>
-    <Compile Include="src\assets\emulator.worker.js" />
     <Compile Include="workers\helper.js" />
     <Compile Include="workers\webpack.config.js" />
     <Compile Include="src\assets\emulator.worker.bootstrap.js" />
@@ -32,6 +31,7 @@
     <Content Include="src\app\chichines.instructionhistory\chichines.instructionhistory.component.html" />
     <Content Include="src\app\chichines.memviewer\chichines.memviewer.component.css" />
     <Content Include="src\app\chichines.memviewer\chichines.memviewer.component.html" />
+    <Content Include="src\app\three\chichi.audio.ts" />
     <Content Include="src\app\controlpanel\controlpanel.component.css" />
     <Content Include="src\app\controlpanel\controlpanel.component.html" />
     <Content Include="src\app\debugoutput\debugoutput.component.css" />
@@ -108,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin" />
+    <Folder Include="src\app\three\" />
     <Folder Include="workers\config\" />
     <Folder Include="dist" />
     <Folder Include="dist\out-tsc" />

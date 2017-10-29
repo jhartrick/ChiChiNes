@@ -1,11 +1,11 @@
-﻿import { Injectable, EventEmitter } from '@angular/core';
+import { Injectable, EventEmitter } from '@angular/core';
 import { Debugger, DecodedInstruction, DebugEventInfo } from './debug.interface'; 
 import { AngControlPad } from './chichines.service.controlpad'; 
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import * as JSZip from 'jszip';
 import { WishboneMachine } from "./wishbone/wishbone";
-import { ChiChiCPPU, AudioSettings } from 'chichi';
+import { ChiChiCPPU, AudioSettings, ChiChiPPU } from 'chichi';
 
 class NesInfo {
     stateupdate = true;
@@ -55,10 +55,10 @@ export class Tiler {
 
     DoodleSprite(spritenum: number, outbuf: Uint8ClampedArray): void
     {
-        const patternTable = this.nes.Cpu.SpritePatternTableIndex;
-        const sprite = this.nes.Cpu.unpackedSprites[spritenum];
+        const patternTable = this.nes.ppu.SpritePatternTableIndex;
+        const sprite = this.nes.ppu.unpackedSprites[spritenum];
         const doodle1 = this.nes.tileDoodler.GetSprite(patternTable, sprite.TileIndex, sprite.AttributeByte, sprite.FlipX, sprite.FlipY);
-        const pal = ChiChiCPPU.pal;
+        const pal = ChiChiPPU.pal;
         for (let i = 0; i <= doodle1.length; ++i) {
             const color = pal[doodle1[i]];
             outbuf[i * 4] = (color >> 0) & 0xFF;
@@ -72,7 +72,7 @@ export class Tiler {
    {
        //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
        const doodle1 = this.nes.tileDoodler.DoodleNameTable(nametable);
-       const pal = ChiChiCPPU.pal;
+       const pal = ChiChiPPU.pal;
 
        for (let i = 0; i <= doodle1.length; ++i) {
            const color = pal[doodle1[i]];
@@ -170,20 +170,7 @@ export class Emulator {
    // private ready: boolean = false;
 
     private callback: () => void;
-    private _soundEnabled = false;
 
-    public get soundEnabled() {
-        return this._soundEnabled;
-    }
-    public set soundEnabled(value: boolean) {
-        this._soundEnabled = value;
-        if (this._soundEnabled) {
-            this.wishbone.postNesMessage({ command: "unmute" });
-        } else {
-            this.wishbone.postNesMessage({ command: "mute" });
-        }
-
-    }
 
     public debugger: Debugger ;
 
@@ -225,7 +212,7 @@ export class Emulator {
 
     SetVideoBuffer(array: Uint8Array): void {
         //this.vbuffer = array;
-        this.wishbone.Cpu.byteOutBuffer = array;
+        this.wishbone.ppu.byteOutBuffer = array;
         //this.machine.PPU.ByteOutBuffer = array;
     }
 
