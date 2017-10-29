@@ -769,9 +769,26 @@ class NoiseChannel {
 }
 
 class TriangleChannel {
-    private _bleeper: Blip = null;
+    private _bleeper: Blip;
     private _chan = 0;
-    private LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+    
+    private LengthCounts = new Uint8Array([
+        0x0A,0xFE,
+        0x14,0x02,
+        0x28,0x04,
+        0x50,0x06,
+        0xA0,0x08,
+        0x3C,0x0A,
+        0x0E,0x0C,
+        0x1A,0x0E,
+        0x0C,0x10,
+        0x18,0x12,
+        0x30,0x14,
+        0x60,0x16,
+        0xC0,0x18,
+        0x48,0x1A,
+        0x10,0x1C,
+        0x20,0x1E]);
     private _length = 0;
     private _period = 0;
     private _time = 0;
@@ -862,21 +879,21 @@ class TriangleChannel {
 
         switch (register) {
             case 0:
-                this._looping = (data & 128) === 128;
-                this._linVal = data & 127;
+                this._looping = (data & 0x80) === 0x80;
+                this._linVal = data & 0x7F;
                 break;
             case 1:
                 break;
             case 2:
-                this._period &= 1792;
+                this._period &= 0x700;
                 this._period |= data;
                 break;
             case 3:
-                this._period &= 255;
+                this._period &= 0xFF;
                 this._period |= (data & 7) << 8;
                 // setup lengthhave
                 if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 31];
+                    this._length = this.LengthCounts[(data >> 3) & 0x1f];
                 }
                 this._linStart = true;
                 break;
@@ -941,7 +958,26 @@ class SquareChannel {
     Length: number;
     private _chan = 0;
     private _bleeper: Blip = null;
-    private LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+    private LengthCounts = new Uint8Array(
+        [
+            0x0A,0xFE,
+	        0x14,0x02,
+	        0x28,0x04,
+	        0x50,0x06,
+	        0xA0,0x08,
+	        0x3C,0x0A,
+	        0x0E,0x0C,
+	        0x1A,0x0E,
+
+	        0x0C,0x10,
+	        0x18,0x12,
+	        0x30,0x14,
+	        0x60,0x16,
+	        0xC0,0x18,
+	        0x48,0x1A,
+	        0x10,0x1C,
+	        0x20,0x1E
+        ]);
     private _dutyCycle = 0;
     private _length = 0;
     private _timer = 0;
@@ -1053,33 +1089,33 @@ class SquareChannel {
     WriteRegister(register: number, data: number, time: number): void {
         switch (register) {
             case 0:
-                this._envConstantVolume = (data & 16) === 16;
+                this._envConstantVolume = (data & 0x10) === 0x10;
                 this._volume = data & 15;
-                this._dutyCycle = this.doodies[(data >> 6) & 3];
-                this._looping = (data & 32) === 32;
+                this._dutyCycle = this.doodies[(data >> 6) & 0x3];
+                this._looping = (data & 0x20) === 0x20;
                 this._sweepInvalid = false;
                 break;
             case 1:
                 this._sweepShift = data & 7;
                 this._sweepNegateFlag = (data & 8) === 8;
                 this._sweepDivider = (data >> 4) & 7;
-                this._sweepEnabled = (data & 128) === 128;
+                this._sweepEnabled = (data & 0x80) === 0x80;
                 this._startSweep = true;
                 this._sweepInvalid = false;
                 break;
             case 2:
-                this._timer &= 1792;
+                this._timer &= 0x700;
                 this._timer |= data;
                 this._rawTimer = this._timer;
                 break;
             case 3:
-                this._timer &= 255;
+                this._timer &= 0xFF;
                 this._timer |= (data & 7) << 8;
                 this._rawTimer = this._timer;
                 this._phase = 0;
                 // setup length
                 if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 31];
+                    this._length = this.LengthCounts[(data >> 3) & 0x1f];
                 }
                 this._envStart = true;
                 break;
@@ -1093,7 +1129,7 @@ class SquareChannel {
     }
 
     Run(end_time: number): void {
-        var period = this._sweepEnabled ? ((this._timer + 1) & 2047) << 1 : ((this._rawTimer + 1) & 2047) << 1;
+        var period = this._sweepEnabled ? ((this._timer + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
 
         if (period === 0) {
             this._time = end_time;

@@ -8,7 +8,7 @@ export class ChiChiThreeJSAudio
 	private wishbone: WishboneMachine;
 	
 	bufferBlockSize: number = 8192;
-	bufferBlockCount: number = 2;
+	bufferBlockCount: number = 4;
 	bufferOverrunBlocks: number = 0;
 	
 	nesBufferWritePos: number= 0;
@@ -36,7 +36,7 @@ export class ChiChiThreeJSAudio
 			
 		let lastReadPos = 0;
 		sound.setNodeSource(audioSource);
-		audioSource.buffer = audioCtx.createBuffer(1, 4096, 44100);
+		audioSource.buffer = audioCtx.createBuffer(1, 8192, 44100);
 		const scriptNode = audioCtx.createScriptProcessor(2048, 1, 1);
 
 		audioSource.connect(scriptNode);
@@ -54,10 +54,7 @@ export class ChiChiThreeJSAudio
 						lastReadPos= 0;
 					}
 					nesBytesAvailable--;
-					if (nesBytesAvailable < 0) {
-						//console.log ('audio overrun')
-						nesBytesAvailable = 0;
-					}
+
 					// this.wishbone.nesAudioDataAvailable = nesBytesAvailable;
 					
 				}
@@ -71,14 +68,15 @@ export class ChiChiThreeJSAudio
 						lastReadPos= 0;
 					}
 					nesBytesAvailable--;
-					if (nesBytesAvailable < 0) {
-						//console.log ('audio overrun')
-						nesBytesAvailable = 0;
-					}
+
 					// this.wishbone.nesAudioDataAvailable = nesBytesAvailable;
 					
 				}
 			
+			}
+			if (nesBytesAvailable < 0) {
+				//console.log ('audio overrun')
+				nesBytesAvailable = 0;
 			}
 			this.wishbone.nesAudioDataAvailable = nesBytesAvailable;
 			

@@ -112,7 +112,7 @@ export class WishboneMachine  {
     tileDoodler: TileDoodler;
     private worker: Worker;
 
-    
+    readonly NES_GAME_LOOP_CONTROL = 0;
     readonly NES_AUDIO_AVAILABLE = 3;
     
     private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT);
@@ -174,6 +174,9 @@ export class WishboneMachine  {
     postNesMessage(message: any) {
         //this.oldOp = this.nesInterop[0] ;
         //this.nesInterop[0] = 0;
+        <any>Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL , 0);
+        <any>Atomics.wake(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 9999);
+
         this.worker.postMessage(message);
     }
 
@@ -189,12 +192,10 @@ export class WishboneMachine  {
     RunFrame() {
     }
 
-    RequestSync(bytesAvailable: number) {
+    RequestSync() {
         //case 'audiosettings':
         // this.machine.SoundBopper.audioSettings = event.data.settings;
-        <any>Atomics.store(this.nesInterop, this.NES_AUDIO_AVAILABLE , bytesAvailable);
-        <any>Atomics.wake(this.nesInterop, this.NES_AUDIO_AVAILABLE, 9999);
-        //this.postNesMessage({ command: 'audiosettings', settings: this.SoundBopper.audioSettings });
+        this.postNesMessage({ command: 'audiosettings', settings: this.SoundBopper.audioSettings });
     }
 
 
@@ -240,8 +241,8 @@ export class WishboneMachine  {
 
             }
         }
-
-        this.SoundBopper.audioSettings = data.sound.settings;
+        if (data.sound)
+            this.SoundBopper.audioSettings = data.sound.settings;
 
         if (data.debug && data.debug.InstructionHistory) {
             this.Cpu._instructionHistory = data.debug.InstructionHistory.Buffer;
