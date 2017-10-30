@@ -8,7 +8,7 @@ export class WavSharer  {
 
     Locker: any = {};
     NESTooFast: boolean = false;
-    Frequency: number = 44100;
+    Frequency: number = 48000;
     SharedBuffer: any;
     SharedBufferLength: number = 8192;
     BufferAvailable: boolean = true;
@@ -1251,7 +1251,7 @@ export class ChiChiBopper {
     private master_vol = 4369;
     private static clock_rate = 1789772.727;
     private registers = new QueuedPort();
-    private _sampleRate = 44100;
+    private _sampleRate = 48000;
     private square0Gain = 873;
     private square1Gain = 873;
     private triangleGain = 1004;

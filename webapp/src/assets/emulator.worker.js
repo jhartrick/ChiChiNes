@@ -207,10 +207,12 @@ var tendoWrapper = (function () {
             };
         }
         if (machine) {
-            info.sound = {
-                soundEnabled: machine.EnableSound,
-                settings: machine.SoundBopper.audioSettings
-            };
+            if (machine.SoundBopper && machine.SoundBopper.audioSettings) {
+                info.sound = {
+                    soundEnabled: machine.EnableSound,
+                    settings: machine.SoundBopper.audioSettings
+                };
+            }
             if (this.machine.Cpu.Debugging) {
                 info.debug = {
                     currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {

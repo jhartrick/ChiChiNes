@@ -4,11 +4,7 @@ import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { TileDoodler } from './wishbone.tiledoodler';
 import { WishboneCart } from './wishbone.cart';
-
-class WishBopper  extends ChiChiBopper {
-
-
-}
+import { WishBopper } from './wishbone.audio';
 
 export class WishBoneControlPad {
     constructor(private machine: WishboneMachine) {
@@ -120,9 +116,8 @@ export class WishboneMachine  {
 
 
     constructor() {
-        const wavSharer = new WavSharer();
-        this.SoundBopper = new WishBopper(wavSharer);
-        this.WaveForms = wavSharer;
+        this.SoundBopper = new WishBopper(this);
+        this.WaveForms = this.SoundBopper.writer;
         this.ppu = new WishbonePPU();
         this.Cpu = new WishboneCPPU(this.SoundBopper, this.ppu);
         this.ppu.cpu = this.Cpu;
@@ -275,7 +270,7 @@ export class WishboneMachine  {
     private _soundEnabled = false;
     
     public get EnableSound() {
-        return this._soundEnabled;
+        return this.IsRunning && this._soundEnabled;
     }
     public set EnableSound(value: boolean) {
         this._soundEnabled = value;
@@ -288,7 +283,9 @@ export class WishboneMachine  {
     }
 
     FrameCount: number;
-    IsRunning: boolean;
+    get IsRunning(): boolean {
+        return this.nesInterop[this.NES_GAME_LOOP_CONTROL] > 0;
+    }
     PadOne: ChiChiNES.IControlPad;
     PadTwo: ChiChiNES.IControlPad;
     SRAMReader: (RomID: string) => any;
@@ -324,7 +321,7 @@ export class WishboneMachine  {
         this.Cart.realCart.Whizzler = this.ppu;
         this.Cart.CartName = cartName;
 
-        this.tileDoodler = new TileDoodler(this.Cpu);
+        this.tileDoodler = new TileDoodler(this.ppu);
         this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
         //        this.machine.LoadCart(rom);
     }

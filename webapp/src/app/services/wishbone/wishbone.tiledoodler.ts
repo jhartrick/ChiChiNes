@@ -1,4 +1,5 @@
 ﻿import { ChiChiCPPU } from "chichi";
+import { WishbonePPU } from "./wishbone";
 
 export class TileDoodler {
     static powersOfTwo = [1, 2, 4, 8, 6, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192];
@@ -7,7 +8,7 @@ export class TileDoodler {
     XOffset = 0;
     YOffset = 0;
 
-    constructor(private ppu: any) {
+    constructor(private ppu: WishbonePPU) {
         this.currentPatternTableEntries = new Array<Array<Array<Uint8Array>>>(2);
         for (let pt = 0; pt < 2; pt++) {
             this.currentPatternTableEntries[pt] = new Array<Array<Uint8Array>>(32);
@@ -177,22 +178,24 @@ export class TileDoodler {
     //                 }
     //             }
     //         },
-        DrawRect (newData : any, width: number, height: number, xPos: number, yPos: number) {
 
-            for (let j = 0; j < height; j = (j + 1) | 0) {
-                for (let i = 0; i < width; i = (i + 1) | 0) {
+    // DrawRect (newData : any, width: number, height: number, xPos: number, yPos: number) {
 
-                    const xPosition = (((xPos + 8) | 0) - i) | 0;
-                    const yPosition = (yPos + j) | 0;
+        //     for (let j = 0; j < height; j = (j + 1) | 0) {
+        //         for (let i = 0; i < width; i = (i + 1) | 0) {
 
-                    if (xPosition >= 256 || yPosition >= 240) {
-                        return;
-                    }
-                    this.ppu.CurrentFrame[((yPosition * 256) + xPosition)] = newData[(j * width) + i];
-                }
-            }
-        }
-    //         MergeRect: function (newData, width, height, xPos, yPos, inFront) {
+        //             const xPosition = (((xPos + 8) | 0) - i) | 0;
+        //             const yPosition = (yPos + j) | 0;
+
+        //             if (xPosition >= 256 || yPosition >= 240) {
+        //                 return;
+        //             }
+        //             this.ppu.CurrentFrame[((yPosition * 256) + xPosition)] = newData[(j * width) + i];
+        //         }
+        //     }
+        // }
+
+        //         MergeRect: function (newData, width, height, xPos, yPos, inFront) {
     //             var $t;
 
     //             if (inFront) {
@@ -234,31 +237,31 @@ export class TileDoodler {
     //             }
     //         },
 
-        DrawAllTiles () {
-            if (this.YOffset > 256) {
-                this.YOffset = this.YOffset & 255;
-            }
-            if (this.XOffset > 256) {
-                this.XOffset = this.XOffset & 255;
-            }
+        // DrawAllTiles () {
+        //     if (this.YOffset > 256) {
+        //         this.YOffset = this.YOffset & 255;
+        //     }
+        //     if (this.XOffset > 256) {
+        //         this.XOffset = this.XOffset & 255;
+        //     }
 
-            const NameTable = 8192 + (1024 * (this.ppu.PPUControlByte0 & 3));
-            const nt2 = ((NameTable & 3072) >> 10);
+        //     const NameTable = 8192 + (1024 * (this.ppu.PPUControlByte0 & 3));
+        //     const nt2 = ((NameTable & 3072) >> 10);
 
-            for (let i = 0; i < 32; i++) {
-                for (let j = 0; j < 30; j++) {
-                    const TileIndex = this.ppu.VidRAM_GetNTByte(8192 + this.ppu.NameTableMemoryStart + i  + (j * 32));
+        //     for (let i = 0; i < 32; i++) {
+        //         for (let j = 0; j < 30; j++) {
+        //             const TileIndex = this.ppu.VidRAM_GetNTByte(8192 + this.ppu.NameTableMemoryStart + i  + (j * 32));
 
-                    const addToCol = this.GetAttributeTableEntry(this.ppu.NameTableMemoryStart, i, j);
-                    this.DrawRect(
-                        this.GetPatternTableEntry(
-                            this.ppu.PatternTableIndex, TileIndex, addToCol, 
-                            this.currentNameTableEntries[i][j]),
-                                8, 8, (i * 8) + this.XOffset , (j * 8) + this.YOffset );
+        //             const addToCol = this.GetAttributeTableEntry(this.ppu.NameTableMemoryStart, i, j);
+        //             this.DrawRect(
+        //                 this.GetPatternTableEntry(
+        //                     this.ppu.PatternTableIndex, TileIndex, addToCol, 
+        //                     this.currentNameTableEntries[i][j]),
+        //                         8, 8, (i * 8) + this.XOffset , (j * 8) + this.YOffset );
 
-                }
-            }
-        }
+        //         }
+        //     }
+        // }
 
         GetAttributeTableEntry (ppuNameTableMemoryStart: number, i: number, j: number) : number {
 

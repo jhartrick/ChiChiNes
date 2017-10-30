@@ -5,7 +5,7 @@ import 'rxjs/add/operator/catch';
 import * as THREE from 'three';
 import { AudioSettings } from 'chichi';
 import { WishBoneControlPad } from '../services/wishbone/wishbone';
-import { ChiChiThreeJSAudio } from '../three/chichi.audio';
+import { WishBopper } from '../services/wishbone/wishbone.audio';
 
 @Component({
     selector: 'chichi',
@@ -77,10 +77,10 @@ export class ChiChiComponent implements AfterViewInit {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
         
-        var x  = new ChiChiThreeJSAudio(this.nesService.wishbone);
 
         this.zone.runOutsideAngular(()=>{
-            this.camera.add( x.setupAudio());
+            const listener = this.nesService.wishbone.SoundBopper.audioHandler.listener;
+            this.camera.add( listener);
         });
 
         // console.log(scriptNode.bufferSize);
