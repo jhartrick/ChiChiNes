@@ -78,6 +78,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+<<<<<<< HEAD
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var chichi_1 = __webpack_require__(1);
@@ -381,6 +382,311 @@ var tendoWrapper = (function () {
     return tendoWrapper;
 }());
 exports.tendoWrapper = tendoWrapper;
+=======
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var chichi_1 = __webpack_require__(1);
+var NesInfo = (function () {
+    function NesInfo() {
+        this.bufferupdate = false;
+        this.stateupdate = true;
+        this.runStatus = {};
+        this.cartInfo = {};
+        this.sound = {};
+        this.Cpu = {};
+        this.Cart = {};
+        this.debug = {
+            currentCpuStatus: {
+                PC: 0,
+                A: 0,
+                X: 0,
+                Y: 0,
+                SP: 0,
+                SR: 0
+            },
+            currentPPUStatus: {}
+        };
+    }
+    return NesInfo;
+}());
+var tendoWrapper = (function () {
+    function tendoWrapper() {
+        this.framesRendered = 0;
+        this.startTime = 0;
+        this.runTimeout = 0;
+        this.Debugging = false;
+        this.frameFinished = false;
+        this.ready = false;
+        this.framesPerSecond = 0;
+        this.iops = new Int32Array(16);
+        this.cartName = 'unk';
+        this.sharedAudioBufferPos = 0;
+        this.audioBytesWritten = 0;
+        this.machine = new chichi_1.ChiChiMachine();
+    }
+    tendoWrapper.prototype.createMachine = function () {
+        var _this = this;
+        this.machine = new chichi_1.ChiChiMachine();
+        this.machine.Drawscreen = function () {
+            // flush audio
+            // globals.postMessage({ frame: true, fps: framesPerSecond });
+        };
+        this.ready = true;
+        this.machine.Cpu.addDebugEvent(function () {
+            var info = new NesInfo();
+            info.debug = {
+                currentCpuStatus: _this.machine.Cpu.GetStatus ? _this.machine.Cpu.GetStatus() : {
+                    PC: 0,
+                    A: 0,
+                    X: 0,
+                    Y: 0,
+                    SP: 0,
+                    SR: 0
+                },
+                currentPPUStatus: _this.machine.ppu.GetPPUStatus ? _this.machine.ppu.GetPPUStatus() : {},
+                InstructionHistory: {
+                    Buffer: _this.machine.Cpu.InstructionHistory.slice(0),
+                    Index: _this.machine.Cpu.InstructionHistoryPointer,
+                    Finish: false
+                }
+            };
+            postMessage(info);
+            //this.updateState();
+        });
+        this.machine.Cpu.Debugging = false;
+    };
+    tendoWrapper.prototype.updateBuffers = function () {
+        var machine = this.machine;
+        var info = new NesInfo();
+        info.bufferupdate = true;
+        info.stateupdate = false;
+        if (this.machine && this.machine.Cart) {
+            info.Cpu = {
+                Rams: this.machine.Cpu.Rams,
+                spriteRAM: this.machine.Cpu.ppu.spriteRAM
+            };
+            info.Cart = {
+                //buffers
+                chrRom: this.machine.Cart.chrRom,
+                prgRomBank6: this.machine.Cart.prgRomBank6,
+                ppuBankStarts: this.machine.Cart.ppuBankStarts,
+                bankStartCache: this.machine.Cart.bankStartCache,
+            };
+        }
+        postMessage(info);
+    };
+    tendoWrapper.prototype.updateState = function () {
+        var machine = this.machine;
+        var info = new NesInfo();
+        if (this.machine && this.machine.Cart) {
+            info.Cpu = {
+                //Rams: this.machine.Cpu.Rams,
+                status: this.machine.Cpu.GetStatus(),
+                ppuStatus: this.machine.Cpu.ppu.GetPPUStatus(),
+                backgroundPatternTableIndex: this.machine.Cpu.ppu.backgroundPatternTableIndex,
+                _PPUControlByte0: this.machine.Cpu.ppu._PPUControlByte0,
+                _PPUControlByte1: this.machine.Cpu.ppu._PPUControlByte1
+            };
+            info.cartInfo = {
+                mapperId: this.machine.Cart.MapperID,
+                name: this.cartName,
+                prgRomCount: this.machine.Cart.NumberOfPrgRoms,
+                chrRomCount: this.machine.Cart.NumberOfChrRoms
+            };
+            info.Cart = {
+                //buffers
+                //chrRom: (<any>this.machine.Cart).chrRom,
+                //prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
+                //ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
+                //bankStartCache: (<any>this.machine.Cart).bankStartCache,
+                CurrentBank: this.machine.Cart.CurrentBank,
+                // integers
+                current8: this.machine.Cart.current8,
+                currentA: this.machine.Cart.currentA,
+                currentC: this.machine.Cart.currentC,
+                currentE: this.machine.Cart.currentE,
+                bank8start: this.machine.Cart.bank8start,
+                bankAstart: this.machine.Cart.bankAstart,
+                bankCstart: this.machine.Cart.bankCstart,
+                bankEstart: this.machine.Cart.bankEstart
+            };
+        }
+        if (machine) {
+            if (machine.SoundBopper && machine.SoundBopper.audioSettings) {
+                info.sound = {
+                    soundEnabled: machine.EnableSound,
+                    settings: machine.SoundBopper.audioSettings
+                };
+            }
+            if (this.machine.Cpu.Debugging) {
+                info.debug = {
+                    currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
+                        PC: 0,
+                        A: 0,
+                        X: 0,
+                        Y: 0,
+                        SP: 0,
+                        SR: 0
+                    },
+                    currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
+                    InstructionHistory: {
+                        Buffer: this.machine.Cpu.InstructionHistory.slice(0),
+                        Index: this.machine.Cpu.InstructionHistoryPointer,
+                        Finish: true
+                    }
+                };
+            }
+        }
+        postMessage(info);
+    };
+    tendoWrapper.prototype.drawScreen = function () { };
+    tendoWrapper.prototype.stop = function () {
+        clearInterval(this.interval);
+        this.machine.PowerOff();
+        this.runStatus = this.machine.RunState;
+    };
+    tendoWrapper.prototype.flushAudio = function () {
+        //  debugger;
+        var len = this.machine.WaveForms.SharedBufferLength / 2;
+        for (var i = 0; i < len; ++i) {
+            this.sharedAudioBufferPos++;
+            if (this.sharedAudioBufferPos >= this.sharedAudioBuffer.length) {
+                this.sharedAudioBufferPos = 0;
+            }
+            this.sharedAudioBuffer[this.sharedAudioBufferPos] = this.machine.WaveForms.SharedBuffer[i];
+            this.audioBytesWritten++;
+        }
+        while (this.audioBytesWritten >= this.sharedAudioBuffer.length / 2) {
+            Atomics.store(this.iops, 3, this.audioBytesWritten);
+            Atomics.wait(this.iops, 3, this.audioBytesWritten);
+            this.audioBytesWritten = Atomics.load(this.iops, 3);
+        }
+    };
+    tendoWrapper.prototype.runInnerLoop = function () {
+        this.machine.RunFrame();
+        this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
+        this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
+        this.framesPerSecond = 0;
+        this.flushAudio();
+        if ((this.framesRendered++) === 60) {
+            this.updateState();
+            this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
+            this.framesRendered = 0;
+            this.startTime = new Date().getTime();
+            this.iops[1] = this.framesPerSecond;
+            // if (this.framesPerSecond < 60 && this.runTimeout > 0) {
+            //     this.runTimeout--;
+            // } else if (this.runTimeout < 50) {
+            //     this.runTimeout++;
+            // }
+        }
+        //this.runInnerLoop();
+        //setTimeout(() => { this.runInnerLoop(); }, this.runTimeout); 
+    };
+    tendoWrapper.prototype.run = function (reset) {
+        var _this = this;
+        this.iops[3] = 12312312;
+        var framesRendered = 0;
+        var machine = this.machine;
+        if (reset) {
+            machine.Reset();
+        }
+        machine.Cpu.Debugging = false;
+        this.startTime = new Date().getTime();
+        clearInterval(this.interval);
+        this.interval = setInterval(function () {
+            _this.iops[0] = 1;
+            while (_this.iops[0] == 1) {
+                _this.runInnerLoop();
+            }
+        }, 1);
+        this.runStatus = machine.RunState; // runStatuses.Running;
+    };
+    tendoWrapper.prototype.runFrame = function () {
+        clearInterval(this.interval);
+        this.frameFinished = false;
+        var machine = this.machine;
+        machine.Cpu.Debugging = this.Debugging;
+        // intervalId = setInterval(() => 
+        machine.RunFrame();
+        this.runStatus = this.machine.RunState;
+        this.frameFinished = true;
+    };
+    tendoWrapper.prototype.reset = function () {
+        var machine = this.machine;
+        machine.Cpu.Debugging = this.Debugging;
+        machine.Reset();
+        this.runStatus = this.machine.RunState;
+    };
+    tendoWrapper.prototype.step = function () {
+        clearInterval(this.interval);
+        var machine = this.machine;
+        machine.Cpu.Debugging = this.Debugging;
+        machine.Step();
+        this.runStatus = this.machine.RunState;
+    };
+    tendoWrapper.prototype.handleMessage = function (event) {
+        var machine = this.machine;
+        switch (event.data.command) {
+            case 'create':
+                this.createMachine();
+                this.machine.Cpu.ppu.byteOutBuffer = event.data.vbuffer;
+                this.sharedAudioBuffer = event.data.abuffer;
+                this.sharedAudioBufferPos = 0;
+                this.iops = event.data.iops;
+                break;
+            case 'loadrom':
+                this.stop();
+                //this.createMachine();
+                this.machine.EnableSound = false;
+                this.machine.LoadCart(event.data.rom);
+                this.updateBuffers();
+                break;
+            case 'loadnsf':
+                this.stop();
+                //this.createNsfMachine();
+                this.updateBuffers();
+                break;
+            case 'audiosettings':
+                this.machine.SoundBopper.audioSettings = event.data.settings;
+                break;
+            case 'mute':
+                this.machine.EnableSound = false;
+                break;
+            case 'unmute':
+                this.machine.EnableSound = true;
+                break;
+            case 'run':
+                this.Debugging = false;
+                this.run(true);
+                break;
+            case 'runframe':
+                this.Debugging = true;
+                this.runFrame();
+                break;
+            case 'step':
+                this.Debugging = true;
+                this.step();
+                break;
+            case 'continue':
+                this.run(false);
+                break;
+            case 'stop':
+                this.machine.EnableSound = false;
+                this.stop();
+                break;
+            case 'reset':
+                this.reset();
+                break;
+            default:
+                return;
+        }
+        this.updateState();
+    };
+    return tendoWrapper;
+}());
+exports.tendoWrapper = tendoWrapper;
+>>>>>>> 63efb3bf98188fc24af6ffb38f3ca3936b4a5b3d
 
 
 /***/ }),
@@ -1739,6 +2045,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this.outBuffer = new Uint8Array(65536);
         // 'internal
         this.byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
+        this.debugEvents = new Array();
         //this.$initialize();
         // BuildOpArray();
         this.SoundBopper = bopper;
@@ -1799,7 +2106,7 @@ var ChiChiCPPU = /** @class */ (function () {
         configurable: true
     });
     ChiChiCPPU.prototype.addDebugEvent = function (value) {
-        //throw new Error('Method not implemented.');
+        this.debugEvents.push(value);
     };
     ChiChiCPPU.prototype.removeDebugEvent = function (value) {
         // throw new Error('Method not implemented.');
@@ -2933,7 +3240,10 @@ var ChiChiCPPU = /** @class */ (function () {
         }
     };
     ChiChiCPPU.prototype.FireDebugEvent = function (s) {
-        throw new Error('Method not implemented.');
+        for (var i = 0; i < this.debugEvents.length; ++i) {
+            this.debugEvents[i].call(this, s);
+        }
+        //throw new Error('Method not implemented.');
     };
     ChiChiCPPU.prototype.PeekInstruction = function (address) {
         throw new Error('Method not implemented.');
@@ -4081,7 +4391,7 @@ var WavSharer = /** @class */ (function () {
     function WavSharer() {
         this.Locker = {};
         this.NESTooFast = false;
-        this.Frequency = 44100;
+        this.Frequency = 48000;
         this.SharedBufferLength = 8192;
         this.BufferAvailable = true;
         this.SharedBuffer = new Float32Array(this.SharedBufferLength);
@@ -4784,9 +5094,25 @@ var NoiseChannel = /** @class */ (function () {
 }());
 var TriangleChannel = /** @class */ (function () {
     function TriangleChannel(bleeper, chan) {
-        this._bleeper = null;
         this._chan = 0;
-        this.LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+        this.LengthCounts = new Uint8Array([
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ]);
         this._length = 0;
         this._period = 0;
         this._time = 0;
@@ -4887,21 +5213,21 @@ var TriangleChannel = /** @class */ (function () {
         //Run(time);
         switch (register) {
             case 0:
-                this._looping = (data & 128) === 128;
-                this._linVal = data & 127;
+                this._looping = (data & 0x80) === 0x80;
+                this._linVal = data & 0x7F;
                 break;
             case 1:
                 break;
             case 2:
-                this._period &= 1792;
+                this._period &= 0x700;
                 this._period |= data;
                 break;
             case 3:
-                this._period &= 255;
+                this._period &= 0xFF;
                 this._period |= (data & 7) << 8;
                 // setup lengthhave
                 if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 31];
+                    this._length = this.LengthCounts[(data >> 3) & 0x1f];
                 }
                 this._linStart = true;
                 break;
@@ -4961,7 +5287,24 @@ var SquareChannel = /** @class */ (function () {
     function SquareChannel(bleeper, chan) {
         this._chan = 0;
         this._bleeper = null;
-        this.LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+        this.LengthCounts = new Uint8Array([
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ]);
         this._dutyCycle = 0;
         this._length = 0;
         this._timer = 0;
@@ -5088,33 +5431,33 @@ var SquareChannel = /** @class */ (function () {
     SquareChannel.prototype.WriteRegister = function (register, data, time) {
         switch (register) {
             case 0:
-                this._envConstantVolume = (data & 16) === 16;
+                this._envConstantVolume = (data & 0x10) === 0x10;
                 this._volume = data & 15;
-                this._dutyCycle = this.doodies[(data >> 6) & 3];
-                this._looping = (data & 32) === 32;
+                this._dutyCycle = this.doodies[(data >> 6) & 0x3];
+                this._looping = (data & 0x20) === 0x20;
                 this._sweepInvalid = false;
                 break;
             case 1:
                 this._sweepShift = data & 7;
                 this._sweepNegateFlag = (data & 8) === 8;
                 this._sweepDivider = (data >> 4) & 7;
-                this._sweepEnabled = (data & 128) === 128;
+                this._sweepEnabled = (data & 0x80) === 0x80;
                 this._startSweep = true;
                 this._sweepInvalid = false;
                 break;
             case 2:
-                this._timer &= 1792;
+                this._timer &= 0x700;
                 this._timer |= data;
                 this._rawTimer = this._timer;
                 break;
             case 3:
-                this._timer &= 255;
+                this._timer &= 0xFF;
                 this._timer |= (data & 7) << 8;
                 this._rawTimer = this._timer;
                 this._phase = 0;
                 // setup length
                 if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 31];
+                    this._length = this.LengthCounts[(data >> 3) & 0x1f];
                 }
                 this._envStart = true;
                 break;
@@ -5127,7 +5470,7 @@ var SquareChannel = /** @class */ (function () {
         }
     };
     SquareChannel.prototype.Run = function (end_time) {
-        var period = this._sweepEnabled ? ((this._timer + 1) & 2047) << 1 : ((this._rawTimer + 1) & 2047) << 1;
+        var period = this._sweepEnabled ? ((this._timer + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
         if (period === 0) {
             this._time = end_time;
             this.UpdateAmplitude(0);
@@ -5213,7 +5556,7 @@ var ChiChiBopper = /** @class */ (function () {
         this.reg15 = 0;
         this.master_vol = 4369;
         this.registers = new QueuedPort();
-        this._sampleRate = 44100;
+        this._sampleRate = 48000;
         this.square0Gain = 873;
         this.square1Gain = 873;
         this.triangleGain = 1004;

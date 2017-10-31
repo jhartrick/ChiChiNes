@@ -132,6 +132,7 @@ export declare class ChiChiCPPU {
     constructor(bopper: ChiChiBopper, ppu: ChiChiPPU);
     PadOne: ChiChiInputHandler;
     PadTwo: ChiChiInputHandler;
+    private debugEvents;
     addDebugEvent(value: (sender: any, e: any) => void): void;
     removeDebugEvent(value: (sender: any, e: any) => void): void;
     CurrentInstruction: ChiChiInstruction;

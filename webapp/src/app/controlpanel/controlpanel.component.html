@@ -35,9 +35,9 @@
 
   </mat-expansion-panel>
 <mat-button-toggle value="wishbone.EnableSound" (change)="wishbone.EnableSound = !wishbone.EnableSound" [disabled]="!nesService.canStart">
-  {{ nesService.soundEnabled ? 'sound on' : 'sound off' }}
+  {{ wishbone.EnableSound ? 'sound on' : 'sound off' }}
 </mat-button-toggle>
-
+<chichines-controlconfig></chichines-controlconfig>
 <mat-expansion-panel>
   <mat-expansion-panel-header>
     <mat-panel-title>

@@ -19,7 +19,7 @@ export class ChiChiComponent implements AfterViewInit {
     @ViewChild('fragmentShader') fragmentShader: ElementRef;
     @ViewChild('vertexShader') vertexShader: ElementRef;
 
-    private pal32: number[] = [7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; 
+    private pal32: number[] = [7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     private renderer: THREE.WebGLRenderer;
     private dkrom: number[];
@@ -47,38 +47,28 @@ export class ChiChiComponent implements AfterViewInit {
     constructor(private nesService: Emulator, private cd: ChangeDetectorRef, private zone: NgZone) {
     }
 
-    @HostListener('document:keydown', ['$event'])
-    handleKeyDownEvent(event: KeyboardEvent) {
-        (<WishBoneControlPad>this.nesService.wishbone.PadOne).handleKeyDownEvent(event);
-    }
-
-    @HostListener('document:keyup', ['$event'])
-    handleKeyUpEvent(event: KeyboardEvent) {
-        (<WishBoneControlPad>this.nesService.wishbone.PadOne).handleKeyUpEvent(event);
-    }
-
     @HostListener('window:resize', ['$event'])
-    onResize(event?:any){
+    onResize(event?: any) {
         if (this.canvasRef.nativeElement.offsetHeight < this.canvasRef.nativeElement.offsetWidth) {
             this.renderer.setSize(this.canvasRef.nativeElement.offsetHeight * 4/3, this.canvasRef.nativeElement.offsetHeight );
-            this.canvasLeft = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetHeight * 4/3)) /2) + "px";
-            this.canvasTop='0px';
+            this.canvasLeft = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetHeight * 4/3)) / 2) + 'px';
+            this.canvasTop = '0px';
         } else {
-            this.renderer.setSize(this.canvasRef.nativeElement.offsetWidth , this.canvasRef.nativeElement.offsetWidth * 3/4);
-            this.canvasLeft = '0px';            
-            this.canvasTop = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetWidth * 3/4)) /2) + "px";
+            this.renderer.setSize(this.canvasRef.nativeElement.offsetWidth , this.canvasRef.nativeElement.offsetWidth * 3 / 4);
+            this.canvasLeft = '0px';
+            this.canvasTop = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetWidth * 3/4)) / 2) + "px";
         }
         this.cd.detectChanges();
-       //console.log("Width: " + event.target.innerWidth);
+       // console.log("Width: " + event.target.innerWidth);
     }
 
     private setupScene(): void {
-        
+
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-        
 
-        this.zone.runOutsideAngular(()=>{
+
+        this.zone.runOutsideAngular(() => {
             const listener = this.nesService.wishbone.SoundBopper.audioHandler.listener;
             this.camera.add( listener);
         });
@@ -94,7 +84,7 @@ export class ChiChiComponent implements AfterViewInit {
         for (var i = 0; i < 256; i++) {
             var color = this.pal32[i];
             this.pal[i * 4] = color & 0xFF;
-            this.pal[(i * 4) +1] = (color >> 8) & 0xFF;
+            this.pal[(i * 4) + 1] = (color >> 8) & 0xFF;
             this.pal[(i * 4) + 2] = (color >> 16) & 0xFF;
             this.pal[(i * 4) + 3] =  0xFF;
         }
@@ -105,7 +95,7 @@ export class ChiChiComponent implements AfterViewInit {
                 myTexture: { value: this.text },
                 myPalette: { value: this.paltext }
             },
-            vertexShader: 
+            vertexShader:
 `
 varying vec2 v_texCoord;
 void main()
@@ -114,7 +104,7 @@ void main()
     v_texCoord = uv.st;
 }
 `,
-            fragmentShader: 
+            fragmentShader:
 `
 uniform sampler2D myTexture;
 uniform sampler2D myPalette;
@@ -124,7 +114,7 @@ void main()	{
   vec2 texCoord = vec2(v_texCoord.s, 1.0 - v_texCoord.t);
   vec4 color = texture2D(myTexture, texCoord);
   vec4 finalColor = texture2D(myPalette,vec2(color.r,0.5));
-  gl_FragColor = vec4(finalColor.rgb, 1.0); 
+  gl_FragColor = vec4(finalColor.rgb, 1.0);
 }
 `
         });
@@ -138,13 +128,13 @@ void main()	{
         this.camera.position.z = 5.8;
         // this.camera.lookAt(new THREE.Vector3(0,0,0));
         this.renderer = new THREE.WebGLRenderer();
-        
+
 
         this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
         this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
         setTimeout(() => {
           this.onResize();
-        },1);
+        }, 1);
         this.renderScene();
     }
 

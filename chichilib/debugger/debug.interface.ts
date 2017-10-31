@@ -104,7 +104,7 @@ export class Debugger {
                     SR: 0,
                     SP: 0
                 };
-            if (instr.asm != 'none') this.lastInstructions.concat.push(instr);
+            if (instr.asm != 'none') this.lastInstructions.push(instr);
             //' DecodedInstruction (this.disassemble(inst[i]), inst);
         }
     }
