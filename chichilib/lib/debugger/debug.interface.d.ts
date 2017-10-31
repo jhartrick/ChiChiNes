@@ -1,19 +1,20 @@
+import { ChiChiCPPU } from '../chichi/ChiChi';
 export interface DecodedInstruction {
     asm: string;
-    AddressingMode: number;
     frame: number;
     time: number;
+    AddressingMode: number;
     A: number;
     X: number;
     Y: number;
     SR: number;
     SP: number;
-    Address: number;
+    Length: number;
     OpCode: number;
     Parameters0: number;
     Parameters1: number;
     ExtraTiming: number;
-    Length: number;
+    Address: number;
 }
 export declare class Debugger {
     static SRMasks_CarryMask: number;
@@ -24,9 +25,10 @@ export declare class Debugger {
     static SRMasks_ExpansionMask: number;
     static SRMasks_OverflowMask: number;
     static SRMasks_NegativeResultMask: number;
+    private _cpu;
+    cpu: ChiChiCPPU;
     lastInstructions: Array<DecodedInstruction>;
     constructor();
-    doUpdate(): void;
     decodedStatusRegister: string;
     static decodeCpuStatusRegister(sr: number): string;
     appendInstructionPage(): void;

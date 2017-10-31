@@ -3,7 +3,8 @@ import { NgModule } from '@angular/core';
 import { HttpModule } from '@angular/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import { MatTableModule, MatPaginatorModule, MatGridListModule, MatTabsModule } from '@angular/material';
-import { MatButtonModule, MatCheckboxModule, MatSidenavModule, MatButtonToggleModule, MatExpansionModule } from '@angular/material';
+import { MatButtonModule, MatCheckboxModule, MatSidenavModule } from '@angular/material';
+import { MatButtonToggleModule, MatExpansionModule, MatDialogModule } from '@angular/material';
 import * as JSZip from 'jszip';
 import { Emulator , RomLoader } from './services/NESService';
 
@@ -15,12 +16,8 @@ import { MemViewerComponent, MyTrComponent, AsciiPipe } from './chichines.memvie
 import { InstructionHistoryComponent } from './chichines.instructionhistory/chichines.instructionhistory.component';
 import { NameTableViewerComponent } from './debugoutput/nametableviewer/nametableviewer.component';
 import { SpriteViewerComponent } from './debugoutput/spriteviewer/spriteviewer.component';
-
-
-import {
-    CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart, ChiChiInputHandler,
-    AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler
-} from 'chichi'
+import { ControlConfigComponent } from './chichines.controlconfig/chichines.controlconfig.component';
+import { ControlDialogComponent } from './chichines.controlconfig/chichines.controldialog.component';
 
 @NgModule({
   declarations: [
@@ -36,21 +33,28 @@ import {
       CpuStatusComponent,
       PpuStatusComponent,
       NameTableViewerComponent,
-      SpriteViewerComponent
+      SpriteViewerComponent,
+      ControlConfigComponent,
+      ControlDialogComponent
 
   ],
+  entryComponents: [
+    ControlConfigComponent,
+    ControlDialogComponent
+],
   imports: [
-      BrowserModule, 
-      HttpModule, 
-      MatSidenavModule, 
-      BrowserAnimationsModule, 
-      MatButtonToggleModule, 
-      MatButtonModule, 
-      MatExpansionModule, 
-      MatTableModule, 
+      BrowserModule,
+      HttpModule,
+      MatSidenavModule,
+      BrowserAnimationsModule,
+      MatButtonToggleModule,
+      MatButtonModule,
+      MatExpansionModule,
+      MatTableModule,
       MatPaginatorModule,
       MatGridListModule,
-	  MatTabsModule
+      MatTabsModule,
+      MatDialogModule
   ],
   providers: [HttpModule, Emulator, RomLoader],
   bootstrap: [AppComponent]

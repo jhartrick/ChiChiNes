@@ -77,19 +77,18 @@ var Debugger = /** @class */ (function () {
         this.lastInstructions = new Array();
         this.decodedStatusRegister = '';
     }
-    Debugger.prototype.doUpdate = function () {
-        //this.setInstructionPage(this.machine.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
-        //this.lastInstructions.update();
-        //this.decodeCpuStatusRegister(this.machine.Cpu.StatusRegister);
-        //this.currentCpuStatus = {
-        //    PC: this.machine.Cpu.ProgramCounter,
-        //    A: this.machine.Cpu.Accumulator,
-        //    X: this.machine.Cpu.IndexRegisterX,
-        //    Y: this.machine.Cpu.IndexRegisterY,
-        //    SP: this.machine.Cpu.StackPointer,
-        //    SR: this.machine.Cpu.StatusRegister
-        //};
-    };
+    Object.defineProperty(Debugger.prototype, "cpu", {
+        get: function () { return this._cpu; },
+        set: function (value) {
+            this._cpu = value;
+            this._cpu.addDebugEvent(function () {
+                //this.updateState();
+            });
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ;
     Debugger.decodeCpuStatusRegister = function (sr) {
         var result = '';
         result += ' N:' + (sr & Debugger.SRMasks_NegativeResultMask ? '1' : '0');
@@ -107,7 +106,6 @@ var Debugger = /** @class */ (function () {
     };
     Debugger.prototype.setInstructionPage = function (inst, start, frameNumber) {
         var curPos = start + 1;
-        var newInstructions = new Array();
         for (var j = 0; j < inst.length; ++j) {
             var i = (curPos + j) & 0xFF;
             var instr = inst[i] ?
@@ -145,10 +143,9 @@ var Debugger = /** @class */ (function () {
                 SP: 0
             };
             if (instr.asm != 'none')
-                newInstructions.push(instr);
+                this.lastInstructions.push(instr);
             //' DecodedInstruction (this.disassemble(inst[i]), inst);
         }
-        this.lastInstructions.concat(newInstructions);
     };
     Debugger.prototype.getMnemnonic = function (opcode) {
         switch (opcode) {

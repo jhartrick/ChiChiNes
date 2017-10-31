@@ -1739,6 +1739,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this.outBuffer = new Uint8Array(65536);
         // 'internal
         this.byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
+        this.debugEvents = new Array();
         //this.$initialize();
         // BuildOpArray();
         this.SoundBopper = bopper;
@@ -1799,7 +1800,7 @@ var ChiChiCPPU = /** @class */ (function () {
         configurable: true
     });
     ChiChiCPPU.prototype.addDebugEvent = function (value) {
-        //throw new Error('Method not implemented.');
+        this.debugEvents.push(value);
     };
     ChiChiCPPU.prototype.removeDebugEvent = function (value) {
         // throw new Error('Method not implemented.');
@@ -2933,7 +2934,10 @@ var ChiChiCPPU = /** @class */ (function () {
         }
     };
     ChiChiCPPU.prototype.FireDebugEvent = function (s) {
-        throw new Error('Method not implemented.');
+        for (var i = 0; i < this.debugEvents.length; ++i) {
+            this.debugEvents[i].call(this, s);
+        }
+        //throw new Error('Method not implemented.');
     };
     ChiChiCPPU.prototype.PeekInstruction = function (address) {
         throw new Error('Method not implemented.');
@@ -4081,7 +4085,7 @@ var WavSharer = /** @class */ (function () {
     function WavSharer() {
         this.Locker = {};
         this.NESTooFast = false;
-        this.Frequency = 44100;
+        this.Frequency = 48000;
         this.SharedBufferLength = 8192;
         this.BufferAvailable = true;
         this.SharedBuffer = new Float32Array(this.SharedBufferLength);
@@ -4784,9 +4788,25 @@ var NoiseChannel = /** @class */ (function () {
 }());
 var TriangleChannel = /** @class */ (function () {
     function TriangleChannel(bleeper, chan) {
-        this._bleeper = null;
         this._chan = 0;
-        this.LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+        this.LengthCounts = new Uint8Array([
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ]);
         this._length = 0;
         this._period = 0;
         this._time = 0;
@@ -4887,21 +4907,21 @@ var TriangleChannel = /** @class */ (function () {
         //Run(time);
         switch (register) {
             case 0:
-                this._looping = (data & 128) === 128;
-                this._linVal = data & 127;
+                this._looping = (data & 0x80) === 0x80;
+                this._linVal = data & 0x7F;
                 break;
             case 1:
                 break;
             case 2:
-                this._period &= 1792;
+                this._period &= 0x700;
                 this._period |= data;
                 break;
             case 3:
-                this._period &= 255;
+                this._period &= 0xFF;
                 this._period |= (data & 7) << 8;
                 // setup lengthhave
                 if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 31];
+                    this._length = this.LengthCounts[(data >> 3) & 0x1f];
                 }
                 this._linStart = true;
                 break;
@@ -4961,7 +4981,24 @@ var SquareChannel = /** @class */ (function () {
     function SquareChannel(bleeper, chan) {
         this._chan = 0;
         this._bleeper = null;
-        this.LengthCounts = new Uint8Array([10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30]);
+        this.LengthCounts = new Uint8Array([
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ]);
         this._dutyCycle = 0;
         this._length = 0;
         this._timer = 0;
@@ -5088,33 +5125,33 @@ var SquareChannel = /** @class */ (function () {
     SquareChannel.prototype.WriteRegister = function (register, data, time) {
         switch (register) {
             case 0:
-                this._envConstantVolume = (data & 16) === 16;
+                this._envConstantVolume = (data & 0x10) === 0x10;
                 this._volume = data & 15;
-                this._dutyCycle = this.doodies[(data >> 6) & 3];
-                this._looping = (data & 32) === 32;
+                this._dutyCycle = this.doodies[(data >> 6) & 0x3];
+                this._looping = (data & 0x20) === 0x20;
                 this._sweepInvalid = false;
                 break;
             case 1:
                 this._sweepShift = data & 7;
                 this._sweepNegateFlag = (data & 8) === 8;
                 this._sweepDivider = (data >> 4) & 7;
-                this._sweepEnabled = (data & 128) === 128;
+                this._sweepEnabled = (data & 0x80) === 0x80;
                 this._startSweep = true;
                 this._sweepInvalid = false;
                 break;
             case 2:
-                this._timer &= 1792;
+                this._timer &= 0x700;
                 this._timer |= data;
                 this._rawTimer = this._timer;
                 break;
             case 3:
-                this._timer &= 255;
+                this._timer &= 0xFF;
                 this._timer |= (data & 7) << 8;
                 this._rawTimer = this._timer;
                 this._phase = 0;
                 // setup length
                 if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 31];
+                    this._length = this.LengthCounts[(data >> 3) & 0x1f];
                 }
                 this._envStart = true;
                 break;
@@ -5127,7 +5164,7 @@ var SquareChannel = /** @class */ (function () {
         }
     };
     SquareChannel.prototype.Run = function (end_time) {
-        var period = this._sweepEnabled ? ((this._timer + 1) & 2047) << 1 : ((this._rawTimer + 1) & 2047) << 1;
+        var period = this._sweepEnabled ? ((this._timer + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
         if (period === 0) {
             this._time = end_time;
             this.UpdateAmplitude(0);
@@ -5213,7 +5250,7 @@ var ChiChiBopper = /** @class */ (function () {
         this.reg15 = 0;
         this.master_vol = 4369;
         this.registers = new QueuedPort();
-        this._sampleRate = 44100;
+        this._sampleRate = 48000;
         this.square0Gain = 873;
         this.square1Gain = 873;
         this.triangleGain = 1004;

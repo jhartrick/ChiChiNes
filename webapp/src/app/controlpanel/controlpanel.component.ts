@@ -1,9 +1,9 @@
 ﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Emulator, EmuState, RomLoader } from '../services/NESService'
-import { Observable } from 'rxjs';
+import { Emulator, EmuState, RomLoader } from '../services/NESService';
+import { Observable } from 'rxjs/Observable';
 import * as JSZip from 'jszip';
-import { AudioSettings } from "chichi";
-import { WishboneMachine } from "../services/wishbone/wishbone";
+import { AudioSettings } from 'chichi';
+import { WishboneMachine } from '../services/wishbone/wishbone';
 
 @Component({
     selector: 'chichi-status',
@@ -40,7 +40,7 @@ export class ControlPanelComponent {
     set enableSquare0(value: boolean) {
         this.audioSettings.enableSquare0 = value;
         this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-        //this.wishbone.RequestSync();
+        // this.wishbone.RequestSync();
     }
 
     get enableSquare1(): boolean {
@@ -60,7 +60,7 @@ export class ControlPanelComponent {
     set enableTriangle(value: boolean) {
         this.audioSettings.enableTriangle = value;
         this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-        //this.wishbone.RequestSync();
+        // this.wishbone.RequestSync();
     }
 
     get enableNoise(): boolean {
@@ -72,8 +72,8 @@ export class ControlPanelComponent {
         this.wishbone.SoundBopper.audioSettings = this.audioSettings;
        // this.wishbone.RequestSync();
     }
-    
-    constructor(public nesService: Emulator, cd: ChangeDetectorRef, private romLoader: RomLoader, private ngZone : NgZone) {
+
+    constructor(public nesService: Emulator, cd: ChangeDetectorRef, private romLoader: RomLoader, private ngZone: NgZone) {
         this.powerstate = 'OFF';
         this.wishbone = nesService.wishbone;
         this.wishbone.asObservable().subscribe((machine) => {
@@ -106,8 +106,8 @@ export class ControlPanelComponent {
         this.powerstate = 'OFF';
     }
 
-    showDebugger() : void {
-        this.nesService.DebugUpdateEvent.emit({eventType: "showDebugger"});
+    showDebugger(): void {
+        this.nesService.DebugUpdateEvent.emit({eventType: 'showDebugger'});
     }
 
     reset(): void {
@@ -115,7 +115,7 @@ export class ControlPanelComponent {
     }
 
     powertoggle() {
-        if (this.powerstate == 'OFF') {
+        if (this.powerstate === 'OFF') {
             this.poweron();
         } else {
             this.poweroff();

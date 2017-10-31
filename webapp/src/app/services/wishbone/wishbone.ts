@@ -1,100 +1,149 @@
-import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart,  ChiChiInputHandler, 
+import { NgZone } from '@angular/core';
+
+import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart,  ChiChiInputHandler,
     AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU  } from 'chichi'
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
+import { Subscription } from 'rxjs/Subscription';
 import { TileDoodler } from './wishbone.tiledoodler';
 import { WishboneCart } from './wishbone.cart';
 import { WishBopper } from './wishbone.audio';
 
+export class KeyBindings {
+    left = 37;
+    right = 39;
+    up = 38;
+    down = 40;
+    b = 90;
+    a = 88;
+    select = 65;
+    start = 83;
+}
+
 export class WishBoneControlPad {
-    constructor(private machine: WishboneMachine) {
+    kuSub: Subscription;
+    kdSub: Subscription;
+    keydownEvent: Observable<any> = Observable.fromEvent(document, 'keydown');
+    keyupEvent: Observable<any> = Observable.fromEvent(document, 'keyup');
+    gamepad: Gamepad;
+
+    gamepadConnected: Observable<any> = Observable.fromEvent(window, 'gamepadconnected');
+
+    readGamepad() {
+        if (this.gamepad) {
+            this.padOneState = 0;
+            // left
+            if (this.gamepad.axes[0]) {
+                this.padOneState |= 64 & 0xFF;
+            }
+        }
     }
 
-    padOneState: number = 0;
+    constructor(private machine: WishboneMachine) {
+
+        this.attach();
+        this.gamepadConnected.subscribe((e) => {
+            console.log('Gamepad connected at index %d: %s. %d buttons, %d axes.',
+            e.gamepad.index, e.gamepad.id,
+            e.gamepad.buttons.length, e.gamepad.axes.length);
+        });
+    }
+
+    attach(bindings?: KeyBindings) {
+        const zone = new NgZone({enableLongStackTrace: false});
+        zone.runOutsideAngular(() => {
+            if (this.kdSub) {
+                this.kdSub.unsubscribe();
+                this.kuSub.unsubscribe();
+            }
+            if (bindings) {
+                this.bindings = Object.assign({}, bindings);
+            }
+            this.kdSub = this.keydownEvent.subscribe((event) => {
+                zone.runOutsideAngular(() => {
+                    this.handleKeyDownEvent(event);
+                });
+            });
+            this.kuSub = this.keyupEvent.subscribe((event) => {
+                zone.runOutsideAngular(() => {
+                    this.handleKeyUpEvent(event);
+                });
+            });
+        });
+    }
+
+    bindings: KeyBindings = new KeyBindings();
+
+    padOneState  = 0;
+
+    enabled = true;
 
     // control pad
     handleKeyDownEvent(event: KeyboardEvent) {
-
         switch (event.keyCode) {
-            case 37: //left arrow
+            case this.bindings.left: // left arrow
                 this.padOneState |= 64 & 0xFF;
                 break;
-            case 38: //up arrow	
+            case this.bindings.up: // up arrow
                 this.padOneState |= 16 & 0xFF;
                 break;
-            case 39: //right arrow	39
+            case this.bindings.right: // right arrow	39
                 this.padOneState |= 128 & 0xFF;
                 break;
-            case 40: //down arrow	40
+            case this.bindings.down: // down arrow	40
                 this.padOneState |= 32 & 0xFF;
                 break;
-            case 90: //	z
+            case this.bindings.b: // z
                 this.padOneState |= 2 & 0xFF;
                 break;
-            case 88: //x
+            case this.bindings.a: // x
                 this.padOneState |= 1 & 0xFF;
                 break;
-            case 13: case 89: // enter
+            case this.bindings.start:  // enter
                 this.padOneState |= 8 & 0xFF;
                 break;
-            case 9: // tab
+            case this.bindings.select: // tab
                 this.padOneState |= 4 & 0xFF;
                 break;
         }
-        //debugger;
+        // debugger;
         this.machine.nesInterop[2] = this.padOneState;
-        //this.nesInterop[2] = this.padOneState & 0xFF; 
-        //this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
+        // this.nesInterop[2] = this.padOneState & 0xFF;
+        // this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
     }
 
     handleKeyUpEvent(event: KeyboardEvent) {
         switch (event.keyCode) {
-            case 37: //left arrow
+            case this.bindings.left: // left arrow
                 this.padOneState &= ~64 & 0xFF;
                 break;
-            case 38: //up arrow	
+            case this.bindings.up: // up arrow
                 this.padOneState &= ~16 & 0xFF;
                 break;
-            case 39: //right arrow	39
+            case this.bindings.right: // right arrow	39
                 this.padOneState &= ~128 & 0xFF;
                 break;
-            case 40: //down arrow	40
+            case this.bindings.down: // down arrow	40
                 this.padOneState &= ~32 & 0xFF;
                 break;
-            case 90: //	z
+            case this.bindings.b: // 	z
                 this.padOneState &= ~2 & 0xFF;
                 break;
-            case 88: //x
+            case this.bindings.a: // x
                 this.padOneState &= ~1 & 0xFF;
                 break;
-            case 13: // enter
+            case this.bindings.start: // enter
                 this.padOneState &= ~8 & 0xFF;
                 break;
-            case 9: // tab
+            case this.bindings.select: // tab
                 this.padOneState &= ~4 & 0xFF;
                 break;
         }
         this.machine.nesInterop[2] = this.padOneState;
 
-        //this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
+        // this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
     }
 
-
-    currentByte: number = 0;
-    readNumber: number = 0;
-
-    CurrentByte: number = 0;
-
-    refresh(): void {
-    }
-
-    getByte(clock: number) {
-        return 0;
-    }
-
-    setByte(clock: number, data: number): void {
-
-    }
 }
 
 export class WishbonePPU extends ChiChiPPU {
@@ -103,14 +152,14 @@ export class WishbonePPU extends ChiChiPPU {
 export class WishboneMachine  {
     ppuStatus: PpuStatus = new PpuStatus();
     cpuStatus: CpuStatus = new CpuStatus();
-    fps: number = 0;
+    fps = 0;
     nesReady: boolean;
     tileDoodler: TileDoodler;
     private worker: Worker;
 
     readonly NES_GAME_LOOP_CONTROL = 0;
     readonly NES_AUDIO_AVAILABLE = 3;
-    
+
     private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT);
     nesInterop: Int32Array = new Int32Array(<any>this.nesControlBuf);
 
@@ -143,8 +192,8 @@ export class WishboneMachine  {
 
             const createCommand = 'create';
             this.postNesMessage({ command: createCommand,
-                vbuffer: this.ppu.byteOutBuffer, 
-                abuffer: this.WaveForms.SharedBuffer, 
+                vbuffer: this.ppu.byteOutBuffer,
+                abuffer: this.WaveForms.SharedBuffer,
                 iops: this.nesInterop });
 
             return;
@@ -167,8 +216,8 @@ export class WishboneMachine  {
     }
 
     postNesMessage(message: any) {
-        //this.oldOp = this.nesInterop[0] ;
-        //this.nesInterop[0] = 0;
+        // this.oldOp = this.nesInterop[0] ;
+        // this.nesInterop[0] = 0;
         <any>Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL , 0);
         <any>Atomics.wake(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 9999);
 
@@ -188,7 +237,7 @@ export class WishboneMachine  {
     }
 
     RequestSync() {
-        //case 'audiosettings':
+        // case 'audiosettings':
         // this.machine.SoundBopper.audioSettings = event.data.settings;
         this.postNesMessage({ command: 'audiosettings', settings: this.SoundBopper.audioSettings });
     }
@@ -258,26 +307,26 @@ export class WishboneMachine  {
     WaveForms: any;
 
     get nesAudioDataAvailable(): number {
-        return <any>Atomics.load(this.nesInterop,this.NES_AUDIO_AVAILABLE);
+        return <any>Atomics.load(this.nesInterop, this.NES_AUDIO_AVAILABLE);
     }
 
     set nesAudioDataAvailable(value: number) {
         <any>Atomics.store(this.nesInterop, this.NES_AUDIO_AVAILABLE, value);
-       
+
         <any>Atomics.wake(this.nesInterop, this.NES_AUDIO_AVAILABLE, 321);
     }
 
     private _soundEnabled = false;
-    
+
     public get EnableSound() {
         return this.IsRunning && this._soundEnabled;
     }
     public set EnableSound(value: boolean) {
         this._soundEnabled = value;
         if (this._soundEnabled) {
-            this.postNesMessage({ command: "unmute" });
+            this.postNesMessage({ command: 'unmute' });
         } else {
-            this.postNesMessage({ command: "mute" });
+            this.postNesMessage({ command: 'mute' });
         }
 
     }
@@ -286,13 +335,15 @@ export class WishboneMachine  {
     get IsRunning(): boolean {
         return this.nesInterop[this.NES_GAME_LOOP_CONTROL] > 0;
     }
-    PadOne: ChiChiNES.IControlPad;
-    PadTwo: ChiChiNES.IControlPad;
+
+    PadOne: WishBoneControlPad;
+    PadTwo: WishBoneControlPad;
+
     SRAMReader: (RomID: string) => any;
     SRAMWriter: (RomID: string, SRAM: any) => void;
 
     Reset() {
-        this.postNesMessage({ command: "reset", debug: true });
+        this.postNesMessage({ command: 'reset', debug: true });
     }
 
     PowerOn() {
@@ -300,20 +351,20 @@ export class WishboneMachine  {
     }
 
     PowerOff() {
-        this.postNesMessage({ command: "stop" });
+        this.postNesMessage({ command: 'stop' });
     }
 
     Step() {
-        this.postNesMessage({ command: "step", debug: true });
+        this.postNesMessage({ command: 'step', debug: true });
     }
 
     EjectCart() {
-        this.postNesMessage({ command: "stop" });
+        this.postNesMessage({ command: 'stop' });
     }
 
     LoadCart(rom: any) {
-        let cartName = this.Cart.CartName;
-        let cart = iNESFileHandler.LoadROM(this.Cpu, rom);
+        const cartName = this.Cart.CartName;
+        const cart = iNESFileHandler.LoadROM(this.Cpu, rom);
 
         this.Cart = new WishboneCart();
         this.Cart.realCart = cart;
@@ -354,7 +405,7 @@ class WishboneCPPU extends ChiChiCPPU {
         super(soundBopper, ppu);
     }
 
-    Step() : void {}
-    Execute() : void {}
+    Step(): void {}
+    Execute(): void {}
     flushHistory = false;
 }
