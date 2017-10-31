@@ -37,15 +37,13 @@ class ChiChiThreeJSAudio
 	sound: THREE.Audio;
 	private wishbone: WishboneMachine;
 	
-	bufferBlockSize: number = 8192;
-	bufferBlockCount: number = 2;
-	bufferOverrunBlocks: number = 2;
+	bufferBlockSize: number = 4096;
+	bufferBlockCountBits: number = 2;
+	bufferOverrunBlocks: number = 0;
 	
 	nesBufferWritePos: number= 0;
 
-    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer(this.bufferBlockSize * (this.bufferBlockCount + this.bufferOverrunBlocks) * Float32Array.BYTES_PER_ELEMENT);
-	
-
+    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits ) * Float32Array.BYTES_PER_ELEMENT);
 	private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
 
     constructor(wishbopper: WishboneMachine) {
@@ -54,7 +52,7 @@ class ChiChiThreeJSAudio
 	
     setupAudio() : THREE.AudioListener {
 	
-		this.nesAudioBuffer = new SharedArrayBuffer(this.bufferBlockSize * this.bufferBlockCount * Float32Array.BYTES_PER_ELEMENT);
+		this.nesAudioBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
 		this.nesAudio = new Float32Array(<any>this.nesAudioBuffer);
 	
 		this.listener = new THREE.AudioListener();
@@ -64,8 +62,8 @@ class ChiChiThreeJSAudio
 			
 		let lastReadPos = 0;
 		sound.setNodeSource(audioSource);
-		audioSource.buffer = audioCtx.createBuffer(1, 8192, 48000);
-		const scriptNode = audioCtx.createScriptProcessor(4096, 1, 1);
+		audioSource.buffer = audioCtx.createBuffer(1, 2048, 48000);
+		const scriptNode = audioCtx.createScriptProcessor(2048, 1, 1);
 
 		audioSource.connect(scriptNode);
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {
@@ -75,14 +73,12 @@ class ChiChiThreeJSAudio
 			const outputData = outputBuffer.getChannelData(0);
 
 			if (this.wishbone.EnableSound ) {
-
 				for (let sample = 0; sample < outputData.length; sample++) {
 					outputData[sample] = this.nesAudio[lastReadPos++];
 					if (lastReadPos >= this.nesAudio.length) {
-						lastReadPos= 0;
+						lastReadPos = 0;
 					}
 					nesBytesAvailable--;
-
 				}
 				
 			} else {

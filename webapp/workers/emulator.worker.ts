@@ -180,21 +180,20 @@ export class tendoWrapper {
         this.runStatus = this.machine.RunState;
     }
     audioBytesWritten : number = 0;
+    
     private flushAudio() {
     //  debugger;
-          const len = this.machine.WaveForms.SharedBufferLength / 2;
-          for (let i = 0; i < len; ++i) {
+        const len = this.machine.WaveForms.SharedBufferLength / 2;
 
-
+        for (let i = 0; i < len; ++i) {
             this.sharedAudioBufferPos++;
             if (this.sharedAudioBufferPos >= this.sharedAudioBuffer.length) {
                 this.sharedAudioBufferPos = 0;
             }
             this.sharedAudioBuffer[this.sharedAudioBufferPos ] = this.machine.WaveForms.SharedBuffer[i];
-            
             this.audioBytesWritten++;
         }
-        while (this.audioBytesWritten >= this.sharedAudioBuffer.length /2) {
+        while (this.audioBytesWritten >= this.sharedAudioBuffer.length >> 2) {
             <any>Atomics.store(this.iops, 3, this.audioBytesWritten);
             <any>Atomics.wait(this.iops, 3, this.audioBytesWritten);
             this.audioBytesWritten = <any>Atomics.load(this.iops, 3);
@@ -203,25 +202,26 @@ export class tendoWrapper {
     }
 
     private runInnerLoop() {
-            this.machine.RunFrame();
-            this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
-            this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
-            this.framesPerSecond = 0;
+        this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
+        this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
 
-            this.flushAudio();
-            if ((this.framesRendered++) === 60) {
-                this.updateState();
+        this.machine.RunFrame();
+        this.framesPerSecond = 0;
 
-                this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
-                this.framesRendered = 0; this.startTime = new Date().getTime();
-                this.iops[1] = this.framesPerSecond;
+        this.flushAudio();
+        if ((this.framesRendered++) === 60) {
+            // this.updateState();
 
-                // if (this.framesPerSecond < 60 && this.runTimeout > 0) {
-                //     this.runTimeout--;
-                // } else if (this.runTimeout < 50) {
-                //     this.runTimeout++;
-                // }
-            }
+            this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
+            this.framesRendered = 0; this.startTime = new Date().getTime();
+            this.iops[1] = this.framesPerSecond;
+
+            // if (this.framesPerSecond < 60 && this.runTimeout > 0) {
+            //     this.runTimeout--;
+            // } else if (this.runTimeout < 50) {
+            //     this.runTimeout++;
+            // }
+        }
 
         //this.runInnerLoop();
         //setTimeout(() => { this.runInnerLoop(); }, this.runTimeout); 
@@ -245,7 +245,6 @@ export class tendoWrapper {
                 this.runInnerLoop();
             }
           },1);
-
 
           this.runStatus = machine.RunState;// runStatuses.Running;
       }

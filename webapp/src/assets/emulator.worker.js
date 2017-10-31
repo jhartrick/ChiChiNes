@@ -251,20 +251,20 @@ var tendoWrapper = (function () {
             this.sharedAudioBuffer[this.sharedAudioBufferPos] = this.machine.WaveForms.SharedBuffer[i];
             this.audioBytesWritten++;
         }
-        while (this.audioBytesWritten >= this.sharedAudioBuffer.length / 2) {
+        while (this.audioBytesWritten >= this.sharedAudioBuffer.length >> 2) {
             Atomics.store(this.iops, 3, this.audioBytesWritten);
             Atomics.wait(this.iops, 3, this.audioBytesWritten);
             this.audioBytesWritten = Atomics.load(this.iops, 3);
         }
     };
     tendoWrapper.prototype.runInnerLoop = function () {
-        this.machine.RunFrame();
         this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
         this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
+        this.machine.RunFrame();
         this.framesPerSecond = 0;
         this.flushAudio();
         if ((this.framesRendered++) === 60) {
-            this.updateState();
+            // this.updateState();
             this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
             this.framesRendered = 0;
             this.startTime = new Date().getTime();
