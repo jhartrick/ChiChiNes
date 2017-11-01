@@ -94,7 +94,6 @@ export class BaseCart  {
         return this.mapperId;
     }
 
-
     irqRaised = false;
     Debugging: boolean;
     DebugEvents: any = null;
