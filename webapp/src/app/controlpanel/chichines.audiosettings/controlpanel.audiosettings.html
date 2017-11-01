@@ -1,0 +1,19 @@
+﻿<mat-button-toggle value="wishbone.EnableSound" (change)="wishbone.EnableSound = !wishbone.EnableSound" >
+  {{ wishbone.EnableSound ? 'sound on' : 'sound off' }}
+</mat-button-toggle>
+<p>
+  <mat-button-toggle class="audio_button" value="enableSquare0" (change)="enableSquare0 = !(enableSquare0)" >
+    Square 0
+  </mat-button-toggle>
+  <mat-button-toggle class="audio_button" value="enableSquare1" (change)="enableSquare1 = !(enableSquare1)" >
+    Square 1
+  </mat-button-toggle>
+</p>
+<p>
+  <mat-button-toggle class="audio_button" value="enableTriangle" (change)="enableTriangle = !(enableTriangle)" >
+    Triangle
+  </mat-button-toggle>
+  <mat-button-toggle class="audio_button" value="enableNoise" (change)="enableNoise = !(enableNoise)" >
+    Noise
+  </mat-button-toggle>
+</p>
