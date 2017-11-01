@@ -3,8 +3,14 @@
 
 chichilib - the nes emulator library, to build, enter directory and 'webpack'
 
-webapp - the principal emu project.   to build the background worker, go to 'workers' and issue 'webpack'
-                                      to build the app, 'ng build' or 'ng serve'
+for all other apps to consume the library: 
+     npm install
+     npm link ../chichilib
+
+webapp - the principal emu project.   
+
+     to build the background worker, go to 'workers' and issue 'webpack'
+     to build the app, 'ng build' or 'ng serve'
 
 /** coming soon **/
 nsfplayer - standalone player for NSF files
