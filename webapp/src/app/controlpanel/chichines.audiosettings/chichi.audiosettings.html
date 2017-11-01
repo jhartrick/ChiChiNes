@@ -1,6 +1,4 @@
-﻿<mat-button-toggle value="wishbone.EnableSound" (change)="wishbone.EnableSound = !wishbone.EnableSound" >
-  {{ wishbone.EnableSound ? 'sound on' : 'sound off' }}
-</mat-button-toggle>
+﻿<p> Freq: {{ audioSettings.sampleRate }} </p>
 <p>
   <mat-button-toggle class="audio_button" value="enableSquare0" (change)="enableSquare0 = !(enableSquare0)" >
     Square 0

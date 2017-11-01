@@ -1,144 +1,9 @@
-﻿import { BaseCart, NesCart, MMC1Cart, MMC3Cart, NsfCart } from './ChiChiCarts'
+﻿import { BaseCart, NesCart, MMC1Cart, MMC3Cart, NsfCart, AxROMCart, iNESFileHandler } from './ChiChiCarts'
 import { WavSharer, ChiChiBopper } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
 import { ChiChiPPU } from "./ChiChiPPU";
 
-    export class iNESFileHandler  {
-
-        static LoadROM(cpu: ChiChiCPPU, thefile: number[]): BaseCart  {
-            let _cart: any = null;
-
-            let iNesHeader = thefile.slice(0, 16);
-            let bytesRead = 16;
-            /* 
-            .NES file format
-            ---------------------------------------------------------------------------
-            0-3      String "NES^Z" used to recognize .NES files.
-            4        Number of 16kB ROM banks.
-            5        Number of 8kB VROM banks.
-            6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
-            bit 1     1 for battery-backed RAM at $6000-$7FFF
-            bit 2     1 for a 512-byte trainer at $7000-$71FF
-            bit 3     1 for a four-screen VRAM layout 
-            bit 4-7   Four lower bits of ROM Mapper Type.
-            7        bit 0-3   Reserved, must be zeroes!
-            bit 4-7   Four higher bits of ROM Mapper Type.
-            8-15     Reserved, must be zeroes!
-            16-...   ROM banks, in ascending order. If a trainer is present, its
-            512 bytes precede the ROM bank contents.
-            ...-EOF  VROM banks, in ascending order.
-            ---------------------------------------------------------------------------
-            */
-            let mapperId = (iNesHeader[6] & 240);
-            mapperId = mapperId >> 4;
-            mapperId = (mapperId + iNesHeader[7]) | 0;
-
-            let prgRomCount: number = iNesHeader[4];
-            let chrRomCount: number = iNesHeader[5];
-            const prgRomLength = prgRomCount * 16384;
-            const chrRomLength = chrRomCount * 16384;
-            const theRom = new Uint8Array(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
-            theRom.fill(0);
-            const chrRom = new Uint8Array(chrRomLength);
-            chrRom.fill(0);
-
-            //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-            //chrRom.fill(0);
-            let chrOffset = 0;
-
-            //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
-            BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
-            chrOffset = (16 + theRom.length) | 0;
-            let len = chrRom.length;
-            if (((chrOffset + chrRom.length) | 0) > thefile.length) {
-                len = (thefile.length - chrOffset) | 0;
-            }
-            BaseCart.arrayCopy(thefile, chrOffset, chrRom, 0, len);
-            //zipStream.Read(chrRom, 0, chrRom.Length);
-            switch (mapperId) {
-                case 0:
-                case 2:
-                case 3:
-                case 7:
-                    _cart = new NesCart();
-                    break;
-                case 1:
-                    _cart = new MMC1Cart();
-                    break;
-                case 4:
-                    _cart = new MMC3Cart();
-                    break;
-            }
-
-            if (_cart != null) {
-                _cart.Whizzler = cpu.ppu;
-                _cart.CPU = cpu;
-                cpu.Cart = _cart;
-                cpu.ppu.ChrRomHandler = _cart;
-                _cart.ROMHashFunction = null; //Hashers.HashFunction;
-                _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-            }
-
-            return _cart;
-        }
-
-        static LoadNSF(cpu: ChiChiCPPU, thefile: number[]): BaseCart {
-            let _cart: NsfCart = null;
-
-            let iNesHeader = thefile.slice(0, 0x80);
-            let bytesRead = 0x80;
-            /* 
-            .NES file format
-            ---------------------------------------------------------------------------
-            0-3      String "NES^Z" used to recognize .NES files.
-            4        Number of 16kB ROM banks.
-            5        Number of 8kB VROM banks.
-            6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
-            bit 1     1 for battery-backed RAM at $6000-$7FFF
-            bit 2     1 for a 512-byte trainer at $7000-$71FF
-            bit 3     1 for a four-screen VRAM layout 
-            bit 4-7   Four lower bits of ROM Mapper Type.
-            7        bit 0-3   Reserved, must be zeroes!
-            bit 4-7   Four higher bits of ROM Mapper Type.
-            8-15     Reserved, must be zeroes!
-            16-...   ROM banks, in ascending order. If a trainer is present, its
-            512 bytes precede the ROM bank contents.
-            ...-EOF  VROM banks, in ascending order.
-            ---------------------------------------------------------------------------
-            */
-            let mapperId = (iNesHeader[6] & 240);
-            mapperId = mapperId >> 4;
-            mapperId = (mapperId + iNesHeader[7]) | 0;
-
-            const prgRomLength = thefile.length - 0x80; 
-            const theRom = new Array<number>(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
-            theRom.fill(0);
-            const chrRom = new Array<number>(0);
-            chrRom.fill(0);
-
-            //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-            //chrRom.fill(0);
-            let chrOffset = 0;
-
-            //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
-            BaseCart.arrayCopy(thefile, 0x80, theRom, 0, theRom.length);
-
-            //zipStream.Read(chrRom, 0, chrRom.Length);
-            _cart = new NsfCart();
-            if (_cart != null) {
-                _cart.Whizzler = cpu.ppu;
-                _cart.CPU = cpu;
-                cpu.Cart = _cart;
-                cpu.ppu.ChrRomHandler = _cart;
-                _cart.ROMHashFunction = null; //Hashers.HashFunction;
-                //_cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-            }
-
-            return _cart;
-        }
-        
-    }
 
     //machine wrapper
     export class ChiChiMachine {
@@ -173,6 +38,7 @@ import { ChiChiPPU } from "./ChiChiPPU";
         WaveForms: WavSharer;
 
         private _enableSound: boolean = false;
+        
         get EnableSound(): boolean {
             return this._enableSound;
         }
@@ -186,6 +52,7 @@ import { ChiChiPPU } from "./ChiChiPPU";
         }
 
         FrameCount: number;
+
         IsRunning: boolean;
 
         get PadOne(): ChiChiControlPad {
@@ -306,17 +173,21 @@ import { ChiChiPPU } from "./ChiChiPPU";
         GetState(index: number): void {
             throw new Error("Method not implemented.");
         }
+
         SetState(index: number): void {
             throw new Error("Method not implemented.");
         }
+
         SetupSound(): void {
             throw new Error("Method not implemented.");
         }
+
         FrameFinished(): void {
             this.frameJustEnded = true;
             this.frameOn = false;
             this.Drawscreen();
         }
+
         dispose(): void {
         }
     }

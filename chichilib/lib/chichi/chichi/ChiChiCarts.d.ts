@@ -1,5 +1,9 @@
 import { ChiChiCPPU } from './ChiChiMachine';
 import { ChiChiPPU } from './ChiChiPPU';
+export declare class iNESFileHandler {
+    static LoadROM(cpu: ChiChiCPPU, thefile: number[]): BaseCart;
+    static LoadNSF(cpu: ChiChiCPPU, thefile: number[]): BaseCart;
+}
 export declare enum NameTableMirroring {
     OneScreen = 0,
     Vertical = 1,
@@ -7,6 +11,7 @@ export declare enum NameTableMirroring {
     FourScreen = 3,
 }
 export declare class BaseCart {
+    mapperName: string;
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number): void;
     prgRomBank6: Uint8Array;
     ppuBankStarts: Uint32Array;
@@ -40,6 +45,7 @@ export declare class BaseCart {
     readonly NumberOfPrgRoms: number;
     readonly NumberOfChrRoms: number;
     readonly MapperID: number;
+    readonly MapperName: string;
     irqRaised: boolean;
     Debugging: boolean;
     DebugEvents: any;
@@ -73,6 +79,29 @@ export declare class BaseCart {
     UpdateScanlineCounter(): void;
 }
 export declare class NesCart extends BaseCart {
+    irqRaised: boolean;
+    Debugging: boolean;
+    DebugEvents: any;
+    ROMHashFunction: (prg: any, chr: any) => string;
+    IrqRaised: boolean;
+    CheckSum: string;
+    SRAM: any;
+    CartName: string;
+    NumberOfPrgRoms: number;
+    NumberOfChrRoms: number;
+    Mirroring: NameTableMirroring;
+    IRQAsserted: boolean;
+    NextEventAt: number;
+    CurrentBank: number;
+    BankSwitchesChanged: boolean;
+    OneScreenOffset: number;
+    UsesSRAM: boolean;
+    ChrRamStart: number;
+    InitializeCart(): void;
+    CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class AxROMCart extends BaseCart {
     irqRaised: boolean;
     Debugging: boolean;
     DebugEvents: any;

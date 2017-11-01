@@ -3,10 +3,6 @@ import { WavSharer, ChiChiBopper } from './ChiChiAudio';
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, RunningStatuses, CpuStatus } from './ChiChiTypes';
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl';
 import { ChiChiPPU } from "./ChiChiPPU";
-export declare class iNESFileHandler {
-    static LoadROM(cpu: ChiChiCPPU, thefile: number[]): BaseCart;
-    static LoadNSF(cpu: ChiChiCPPU, thefile: number[]): BaseCart;
-}
 export declare class ChiChiMachine {
     private frameJustEnded;
     private frameOn;

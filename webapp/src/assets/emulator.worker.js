@@ -330,6 +330,7 @@ var tendoWrapper = (function () {
                 this.createMachine();
                 this.machine.Cpu.ppu.byteOutBuffer = event.data.vbuffer;
                 this.machine.SoundBopper.writer.SharedBuffer = this.sharedAudioBuffer = event.data.abuffer;
+                this.machine.SoundBopper.audioSettings = event.data.audioSettings;
                 this.sharedAudioBufferPos = 0;
                 this.iops = event.data.iops;
                 break;
@@ -1363,130 +1364,6 @@ var ChiChiAudio_1 = __webpack_require__(4);
 var ChiChiTypes_1 = __webpack_require__(0);
 var ChiChiControl_1 = __webpack_require__(5);
 var ChiChiPPU_1 = __webpack_require__(1);
-var iNESFileHandler = /** @class */ (function () {
-    function iNESFileHandler() {
-    }
-    iNESFileHandler.LoadROM = function (cpu, thefile) {
-        var _cart = null;
-        var iNesHeader = thefile.slice(0, 16);
-        var bytesRead = 16;
-        /*
-        .NES file format
-        ---------------------------------------------------------------------------
-        0-3      String "NES^Z" used to recognize .NES files.
-        4        Number of 16kB ROM banks.
-        5        Number of 8kB VROM banks.
-        6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
-        bit 1     1 for battery-backed RAM at $6000-$7FFF
-        bit 2     1 for a 512-byte trainer at $7000-$71FF
-        bit 3     1 for a four-screen VRAM layout
-        bit 4-7   Four lower bits of ROM Mapper Type.
-        7        bit 0-3   Reserved, must be zeroes!
-        bit 4-7   Four higher bits of ROM Mapper Type.
-        8-15     Reserved, must be zeroes!
-        16-...   ROM banks, in ascending order. If a trainer is present, its
-        512 bytes precede the ROM bank contents.
-        ...-EOF  VROM banks, in ascending order.
-        ---------------------------------------------------------------------------
-        */
-        var mapperId = (iNesHeader[6] & 240);
-        mapperId = mapperId >> 4;
-        mapperId = (mapperId + iNesHeader[7]) | 0;
-        var prgRomCount = iNesHeader[4];
-        var chrRomCount = iNesHeader[5];
-        var prgRomLength = prgRomCount * 16384;
-        var chrRomLength = chrRomCount * 16384;
-        var theRom = new Uint8Array(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
-        theRom.fill(0);
-        var chrRom = new Uint8Array(chrRomLength);
-        chrRom.fill(0);
-        //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-        //chrRom.fill(0);
-        var chrOffset = 0;
-        //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
-        ChiChiCarts_1.BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
-        chrOffset = (16 + theRom.length) | 0;
-        var len = chrRom.length;
-        if (((chrOffset + chrRom.length) | 0) > thefile.length) {
-            len = (thefile.length - chrOffset) | 0;
-        }
-        ChiChiCarts_1.BaseCart.arrayCopy(thefile, chrOffset, chrRom, 0, len);
-        //zipStream.Read(chrRom, 0, chrRom.Length);
-        switch (mapperId) {
-            case 0:
-            case 2:
-            case 3:
-            case 7:
-                _cart = new ChiChiCarts_1.NesCart();
-                break;
-            case 1:
-                _cart = new ChiChiCarts_1.MMC1Cart();
-                break;
-            case 4:
-                _cart = new ChiChiCarts_1.MMC3Cart();
-                break;
-        }
-        if (_cart != null) {
-            _cart.Whizzler = cpu.ppu;
-            _cart.CPU = cpu;
-            cpu.Cart = _cart;
-            cpu.ppu.ChrRomHandler = _cart;
-            _cart.ROMHashFunction = null; //Hashers.HashFunction;
-            _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-        }
-        return _cart;
-    };
-    iNESFileHandler.LoadNSF = function (cpu, thefile) {
-        var _cart = null;
-        var iNesHeader = thefile.slice(0, 0x80);
-        var bytesRead = 0x80;
-        /*
-        .NES file format
-        ---------------------------------------------------------------------------
-        0-3      String "NES^Z" used to recognize .NES files.
-        4        Number of 16kB ROM banks.
-        5        Number of 8kB VROM banks.
-        6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
-        bit 1     1 for battery-backed RAM at $6000-$7FFF
-        bit 2     1 for a 512-byte trainer at $7000-$71FF
-        bit 3     1 for a four-screen VRAM layout
-        bit 4-7   Four lower bits of ROM Mapper Type.
-        7        bit 0-3   Reserved, must be zeroes!
-        bit 4-7   Four higher bits of ROM Mapper Type.
-        8-15     Reserved, must be zeroes!
-        16-...   ROM banks, in ascending order. If a trainer is present, its
-        512 bytes precede the ROM bank contents.
-        ...-EOF  VROM banks, in ascending order.
-        ---------------------------------------------------------------------------
-        */
-        var mapperId = (iNesHeader[6] & 240);
-        mapperId = mapperId >> 4;
-        mapperId = (mapperId + iNesHeader[7]) | 0;
-        var prgRomLength = thefile.length - 0x80;
-        var theRom = new Array(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
-        theRom.fill(0);
-        var chrRom = new Array(0);
-        chrRom.fill(0);
-        //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-        //chrRom.fill(0);
-        var chrOffset = 0;
-        //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
-        ChiChiCarts_1.BaseCart.arrayCopy(thefile, 0x80, theRom, 0, theRom.length);
-        //zipStream.Read(chrRom, 0, chrRom.Length);
-        _cart = new ChiChiCarts_1.NsfCart();
-        if (_cart != null) {
-            _cart.Whizzler = cpu.ppu;
-            _cart.CPU = cpu;
-            cpu.Cart = _cart;
-            cpu.ppu.ChrRomHandler = _cart;
-            _cart.ROMHashFunction = null; //Hashers.HashFunction;
-            //_cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-        }
-        return _cart;
-    };
-    return iNESFileHandler;
-}());
-exports.iNESFileHandler = iNESFileHandler;
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -1614,7 +1491,7 @@ var ChiChiMachine = /** @class */ (function () {
     ChiChiMachine.prototype.LoadCart = function (rom) {
         var _this = this;
         this.EjectCart();
-        var cart = iNESFileHandler.LoadROM(this.Cpu, rom);
+        var cart = ChiChiCarts_1.iNESFileHandler.LoadROM(this.Cpu, rom);
         if (cart != null) {
             this.Cpu.Cart = cart; // Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
             this.Cart.NMIHandler = function () { _this.Cpu.InterruptRequest(); };
@@ -2981,6 +2858,113 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var iNESFileHandler = /** @class */ (function () {
+    function iNESFileHandler() {
+    }
+    iNESFileHandler.LoadROM = function (cpu, thefile) {
+        var _cart = null;
+        var iNesHeader = thefile.slice(0, 16);
+        var bytesRead = 16;
+        /*
+        .NES file format
+        ---------------------------------------------------------------------------
+        0-3      String "NES^Z" used to recognize .NES files.
+        4        Number of 16kB ROM banks.
+        5        Number of 8kB VROM banks.
+        6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
+        bit 1     1 for battery-backed RAM at $6000-$7FFF
+        bit 2     1 for a 512-byte trainer at $7000-$71FF
+        bit 3     1 for a four-screen VRAM layout
+        bit 4-7   Four lower bits of ROM Mapper Type.
+        7        bit 0-3   Reserved, must be zeroes!
+        bit 4-7   Four higher bits of ROM Mapper Type.
+        8-15     Reserved, must be zeroes!
+        16-...   ROM banks, in ascending order. If a trainer is present, its
+        512 bytes precede the ROM bank contents.
+        ...-EOF  VROM banks, in ascending order.
+        ---------------------------------------------------------------------------
+        */
+        var mapperId = (iNesHeader[6] & 240);
+        mapperId = mapperId >> 4;
+        mapperId = (mapperId + iNesHeader[7]) | 0;
+        var prgRomCount = iNesHeader[4];
+        var chrRomCount = iNesHeader[5];
+        var prgRomLength = prgRomCount * 16384;
+        var chrRomLength = chrRomCount * 16384;
+        var theRom = new Uint8Array(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
+        theRom.fill(0);
+        var chrRom = new Uint8Array(chrRomLength);
+        chrRom.fill(0);
+        //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
+        //chrRom.fill(0);
+        var chrOffset = 0;
+        //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
+        BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
+        chrOffset = (16 + theRom.length) | 0;
+        var len = chrRom.length;
+        if (((chrOffset + chrRom.length) | 0) > thefile.length) {
+            len = (thefile.length - chrOffset) | 0;
+        }
+        BaseCart.arrayCopy(thefile, chrOffset, chrRom, 0, len);
+        //zipStream.Read(chrRom, 0, chrRom.Length);
+        switch (mapperId) {
+            case 0:
+            case 2:
+            case 3:
+                _cart = new NesCart();
+                break;
+            case 7:
+                _cart = new AxROMCart();
+                break;
+            case 1:
+                _cart = new MMC1Cart();
+                break;
+            case 4:
+                _cart = new MMC3Cart();
+                break;
+        }
+        if (_cart != null) {
+            _cart.Whizzler = cpu.ppu;
+            _cart.CPU = cpu;
+            cpu.Cart = _cart;
+            cpu.ppu.ChrRomHandler = _cart;
+            _cart.ROMHashFunction = null; //Hashers.HashFunction;
+            _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
+        }
+        return _cart;
+    };
+    iNESFileHandler.LoadNSF = function (cpu, thefile) {
+        var _cart = null;
+        var iNesHeader = thefile.slice(0, 0x80);
+        var bytesRead = 0x80;
+        var mapperId = (iNesHeader[6] & 240);
+        mapperId = mapperId >> 4;
+        mapperId = (mapperId + iNesHeader[7]) | 0;
+        var prgRomLength = thefile.length - 0x80;
+        var theRom = new Array(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
+        theRom.fill(0);
+        var chrRom = new Array(0);
+        chrRom.fill(0);
+        //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
+        //chrRom.fill(0);
+        var chrOffset = 0;
+        //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
+        BaseCart.arrayCopy(thefile, 0x80, theRom, 0, theRom.length);
+        //zipStream.Read(chrRom, 0, chrRom.Length);
+        _cart = new NsfCart();
+        if (_cart != null) {
+            _cart.Whizzler = cpu.ppu;
+            _cart.CPU = cpu;
+            cpu.Cart = _cart;
+            cpu.ppu.ChrRomHandler = _cart;
+            _cart.ROMHashFunction = null; //Hashers.HashFunction;
+            //_cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
+        }
+        return _cart;
+    };
+    return iNESFileHandler;
+}());
+exports.iNESFileHandler = iNESFileHandler;
 var NameTableMirroring;
 (function (NameTableMirroring) {
     NameTableMirroring[NameTableMirroring["OneScreen"] = 0] = "OneScreen";
@@ -2992,6 +2976,7 @@ var BaseCart = /** @class */ (function () {
     //ChrRamStart: number;
     function BaseCart() {
         var _this = this;
+        this.mapperName = 'base';
         // shared components
         this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
         this.ppuBankStarts = new Uint32Array(new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
@@ -3082,6 +3067,13 @@ var BaseCart = /** @class */ (function () {
     Object.defineProperty(BaseCart.prototype, "MapperID", {
         get: function () {
             return this.mapperId;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BaseCart.prototype, "MapperName", {
+        get: function () {
+            return this.mapperName;
         },
         enumerable: true,
         configurable: true
@@ -3340,6 +3332,20 @@ var NesCart = /** @class */ (function (_super) {
         //SRAMEnabled = SRAMCanSave;
         switch (this.mapperId) {
             case 0:
+                this.mapperName = 'NROM';
+                break;
+            case 1:
+                this.mapperName = 'MMC1';
+                break;
+            case 2:
+                this.mapperName = 'UxROM';
+                break;
+            case 3:
+                this.mapperName = 'CNROM';
+                break;
+        }
+        switch (this.mapperId) {
+            case 0:
             case 1:
             case 2:
             case 3:
@@ -3347,11 +3353,6 @@ var NesCart = /** @class */ (function (_super) {
                     this.CopyBanks(0, 0, 0, 1);
                 }
                 this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-                break;
-            case 7:
-                //SetupBanks(0, 1, 2, 3);
-                this.SetupBankStarts(0, 1, 2, 3);
-                this.Mirror(0, 0);
                 break;
             default:
                 throw new Error("Mapper " + (this.mapperId.toString() || "") + " not implemented.");
@@ -3405,6 +3406,55 @@ var NesCart = /** @class */ (function (_super) {
     return NesCart;
 }(BaseCart));
 exports.NesCart = NesCart;
+//  Mapper 7
+var AxROMCart = /** @class */ (function (_super) {
+    __extends(AxROMCart, _super);
+    function AxROMCart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    // PPUBankStarts: any;
+    AxROMCart.prototype.InitializeCart = function () {
+        this.mapperName = 'AxROM';
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.Mirror(0, 0);
+    };
+    AxROMCart.prototype.CopyBanks = function (clock, dest, src, numberOf8kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = (this.chrRomCount - 1) | 0;
+        }
+        var oneKsrc = src << 3;
+        var oneKdest = dest << 3;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf8kBanks << 3); i = (i + 1) | 0) {
+            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    AxROMCart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+            return;
+        }
+        // val selects which bank to swap, 32k at a time
+        var newbank8 = 0;
+        newbank8 = (val & 15) << 2;
+        // this.Whizzler.DrawTo(clock);
+        this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
+        // whizzler.DrawTo(clock);
+        if ((val & 16) === 16) {
+            this.OneScreenOffset = 1024;
+        }
+        else {
+            this.OneScreenOffset = 0;
+        }
+        this.Mirror(clock, 0);
+    };
+    return AxROMCart;
+}(BaseCart));
+exports.AxROMCart = AxROMCart;
 var NsfCart = /** @class */ (function (_super) {
     __extends(NsfCart, _super);
     function NsfCart() {
@@ -3415,6 +3465,7 @@ var NsfCart = /** @class */ (function (_super) {
         return _this;
     }
     NsfCart.prototype.InitializeCart = function () {
+        this.mapperName = 'NSF';
     };
     NsfCart.prototype.GetPPUByte = function (clock, address) {
         return 0;
@@ -3499,6 +3550,7 @@ var MMC1Cart = /** @class */ (function (_super) {
         return _this;
     }
     MMC1Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'MMC1';
         if (this.chrRomCount > 0) {
             this.CopyBanks(0, 0, 4);
         }
@@ -3660,6 +3712,7 @@ var MMC2Cart = /** @class */ (function (_super) {
         return _this;
     }
     MMC2Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'MMC2';
         if (this.chrRomCount > 0) {
             this.CopyBanks(0, 0, 4);
         }
@@ -3834,6 +3887,7 @@ var MMC3Cart = /** @class */ (function (_super) {
         return _this;
     }
     MMC3Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'MMC3';
         this._registers.fill(0);
         this.PPUBanks.fill(0);
         this.prevBSSrc.fill(0);
@@ -4100,13 +4154,12 @@ var WavSharer = /** @class */ (function () {
         },
         set: function (value) {
             Atomics.store(this.controlBuffer, this.NES_BYTES_WRITTEN, value);
-            //this.controlBuffer[this.NES_BYTES_WRITTEN] = value;
         },
         enumerable: true,
         configurable: true
     });
     WavSharer.prototype.wakeSleepers = function () {
-        Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 321);
+        Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
     };
     WavSharer.prototype.synchronize = function () {
         while (this.audioBytesWritten >= this.SharedBuffer.length >> 2) {
@@ -4230,8 +4283,6 @@ var Blip = /** @class */ (function () {
         var sum = this.BlipBuffer.integrator;
         if (count !== 0) {
             var step = 1;
-            //int inPtr  = BLIP_SAMPLES( s );
-            //buf_t const* end = in + count;
             do {
                 var st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
                 sum = sum + this.BlipBuffer.samples[inPtr];
@@ -4240,12 +4291,6 @@ var Blip = /** @class */ (function () {
                     st = (st >> 31) ^ 32767;
                 }
                 var f = st / 65536; // (st/0xFFFF) * 2 - 1;
-                //if (f < -1) {
-                //    f = -1;
-                //}
-                //if (f > 1) {
-                //    f = 1;
-                //}
                 outPtr += step;
                 if (outPtr >= outbuf.length) {
                     outPtr = 0;
@@ -5314,12 +5359,14 @@ var ChiChiBopper = /** @class */ (function () {
             return settings;
         },
         set: function (value) {
-            //this._sampleRate = value.sampleRate;
             this.EnableNoise = value.enableNoise;
             this.EnableSquare0 = value.enableSquare0;
             this.EnableSquare1 = value.enableSquare1;
             this.enableTriangle = value.enableTriangle;
-            //this.RebuildSound();
+            if (value.sampleRate != this._sampleRate) {
+                this._sampleRate = value.sampleRate;
+                this.RebuildSound();
+            }
         },
         enumerable: true,
         configurable: true
@@ -5624,16 +5671,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiMachine_1 = __webpack_require__(2);
 exports.ChiChiCPPU = ChiChiMachine_1.ChiChiCPPU;
 exports.ChiChiMachine = ChiChiMachine_1.ChiChiMachine;
-exports.iNESFileHandler = ChiChiMachine_1.iNESFileHandler;
 var ChiChiNsfMachine_1 = __webpack_require__(7);
 exports.ChiChiNsfCPPU = ChiChiNsfMachine_1.ChiChiNsfCPPU;
 exports.ChiChiNsfMachine = ChiChiNsfMachine_1.ChiChiNsfMachine;
 var ChiChiCarts_1 = __webpack_require__(3);
 exports.BaseCart = ChiChiCarts_1.BaseCart;
 exports.NesCart = ChiChiCarts_1.NesCart;
+exports.AxROMCart = ChiChiCarts_1.AxROMCart;
 exports.NsfCart = ChiChiCarts_1.NsfCart;
 exports.MMC1Cart = ChiChiCarts_1.MMC1Cart;
 exports.MMC3Cart = ChiChiCarts_1.MMC3Cart;
+exports.iNESFileHandler = ChiChiCarts_1.iNESFileHandler;
 var ChiChiControl_1 = __webpack_require__(5);
 exports.ChiChiInputHandler = ChiChiControl_1.ChiChiInputHandler;
 var ChiChiAudio_1 = __webpack_require__(4);

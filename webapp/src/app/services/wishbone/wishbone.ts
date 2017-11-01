@@ -8,6 +8,71 @@ import { TileDoodler } from './wishbone.tiledoodler';
 import { WishboneCart } from './wishbone.cart';
 import { WishBopper } from './wishbone.audio';
 
+export class WishboneSyncHandler {
+    private subj: Subject<WishboneSyncHandler> = new Subject<WishboneSyncHandler>();
+    private wishbone: WishboneMachine;
+
+    asObservable(): Observable<WishboneSyncHandler> {
+        return this.subj;
+    }
+    Sync(data: any) {
+        if (data.bufferupdate) {
+            if (data.Cpu.Rams) {
+                this.wishbone.Cpu.Rams = data.Cpu.Rams;
+                this.wishbone.ppu.spriteRAM = data.Cpu.spriteRAM;
+                for (let i = 0; i < this.wishbone.ppu.unpackedSprites.length; ++i) {
+                    this.wishbone.ppu.unpackedSprites[i].Changed = true;
+                }
+                this.wishbone.ppu.UnpackSprites();
+            }
+            if (data.Cart && this.wishbone.Cart.realCart) {
+
+                this.wishbone.Cart.realCart.prgRomBank6 = data.Cart.prgRomBank6;
+                this.wishbone.Cart.realCart.ppuBankStarts = data.Cart.ppuBankStarts;
+                this.wishbone.Cart.realCart.bankStartCache = data.Cart.bankStartCache;
+                this.wishbone.Cart.realCart.chrRom = data.Cart.chrRom;
+            }
+            if (data.sound) {
+                this.wishbone.WaveForms.controlBuffer = data.sound.waveForms_controlBuffer;//
+            }
+        }
+        if (data.stateupdate) {
+            if (data.Cpu) {
+                this.wishbone.ppu.backgroundPatternTableIndex = data.Cpu.backgroundPatternTableIndex;
+                this.wishbone.cpuStatus = data.Cpu.status;
+                this.wishbone.ppuStatus = data.Cpu.ppuStatus;
+                this.wishbone.ppu._PPUControlByte0 = data.Cpu._PPUControlByte0;
+                this.wishbone.ppu._PPUControlByte1 = data.Cpu._PPUControlByte1;
+
+            }
+            if (data.Cart && this.wishbone.Cart.realCart) {
+
+                this.wishbone.Cart.realCart.CurrentBank = data.Cart.CurrentBank;
+                this.wishbone.Cart.realCart.current8 = data.Cart.current8;
+                this.wishbone.Cart.realCart.currentA = data.Cart.currentA;
+                this.wishbone.Cart.realCart.currentC = data.Cart.currentC;
+                this.wishbone.Cart.realCart.currentE = data.Cart.currentE;
+
+                this.wishbone.Cart.realCart.bank8start = data.Cart.bank8start;
+                this.wishbone.Cart.realCart.bankAstart = data.Cart.bankAstart;
+                this.wishbone.Cart.realCart.bankCstart = data.Cart.bankCstart;
+                this.wishbone.Cart.realCart.bankEstart = data.Cart.bankEstart;
+
+            }
+        }
+        if (data.sound) {
+            this.wishbone.SoundBopper.audioSettings = data.sound.settings;
+        }
+
+        if (data.debug && data.debug.InstructionHistory) {
+            this.wishbone.Cpu._instructionHistory = data.debug.InstructionHistory.Buffer;
+            this.wishbone.Cpu.instructionHistoryPointer = data.debug.InstructionHistory.Index;
+            this.wishbone.Cpu.flushHistory = data.debug.InstructionHistory.Finish ? true : false;
+        }
+    }
+}
+
+
 export class KeyBindings {
     left = 37;
     right = 39;
@@ -164,14 +229,16 @@ export class WishboneMachine  {
 
 
     constructor() {
+        // initialize sound
         this.WaveForms = new WavSharer();
         this.SoundBopper = new WishBopper(this.WaveForms, this);
+        this.SoundBopper.RebuildSound();
+        
         this.ppu = new WishbonePPU();
         this.Cpu = new WishboneCPPU(this.SoundBopper, this.ppu);
         this.ppu.cpu = this.Cpu;
         this.Cart = new WishboneCart();
         this.PadOne = new WishBoneControlPad(this);
-
 
         const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../../assets/emulator.worker.bootstrap.js');
 
@@ -180,7 +247,6 @@ export class WishboneMachine  {
         this.worker.onmessage = (data: MessageEvent) => {
             this.handleMessage(data);
         };
-
 
     }
 
@@ -193,7 +259,12 @@ export class WishboneMachine  {
             this.postNesMessage({ command: createCommand,
                 vbuffer: this.ppu.byteOutBuffer,
                 abuffer: this.WaveForms.SharedBuffer,
+                audioSettings: this.SoundBopper.audioSettings,
                 iops: this.nesInterop });
+
+            while (this.pendingMessages.length > 0) {
+                this.worker.postMessage(this.pendingMessages.pop());
+            }
             return;
         }
 
@@ -212,13 +283,16 @@ export class WishboneMachine  {
         return this.nesStateSubject.asObservable();
     }
 
-    postNesMessage(message: any) {
-        // this.oldOp = this.nesInterop[0] ;
-        // this.nesInterop[0] = 0;
-        <any>Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL , 0);
-        <any>Atomics.wake(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 9999);
+    pendingMessages: Array<any> = new Array<any>();
 
-        this.worker.postMessage(message);
+    postNesMessage(message: any) {
+        if (this.worker) {
+            <any>Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL , 0);
+            <any>Atomics.wake(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 9999);
+            this.worker.postMessage(message);
+        } else {
+            this.pendingMessages.push(message);
+        }
     }
 
     Run() {
@@ -285,8 +359,9 @@ export class WishboneMachine  {
 
             }
         }
-        if (data.sound)
+        if (data.sound) {
             this.SoundBopper.audioSettings = data.sound.settings;
+        }
 
         if (data.debug && data.debug.InstructionHistory) {
             this.Cpu._instructionHistory = data.debug.InstructionHistory.Buffer;
@@ -304,7 +379,7 @@ export class WishboneMachine  {
     Cart: WishboneCart;
 
     SoundBopper: WishBopper;
-    WaveForms: any;
+    WaveForms: WavSharer;
 
     get nesAudioDataAvailable(): number {
         return <any>Atomics.load(this.nesInterop, this.NES_AUDIO_AVAILABLE);

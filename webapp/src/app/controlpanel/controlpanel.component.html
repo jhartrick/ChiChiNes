@@ -22,10 +22,11 @@
         <div class="mat-button-toggle-focus-overlay"></div>
       </div>
     </div>
-    <div *ngIf="wishbone.Cart.MapperID > 0" >
+    <div *ngIf="wishbone.Cart.MapperID > -1" >
       <p>Loaded: {{ wishbone.Cart.CartName }}</p>
        <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
         <p>Mapper: {{ wishbone.Cart.MapperID }}</p>
+        <p>Mapper: {{ wishbone.Cart.MapperName }}</p>
         <p>Prg Roms: {{ wishbone.Cart.NumberOfPrgRoms }}</p>
         <p>Chr Roms: {{ wishbone.Cart.NumberOfChrRoms }}</p>
     </div>
@@ -44,5 +45,7 @@
   </mat-expansion-panel-header>
 <chichi-audiosettings></chichi-audiosettings>
   </mat-expansion-panel>
-
+  <mat-button-toggle (change)="wishbone.EnableSound = !wishbone.EnableSound" >
+    {{ wishbone.EnableSound ? 'sound on' : 'sound off' }}
+  </mat-button-toggle>
   <button mat-button (click)="showDebugger()">Open Debugger</button>

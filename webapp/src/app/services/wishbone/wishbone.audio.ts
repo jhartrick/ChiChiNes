@@ -7,37 +7,35 @@ export class WishBopper  extends ChiChiBopper {
 	_audioHandler: ChiChiThreeJSAudio;
 
 	get audioHandler(): ChiChiThreeJSAudio {
-		if (this._audioHandler && this._audioHandler.sound) {
-			this._audioHandler.sound.stop();
-		}
-		this._audioHandler.setupAudio();
 		return this._audioHandler;
 	}
 
 	private _audioSettings: AudioSettings = new AudioSettings();
 	private wishbone: WishboneMachine;
+
 	get audioSettings(): AudioSettings {
 		return this._audioSettings;
 	}
 	
 	set audioSettings(value: AudioSettings) {
 		this._audioSettings = value;
-		this.wishbone.RequestSync();
+		// this.wishbone.RequestSync();
 	}
-    // get nesAudioDataAvailable(): number {
-    //     return <any>Atomics.load(this.nesInterop,this.NES_AUDIO_AVAILABLE);
-    // }
 
-    // set nesAudioDataAvailable(value: number) {
-    //     <any>Atomics.store(this.nesInterop, this.NES_AUDIO_AVAILABLE, value);
-    //     <any>Atomics.wake(this.nesInterop, this.NES_AUDIO_AVAILABLE, 321);
-    // }
+	RebuildSound() {
+		if (this._audioHandler) {
+			this._audioHandler.setupAudio();
+			this.audioSettings.sampleRate = this._audioHandler.sampleRate;
+			this.wishbone.RequestSync();
+		}
+	}
 
 	constructor(wavSharer: WavSharer, wishbone: WishboneMachine) {
 		super(wavSharer);
 		this.wishbone = wishbone;
+
+		this._audioHandler = new ChiChiThreeJSAudio(this.wishbone);
 		
-		this._audioHandler = new ChiChiThreeJSAudio(this.wishbone); 
 	}
 }
 
@@ -46,12 +44,13 @@ class ChiChiThreeJSAudio
 	listener: THREE.AudioListener;
 	sound: THREE.Audio;
 	private wishbone: WishboneMachine;
-	
-	bufferBlockSize: number = 4096;
+
+	bufferBlockSize: number = 8192;
 	bufferBlockCountBits: number = 2;
 	bufferSize: number = this.bufferBlockSize << this.bufferBlockCountBits;
-	
 	nesBufferWritePos: number = 0;
+	sampleRate: number = 44100;
+
 
     private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
 	private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
@@ -61,19 +60,21 @@ class ChiChiThreeJSAudio
 	}
 	
     setupAudio(): THREE.AudioListener {
-	
 		this.nesAudioBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
 		this.nesAudio = new Float32Array(<any>this.nesAudioBuffer);
-	
+
 		this.listener = new THREE.AudioListener();
 		const sound = new THREE.Audio(this.listener);
 		const  audioCtx = sound.context;
+		
 		const audioSource = audioCtx.createBufferSource();
 			
 		let lastReadPos = 0;
 		sound.setNodeSource(audioSource);
-		audioSource.buffer = audioCtx.createBuffer(1, 2048, 44100);
-		const scriptNode = audioCtx.createScriptProcessor(512, 1, 1);
+		console.log (audioCtx.sampleRate);
+		this.sampleRate = audioCtx.sampleRate;
+		audioSource.buffer = audioCtx.createBuffer(1, 4096, audioCtx.sampleRate);
+		const scriptNode = audioCtx.createScriptProcessor(2048, 1, 1);
 
 		audioSource.connect(scriptNode);
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {
@@ -97,9 +98,7 @@ class ChiChiThreeJSAudio
 						lastReadPos = 0;
 					}
 					nesBytesAvailable--;
-
 				}
-			
 			}
 			if (nesBytesAvailable < 0) {
 				while (nesBytesAvailable + this.bufferSize < 0) {
@@ -111,7 +110,6 @@ class ChiChiThreeJSAudio
 			
 			this.wishbone.WaveForms.audioBytesWritten = nesBytesAvailable;
 			this.wishbone.WaveForms.wakeSleepers(); // = nesBytesAvailable;
-			// nesService.clearAudio();
 		}
 
 		scriptNode.connect(audioCtx.destination);
@@ -121,6 +119,7 @@ class ChiChiThreeJSAudio
 			// this.sound.play();
 			//this.nesService.SetAudioBuffer();
 		this.wishbone.WaveForms.SharedBuffer = this.nesAudio;
+		
 		return this.listener;
 	}
 	

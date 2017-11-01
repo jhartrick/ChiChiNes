@@ -1,6 +1,127 @@
 ﻿import { ChiChiCPPU } from './ChiChiMachine';
 import { ChiChiPPU } from './ChiChiPPU';
 
+export class iNESFileHandler  {
+    
+            static LoadROM(cpu: ChiChiCPPU, thefile: number[]): BaseCart  {
+                let _cart: any = null;
+    
+                let iNesHeader = thefile.slice(0, 16);
+                let bytesRead = 16;
+                /* 
+                .NES file format
+                ---------------------------------------------------------------------------
+                0-3      String "NES^Z" used to recognize .NES files.
+                4        Number of 16kB ROM banks.
+                5        Number of 8kB VROM banks.
+                6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
+                bit 1     1 for battery-backed RAM at $6000-$7FFF
+                bit 2     1 for a 512-byte trainer at $7000-$71FF
+                bit 3     1 for a four-screen VRAM layout 
+                bit 4-7   Four lower bits of ROM Mapper Type.
+                7        bit 0-3   Reserved, must be zeroes!
+                bit 4-7   Four higher bits of ROM Mapper Type.
+                8-15     Reserved, must be zeroes!
+                16-...   ROM banks, in ascending order. If a trainer is present, its
+                512 bytes precede the ROM bank contents.
+                ...-EOF  VROM banks, in ascending order.
+                ---------------------------------------------------------------------------
+                */
+                let mapperId = (iNesHeader[6] & 240);
+                mapperId = mapperId >> 4;
+                mapperId = (mapperId + iNesHeader[7]) | 0;
+    
+                let prgRomCount: number = iNesHeader[4];
+                let chrRomCount: number = iNesHeader[5];
+                const prgRomLength = prgRomCount * 16384;
+                const chrRomLength = chrRomCount * 16384;
+                const theRom = new Uint8Array(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
+                theRom.fill(0);
+                const chrRom = new Uint8Array(chrRomLength);
+                chrRom.fill(0);
+    
+                //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
+                //chrRom.fill(0);
+                let chrOffset = 0;
+    
+                //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
+                BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
+                chrOffset = (16 + theRom.length) | 0;
+                let len = chrRom.length;
+                if (((chrOffset + chrRom.length) | 0) > thefile.length) {
+                    len = (thefile.length - chrOffset) | 0;
+                }
+                BaseCart.arrayCopy(thefile, chrOffset, chrRom, 0, len);
+                //zipStream.Read(chrRom, 0, chrRom.Length);
+                switch (mapperId) {
+                    case 0:
+                    case 2:
+                    case 3:
+                        _cart = new NesCart();
+                        break;
+                    case 7:
+                        _cart = new AxROMCart();
+                        break;
+                    case 1:
+                        _cart = new MMC1Cart();
+                        break;
+                    case 4:
+                        _cart = new MMC3Cart();
+                        break;
+                }
+    
+                if (_cart != null) {
+                    _cart.Whizzler = cpu.ppu;
+                    _cart.CPU = cpu;
+                    cpu.Cart = _cart;
+                    cpu.ppu.ChrRomHandler = _cart;
+                    _cart.ROMHashFunction = null; //Hashers.HashFunction;
+                    _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
+                }
+    
+                return _cart;
+            }
+    
+            static LoadNSF(cpu: ChiChiCPPU, thefile: number[]): BaseCart {
+                let _cart: NsfCart = null;
+    
+                let iNesHeader = thefile.slice(0, 0x80);
+                let bytesRead = 0x80;
+
+                let mapperId = (iNesHeader[6] & 240);
+                mapperId = mapperId >> 4;
+                mapperId = (mapperId + iNesHeader[7]) | 0;
+    
+                const prgRomLength = thefile.length - 0x80; 
+                const theRom = new Array<number>(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
+                theRom.fill(0);
+                const chrRom = new Array<number>(0);
+                chrRom.fill(0);
+    
+                //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
+                //chrRom.fill(0);
+                let chrOffset = 0;
+    
+                //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
+                BaseCart.arrayCopy(thefile, 0x80, theRom, 0, theRom.length);
+    
+                //zipStream.Read(chrRom, 0, chrRom.Length);
+                _cart = new NsfCart();
+                if (_cart != null) {
+                    _cart.Whizzler = cpu.ppu;
+                    _cart.CPU = cpu;
+                    cpu.Cart = _cart;
+                    cpu.ppu.ChrRomHandler = _cart;
+                    _cart.ROMHashFunction = null; //Hashers.HashFunction;
+                    //_cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
+                }
+    
+                return _cart;
+            }
+            
+        }
+    
+
 export enum NameTableMirroring {
     OneScreen = 0,
     Vertical = 1,
@@ -9,6 +130,7 @@ export enum NameTableMirroring {
 }
 
 export class BaseCart  {
+    mapperName: string = 'base';
     // compatible with .net array.copy method
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
         if (!dest) {
@@ -80,8 +202,6 @@ export class BaseCart  {
     bankSwitchesChanged = false;
     oneScreenOffset = 0
 
-
-
     // external api
     get NumberOfPrgRoms(): number {
         return this.prgRomCount;
@@ -92,6 +212,10 @@ export class BaseCart  {
     }
     get MapperID(): number {
         return this.mapperId;
+    }
+
+    get MapperName(): string {
+        return this.mapperName;
     }
 
     irqRaised = false;
@@ -414,7 +538,6 @@ export class BaseCart  {
 
 }
 
-
 export class NesCart extends BaseCart {
    // prevBSSrc = new Uint8Array(8);
 
@@ -448,7 +571,20 @@ export class NesCart extends BaseCart {
         //    this.prevBSSrc[i] = -1;
         //}
         //SRAMEnabled = SRAMCanSave;
-
+        switch (this.mapperId) {
+        case 0:
+            this.mapperName = 'NROM';
+            break;
+        case 1:
+            this.mapperName = 'MMC1';
+            break;
+        case 2:
+            this.mapperName = 'UxROM';
+            break;
+        case 3:
+            this.mapperName = 'CNROM';
+            break;
+        }
 
         switch (this.mapperId) {
             case 0:
@@ -459,11 +595,6 @@ export class NesCart extends BaseCart {
                     this.CopyBanks(0, 0, 0, 1);
                 }
                 this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-                break;
-            case 7:
-                //SetupBanks(0, 1, 2, 3);
-                this.SetupBankStarts(0, 1, 2, 3);
-                this.Mirror(0, 0);
                 break;
             default:
                 throw new Error("Mapper " + (this.mapperId.toString() || "") + " not implemented.");
@@ -526,9 +657,91 @@ export class NesCart extends BaseCart {
 
 
     }
-
-
 }
+
+//  Mapper 7
+export class AxROMCart extends BaseCart {
+    // prevBSSrc = new Uint8Array(8);
+ 
+     irqRaised: boolean;
+     Debugging: boolean;
+     DebugEvents: any;
+     ROMHashFunction: (prg: any, chr: any) => string;
+     // Whizzler: ChiChiNES.CPU2A03;
+     IrqRaised: boolean;
+     CheckSum: string;
+     SRAM: any;
+     CartName: string;
+     NumberOfPrgRoms: number;
+     NumberOfChrRoms: number;
+     // MapperID: number;
+     Mirroring: NameTableMirroring;
+     IRQAsserted: boolean;
+     NextEventAt: number;
+     // PpuBankStarts: any;
+     // BankStartCache: any;
+     CurrentBank: number;
+     BankSwitchesChanged: boolean;
+     OneScreenOffset: number;
+     UsesSRAM: boolean;
+     ChrRamStart: number;
+     // PPUBankStarts: any;
+ 
+     InitializeCart(): void {
+        this.mapperName = 'AxROM';
+        
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.Mirror(0, 0);
+     }
+
+     CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void {
+ 
+         if (dest >= this.chrRomCount) {
+             dest = (this.chrRomCount - 1) | 0;
+         }
+ 
+         var oneKsrc = src << 3;
+         var oneKdest = dest << 3;
+         //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+         //  setup ppuBankStarts in 0x400 block chunks 
+         for (var i = 0; i < (numberOf8kBanks << 3); i = (i + 1) | 0) {
+             this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
+ 
+         }
+         this.UpdateBankStartCache();
+     }
+     SetByte(clock: number, address: number, val: number): void {
+         if (address >= 24576 && address <= 32767) {
+             if (this.SRAMEnabled) {
+                 this.prgRomBank6[address & 8191] = val & 255;
+             }
+ 
+             return;
+         }
+ 
+        // val selects which bank to swap, 32k at a time
+        var newbank8 = 0;
+        newbank8 = (val & 15) << 2;
+        
+        // this.Whizzler.DrawTo(clock);
+
+        this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
+        // whizzler.DrawTo(clock);
+        if ((val & 16) === 16) {
+            this.OneScreenOffset = 1024;
+        } else {
+            this.OneScreenOffset = 0;
+        }
+        this.Mirror(clock, 0);
+ 
+
+ 
+ 
+     }
+ 
+ 
+ }
+ 
 
 export class NsfCart extends BaseCart {copyright: string;
     artist: string;songName: string;
@@ -539,7 +752,8 @@ export class NsfCart extends BaseCart {copyright: string;
     bank_select = 0;
     rams = new Uint8Array(0xFFFFFFFF);
     InitializeCart() {
-
+        this.mapperName = 'NSF';
+        
     }
 
     GetPPUByte(clock: number, address: number): number {
@@ -557,37 +771,37 @@ export class NsfCart extends BaseCart {copyright: string;
 
     LoadNSFFile(header: number[], prgRoms: number, chrRoms: number, prgRomData: number[], chrRomData: number[], chrRomOffset: number): void {
         this.mapperId = -1;
-//        $000    5   STRING  'N', 'E', 'S', 'M', $1A(denotes an NES sound format file)
-//        $005    1   BYTE    Version number (currently $01)
-//        $006    1   BYTE    Total songs   (1 = 1 song, 2 = 2 songs, etc)
-//        $007    1   BYTE    Starting song (1 = 1st song, 2 = 2nd song, etc)
-//        $008    2   WORD    (lo, hi) load address of data ($8000 - FFFF)
-//        $00A    2   WORD    (lo, hi) init address of data ($8000 - FFFF)
-//        $00C    2   WORD    (lo, hi) play address of data ($8000 - FFFF)
-//        $00E    32  STRING  The name of the song, null terminated
-//        $02E    32  STRING  The artist, if known, null terminated
-//        $04E    32  STRING  The copyright holder, null terminated
-//        $06E    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, NTSC(see text)
-//        $070    8   BYTE    Bankswitch init values (see text, and FDS section)
-//        $078    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, PAL(see text)
-//        $07A    1   BYTE    PAL/ NTSC bits
-//        bit 0: if clear, this is an NTSC tune
-//        bit 0: if set, this is a PAL tune
-//        bit 1: if set, this is a dual PAL/ NTSC tune
-//        bits 2- 7: not used.they * must * be 0
-//        $07B    1   BYTE    Extra Sound Chip Support
-//        bit 0: if set, this song uses VRC6 audio
-//        bit 1: if set, this song uses VRC7 audio
-//        bit 2: if set, this song uses FDS audio
-//        bit 3: if set, this song uses MMC5 audio
-//        bit 4: if set, this song uses Namco 163 audio
-//        bit 5: if set, this song uses Sunsoft 5B audio
-//        bits 6, 7: future expansion: they * must * be 0
-//        $07C    1   BYTE    Extra Sound Chip Support (Cont.)
-//        bits 0- 3: future expansion: they * must * be 0
-//        bits 4- 7: unavailable(conflicts with NSF2 backwards compatibility)
-//        $07D    3   ----    3 extra bytes for expansion (must be $00)
-//        $080    nnn ----    The music program/ data follows until end of file
+        //        $000    5   STRING  'N', 'E', 'S', 'M', $1A(denotes an NES sound format file)
+        //        $005    1   BYTE    Version number (currently $01)
+        //        $006    1   BYTE    Total songs   (1 = 1 song, 2 = 2 songs, etc)
+        //        $007    1   BYTE    Starting song (1 = 1st song, 2 = 2nd song, etc)
+        //        $008    2   WORD    (lo, hi) load address of data ($8000 - FFFF)
+        //        $00A    2   WORD    (lo, hi) init address of data ($8000 - FFFF)
+        //        $00C    2   WORD    (lo, hi) play address of data ($8000 - FFFF)
+        //        $00E    32  STRING  The name of the song, null terminated
+        //        $02E    32  STRING  The artist, if known, null terminated
+        //        $04E    32  STRING  The copyright holder, null terminated
+        //        $06E    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, NTSC(see text)
+        //        $070    8   BYTE    Bankswitch init values (see text, and FDS section)
+        //        $078    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, PAL(see text)
+        //        $07A    1   BYTE    PAL/ NTSC bits
+        //        bit 0: if clear, this is an NTSC tune
+        //        bit 0: if set, this is a PAL tune
+        //        bit 1: if set, this is a dual PAL/ NTSC tune
+        //        bits 2- 7: not used.they * must * be 0
+        //        $07B    1   BYTE    Extra Sound Chip Support
+        //        bit 0: if set, this song uses VRC6 audio
+        //        bit 1: if set, this song uses VRC7 audio
+        //        bit 2: if set, this song uses FDS audio
+        //        bit 3: if set, this song uses MMC5 audio
+        //        bit 4: if set, this song uses Namco 163 audio
+        //        bit 5: if set, this song uses Sunsoft 5B audio
+        //        bits 6, 7: future expansion: they * must * be 0
+        //        $07C    1   BYTE    Extra Sound Chip Support (Cont.)
+        //        bits 0- 3: future expansion: they * must * be 0
+        //        bits 4- 7: unavailable(conflicts with NSF2 backwards compatibility)
+        //        $07D    3   ----    3 extra bytes for expansion (must be $00)
+        //        $080    nnn ----    The music program/ data follows until end of file
         this.prgRomCount = prgRoms;
         this.chrRomCount = chrRoms;
 
@@ -632,7 +846,8 @@ export class MMC1Cart extends BaseCart  {
     lastwriteAddress = 0;
 
     InitializeCart() {
-
+        this.mapperName = 'MMC1';
+        
         if (this.chrRomCount > 0) {
             this.CopyBanks(0, 0, 4);
         }
@@ -804,7 +1019,8 @@ export class MMC2Cart extends BaseCart {
     lastwriteAddress = 0;
 
     InitializeCart() {
-
+        this.mapperName = 'MMC2';
+        
         if (this.chrRomCount > 0) {
             this.CopyBanks(0, 0, 4);
         }
@@ -988,6 +1204,8 @@ export class MMC3Cart extends BaseCart {
     private PPUBanks = new Uint32Array(8);
 
     InitializeCart() {
+
+        this.mapperName = 'MMC3';
         this._registers.fill(0);
         this.PPUBanks.fill(0);
         this.prevBSSrc.fill(0);
@@ -1187,6 +1405,7 @@ export class MMC3Cart extends BaseCart {
             this.CopyBanks(2, this.chr2kBank1, 2);
         }
     }
+
     SwapPrgRomBanks() {
         //|+-------- PRG ROM bank configuration (0: $8000-$9FFF swappable, $C000-$DFFF fixed to second-last bank;
         //|                                      1: $C000-$DFFF swappable, $8000-$9FFF fixed to second-last bank)
@@ -1238,6 +1457,5 @@ export class MMC3Cart extends BaseCart {
         }
 
     }
-
 
 }

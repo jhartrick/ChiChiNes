@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+﻿import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Emulator } from '../../services/NESService';
 import { Observable } from 'rxjs/Observable';
 import { AudioSettings } from 'chichi';
@@ -7,7 +7,8 @@ import { WishboneMachine } from '../../services/wishbone/wishbone';
 @Component({
   selector: 'chichi-audiosettings',
   templateUrl: './chichi.audiosettings.html',
-  styleUrls: ['./chichi.audiosettings.css']
+  styleUrls: ['./chichi.audiosettings.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 
 export class AudioSettingsComponent {
@@ -18,11 +19,11 @@ export class AudioSettingsComponent {
 
     constructor(public nesService: Emulator ) {
         this.wishbone = nesService.wishbone;
-        this.wishbone.asObservable().subscribe((machine) => {
-            if (machine && machine.SoundBopper) {
-                this.audioSettings = machine.SoundBopper.audioSettings;
-            }
-        });
+        this.audioSettings = this.wishbone.SoundBopper.audioSettings;
+        // this.wishbone.asObservable().subscribe((machine) => {
+        //     if (machine && machine.SoundBopper) {
+        //     }
+        // });
     }
 
     get enableSquare0(): boolean {

@@ -1,4 +1,4 @@
-declare var Atomics: any;
+﻿declare var Atomics: any;
 import { ChiChiMachine, RunningStatuses } from 'chichi'
 
 class NesInfo {
@@ -287,6 +287,7 @@ export class tendoWrapper {
                 this.createMachine();
                 this.machine.Cpu.ppu.byteOutBuffer = event.data.vbuffer;
                 this.machine.SoundBopper.writer.SharedBuffer = this.sharedAudioBuffer = event.data.abuffer;
+                this.machine.SoundBopper.audioSettings = event.data.audioSettings;
                 this.sharedAudioBufferPos = 0;
                 this.iops = event.data.iops;
                 break;

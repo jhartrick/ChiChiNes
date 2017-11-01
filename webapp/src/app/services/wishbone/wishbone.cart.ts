@@ -1,4 +1,4 @@
-﻿import { BaseCart, ChiChiCPPU } from 'chichi'
+﻿import { BaseCart, ChiChiCPPU } from 'chichi';
 
 export class WishboneCart {
 
@@ -18,7 +18,7 @@ export class WishboneCart {
     get NumberOfPrgRoms(): number {
         return this.realCart ? this.realCart.NumberOfPrgRoms : -1;
     }
-    
+
     get NumberOfChrRoms(): number {
         return this.realCart ? this.realCart.NumberOfChrRoms : -1;
     }
@@ -26,6 +26,11 @@ export class WishboneCart {
     get MapperID(): number {
         return this.realCart ? this.realCart.MapperID : -1;
     }
+
+    get MapperName(): string {
+        return this.realCart ? this.realCart.MapperName : '';
+    }
+
 
     BankSwitchesChanged: boolean;
     BankStartCache: any;

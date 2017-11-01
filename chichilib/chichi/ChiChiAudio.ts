@@ -22,11 +22,10 @@ export class WavSharer  {
     
     set audioBytesWritten(value:number) {
         <any>Atomics.store(this.controlBuffer, this.NES_BYTES_WRITTEN, value);
-        //this.controlBuffer[this.NES_BYTES_WRITTEN] = value;
     }
 
     wakeSleepers() {
-        <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 321);
+        <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
     }
 
 
@@ -479,9 +478,6 @@ class Blip  {
 
         if (count !== 0) {
             const step = 1;
-            //int inPtr  = BLIP_SAMPLES( s );
-            //buf_t const* end = in + count;
-
             do {
                 let st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
                 sum = sum + this.BlipBuffer.samples[inPtr];
@@ -490,12 +486,7 @@ class Blip  {
                     st = (st >> 31) ^ 32767;
                 }
                 var f = st / 65536; // (st/0xFFFF) * 2 - 1;
-                //if (f < -1) {
-                //    f = -1;
-                //}
-                //if (f > 1) {
-                //    f = 1;
-                //}
+
                 outPtr += step;
                 if (outPtr >= outbuf.length) {
                     outPtr=0;
@@ -1261,12 +1252,14 @@ class SquareChannel {
 export class ChiChiBopper {
 
     set audioSettings(value: AudioSettings) {
-        //this._sampleRate = value.sampleRate;
         this.EnableNoise = value.enableNoise;
         this.EnableSquare0 = value.enableSquare0;
         this.EnableSquare1 = value.enableSquare1;
         this.enableTriangle = value.enableTriangle;
-        //this.RebuildSound();
+        if (value.sampleRate != this._sampleRate) {
+            this._sampleRate = value.sampleRate;
+            this.RebuildSound();
+        }
     }
 
     get audioSettings(): AudioSettings {
