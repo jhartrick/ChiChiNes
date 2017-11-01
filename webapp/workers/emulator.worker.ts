@@ -93,6 +93,9 @@ export class tendoWrapper {
                 ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
                 bankStartCache: (<any>this.machine.Cart).bankStartCache,
             }
+            info.sound = {
+                waveForms_controlBuffer: this.machine.WaveForms.controlBuffer
+            }
         }
 
         postMessage(info);
@@ -180,10 +183,10 @@ export class tendoWrapper {
         this.runStatus = this.machine.RunState;
     }
     audioBytesWritten : number = 0;
-    
+
     private flushAudio() {
     //  debugger;
-        const len = this.machine.WaveForms.SharedBufferLength / 2;
+        const len = this.machine.WaveForms.SharedBufferLength;
 
         for (let i = 0; i < len; ++i) {
             this.sharedAudioBufferPos++;
@@ -208,7 +211,7 @@ export class tendoWrapper {
         this.machine.RunFrame();
         this.framesPerSecond = 0;
 
-        this.flushAudio();
+        //this.flushAudio();
         if ((this.framesRendered++) === 60) {
             // this.updateState();
 
@@ -283,7 +286,7 @@ export class tendoWrapper {
             case 'create':
                 this.createMachine();
                 this.machine.Cpu.ppu.byteOutBuffer = event.data.vbuffer;
-                this.sharedAudioBuffer = event.data.abuffer;
+                this.machine.SoundBopper.writer.SharedBuffer = this.sharedAudioBuffer = event.data.abuffer;
                 this.sharedAudioBufferPos = 0;
                 this.iops = event.data.iops;
                 break;

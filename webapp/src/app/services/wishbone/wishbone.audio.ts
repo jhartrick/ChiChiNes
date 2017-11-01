@@ -10,6 +10,7 @@ export class WishBopper  extends ChiChiBopper {
 		}
 		this._audioHandler.setupAudio();
 		return this._audioHandler;
+	
 	}
 	
     // get nesAudioDataAvailable(): number {
@@ -39,7 +40,7 @@ class ChiChiThreeJSAudio
 	
 	bufferBlockSize: number = 4096;
 	bufferBlockCountBits: number = 2;
-	bufferOverrunBlocks: number = 0;
+	bufferSize: number = this.bufferBlockSize << this.bufferBlockCountBits;
 	
 	nesBufferWritePos: number= 0;
 
@@ -62,12 +63,12 @@ class ChiChiThreeJSAudio
 			
 		let lastReadPos = 0;
 		sound.setNodeSource(audioSource);
-		audioSource.buffer = audioCtx.createBuffer(1, 2048, 48000);
-		const scriptNode = audioCtx.createScriptProcessor(2048, 1, 1);
+		audioSource.buffer = audioCtx.createBuffer(1, 2048, 44100);
+		const scriptNode = audioCtx.createScriptProcessor(512, 1, 1);
 
 		audioSource.connect(scriptNode);
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {
-			let nesBytesAvailable = this.wishbone.nesAudioDataAvailable;
+			let nesBytesAvailable = this.wishbone.WaveForms.audioBytesWritten;
 			const outputBuffer = audioProcessingEvent.outputBuffer;
 
 			const outputData = outputBuffer.getChannelData(0);
@@ -95,12 +96,15 @@ class ChiChiThreeJSAudio
 			
 			}
 			if (nesBytesAvailable < 0) {
+				while (nesBytesAvailable + this.bufferSize < 0) {
+					nesBytesAvailable += this.bufferSize;
+				}
 				//console.log ('audio overrun')
 				//nesBytesAvailable = 0;
 			}
-			this.wishbone.nesAudioDataAvailable = nesBytesAvailable;
 			
-			
+			this.wishbone.WaveForms.audioBytesWritten = nesBytesAvailable;
+			this.wishbone.WaveForms.wakeSleepers();// = nesBytesAvailable;
 			// nesService.clearAudio();
 		}
 

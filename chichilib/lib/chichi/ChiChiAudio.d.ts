@@ -1,18 +1,17 @@
 import { AudioSettings } from './ChiChiTypes';
 export declare class WavSharer {
+    readonly NES_BYTES_WRITTEN: number;
+    readonly WAVSHARER_BLOCKTHREAD: number;
+    controlBuffer: Int32Array;
+    sharedAudioBufferPos: number;
     bufferWasRead: boolean;
     static sample_size: number;
-    Locker: any;
-    NESTooFast: boolean;
-    Frequency: number;
-    SharedBuffer: any;
+    SharedBuffer: Float32Array;
     SharedBufferLength: number;
-    BufferAvailable: boolean;
     constructor();
-    BytesWritten: (sender: any, e: any) => void;
-    WavesWritten(remain: number): void;
-    ReadWaves(): void;
-    SetSharedBuffer(values: any): void;
+    audioBytesWritten: number;
+    wakeSleepers(): void;
+    synchronize(): void;
 }
 export declare class ChiChiBopper {
     writer: WavSharer;

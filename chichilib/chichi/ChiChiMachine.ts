@@ -265,6 +265,7 @@ import { ChiChiPPU } from "./ChiChiPPU";
 
             this.SoundBopper.FlushFrame(this.totalCPUClocks);
             this.SoundBopper.EndFrame(this.totalCPUClocks);
+            //this.SoundBopper.writer.ReadWaves();
 
             this.totalCPUClocks = 0;
             this.Cpu.Clock = 0;
@@ -602,7 +603,7 @@ import { ChiChiPPU } from "./ChiChiPPU";
             //let tickCount = 0;
             this._currentInstruction_ExtraTiming = 0;
 
-            this.ppu.DrawTo(this.clock);
+            // this.ppu.DrawTo(this.clock);
             if (this.nextEvent <= this.clock) {
                 this.HandleNextEvent();
             }

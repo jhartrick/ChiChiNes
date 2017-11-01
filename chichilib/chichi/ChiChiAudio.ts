@@ -2,70 +2,41 @@
 
 // shared buffer to get sound out
 export class WavSharer  {
+    readonly NES_BYTES_WRITTEN = 0;
+    readonly WAVSHARER_BLOCKTHREAD = 1;
+    controlBuffer = new Int32Array(<any>new SharedArrayBuffer(2 * Int32Array.BYTES_PER_ELEMENT));
     sharedAudioBufferPos: number = 0;
     bufferWasRead: boolean;
     static sample_size = 1;
 
-    Frequency: number = 48000;
     SharedBuffer: Float32Array;
     SharedBufferLength: number = 8192;
-
-    BufferAvailable: boolean = true;
 
     constructor() {
         this.SharedBuffer = new Float32Array(this.SharedBufferLength);
     }
 
-        
-        // private flushAudio() {
-        // //  debugger;
-        //     const len = this.SharedBufferLength;
+    get audioBytesWritten(): number {
+        return <any>Atomics.load(this.controlBuffer, this.NES_BYTES_WRITTEN);
+    }
+    
+    set audioBytesWritten(value:number) {
+        <any>Atomics.store(this.controlBuffer, this.NES_BYTES_WRITTEN, value);
+        //this.controlBuffer[this.NES_BYTES_WRITTEN] = value;
+    }
 
-        //     for (let i = 0; i < len; ++i) {
-        //         this.sharedAudioBufferPos++;
-        //         if (this.sharedAudioBufferPos >= this.sharedAudioBuffer.length) {
-        //             this.sharedAudioBufferPos = 0;
-        //         }
-        //         this.sharedAudioBuffer[this.sharedAudioBufferPos ] = this.machine.WaveForms.SharedBuffer[i];
-        //         this.audioBytesWritten++;
-        //     }
-        //     while (this.audioBytesWritten >= this.sharedAudioBuffer.length >> 2) {
-        //         <any>Atomics.store(this.iops, 3, this.audioBytesWritten);
-        //         <any>Atomics.wait(this.iops, 3, this.audioBytesWritten);
-        //         this.audioBytesWritten = <any>Atomics.load(this.iops, 3);
-        //     }
+    wakeSleepers() {
+        <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 321);
+    }
 
-        // }
-        
 
-        BytesWritten: (sender: any, e: any) => void;
-        WavesWritten(remain: number): void {
+    synchronize(): void {
 
-        var n = (this.SharedBuffer.length / WavSharer.sample_size) | 0;
-        if (n > remain) {
-            n = remain;
+        while (this.audioBytesWritten >= this.SharedBuffer.length >> 2) {
+            <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
         }
-        this.SharedBufferLength = n;
-
-        //if (fileWriting)
-        //{
-        //        appendToFile.WriteWaves(_sharedBuffer, _sharedBufferLength);
-        //}
-        this.bufferWasRead = false;
-        this.BufferAvailable = true;
     }
 
-    ReadWaves(): void {
-
-        this.BufferAvailable = false;
-        this.SharedBufferLength = 0;
-        this.bufferWasRead = true;
-        // bufferReadResetEvent.Set();
-    }
-
-    SetSharedBuffer(values: any): void {
-        this.SharedBuffer = values;
-    }
 
 
 }
@@ -497,12 +468,13 @@ class Blip  {
 
     // reads 'count' elements into array 'outbuf', beginning at 'start' and looping at array boundary if needed
     // returns number of elements written
-    ReadElementsLoop(outbuf: any, count: number, start: number): number {
-        if (count > this.BlipBuffer.avail) {
-            count = this.BlipBuffer.avail;
-        }
+    ReadElementsLoop(wavSharer: WavSharer): number {
+        let outbuf = wavSharer.SharedBuffer;
+        let start = wavSharer.sharedAudioBufferPos;
+
+        let count = this.BlipBuffer.avail;
         let inPtr = 0, outPtr = start;
-        let endPtr = inPtr + count;
+        let end = count;
         let sum = this.BlipBuffer.integrator;
 
         if (count !== 0) {
@@ -524,21 +496,23 @@ class Blip  {
                 //if (f > 1) {
                 //    f = 1;
                 //}
-                outbuf[outPtr] = f;
-                // outbuf[outPtr+ 1] = (byte)(st >> 8);
                 outPtr += step;
                 if (outPtr >= outbuf.length) {
                     outPtr=0;
                 }
+                outbuf[outPtr] = f;
+                // outbuf[outPtr+ 1] = (byte)(st >> 8);
                 sum = sum - (st << (7));
-            } while (inPtr !== endPtr);
+            } while (end-- > 0);
 
             this.BlipBuffer.integrator = sum;
 
             this.remove_samples(count);
         }
-
-        return outPtr;
+        wavSharer.sharedAudioBufferPos = outPtr;
+        wavSharer.audioBytesWritten += count;
+        wavSharer.synchronize();
+        return count;
     }
 
 
@@ -1199,7 +1173,7 @@ class SquareChannel {
     }
 
     Run(end_time: number): void {
-        var period = this._sweepEnabled ? ((this._timer + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
+        const period = this._sweepEnabled ? ((this._timer + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
 
         if (period === 0) {
             this._time = end_time;
@@ -1207,7 +1181,7 @@ class SquareChannel {
             return;
         }
 
-        var volume = this._envConstantVolume ? this._volume : this._envVolume;
+        const volume = this._envConstantVolume ? this._volume : this._envVolume;
 
 
         if (this._length === 0 || volume === 0 || this._sweepInvalid) {
@@ -1222,7 +1196,7 @@ class SquareChannel {
         this._phase &= 7;
     }
     UpdateAmplitude(new_amp: number): void {
-        var delta = new_amp * this._gain - this._amplitude;
+        const delta = new_amp * this._gain - this._amplitude;
 
         this._amplitude += delta;
         this._bleeper.blip_add_delta(this._time, delta);
@@ -1321,7 +1295,7 @@ export class ChiChiBopper {
     private master_vol = 4369;
     private static clock_rate = 1789772.727;
     private registers = new QueuedPort();
-    private _sampleRate = 48000;
+    private _sampleRate = 44100;
     private square0Gain = 873;
     private square1Gain = 873;
     private triangleGain = 1004;
@@ -1383,7 +1357,6 @@ export class ChiChiBopper {
         this.myBlipper = new Blip(this._sampleRate / 5);
         this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
-        this.writer.Frequency = this.sampleRate;
         //this.writer.
 
         this.registers.clear();
@@ -1520,9 +1493,12 @@ export class ChiChiBopper {
         }
 
 
-        var count = this.myBlipper.ReadBytes(this.writer.SharedBuffer, this.writer.SharedBuffer.length / 2, 0);
-        //var count = this.myBlipper.ReadBytesLoop(this.writer.SharedBuffer, this.writer.SharedBuffer.length, start, 0 )
-        this.writer.WavesWritten(count);
+        //var count = this.myBlipper.ReadBytes(this.writer.SharedBuffer, this.writer.SharedBuffer.length / 2, 0);
+       // const startPos = this.writer.sharedAudioBufferPos;
+        this.myBlipper.ReadElementsLoop(this.writer);
+        //this.writer.audioBytesWritten += count;
+        //this.writer.sharedAudioBufferPos += count;
+        //this.writer.WavesWritten(count);
     }
 
     FlushFrame(time: number): void {

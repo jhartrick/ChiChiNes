@@ -260,6 +260,9 @@ export class WishboneMachine  {
                 this.Cart.realCart.bankStartCache = data.Cart.bankStartCache;
                 this.Cart.realCart.chrRom = data.Cart.chrRom;
             }
+            if (data.sound) {
+                this.WaveForms.controlBuffer = data.sound.waveForms_controlBuffer;//
+            }
         }
         if (data.stateupdate) {
             if (data.Cpu) {

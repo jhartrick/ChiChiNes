@@ -1,5 +1,4 @@
-import {  ChiChiCPPU } from "./ChiChiMachine";
-import { ChiChiPPU } from "./ChiChiPPU";
+import { ChiChiPPU, ChiChiCPPU } from "./ChiChi";
 export declare enum NameTableMirroring {
     OneScreen = 0,
     Vertical = 1,

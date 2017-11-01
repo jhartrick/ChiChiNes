@@ -1208,6 +1208,7 @@ var ChiChiMachine = /** @class */ (function () {
         this.totalCPUClocks = this.Cpu.Clock;
         this.SoundBopper.FlushFrame(this.totalCPUClocks);
         this.SoundBopper.EndFrame(this.totalCPUClocks);
+        //this.SoundBopper.writer.ReadWaves();
         this.totalCPUClocks = 0;
         this.Cpu.Clock = 0;
         this.ppu.LastcpuClock = 0;
@@ -1484,7 +1485,7 @@ var ChiChiCPPU = /** @class */ (function () {
     ChiChiCPPU.prototype.Step = function () {
         //let tickCount = 0;
         this._currentInstruction_ExtraTiming = 0;
-        this.ppu.DrawTo(this.clock);
+        // this.ppu.DrawTo(this.clock);
         if (this.nextEvent <= this.clock) {
             this.HandleNextEvent();
         }
@@ -3694,34 +3695,31 @@ var ChiChiTypes_1 = __webpack_require__(0);
 // shared buffer to get sound out
 var WavSharer = /** @class */ (function () {
     function WavSharer() {
-        this.Locker = {};
-        this.NESTooFast = false;
-        this.Frequency = 48000;
+        this.NES_BYTES_WRITTEN = 0;
+        this.WAVSHARER_BLOCKTHREAD = 1;
+        this.controlBuffer = new Int32Array(new SharedArrayBuffer(2 * Int32Array.BYTES_PER_ELEMENT));
+        this.sharedAudioBufferPos = 0;
         this.SharedBufferLength = 8192;
-        this.BufferAvailable = true;
         this.SharedBuffer = new Float32Array(this.SharedBufferLength);
     }
-    WavSharer.prototype.WavesWritten = function (remain) {
-        var n = (this.SharedBuffer.length / WavSharer.sample_size) | 0;
-        if (n > remain) {
-            n = remain;
+    Object.defineProperty(WavSharer.prototype, "audioBytesWritten", {
+        get: function () {
+            return Atomics.load(this.controlBuffer, this.NES_BYTES_WRITTEN);
+        },
+        set: function (value) {
+            Atomics.store(this.controlBuffer, this.NES_BYTES_WRITTEN, value);
+            //this.controlBuffer[this.NES_BYTES_WRITTEN] = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    WavSharer.prototype.wakeSleepers = function () {
+        Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 321);
+    };
+    WavSharer.prototype.synchronize = function () {
+        while (this.audioBytesWritten >= this.SharedBuffer.length >> 2) {
+            Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
         }
-        this.SharedBufferLength = n * 2;
-        //if (fileWriting)
-        //{
-        //        appendToFile.WriteWaves(_sharedBuffer, _sharedBufferLength);
-        //}
-        this.bufferWasRead = false;
-        this.BufferAvailable = true;
-    };
-    WavSharer.prototype.ReadWaves = function () {
-        this.BufferAvailable = false;
-        this.SharedBufferLength = 0;
-        this.bufferWasRead = true;
-        // bufferReadResetEvent.Set();
-    };
-    WavSharer.prototype.SetSharedBuffer = function (values) {
-        this.SharedBuffer = values;
     };
     WavSharer.sample_size = 1;
     return WavSharer;
@@ -3827,6 +3825,49 @@ var Blip = /** @class */ (function () {
             this.BlipBuffer.integrator = sum;
             this.remove_samples(count);
         }
+        return count;
+    };
+    // reads 'count' elements into array 'outbuf', beginning at 'start' and looping at array boundary if needed
+    // returns number of elements written
+    Blip.prototype.ReadElementsLoop = function (wavSharer) {
+        var outbuf = wavSharer.SharedBuffer;
+        var start = wavSharer.sharedAudioBufferPos;
+        var count = this.BlipBuffer.avail;
+        var inPtr = 0, outPtr = start;
+        var end = count;
+        var sum = this.BlipBuffer.integrator;
+        if (count !== 0) {
+            var step = 1;
+            //int inPtr  = BLIP_SAMPLES( s );
+            //buf_t const* end = in + count;
+            do {
+                var st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
+                sum = sum + this.BlipBuffer.samples[inPtr];
+                inPtr++;
+                if (st !== st) {
+                    st = (st >> 31) ^ 32767;
+                }
+                var f = st / 65536; // (st/0xFFFF) * 2 - 1;
+                //if (f < -1) {
+                //    f = -1;
+                //}
+                //if (f > 1) {
+                //    f = 1;
+                //}
+                outPtr += step;
+                if (outPtr >= outbuf.length) {
+                    outPtr = 0;
+                }
+                outbuf[outPtr] = f;
+                // outbuf[outPtr+ 1] = (byte)(st >> 8);
+                sum = sum - (st << (7));
+            } while (end-- > 0);
+            this.BlipBuffer.integrator = sum;
+            this.remove_samples(count);
+        }
+        wavSharer.sharedAudioBufferPos = outPtr;
+        wavSharer.audioBytesWritten += count;
+        wavSharer.synchronize();
         return count;
     };
     Blip.prototype.blip_add_delta = function (time, delta) {
@@ -4861,7 +4902,7 @@ var ChiChiBopper = /** @class */ (function () {
         this.reg15 = 0;
         this.master_vol = 4369;
         this.registers = new QueuedPort();
-        this._sampleRate = 48000;
+        this._sampleRate = 44100;
         this.square0Gain = 873;
         this.square1Gain = 873;
         this.triangleGain = 1004;
@@ -4950,7 +4991,6 @@ var ChiChiBopper = /** @class */ (function () {
         this.myBlipper = new Blip(this._sampleRate / 5);
         this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
-        this.writer.Frequency = this.sampleRate;
         //this.writer.
         this.registers.clear();
         this.InterruptRaised = false;
@@ -5072,8 +5112,12 @@ var ChiChiBopper = /** @class */ (function () {
         if (!this.muted) {
             this.myBlipper.blip_end_frame(time);
         }
-        var count = this.myBlipper.ReadBytes(this.writer.SharedBuffer, this.writer.SharedBuffer.length / 2, 0);
-        this.writer.WavesWritten(count);
+        //var count = this.myBlipper.ReadBytes(this.writer.SharedBuffer, this.writer.SharedBuffer.length / 2, 0);
+        // const startPos = this.writer.sharedAudioBufferPos;
+        this.myBlipper.ReadElementsLoop(this.writer);
+        //this.writer.audioBytesWritten += count;
+        //this.writer.sharedAudioBufferPos += count;
+        //this.writer.WavesWritten(count);
     };
     ChiChiBopper.prototype.FlushFrame = function (time) {
         var currentClock = 0;
