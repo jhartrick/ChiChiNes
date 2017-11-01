@@ -164,8 +164,8 @@ export class WishboneMachine  {
 
 
     constructor() {
-        this.SoundBopper = new WishBopper(this);
-        this.WaveForms = this.SoundBopper.writer;
+        this.WaveForms = new WavSharer();
+        this.SoundBopper = new WishBopper(this.WaveForms, this);
         this.ppu = new WishbonePPU();
         this.Cpu = new WishboneCPPU(this.SoundBopper, this.ppu);
         this.ppu.cpu = this.Cpu;

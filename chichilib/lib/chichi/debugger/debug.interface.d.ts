@@ -1,4 +1,4 @@
-import { ChiChiCPPU } from '../chichi/ChiChi';
+import { ChiChiCPPU } from '../chichi/chichi';
 export interface DecodedInstruction {
     asm: string;
     frame: number;

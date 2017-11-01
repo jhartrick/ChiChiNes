@@ -1,34 +1,43 @@
 import * as THREE from 'three';
 import { WishboneMachine } from './wishbone';
-import { ChiChiBopper, WavSharer } from 'chichi';
+import { ChiChiBopper, WavSharer, AudioSettings } from 'chichi';
 
 export class WishBopper  extends ChiChiBopper {
+
 	_audioHandler: ChiChiThreeJSAudio;
+
 	get audioHandler(): ChiChiThreeJSAudio {
 		if (this._audioHandler && this._audioHandler.sound) {
 			this._audioHandler.sound.stop();
 		}
 		this._audioHandler.setupAudio();
 		return this._audioHandler;
-	
+	}
+
+	private _audioSettings: AudioSettings = new AudioSettings();
+	private wishbone: WishboneMachine;
+	get audioSettings(): AudioSettings {
+		return this._audioSettings;
 	}
 	
+	set audioSettings(value: AudioSettings) {
+		this._audioSettings = value;
+		this.wishbone.RequestSync();
+	}
     // get nesAudioDataAvailable(): number {
     //     return <any>Atomics.load(this.nesInterop,this.NES_AUDIO_AVAILABLE);
     // }
 
     // set nesAudioDataAvailable(value: number) {
     //     <any>Atomics.store(this.nesInterop, this.NES_AUDIO_AVAILABLE, value);
-       
     //     <any>Atomics.wake(this.nesInterop, this.NES_AUDIO_AVAILABLE, 321);
     // }
 
-
-	constructor(wishbone: WishboneMachine) {
-		const wavSharer = new WavSharer();
+	constructor(wavSharer: WavSharer, wishbone: WishboneMachine) {
 		super(wavSharer);
-
-		this._audioHandler = new ChiChiThreeJSAudio(wishbone); 
+		this.wishbone = wishbone;
+		
+		this._audioHandler = new ChiChiThreeJSAudio(this.wishbone); 
 	}
 }
 

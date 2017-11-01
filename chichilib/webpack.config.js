@@ -1,6 +1,6 @@
 module.exports = {
     entry: {
-        chichi: './chichi/ChiChi.ts',
+        chichi: './chichi/chichi.ts',
         debugger: './debugger/debug.interface.ts'
     },
     output: {

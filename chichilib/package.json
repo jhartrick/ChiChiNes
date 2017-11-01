@@ -8,7 +8,7 @@
   },
   "private": true,
   "main": "chichi.js",
-  "types": "lib/chichi/chichi.d.ts",
+  "types": "lib/chichi/chichi/chichi.d.ts",
   "dependencies": {
     "ts-loader": "^3.0.5"
   },

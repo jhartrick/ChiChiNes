@@ -1,4 +1,11 @@
-import { ChiChiPPU, ChiChiCPPU } from "./ChiChi";
+import { ChiChiCPPU } from './ChiChiMachine';
+import { ChiChiPPU } from './ChiChiPPU';
+export declare enum NameTableMirroring {
+    OneScreen = 0,
+    Vertical = 1,
+    Horizontal = 2,
+    FourScreen = 3,
+}
 export declare class BaseCart {
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number): void;
     prgRomBank6: Uint8Array;
@@ -76,7 +83,7 @@ export declare class NesCart extends BaseCart {
     CartName: string;
     NumberOfPrgRoms: number;
     NumberOfChrRoms: number;
-    Mirroring: ChiChiNES.NameTableMirroring;
+    Mirroring: NameTableMirroring;
     IRQAsserted: boolean;
     NextEventAt: number;
     CurrentBank: number;

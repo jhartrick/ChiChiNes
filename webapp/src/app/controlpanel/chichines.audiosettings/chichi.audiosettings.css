@@ -1,0 +1,9 @@
+﻿
+.audio_button {
+  font-size: 0.6em;
+  line-height: 18px;
+}
+
+.audio_button div.mat-button-toggle-label-content {
+  line-height: 18px !important;
+}
