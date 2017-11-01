@@ -1,7 +1,6 @@
 import { NgZone } from '@angular/core';
 
-import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart,  ChiChiInputHandler,
-    AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU  } from 'chichi'
+import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart,  ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
@@ -195,7 +194,6 @@ export class WishboneMachine  {
                 vbuffer: this.ppu.byteOutBuffer,
                 abuffer: this.WaveForms.SharedBuffer,
                 iops: this.nesInterop });
-
             return;
         }
 
@@ -208,7 +206,6 @@ export class WishboneMachine  {
     readonly iop_runStatus = 2;
 
     initChiChiWorker() {
-
     }
 
     asObservable() {

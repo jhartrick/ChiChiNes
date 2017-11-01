@@ -6,11 +6,11 @@
     </mat-expansion-panel-header>
 
     <div class="">
-      <mat-button-toggle value="powertoggle" (change)="powertoggle()" [disabled]="!nesService.canStart">
+      <mat-button-toggle (change)="powertoggle()" >
         {{ powerstate }}
       </mat-button-toggle>
 
-      <button mat-button (click)="reset()">Reset</button>
+      <button mat-button (click)="wishbone.Reset()">Reset</button>
     </div>
     <div class="fileLoader">
       <input type="file" id="input-file-id" class="ng-hide" style="display:none" (change)="handleFile($event)">
@@ -34,9 +34,7 @@
     </div>
 
   </mat-expansion-panel>
-<mat-button-toggle value="wishbone.EnableSound" (change)="wishbone.EnableSound = !wishbone.EnableSound" [disabled]="!nesService.canStart">
-  {{ wishbone.EnableSound ? 'sound on' : 'sound off' }}
-</mat-button-toggle>
+  
 <chichines-controlconfig></chichines-controlconfig>
 <mat-expansion-panel>
   <mat-expansion-panel-header>
@@ -44,22 +42,7 @@
       Audio Settings
     </mat-panel-title>
   </mat-expansion-panel-header>
-  <p>
-    <mat-button-toggle class="audio_button" value="enableSquare0" (change)="enableSquare0 = !(enableSquare0)" [disabled]="!nesService.canStart">
-      Square 0
-    </mat-button-toggle>
-    <mat-button-toggle class="audio_button" value="enableSquare1" (change)="enableSquare1 = !(enableSquare1)" [disabled]="!nesService.canStart">
-      Square 1
-    </mat-button-toggle>
-  </p>
-  <p>
-    <mat-button-toggle class="audio_button" value="enableTriangle" (change)="enableTriangle = !(enableTriangle)" [disabled]="!nesService.canStart">
-      Triangle
-    </mat-button-toggle>
-    <mat-button-toggle class="audio_button" value="enableNoise" (change)="enableNoise = !(enableNoise)" [disabled]="!nesService.canStart">
-      Noise
-    </mat-button-toggle>
-  </p>
+<chichi-audiosettings></chichi-audiosettings>
   </mat-expansion-panel>
 
   <button mat-button (click)="showDebugger()">Open Debugger</button>

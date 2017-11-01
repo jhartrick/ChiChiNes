@@ -42,16 +42,16 @@ class ChiChiThreeJSAudio
 	bufferBlockCountBits: number = 2;
 	bufferSize: number = this.bufferBlockSize << this.bufferBlockCountBits;
 	
-	nesBufferWritePos: number= 0;
+	nesBufferWritePos: number = 0;
 
-    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits ) * Float32Array.BYTES_PER_ELEMENT);
+    private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
 	private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
 
     constructor(wishbopper: WishboneMachine) {
         this.wishbone = wishbopper;
 	}
 	
-    setupAudio() : THREE.AudioListener {
+    setupAudio(): THREE.AudioListener {
 	
 		this.nesAudioBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
 		this.nesAudio = new Float32Array(<any>this.nesAudioBuffer);
@@ -81,14 +81,11 @@ class ChiChiThreeJSAudio
 					}
 					nesBytesAvailable--;
 				}
-				
 			} else {
-
-
 				for (let sample = 0; sample < outputData.length; sample++) {
 					outputData[sample] = 0; lastReadPos++;
 					if (lastReadPos >= this.nesAudio.length) {
-						lastReadPos= 0;
+						lastReadPos = 0;
 					}
 					nesBytesAvailable--;
 
@@ -104,7 +101,7 @@ class ChiChiThreeJSAudio
 			}
 			
 			this.wishbone.WaveForms.audioBytesWritten = nesBytesAvailable;
-			this.wishbone.WaveForms.wakeSleepers();// = nesBytesAvailable;
+			this.wishbone.WaveForms.wakeSleepers(); // = nesBytesAvailable;
 			// nesService.clearAudio();
 		}
 

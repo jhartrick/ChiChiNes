@@ -1,4 +1,5 @@
-﻿import { ChiChiPPU, ChiChiCPPU } from "./ChiChi";
+﻿import { ChiChiCPPU } from './ChiChiMachine';
+import { ChiChiPPU } from './ChiChiPPU';
 
 export enum NameTableMirroring {
     OneScreen = 0,

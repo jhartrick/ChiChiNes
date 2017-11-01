@@ -18,6 +18,7 @@ import { NameTableViewerComponent } from './debugoutput/nametableviewer/nametabl
 import { SpriteViewerComponent } from './debugoutput/spriteviewer/spriteviewer.component';
 import { ControlConfigComponent } from './chichines.controlconfig/chichines.controlconfig.component';
 import { ControlDialogComponent } from './chichines.controlconfig/chichines.controldialog.component';
+import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/controlpanel.audiosettings';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { ControlDialogComponent } from './chichines.controlconfig/chichines.cont
       NameTableViewerComponent,
       SpriteViewerComponent,
       ControlConfigComponent,
-      ControlDialogComponent
+      ControlDialogComponent,
+      AudioSettingsComponent
 
   ],
   entryComponents: [
