@@ -6,6 +6,7 @@ import { MatTableModule, MatPaginatorModule, MatGridListModule, MatTabsModule } 
 import { MatButtonModule, MatCheckboxModule, MatSidenavModule } from '@angular/material';
 import { MatButtonToggleModule, MatExpansionModule, MatDialogModule } from '@angular/material';
 import * as JSZip from 'jszip';
+
 import { Emulator , RomLoader } from './services/NESService';
 
 import { AppComponent } from './app.component';
@@ -19,6 +20,8 @@ import { SpriteViewerComponent } from './debugoutput/spriteviewer/spriteviewer.c
 import { ControlConfigComponent } from './chichines.controlconfig/chichines.controlconfig.component';
 import { ControlDialogComponent } from './chichines.controlconfig/chichines.controldialog.component';
 import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/chichi.audiosettings';
+import { GameGenieComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie';
+import { GameGenieDialogComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie.dialog';
 
 @NgModule({
   declarations: [
@@ -37,12 +40,15 @@ import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/c
       SpriteViewerComponent,
       ControlConfigComponent,
       ControlDialogComponent,
-      AudioSettingsComponent
+      AudioSettingsComponent,
+      GameGenieComponent,
+      GameGenieDialogComponent
 
   ],
   entryComponents: [
     ControlConfigComponent,
-    ControlDialogComponent
+    ControlDialogComponent,
+    GameGenieDialogComponent
 ],
   imports: [
       BrowserModule,
