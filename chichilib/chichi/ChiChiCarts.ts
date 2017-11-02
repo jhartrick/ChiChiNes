@@ -57,9 +57,17 @@ export class iNESFileHandler  {
                     case 0:
                     case 2:
                     case 180:
-                   
-                    case 3:
                         _cart = new NesCart();
+                        break;
+               
+                    case 3:
+                        _cart = new CNROMCart();
+                        break;
+                    case 87:
+                        _cart = new Mapper087Cart();
+                        break;
+                    case 145:
+                        _cart = new Mapper145Cart();
                         break;
                     case 97:
                         _cart = new Irem097Cart();
@@ -72,6 +80,18 @@ export class iNESFileHandler  {
                         break;
                     case 66:
                         _cart = new MHROMCart();
+                        break;
+                    case 70:
+                        _cart = new Mapper070Cart();
+                        break;
+                    case 152:
+                        _cart = new Mapper152Cart();
+                        break;
+                    case 140:
+                        _cart = new JF1xCart();
+                        break;
+                    case 38:
+                        _cart = new BitCorp038Cart();
                         break;
                     case 34:
                         if (chrRomCount > 0) {
@@ -651,7 +671,7 @@ export class NesCart extends BaseCart {
             return;
         }
 
-        if (this.mapperId === 3 && address >= 32768) {
+        if (this.mapperId === 3 && address >= 0x8000) {
 
             this.CopyBanks(clock, 0, val, 1);
         }
@@ -679,7 +699,114 @@ export class NesCart extends BaseCart {
     }
 }
 
+export class CNROMCart extends NesCart {
+
+        //for (var i = 0; i < 8; i = (i + 1) | 0) {
+        //    this.prevBSSrc[i] = -1;
+        //}
+        //SRAMEnabled = SRAMCanSave;
+    InitializeCart() {
+        this.mapperName = 'CNROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+       }
+
+    SetByte(clock: number, address: number, val: number): void {
+        if (address >= 0x8000) {
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, val, 1);
+        }
+    }
+    
+}
+
+export class Mapper087Cart extends NesCart {
+    
+            //for (var i = 0; i < 8; i = (i + 1) | 0) {
+            //    this.prevBSSrc[i] = -1;
+            //}
+            //SRAMEnabled = SRAMCanSave;
+        InitializeCart() {
+            this.mapperName = 'CNROM Clone';
+            if (this.chrRomCount > 0) {
+                this.CopyBanks(0, 0, 0, 1);
+            }
+            this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+           }
+    
+        SetByte(clock: number, address: number, val: number): void {
+            if (address >= 0x6000 && address <= 0x7FFF) {
+                const chrbank = ((val & 0x1) << 1) | ((val & 0x2) >> 1)
+                this.Whizzler.DrawTo(clock);
+                this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    }
+        
+}
+
+export class Mapper145Cart extends NesCart {
+    
+            //for (var i = 0; i < 8; i = (i + 1) | 0) {
+            //    this.prevBSSrc[i] = -1;
+            //}
+            //SRAMEnabled = SRAMCanSave;
+        InitializeCart() {
+            this.mapperName = 'Sachen Sidewinder';
+            if (this.chrRomCount > 0) {
+                this.CopyBanks(0, 0, 0, 1);
+            }
+            this.SetupBankStarts(0, 1, 2, 3);
+           }
+    
+        SetByte(clock: number, address: number, val: number): void {
+            if ((address & 0xE100) == 0x4100 ) {
+                const chrbank = val;
+                this.Whizzler.DrawTo(clock);
+                this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    }
+        
+}
+
+
+export class VSSystemGames extends NesCart {
+    
+            //for (var i = 0; i < 8; i = (i + 1) | 0) {
+            //    this.prevBSSrc[i] = -1;
+            //}
+            //SRAMEnabled = SRAMCanSave;
+        supported = false;
+        InitializeCart() {
+            this.mapperName = 'VS System';
+            if (this.chrRomCount > 0) {
+                this.CopyBanks(0, 0, 0, 1);
+            }
+            this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+           }
+    
+        SetByte(clock: number, address: number, val: number): void {
+            if (address >= 0x6000 && address <= 0x7FFF) {
+                if (this.SRAMEnabled) {
+                    this.prgRomBank6[address & 8191] = val & 255;
+                }
+    
+                return;
+            }
+            // TODO: Cpu.ppu mem mapping needs changing vs unisystem and pc10 (new machine extensions?)
+            if (address >= 4016 ) {
+                const chrbank = val;
+                this.Whizzler.DrawTo(clock);
+                this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    }
+        
+}
+
+
 export class ColorDreams extends NesCart {
+    // https://wiki.nesdev.com/w/index.php/Color_Dreams
     InitializeCart(): void {
         
         this.mapperName = 'Color Dreams';
@@ -691,17 +818,17 @@ export class ColorDreams extends NesCart {
 
     SetByte(clock: number, address: number, val: number): void {
 
-        let newbank81 = 0;
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            const prgbank = (val & 0x3) << 2 ;
+            const chrbank = ((val >> 4) & 0xf);
 
-        newbank81 = (val & 0x3) ;
-        // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
-        this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
+            // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
 
-        // two high bits set mirroring
-        this.Whizzler.DrawTo(clock);
-
-        const chrBank = (val >> 4) & 0xF;
-        this.CopyBanks(clock, 0, chrBank, 1);
+            // two high bits set mirroring
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
         //         %00 = 1ScA
         //         %01 = Horz
         //         %10 = Vert
@@ -719,20 +846,108 @@ export class MHROMCart extends NesCart {
         if (this.chrRomCount > 0) {
             this.CopyBanks(0, 0, 0, 1);
         }
-        this.SetupBankStarts((this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1, 0, 1);
+        this.SetupBankStarts(0, 1, 2, 3);
     }
 
     SetByte(clock: number, address: number, val: number): void {
 
-        let newbank81 = 0;
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            let newbank81 = 0;
 
-        const chrbank = (val & 0x15) << 2  ;
-        const prgbank = ((val >> 4) & 0x3) * 2;
+            const chrbank = (val) & 0x3 ;
+            const prgbank = ((val >> 4) & 0x3) << 2;
 
-        this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
 
-        this.Whizzler.DrawTo(clock);
-        this.CopyBanks(clock, 0, chrbank, 1);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+
+    }
+
+}
+
+export class Mapper070Cart extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = '~Family Trainer';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            let newbank81 = 0;
+
+            const chrbank = (val) & 0xF ;
+            const prgbank = ((val >> 4) & 0xF) << 1;
+
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+            
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+
+    }
+
+}
+
+export class Mapper152Cart extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = '~FT + mirroring';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            let newbank81 = 0;
+
+            const chrbank = (val) & 0xF ;
+            const prgbank = ((val >> 4) & 0x31) << 1;
+
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+            
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+            this.oneScreenOffset = (val >> 7) == 1 ? 1024 : 0;
+            this.Mirror(clock, 0);
+        }
+
+    }
+
+}
+
+export class JF1xCart extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = 'Jaleco JF-11, JF-14';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x6000 && address <= 0x7FFF) {
+            let newbank81 = 0;
+
+            const chrbank = (val) & 0xF ;
+            const prgbank = ((val >> 4) & 0x3) << 2;
+
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
 
     }
 
@@ -776,6 +991,35 @@ export class Irem097Cart extends NesCart {
 
     
 }
+
+export class BitCorp038Cart extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = 'Bit Corp Crime Busters';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x7000 && address <= 0x7FFF) {
+            let newbank81 = 0;
+
+            const prgbank = (val & 0x3) <<2;
+            const chrbank = ((val >> 2) & 0x3);
+
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+
+    }
+
+}
+
 
 //  Mapper 7 and derivatives 34
 export class AxROMCart extends BaseCart {

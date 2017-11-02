@@ -134,10 +134,6 @@ export declare class Mapper070Cart extends NesCart {
     InitializeCart(): void;
     SetByte(clock: number, address: number, val: number): void;
 }
-export declare class Mapper152Cart extends NesCart {
-    InitializeCart(): void;
-    SetByte(clock: number, address: number, val: number): void;
-}
 export declare class JF1xCart extends NesCart {
     InitializeCart(): void;
     SetByte(clock: number, address: number, val: number): void;

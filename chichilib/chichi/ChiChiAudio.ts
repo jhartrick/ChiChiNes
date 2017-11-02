@@ -29,7 +29,6 @@ export class WavSharer  {
         <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
     }
 
-
     synchronize(): void {
 
         while (this.audioBytesWritten >= this.chunkSize)
@@ -37,8 +36,6 @@ export class WavSharer  {
             <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
         }
     }
-
-
 
 }
 

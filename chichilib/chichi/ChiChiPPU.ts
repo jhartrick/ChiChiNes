@@ -872,6 +872,10 @@ export class ChiChiPPU {
         this.LastcpuClock = cpuClockNum;
     }
 
+    Tick() {
+        this.DrawTo(this.LastcpuClock + 1);
+    }
+
     UpdatePixelInfo(): void {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;
     }
