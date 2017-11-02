@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import * as JSZip from 'jszip';
 import { AudioSettings } from 'chichi';
 import { WishboneMachine } from '../services/wishbone/wishbone';
+import * as crc from 'crc';
 
 @Component({
     selector: 'chichi-status',
@@ -91,6 +92,7 @@ export class ControlPanelComponent {
             if (rom.nsf) {
                 this.nesService.LoadNsf(rom.data, rom.name);
             } else {
+                console.log ("ROM CRC: " + crc.crc32(new Buffer(rom.data.slice(16, rom.data.length))).toString(16).toUpperCase() );
                 this.nesService.LoadRom(rom.data, rom.name);
             }
         });

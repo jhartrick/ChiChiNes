@@ -29,6 +29,7 @@ export class GameGenieDialogComponent {
         // this.wishbone.setCheats(this.cheats);
         for(let i=0; i< this.cheats.length;++i) {
             console.log(this.cheats[i].code + ' ' + this.cheats[i].active);
+            
         }
         this.dialogRef.close();
     }
