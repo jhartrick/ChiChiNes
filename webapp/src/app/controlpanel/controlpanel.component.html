@@ -42,9 +42,11 @@
       Audio Settings
     </mat-panel-title>
   </mat-expansion-panel-header>
-<chichi-audiosettings></chichi-audiosettings>
+    <chichi-audiosettings></chichi-audiosettings>
   </mat-expansion-panel>
   <mat-button-toggle (change)="wishbone.EnableSound = !wishbone.EnableSound" >
     {{ wishbone.EnableSound ? 'sound on' : 'sound off' }}
   </mat-button-toggle>
   <button mat-button (click)="showDebugger()">Open Debugger</button>
+ 
+  <chichi-gamegenie></chichi-gamegenie>
