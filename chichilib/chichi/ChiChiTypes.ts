@@ -1,4 +1,15 @@
 ﻿// utility classes
+
+export class BufferMaker {
+    static MakeUint32Array(count: number) : Uint32Array {
+        return new Uint32Array(count);
+    }
+
+    static MakeUint8Array(count: number) : Uint8Array {
+        return new Uint8Array(count);
+    }
+}
+
 export enum RunningStatuses {
     Unloaded = 0,
     Off = 1,

@@ -68,7 +68,7 @@ import { ChiChiPPU } from "./ChiChiPPU";
         SRAMWriter: (RomID: string, SRAM: any) => void;
 
         Reset(): void {
-            if (this.Cpu != null && this.Cart != null) {
+            if (this.Cpu  && this.Cart && this.Cart.supported) {
                 // ForceStop();
                 this.SoundBopper.RebuildSound();
                 this.ppu.Initialize();
@@ -81,7 +81,7 @@ import { ChiChiPPU } from "./ChiChiPPU";
         }
 
         PowerOn(): void {
-            if (this.Cpu != null && this.Cart != null) {
+            if (this.Cpu && this.Cart && this.Cart.supported) {
                 this.Cpu.ppu.Initialize();
                 this.Cart.InitializeCart();
                 // if (this.SRAMReader !=  null && this.Cart.UsesSRAM) {
@@ -108,14 +108,11 @@ import { ChiChiPPU } from "./ChiChiPPU";
             this.Cpu.Step();
 
             if (!this.frameOn) {
-                this.totalCPUClocks = this.Cpu.Clock;
                 this.totalCPUClocks = 0;
                 this.Cpu.Clock = 0;
                 this.ppu.LastcpuClock = 0;
                 this.frameJustEnded = true;
             }
-            //_cpu.Clock = _totalCPUClocks;
-            //breakpoints: HandleBreaks();        
         }
 
         RunFrame(): void {
@@ -651,7 +648,8 @@ import { ChiChiPPU } from "./ChiChiPPU";
         }
 
         HandleBadOperation(): void {
-            throw new Error('Method not implemented.');
+            
+            //throw new Error('Method not implemented.');
         }
 
         DecodeOperand(): number {

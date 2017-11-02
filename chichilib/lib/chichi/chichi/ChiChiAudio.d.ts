@@ -8,6 +8,7 @@ export declare class WavSharer {
     static sample_size: number;
     SharedBuffer: Float32Array;
     SharedBufferLength: number;
+    chunkSize: number;
     constructor();
     audioBytesWritten: number;
     wakeSleepers(): void;

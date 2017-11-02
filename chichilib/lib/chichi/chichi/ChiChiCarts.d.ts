@@ -12,6 +12,7 @@ export declare enum NameTableMirroring {
 }
 export declare class BaseCart {
     mapperName: string;
+    supported: boolean;
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number): void;
     prgRomBank6: Uint8Array;
     ppuBankStarts: Uint32Array;
@@ -78,6 +79,10 @@ export declare class BaseCart {
     InitializeCart(): void;
     UpdateScanlineCounter(): void;
 }
+export declare class UnsupportedCart extends BaseCart {
+    supported: boolean;
+    InitializeCart(): void;
+}
 export declare class NesCart extends BaseCart {
     irqRaised: boolean;
     Debugging: boolean;
@@ -94,34 +99,26 @@ export declare class NesCart extends BaseCart {
     NextEventAt: number;
     CurrentBank: number;
     BankSwitchesChanged: boolean;
-    OneScreenOffset: number;
     UsesSRAM: boolean;
     ChrRamStart: number;
     InitializeCart(): void;
     CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void;
     SetByte(clock: number, address: number, val: number): void;
 }
-export declare class AxROMCart extends BaseCart {
-    irqRaised: boolean;
-    Debugging: boolean;
-    DebugEvents: any;
-    ROMHashFunction: (prg: any, chr: any) => string;
-    IrqRaised: boolean;
-    CheckSum: string;
-    SRAM: any;
-    CartName: string;
-    NumberOfPrgRoms: number;
-    NumberOfChrRoms: number;
-    Mirroring: NameTableMirroring;
-    IRQAsserted: boolean;
-    NextEventAt: number;
-    CurrentBank: number;
-    BankSwitchesChanged: boolean;
-    OneScreenOffset: number;
-    UsesSRAM: boolean;
-    ChrRamStart: number;
+export declare class ColorDreams extends NesCart {
     InitializeCart(): void;
-    CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class MHROMCart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class Irem097Cart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class AxROMCart extends BaseCart {
+    InitializeCart(): void;
     SetByte(clock: number, address: number, val: number): void;
 }
 export declare class NsfCart extends BaseCart {
@@ -140,6 +137,15 @@ export declare class NsfCart extends BaseCart {
     GetByte(clock: number, address: number): number;
     __SetByte(address: number, data: number): void;
     LoadNSFFile(header: number[], prgRoms: number, chrRoms: number, prgRomData: number[], chrRomData: number[], chrRomOffset: number): void;
+}
+export declare class BNROMCart extends AxROMCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class NINA001Cart extends AxROMCart {
+    InitializeCart(): void;
+    CopyBanks(clock: number, dest: number, src: number, numberOf4kBanks: number): void;
+    SetByte(clock: number, address: number, val: number): void;
 }
 export declare class MMC1Cart extends BaseCart {
     lastClock: number;

@@ -1,3 +1,7 @@
+export declare class BufferMaker {
+    static MakeUint32Array(count: number): Uint32Array;
+    static MakeUint8Array(count: number): Uint8Array;
+}
 export declare enum RunningStatuses {
     Unloaded = 0,
     Off = 1,

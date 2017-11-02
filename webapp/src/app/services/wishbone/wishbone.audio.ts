@@ -45,11 +45,12 @@ class ChiChiThreeJSAudio
 	sound: THREE.Audio;
 	private wishbone: WishboneMachine;
 
-	bufferBlockSize: number = 8192;
-	bufferBlockCountBits: number = 2;
+	bufferBlockSize: number = 2048;
+	bufferBlockCountBits: number = 	4;
 	bufferSize: number = this.bufferBlockSize << this.bufferBlockCountBits;
+
 	nesBufferWritePos: number = 0;
-	sampleRate: number = 44100;
+	sampleRate: number = -1;
 
 
     private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
@@ -60,6 +61,7 @@ class ChiChiThreeJSAudio
 	}
 	
     setupAudio(): THREE.AudioListener {
+		this.bufferSize = this.bufferBlockSize << this.bufferBlockCountBits;
 		this.nesAudioBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
 		this.nesAudio = new Float32Array(<any>this.nesAudioBuffer);
 
@@ -72,9 +74,11 @@ class ChiChiThreeJSAudio
 		let lastReadPos = 0;
 		sound.setNodeSource(audioSource);
 		console.log (audioCtx.sampleRate);
-		this.sampleRate = audioCtx.sampleRate;
-		audioSource.buffer = audioCtx.createBuffer(1, 4096, audioCtx.sampleRate);
-		const scriptNode = audioCtx.createScriptProcessor(2048, 1, 1);
+		if (this.sampleRate < 0) {
+			this.sampleRate = audioCtx.sampleRate;
+		}
+		audioSource.buffer = audioCtx.createBuffer(1, this.bufferSize, this.sampleRate);
+		const scriptNode = audioCtx.createScriptProcessor(this.bufferBlockSize, 1, 1);
 
 		audioSource.connect(scriptNode);
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {

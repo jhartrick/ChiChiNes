@@ -11,6 +11,7 @@ export class WavSharer  {
 
     SharedBuffer: Float32Array;
     SharedBufferLength: number = 8192;
+    chunkSize: number = 2048;
 
     constructor() {
         this.SharedBuffer = new Float32Array(this.SharedBufferLength);
@@ -31,7 +32,8 @@ export class WavSharer  {
 
     synchronize(): void {
 
-        while (this.audioBytesWritten >= this.SharedBuffer.length >> 2) {
+        while (this.audioBytesWritten >= this.chunkSize)
+        {
             <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
         }
     }

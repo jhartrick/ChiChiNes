@@ -56,11 +56,29 @@ export class iNESFileHandler  {
                 switch (mapperId) {
                     case 0:
                     case 2:
+                    case 180:
+                   
                     case 3:
                         _cart = new NesCart();
                         break;
+                    case 97:
+                        _cart = new Irem097Cart();
+                        break;
                     case 7:
                         _cart = new AxROMCart();
+                        break;
+                    case 11:
+                        _cart = new ColorDreams();
+                        break;
+                    case 66:
+                        _cart = new MHROMCart();
+                        break;
+                    case 34:
+                        if (chrRomCount > 0) {
+                            _cart = new NINA001Cart();
+                        } else {
+                            _cart = new BNROMCart();
+                        }
                         break;
                     case 1:
                         _cart = new MMC1Cart();
@@ -68,6 +86,8 @@ export class iNESFileHandler  {
                     case 4:
                         _cart = new MMC3Cart();
                         break;
+                    default:
+                        _cart = new UnsupportedCart();
                 }
     
                 if (_cart != null) {
@@ -122,7 +142,8 @@ export class iNESFileHandler  {
         }
     
 
-export enum NameTableMirroring {
+
+        export enum NameTableMirroring {
     OneScreen = 0,
     Vertical = 1,
     Horizontal = 2,
@@ -131,6 +152,7 @@ export enum NameTableMirroring {
 
 export class BaseCart  {
     mapperName: string = 'base';
+    supported: boolean = true;
     // compatible with .net array.copy method
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
         if (!dest) {
@@ -476,17 +498,9 @@ export class BaseCart  {
         //    //        $2400,$2C00.  (vertical mirroring)
         //    // x   x  All four screen buffers are mapped to separate
         //    //        areas of memory. In this case, the cartridge
-        //    //        must contain 2kB of additional VRAM (i got vram up the wazoo)
-        //    // 0xC00 = 110000000000
-        //    // 0x800 = 100000000000
-        //    // 0x400 = 010000000000
-        //    // 0x000 = 000000000000
+        //    //        must contain 2kB of additional VRAM 
 
-        //if (this.debugging) {
-        //    this.DebugEvents.add(($t = new ChiChiNES.CartDebugEvent(), $t.Clock = clockNum, $t.EventType = System.String.format("Mirror set to {0}", mirroring), $t));
-        //}
 
-        //if (mirroring == this.mirroring) return;
 
         this.mirroring = mirroring;
 
@@ -538,6 +552,16 @@ export class BaseCart  {
 
 }
 
+export class UnsupportedCart extends BaseCart {
+    supported: boolean = false;
+    InitializeCart(): void {
+        this.mapperName = 'unsupported';
+        
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.Mirror(0, 0);
+     }
+}
+
 export class NesCart extends BaseCart {
    // prevBSSrc = new Uint8Array(8);
 
@@ -560,7 +584,7 @@ export class NesCart extends BaseCart {
     //BankStartCache: any;
     CurrentBank: number;
     BankSwitchesChanged: boolean;
-    OneScreenOffset: number;
+    //OneScreenOffset: number;
     UsesSRAM: boolean;
     ChrRamStart: number;
     //PPUBankStarts: any;
@@ -575,21 +599,23 @@ export class NesCart extends BaseCart {
         case 0:
             this.mapperName = 'NROM';
             break;
-        case 1:
-            this.mapperName = 'MMC1';
-            break;
         case 2:
             this.mapperName = 'UxROM';
             break;
         case 3:
             this.mapperName = 'CNROM';
             break;
+        case 180:
+            this.mapperName  = 'UNROM (Crazy Climber?)';
+
+            break;
         }
 
         switch (this.mapperId) {
             case 0:
-            case 1:
             case 2:
+            case 180:
+            
             case 3:
                 if (this.chrRomCount > 0) {
                     this.CopyBanks(0, 0, 0, 1);
@@ -625,28 +651,13 @@ export class NesCart extends BaseCart {
             return;
         }
 
-        if (this.mapperId === 7) {
-            // val selects which bank to swap, 32k at a time
-            var newbank8 = 0;
-            newbank8 = (val & 15) << 2;
-
-            this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
-            // whizzler.DrawTo(clock);
-            if ((val & 16) === 16) {
-                this.OneScreenOffset = 1024;
-            } else {
-                this.OneScreenOffset = 0;
-            }
-            this.Mirror(clock, 0);
-        }
-
         if (this.mapperId === 3 && address >= 32768) {
 
             this.CopyBanks(clock, 0, val, 1);
         }
 
         if (this.mapperId === 2 && address >= 32768) {
-            var newbank81 = 0;
+            let newbank81 = 0;
 
             newbank81 = val * 2;
             // keep two high banks, swap low banks
@@ -655,37 +666,121 @@ export class NesCart extends BaseCart {
             this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
         }
 
+        if (this.mapperId === 180 && address >= 32768) {
+            let newbankC1 = 0;
+
+            newbankC1 = val * 2;
+            // keep two LOW banks, swap high banks
+
+            // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
+            this.SetupBankStarts(this.current8, this.currentA, newbankC1, ((newbankC1 + 1) | 0));
+        }
 
     }
 }
 
-//  Mapper 7
+export class ColorDreams extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = 'Color Dreams';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        let newbank81 = 0;
+
+        newbank81 = (val & 0x3) ;
+        // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
+        this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
+
+        // two high bits set mirroring
+        this.Whizzler.DrawTo(clock);
+
+        const chrBank = (val >> 4) & 0xF;
+        this.CopyBanks(clock, 0, chrBank, 1);
+        //         %00 = 1ScA
+        //         %01 = Horz
+        //         %10 = Vert
+        //         %11 = 1ScB
+        //this.Mirror(clock,(val >> 6));
+    }
+
+}
+
+
+export class MHROMCart extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = 'GxROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts((this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1, 0, 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        let newbank81 = 0;
+
+        const chrbank = (val & 0x15) << 2  ;
+        const prgbank = ((val >> 4) & 0x3) * 2;
+
+        this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+
+        this.Whizzler.DrawTo(clock);
+        this.CopyBanks(clock, 0, chrbank, 1);
+
+    }
+
+}
+
+export class Irem097Cart extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = '~Irem TAM-S1 IC';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts((this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1, 0, 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+
+            return;
+        }
+
+        let newbankC1 = 0;
+
+        newbankC1 = (val & 0xF) * 2;
+        // keep two LOW banks, swap high banks
+
+        // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
+        this.SetupBankStarts(this.current8, this.currentA, newbankC1, ((newbankC1 + 1) | 0));
+
+        // two high bits set mirroring
+        this.Whizzler.DrawTo(clock);
+        //         %00 = 1ScA
+        //         %01 = Horz
+        //         %10 = Vert
+        //         %11 = 1ScB
+        this.Mirror(clock,(val >> 6));
+    }
+
+    
+}
+
+//  Mapper 7 and derivatives 34
 export class AxROMCart extends BaseCart {
     // prevBSSrc = new Uint8Array(8);
- 
-     irqRaised: boolean;
-     Debugging: boolean;
-     DebugEvents: any;
-     ROMHashFunction: (prg: any, chr: any) => string;
-     // Whizzler: ChiChiNES.CPU2A03;
-     IrqRaised: boolean;
-     CheckSum: string;
-     SRAM: any;
-     CartName: string;
-     NumberOfPrgRoms: number;
-     NumberOfChrRoms: number;
-     // MapperID: number;
-     Mirroring: NameTableMirroring;
-     IRQAsserted: boolean;
-     NextEventAt: number;
-     // PpuBankStarts: any;
-     // BankStartCache: any;
-     CurrentBank: number;
-     BankSwitchesChanged: boolean;
-     OneScreenOffset: number;
-     UsesSRAM: boolean;
-     ChrRamStart: number;
-     // PPUBankStarts: any;
+
  
      InitializeCart(): void {
         this.mapperName = 'AxROM';
@@ -694,28 +789,11 @@ export class AxROMCart extends BaseCart {
         this.Mirror(0, 0);
      }
 
-     CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void {
- 
-         if (dest >= this.chrRomCount) {
-             dest = (this.chrRomCount - 1) | 0;
-         }
- 
-         var oneKsrc = src << 3;
-         var oneKdest = dest << 3;
-         //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-         //  setup ppuBankStarts in 0x400 block chunks 
-         for (var i = 0; i < (numberOf8kBanks << 3); i = (i + 1) | 0) {
-             this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
- 
-         }
-         this.UpdateBankStartCache();
-     }
      SetByte(clock: number, address: number, val: number): void {
          if (address >= 24576 && address <= 32767) {
              if (this.SRAMEnabled) {
                  this.prgRomBank6[address & 8191] = val & 255;
              }
- 
              return;
          }
  
@@ -723,27 +801,24 @@ export class AxROMCart extends BaseCart {
         var newbank8 = 0;
         newbank8 = (val & 15) << 2;
         
-        // this.Whizzler.DrawTo(clock);
-
         this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
         // whizzler.DrawTo(clock);
         if ((val & 16) === 16) {
-            this.OneScreenOffset = 1024;
+            this.oneScreenOffset = 1024;
         } else {
-            this.OneScreenOffset = 0;
+            this.oneScreenOffset = 0;
         }
+        this.Whizzler.DrawTo(clock);
         this.Mirror(clock, 0);
- 
 
- 
- 
      }
  
  
  }
  
 
-export class NsfCart extends BaseCart {copyright: string;
+
+ export class NsfCart extends BaseCart {copyright: string;
     artist: string;songName: string;
     firstSong: number;songCount: number;
     runNsfAt: number;
@@ -837,6 +912,92 @@ export class NsfCart extends BaseCart {copyright: string;
 
 }
 
+export class BNROMCart extends AxROMCart {
+    InitializeCart(): void {
+        this.mapperName = 'BNROM';
+        
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.Mirror(0, 0);
+     }
+
+     SetByte(clock: number, address: number, val: number): void {
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+
+            return;
+        }
+
+       // val selects which bank to swap, 32k at a time
+       var newbank8 = 0;
+       newbank8 = (val & 15) << 2;
+       
+       this.Whizzler.DrawTo(clock);
+
+       this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
+       // whizzler.DrawTo(clock);
+
+    }
+
+}
+
+export class NINA001Cart extends AxROMCart {
+    InitializeCart(): void {
+        this.mapperName = 'BNROM';
+        
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.Mirror(0, 0);
+     }
+
+     CopyBanks(clock: number, dest: number, src: number, numberOf4kBanks: number): void {
+        
+            if (dest >= this.chrRomCount) {
+                dest = (this.chrRomCount - 1) | 0;
+            }
+    
+            const oneKsrc = src << 3;
+            const oneKdest = dest << 3;
+
+            for (let i = 0; i < (numberOf4kBanks << 2); i = (i + 1) | 0) {
+                this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
+    
+            }
+            this.UpdateBankStartCache();
+    }
+
+     SetByte(clock: number, address: number, val: number): void {
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+
+            return;
+        }
+        switch (address) {
+            case 0x7FFD:
+                // val selects which bank to swap, 32k at a time
+                let newbank8 = 0;
+                newbank8 = (val & 15) << 2;
+                this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
+                break;
+            case 0x7FFE:
+                // Select 4 KB CHR ROM bank for PPU $0000-$0FFF
+                this.CopyBanks(clock, 0, val, 1);
+                break;
+            case 0x7FFF:
+                // Select 4 KB CHR ROM bank for PPU $1000-$1FFF
+                this.CopyBanks(clock, 1, val, 1);
+                break;
+            
+        }
+
+
+    }
+
+}
+
+// MMC 
 export class MMC1Cart extends BaseCart  {
     lastClock: number = 0;
     sequence = 0;
@@ -895,9 +1056,9 @@ export class MMC1Cart extends BaseCart  {
     SetByte(clock: number, address: number, val: number) {
         // if write is to a different register, reset
         this.lastClock = clock;
-        switch (address & 61440) {
-            case 24576:
-            case 28672:
+        switch (address & 0xF000) {
+            case 0x6000:
+            case 0x7000:
                 this.prgRomBank6[address & 8191] = val & 255;
                 break;
             default:
