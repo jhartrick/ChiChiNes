@@ -34,45 +34,6 @@ export class ControlPanelComponent {
 
     wishbone: WishboneMachine;
 
-    get enableSquare0(): boolean {
-        return this.audioSettings.enableSquare0;
-    }
-
-    set enableSquare0(value: boolean) {
-        this.audioSettings.enableSquare0 = value;
-        this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-        // this.wishbone.RequestSync();
-    }
-
-    get enableSquare1(): boolean {
-        return this.audioSettings.enableSquare1;
-    }
-
-    set enableSquare1(value: boolean) {
-        this.audioSettings.enableSquare1 = value;
-        this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-       // this.wishbone.RequestSync();
-    }
-
-    get enableTriangle(): boolean {
-        return this.audioSettings.enableTriangle;
-    }
-
-    set enableTriangle(value: boolean) {
-        this.audioSettings.enableTriangle = value;
-        this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-        // this.wishbone.RequestSync();
-    }
-
-    get enableNoise(): boolean {
-        return this.audioSettings.enableNoise;
-    }
-
-    set enableNoise(value: boolean) {
-        this.audioSettings.enableNoise = value;
-        this.wishbone.SoundBopper.audioSettings = this.audioSettings;
-       // this.wishbone.RequestSync();
-    }
 
     constructor(public nesService: Emulator, cd: ChangeDetectorRef, private romLoader: RomLoader, private ngZone: NgZone) {
         this.powerstate = 'OFF';
@@ -92,7 +53,7 @@ export class ControlPanelComponent {
             if (rom.nsf) {
                 this.nesService.LoadNsf(rom.data, rom.name);
             } else {
-                console.log ("ROM CRC: " + crc.crc32(new Buffer(rom.data.slice(16, rom.data.length))).toString(16).toUpperCase() );
+                
                 this.nesService.LoadRom(rom.data, rom.name);
             }
         });

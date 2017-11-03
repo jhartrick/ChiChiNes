@@ -3,6 +3,7 @@ import { WavSharer, ChiChiBopper } from './ChiChiAudio';
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, RunningStatuses, CpuStatus } from './ChiChiTypes';
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl';
 import { ChiChiPPU } from "./ChiChiPPU";
+import { GeniePatch } from './ChiChiCheats';
 export declare class ChiChiMachine {
     private frameJustEnded;
     private frameOn;
@@ -79,6 +80,9 @@ export declare class ChiChiCPPU {
     private instructionUsage;
     private _debugging;
     Debugging: boolean;
+    cheating: boolean;
+    genieCodes: GeniePatch[];
+    cheat(address: number, result: number): number;
     instructionHistoryPointer: number;
     _instructionHistory: ChiChiInstruction[];
     readonly InstructionHistory: Array<any>;

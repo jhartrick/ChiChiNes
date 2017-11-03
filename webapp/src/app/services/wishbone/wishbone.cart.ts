@@ -9,7 +9,7 @@ export class WishboneCart {
     ChrRom: any;
     ChrRamStart: number;
     PPUBankStarts: any;
-    ROMHashFunction: (prg: any, chr: any) => string;
+    ROMHashFunction: string;
     CheckSum: string;
     SRAM: any;
     Mirroring: ChiChiNES.NameTableMirroring;

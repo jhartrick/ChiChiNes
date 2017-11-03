@@ -291,7 +291,14 @@ export class tendoWrapper {
                 this.sharedAudioBufferPos = 0;
                 this.iops = event.data.iops;
                 break;
+            case 'cheats':
+                this.machine.Cpu.cheating = event.data.cheats.length > 0;
+                this.machine.Cpu.genieCodes = event.data.cheats;//: this.Cpu.genieCodes
+                
+
+                break;                
             case 'loadrom':
+                
                 this.stop();
                 //this.createMachine();
                 this.machine.EnableSound = false;

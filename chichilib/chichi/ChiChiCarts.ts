@@ -1,5 +1,6 @@
 ﻿import { ChiChiCPPU } from './ChiChiMachine';
 import { ChiChiPPU } from './ChiChiPPU';
+import * as crc from 'crc';
 
 export class iNESFileHandler  {
     
@@ -115,7 +116,7 @@ export class iNESFileHandler  {
                     _cart.CPU = cpu;
                     cpu.Cart = _cart;
                     cpu.ppu.ChrRomHandler = _cart;
-                    _cart.ROMHashFunction = null; //Hashers.HashFunction;
+                    _cart.ROMHashFunction = crc.crc32(new Buffer(thefile.slice(16, thefile.length))).toString(16).toUpperCase(); //Hashers.HashFunction;
                     _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
                 }
     
@@ -234,7 +235,7 @@ export class BaseCart  {
     bankEstart = 0;
 
 
-    private _ROMHashfunction: any = null;
+    ROMHashFunction: string = null;
     checkSum: any = null;
     private mirroring = -1;
     updateIRQ: () => void = () => {
@@ -263,7 +264,6 @@ export class BaseCart  {
     irqRaised = false;
     Debugging: boolean;
     DebugEvents: any = null;
-    ROMHashFunction: (prg: any, chr: any) => string;
     Whizzler: ChiChiPPU;
     CheckSum: string;
     CPU: ChiChiCPPU;
@@ -584,30 +584,6 @@ export class UnsupportedCart extends BaseCart {
 
 export class NesCart extends BaseCart {
    // prevBSSrc = new Uint8Array(8);
-
-    irqRaised: boolean;
-    Debugging: boolean;
-    DebugEvents: any;
-    ROMHashFunction: (prg: any, chr: any) => string;
-    //Whizzler: ChiChiNES.CPU2A03;
-    IrqRaised: boolean;
-    CheckSum: string;
-    SRAM: any;
-    CartName: string;
-    NumberOfPrgRoms: number;
-    NumberOfChrRoms: number;
-    //MapperID: number;
-    Mirroring: NameTableMirroring;
-    IRQAsserted: boolean;
-    NextEventAt: number;
-    //PpuBankStarts: any;
-    //BankStartCache: any;
-    CurrentBank: number;
-    BankSwitchesChanged: boolean;
-    //OneScreenOffset: number;
-    UsesSRAM: boolean;
-    ChrRamStart: number;
-    //PPUBankStarts: any;
 
     InitializeCart(): void {
 

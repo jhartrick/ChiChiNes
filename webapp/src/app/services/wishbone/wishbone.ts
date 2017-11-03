@@ -1,76 +1,12 @@
 import { NgZone } from '@angular/core';
 
-import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart,  ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU  } from 'chichi';
+import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart,  ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU, GameGenieCode, ChiChiCheats  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
 import { TileDoodler } from './wishbone.tiledoodler';
 import { WishboneCart } from './wishbone.cart';
 import { WishBopper } from './wishbone.audio';
-
-export class WishboneSyncHandler {
-    private subj: Subject<WishboneSyncHandler> = new Subject<WishboneSyncHandler>();
-    private wishbone: WishboneMachine;
-
-    asObservable(): Observable<WishboneSyncHandler> {
-        return this.subj;
-    }
-    Sync(data: any) {
-        if (data.bufferupdate) {
-            if (data.Cpu.Rams) {
-                this.wishbone.Cpu.Rams = data.Cpu.Rams;
-                this.wishbone.ppu.spriteRAM = data.Cpu.spriteRAM;
-                for (let i = 0; i < this.wishbone.ppu.unpackedSprites.length; ++i) {
-                    this.wishbone.ppu.unpackedSprites[i].Changed = true;
-                }
-                this.wishbone.ppu.UnpackSprites();
-            }
-            if (data.Cart && this.wishbone.Cart.realCart) {
-
-                this.wishbone.Cart.realCart.prgRomBank6 = data.Cart.prgRomBank6;
-                this.wishbone.Cart.realCart.ppuBankStarts = data.Cart.ppuBankStarts;
-                this.wishbone.Cart.realCart.bankStartCache = data.Cart.bankStartCache;
-                this.wishbone.Cart.realCart.chrRom = data.Cart.chrRom;
-            }
-            if (data.sound) {
-                this.wishbone.WaveForms.controlBuffer = data.sound.waveForms_controlBuffer;//
-            }
-        }
-        if (data.stateupdate) {
-            if (data.Cpu) {
-                this.wishbone.ppu.backgroundPatternTableIndex = data.Cpu.backgroundPatternTableIndex;
-                this.wishbone.cpuStatus = data.Cpu.status;
-                this.wishbone.ppuStatus = data.Cpu.ppuStatus;
-                this.wishbone.ppu._PPUControlByte0 = data.Cpu._PPUControlByte0;
-                this.wishbone.ppu._PPUControlByte1 = data.Cpu._PPUControlByte1;
-
-            }
-            if (data.Cart && this.wishbone.Cart.realCart) {
-
-                this.wishbone.Cart.realCart.CurrentBank = data.Cart.CurrentBank;
-                this.wishbone.Cart.realCart.current8 = data.Cart.current8;
-                this.wishbone.Cart.realCart.currentA = data.Cart.currentA;
-                this.wishbone.Cart.realCart.currentC = data.Cart.currentC;
-                this.wishbone.Cart.realCart.currentE = data.Cart.currentE;
-
-                this.wishbone.Cart.realCart.bank8start = data.Cart.bank8start;
-                this.wishbone.Cart.realCart.bankAstart = data.Cart.bankAstart;
-                this.wishbone.Cart.realCart.bankCstart = data.Cart.bankCstart;
-                this.wishbone.Cart.realCart.bankEstart = data.Cart.bankEstart;
-
-            }
-        }
-        if (data.sound) {
-            this.wishbone.SoundBopper.audioSettings = data.sound.settings;
-        }
-
-        if (data.debug && data.debug.InstructionHistory) {
-            this.wishbone.Cpu._instructionHistory = data.debug.InstructionHistory.Buffer;
-            this.wishbone.Cpu.instructionHistoryPointer = data.debug.InstructionHistory.Index;
-            this.wishbone.Cpu.flushHistory = data.debug.InstructionHistory.Finish ? true : false;
-        }
-    }
-}
 
 
 export class KeyBindings {
@@ -250,6 +186,32 @@ export class WishboneMachine  {
 
     }
 
+    private _cheats: GameGenieCode[];
+
+    get cheats(): GameGenieCode[] {
+        let ggCodes = new ChiChiCheats().getCheatsForGame(this.Cart.realCart.ROMHashFunction);
+        if (this._cheats) {
+           let cheats = this._cheats;
+           ggCodes = ggCodes.map((ggCode)=>{
+             let existingCode = cheats.find((cheat)=> cheat.code == ggCode.code);
+             if (existingCode) {
+               ggCode.active = existingCode.active;
+             }
+             return ggCode;
+           });
+        }
+        this._cheats = ggCodes;
+        return this._cheats;
+    };
+
+    applyCheats(cheats: GameGenieCode[]) {
+        this._cheats = cheats;
+        const cc = new ChiChiCheats();
+        this.Cpu.genieCodes = cheats.filter((v)=>v.active).map((v) => { return cc.gameGenieCodeToPatch(v.code); } );
+        this.Cpu.cheating =  this.Cpu.genieCodes.length > 0;
+        this.postNesMessage({ command: 'cheats', cheats: this.Cpu.genieCodes })
+    }
+
     handleMessage(data: MessageEvent) {
         const d = data.data;
         if (d === 'ready') {
@@ -418,7 +380,7 @@ export class WishboneMachine  {
     SRAMWriter: (RomID: string, SRAM: any) => void;
 
     Reset() {
-        this.postNesMessage({ command: 'reset', debug: true });
+        this.postNesMessage({ command: 'reset', debug: false });
     }
 
     PowerOn() {
@@ -440,39 +402,18 @@ export class WishboneMachine  {
     LoadCart(rom: any) {
         const cartName = this.Cart.CartName;
         const cart = iNESFileHandler.LoadROM(this.Cpu, rom);
-
         this.Cart = new WishboneCart();
         this.Cart.realCart = cart;
         this.Cart.realCart.CPU = this.Cpu;
         this.Cart.realCart.Whizzler = this.ppu;
+
         this.Cart.CartName = cartName;
+        this.Cart.ROMHashFunction = cart.ROMHashFunction;
 
         this.tileDoodler = new TileDoodler(this.ppu);
         this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
         //        this.machine.LoadCart(rom);
     }
-
-    HasState(index: number): boolean {
-        throw new Error('Method not implemented.');
-    }
-
-    GetState(index: number) {
-        throw new Error('Method not implemented.');
-    }
-
-    SetState(index: number) {
-        throw new Error('Method not implemented.');
-    }
-
-    SetupSound() {
-        throw new Error('Method not implemented.');
-    }
-
-    FrameFinished() {
-        throw new Error('Method not implemented.');
-    }
-
-
 }
 
 class WishboneCPPU extends ChiChiCPPU {

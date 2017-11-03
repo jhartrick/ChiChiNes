@@ -3,6 +3,7 @@ import { WavSharer, ChiChiBopper } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
 import { ChiChiPPU } from "./ChiChiPPU";
+import { GameGenieCode, GeniePatch } from './ChiChiCheats';
 
 
     //machine wrapper
@@ -10,6 +11,7 @@ import { ChiChiPPU } from "./ChiChiPPU";
         private frameJustEnded = true;
         private frameOn = false;
         private totalCPUClocks = 0;
+
 
         constructor(cpu? : ChiChiCPPU) {
             var wavSharer = new WavSharer();
@@ -23,6 +25,7 @@ import { ChiChiPPU } from "./ChiChiPPU";
             }
             this.ppu.frameFinished = () => { this.FrameFinished(); };
         }
+
 
         Drawscreen(): void {
         }
@@ -151,7 +154,8 @@ import { ChiChiPPU } from "./ChiChiPPU";
 
             var cart = iNESFileHandler.LoadROM(this.Cpu, rom);
             if (cart != null) {
-
+                this.Cpu.cheating = false;
+                this.Cpu.genieCodes = new Array<GeniePatch>();
                 this.Cpu.Cart = cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
                 this.Cart.NMIHandler = () => { this.Cpu.InterruptRequest() };
                 this.ppu.ChrRomHandler = this.Cart;
@@ -259,6 +263,34 @@ import { ChiChiPPU } from "./ChiChiPPU";
             this._debugging = value;
         }
 
+// #region Cheats
+        cheating = false;
+        
+        genieCodes: GeniePatch[] = new Array<GeniePatch>();
+
+        cheat(address: number, result: number) : number 
+        {
+            
+            let patch = this.genieCodes.find((v)=>{ return v.address == address; });
+            if (!patch) return result;
+            if (patch.data > 0xFF)
+            {
+                // its a comparison
+                const compare = patch.data  >> 8;
+                if (compare == result)
+                {
+                    result = patch.data & 0xFF;
+                }
+            }
+            else
+            {
+                result = patch.data;
+            }
+            
+            return result;
+        }
+
+// #endregion cheats
 
         instructionHistoryPointer = 255;
         _instructionHistory = new Array<ChiChiInstruction>(256);//System.Array.init(256, null, ChiChiInstruction);
@@ -1316,11 +1348,18 @@ import { ChiChiPPU } from "./ChiChiPPU";
                 default:
                     throw new Error("Bullshit!");
             }
-            //if (_cheating && memoryPatches.ContainsKey(address))
-            //{
 
-            //    return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
-            //}
+            if (this.cheating)
+            {
+                const patch = this.genieCodes.find((v)=>{ return v.address == address; });
+                if (patch && patch.active && patch.address == address) {
+                    if (patch.compare > -1) {
+                        return (patch.compare == result ? patch.data : result) & 0xFF;
+                    } else {
+                        return patch.data;
+                    }
+                } 
+            }
 
             return result & 255;
         }

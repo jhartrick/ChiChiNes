@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
-import { GameGenieCode } from './chichi.gamegenie';
+import { GameGenieCode } from 'chichi';
 
 @Component({
   selector: 'chichi-gamegeniedialog',

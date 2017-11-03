@@ -37,7 +37,7 @@ export declare class BaseCart {
     bankAstart: number;
     bankCstart: number;
     bankEstart: number;
-    private _ROMHashfunction;
+    ROMHashFunction: string;
     checkSum: any;
     private mirroring;
     updateIRQ: () => void;
@@ -50,7 +50,6 @@ export declare class BaseCart {
     irqRaised: boolean;
     Debugging: boolean;
     DebugEvents: any;
-    ROMHashFunction: (prg: any, chr: any) => string;
     Whizzler: ChiChiPPU;
     CheckSum: string;
     CPU: ChiChiCPPU;
@@ -84,23 +83,6 @@ export declare class UnsupportedCart extends BaseCart {
     InitializeCart(): void;
 }
 export declare class NesCart extends BaseCart {
-    irqRaised: boolean;
-    Debugging: boolean;
-    DebugEvents: any;
-    ROMHashFunction: (prg: any, chr: any) => string;
-    IrqRaised: boolean;
-    CheckSum: string;
-    SRAM: any;
-    CartName: string;
-    NumberOfPrgRoms: number;
-    NumberOfChrRoms: number;
-    Mirroring: NameTableMirroring;
-    IRQAsserted: boolean;
-    NextEventAt: number;
-    CurrentBank: number;
-    BankSwitchesChanged: boolean;
-    UsesSRAM: boolean;
-    ChrRamStart: number;
     InitializeCart(): void;
     CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void;
     SetByte(clock: number, address: number, val: number): void;
