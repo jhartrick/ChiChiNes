@@ -358,7 +358,6 @@ export class WishboneMachine  {
 
     set nesAudioDataAvailable(value: number) {
         <any>Atomics.store(this.nesInterop, this.NES_AUDIO_AVAILABLE, value);
-
         <any>Atomics.wake(this.nesInterop, this.NES_AUDIO_AVAILABLE, 321);
     }
 
