@@ -200,9 +200,9 @@ export class WishboneMachine  {
     get cheats(): GameGenieCode[] {
         let ggCodes = new ChiChiCheats().getCheatsForGame(this.Cart.realCart.ROMHashFunction);
         if (this._cheats) {
-           let cheats = this._cheats;
-           ggCodes = ggCodes.map((ggCode)=>{
-             let existingCode = cheats.find((cheat)=> cheat.code == ggCode.code);
+           const cheats = this._cheats;
+           ggCodes = ggCodes.map((ggCode) => {
+            const existingCode = cheats.find((cheat) => cheat.code === ggCode.code);
              if (existingCode) {
                ggCode.active = existingCode.active;
              }
@@ -211,14 +211,14 @@ export class WishboneMachine  {
         }
         this._cheats = ggCodes;
         return this._cheats;
-    };
+    }
 
     applyCheats(cheats: GameGenieCode[]) {
         this._cheats = cheats;
         const cc = new ChiChiCheats();
-        this.Cpu.genieCodes = cheats.filter((v)=>v.active).map((v) => { return cc.gameGenieCodeToPatch(v.code); } );
+        this.Cpu.genieCodes = cheats.filter((v) => v.active).map((v) => cc.gameGenieCodeToPatch(v.code));
         this.Cpu.cheating =  this.Cpu.genieCodes.length > 0;
-        this.postNesMessage({ command: 'cheats', cheats: this.Cpu.genieCodes })
+        this.postNesMessage({ command: 'cheats', cheats: this.Cpu.genieCodes });
     }
 
     handleMessage(data: MessageEvent) {
