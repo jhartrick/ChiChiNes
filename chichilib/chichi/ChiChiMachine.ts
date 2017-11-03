@@ -568,6 +568,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
             this._stackPointer = 253;
             this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
             this._ticks = 4;
+            this.genieCodes = [];
         }
 
         PowerOn(): void {

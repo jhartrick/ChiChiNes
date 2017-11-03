@@ -7,9 +7,16 @@ import { Subscription } from 'rxjs/Subscription';
 import { TileDoodler } from './wishbone.tiledoodler';
 import { WishboneCart } from './wishbone.cart';
 import { WishBopper } from './wishbone.audio';
+import { KeyboardSettings } from '../keyboardsettings';
 
 
 export class KeyBindings {
+    keyName(keyCode: number): string {
+        let keyName = '';
+        keyName = KeyboardSettings.keys[keyCode.toString()];
+        return keyName;
+    }
+
     left = 37;
     right = 39;
     up = 38;
@@ -175,6 +182,8 @@ export class WishboneMachine  {
         this.ppu.cpu = this.Cpu;
         this.Cart = new WishboneCart();
         this.PadOne = new WishBoneControlPad(this);
+        this.PadTwo = new WishBoneControlPad(this);
+        this.PadTwo.bindings = new KeyBindings();
 
         const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../../assets/emulator.worker.bootstrap.js');
 

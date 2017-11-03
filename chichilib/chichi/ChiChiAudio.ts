@@ -1349,7 +1349,7 @@ export class ChiChiBopper {
         this.myBlipper = new Blip(this._sampleRate / 5);
         this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
-        //this.writer.
+        this.writer.audioBytesWritten = 0;
 
         this.registers.clear();
         this.InterruptRaised = false;

@@ -265,6 +265,7 @@ export class tendoWrapper {
     }
 
     reset() {
+        setTimeout(()=>{},10);
         const machine = this.machine;
         machine.Cpu.Debugging = this.Debugging;
         machine.Reset();

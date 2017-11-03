@@ -38,31 +38,6 @@ export class WishboneCart {
 
     UsesSRAM: boolean;
 
-    LoadiNESCart(header: any, prgRoms: number, chrRoms: number, prgRomData: any, chrRomData: any, chrRomOffset: number): void {
-        throw new Error('Method not implemented.');
-    }
-    InitializeCart(): void {
-        throw new Error('Method not implemented.');
-    }
-    UpdateScanlineCounter(): void {
-        throw new Error('Method not implemented.');
-    }
-    WriteState(state: any): void {
-        throw new Error('Method not implemented.');
-    }
-    ReadState(state: any): void {
-        throw new Error('Method not implemented.');
-    }
-    ActualChrRomOffset(address: number): number {
-        throw new Error('Method not implemented.');
-    }
-    UpdateBankStartCache(): number {
-        throw new Error('Method not implemented.');
-    }
-    ResetBankStartCache(): void {
-        throw new Error('Method not implemented.');
-    }
-
     NMIHandler: () => void;
 
     IRQAsserted: boolean;
@@ -70,14 +45,11 @@ export class WishboneCart {
     NextEventAt: number;
 
     GetPPUByte(clock: number, address: number): number {
-        if (this.realCart)
+        if (this.realCart) {
             return this.realCart.GetPPUByte(clock, address);
-        else
+        } else {
             return 0;
-    }
-
-    SetPPUByte(clock: number, address: number, data: number): void {
-        throw new Error('Method not implemented.');
+        }
     }
 
     GetByte(Clock: number, address: number): number {
@@ -87,15 +59,6 @@ export class WishboneCart {
             return 0;
         }
     }
-    SetByte(Clock: number, address: number, data: number): void {
-        throw new Error('Method not implemented.');
-    }
 
-    HandleEvent(Clock: number): void {
-        throw new Error('Method not implemented.');
-    }
-    ResetClock(Clock: number): void {
-        throw new Error('Method not implemented.');
-    }
 
 }

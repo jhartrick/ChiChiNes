@@ -4,6 +4,7 @@ import { WishboneMachine, KeyBindings, WishBoneControlPad } from '../services/wi
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
+import { KeyboardSettings } from '../services/keyboardsettings';
 
 @Component({
   selector: 'chichines-controldialog',
@@ -40,6 +41,10 @@ export class ControlDialogComponent {
             console.log(this.captureType + ' ' + event.keyCode );
             this.currCapture[this.captureType] = event.keyCode;
         }
+    }
+
+    keyName(keyCode: number): string {
+        return KeyboardSettings.keys[keyCode.toString()];
     }
 
     captureInput(event: any, type: string, captureFor: KeyBindings) {

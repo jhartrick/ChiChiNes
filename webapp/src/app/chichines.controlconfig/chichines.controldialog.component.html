@@ -3,31 +3,31 @@
     <div>
         <h3>Pad One</h3>
         <mat-button-toggle-group vertical="true">
-            <mat-button-toggle value="left" (change)="captureInput($event, 'left', controls)" mat-button>Left: {{ controls.left }}</mat-button-toggle>    
-            <mat-button-toggle value="up" (change)="captureInput($event, 'up', controls)" mat-button>Up: {{ controls.up }}</mat-button-toggle>    
-            <mat-button-toggle value="right" (change)="captureInput($event, 'right', controls)" mat-button>Right: {{ controls.right }}</mat-button-toggle>    
-            <mat-button-toggle value="down" (change)="captureInput($event, 'down', controls)" mat-button>Down: {{ controls.down }}</mat-button-toggle>    
-            <mat-button-toggle value="b" (change)="captureInput($event, 'b', controls)" mat-button>B: {{ controls.b }}</mat-button-toggle>    
-            <mat-button-toggle value="a" (change)="captureInput($event, 'a', controls)" mat-button>A: {{ controls.a }}</mat-button-toggle>    
-            <mat-button-toggle value="select" (change)="captureInput($event, 'select', controls)" mat-button>Select: {{ controls.select }}</mat-button-toggle>    
-            <mat-button-toggle value="start" (change)="captureInput($event, 'start', controls)" mat-button>Start: {{ controls.start }}</mat-button-toggle>    
+            <mat-button-toggle value="left" (change)="captureInput($event, 'left', controls)" mat-button>Left: {{ keyName(controls.left) }}</mat-button-toggle>    
+            <mat-button-toggle value="up" (change)="captureInput($event, 'up', controls)" mat-button>Up: {{ keyName(controls.up) }}</mat-button-toggle>    
+            <mat-button-toggle value="right" (change)="captureInput($event, 'right', controls)" mat-button>Right: {{ keyName(controls.right) }}</mat-button-toggle>    
+            <mat-button-toggle value="down" (change)="captureInput($event, 'down', controls)" mat-button>Down: {{ keyName(controls.down) }}</mat-button-toggle>    
+            <mat-button-toggle value="b" (change)="captureInput($event, 'b', controls)" mat-button>B: {{ keyName(controls.b) }}</mat-button-toggle>    
+            <mat-button-toggle value="a" (change)="captureInput($event, 'a', controls)" mat-button>A: {{ keyName(controls.a) }}</mat-button-toggle>    
+            <mat-button-toggle value="select" (change)="captureInput($event, 'select', controls)" mat-button>Select: {{ keyName(controls.select) }}</mat-button-toggle>    
+            <mat-button-toggle value="start" (change)="captureInput($event, 'start', controls)" mat-button>Start: {{ keyName(controls.start) }}</mat-button-toggle>    
         </mat-button-toggle-group>
     </div>
     <div>
         <h3>Pad Two</h3>
         <mat-button-toggle-group vertical="true">
-            <mat-button-toggle value="left" (change)="captureInput($event, 'left', controls2)" mat-button>Left: {{ controls2.left }}</mat-button-toggle>    
-            <mat-button-toggle value="up" (change)="captureInput($event, 'up', controls2)" mat-button>Up: {{ controls2.up }}</mat-button-toggle>    
-            <mat-button-toggle value="right" (change)="captureInput($event, 'right', controls2)" mat-button>Right: {{ controls2.right }}</mat-button-toggle>    
-            <mat-button-toggle value="down" (change)="captureInput($event, 'down', controls2)" mat-button>Down: {{ controls2.down }}</mat-button-toggle>    
-            <mat-button-toggle value="b" (change)="captureInput($event, 'b', controls2)" mat-button>B: {{ controls2.b }}</mat-button-toggle>    
-            <mat-button-toggle value="a" (change)="captureInput($event, 'a', controls2)" mat-button>A: {{ controls2.a }}</mat-button-toggle>    
-            <mat-button-toggle value="select" (change)="captureInput($event, 'select', controls2)" mat-button>Select: {{ controls2.select }}</mat-button-toggle>    
-            <mat-button-toggle value="start" (change)="captureInput($event, 'start', controls2)" mat-button>Start: {{ controls2.start }}</mat-button-toggle>    
+            <mat-button-toggle value="left" (change)="captureInput($event, 'left', controls2)" mat-button>Left: {{ keyName(controls2.left) }}</mat-button-toggle>    
+            <mat-button-toggle value="up" (change)="captureInput($event, 'up', controls2)" mat-button>Up: {{ keyName(controls2.up) }}</mat-button-toggle>    
+            <mat-button-toggle value="right" (change)="captureInput($event, 'right', controls2)" mat-button>Right: {{ keyName(controls2.right) }}</mat-button-toggle>    
+            <mat-button-toggle value="down" (change)="captureInput($event, 'down', controls2)" mat-button>Down: {{ keyName(controls2.down) }}</mat-button-toggle>    
+            <mat-button-toggle value="b" (change)="captureInput($event, 'b', controls2)" mat-button>B: {{ keyName(controls2.b) }}</mat-button-toggle>    
+            <mat-button-toggle value="a" (change)="captureInput($event, 'a', controls2)" mat-button>A: {{ keyName(controls2.a) }}</mat-button-toggle>    
+            <mat-button-toggle value="select" (change)="captureInput($event, 'select', controls2)" mat-button>Select: {{ keyName(controls2.select) }}</mat-button-toggle>    
+            <mat-button-toggle value="start" (change)="captureInput($event, 'start', controls2)" mat-button>Start: {{ keyName(controls2.start) }}</mat-button-toggle>    
         </mat-button-toggle-group>
     </div>
 </div>
 <button mat-button (click)="applyBindings()" >Apply</button>
-<div *ngIf="capturing">
+<p *ngIf="capturing">
     Press a key to assign to {{ captureType }}
-</div>
+</p>
