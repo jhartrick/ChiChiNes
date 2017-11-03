@@ -50,6 +50,15 @@
       <app-nametableviewer></app-nametableviewer>
       </mat-expansion-panel>
       <mat-expansion-panel *ngIf="selectedTabIndex == 2">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              PatternTable Viewer
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <chichi-patternviewer></chichi-patternviewer>
+      </mat-expansion-panel>
+      
+      <mat-expansion-panel *ngIf="selectedTabIndex == 2">
         <mat-expansion-panel-header>
           <mat-panel-title>
             Sprite Viewer

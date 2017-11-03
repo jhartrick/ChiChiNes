@@ -20,6 +20,7 @@ export class ControlDialogComponent {
     currCapture: KeyBindings;
 
     origControls: KeyBindings;
+    origControls2: KeyBindings;
     capturing = false;
     captureType = '';
     sub: Subscription;
@@ -32,7 +33,10 @@ export class ControlDialogComponent {
     ) {
         this.wishbone = data.wishbone;
         this.origControls = Object.assign({}, this.wishbone.PadOne.bindings);
+        this.origControls2 = Object.assign({}, this.wishbone.PadTwo.bindings);
         this.controls = Object.assign({}, this.wishbone.PadOne.bindings);
+        this.controls2 = Object.assign({}, this.wishbone.PadTwo.bindings);
+
         this.sub = this.keydownEvent.subscribe((event) => { this.handleKeyDownEvent(event); });
     }
 
@@ -57,6 +61,7 @@ export class ControlDialogComponent {
 
     applyBindings() {
         this.wishbone.PadOne.attach(this.controls);
+        this.wishbone.PadTwo.attach(this.controls2);
         this.sub.unsubscribe();
 
         this.dialogRef.close();
@@ -65,6 +70,7 @@ export class ControlDialogComponent {
 
     onNoClick(): void {
         this.wishbone.PadOne.attach(this.origControls);
+        this.wishbone.PadTwo.attach(this.origControls2);
         this.sub.unsubscribe();
         this.dialogRef.close();
         this.capturing = false;

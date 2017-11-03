@@ -22,6 +22,7 @@ import { ControlDialogComponent } from './chichines.controlconfig/chichines.cont
 import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/chichi.audiosettings';
 import { GameGenieComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie';
 import { GameGenieDialogComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie.dialog';
+import { PatternViewerComponent } from './debugoutput/pattern.viewer/patternviewer.component';
 
 @NgModule({
   declarations: [
@@ -42,7 +43,8 @@ import { GameGenieDialogComponent } from './controlpanel/chichi.gamegenie/chichi
       ControlDialogComponent,
       AudioSettingsComponent,
       GameGenieComponent,
-      GameGenieDialogComponent
+      GameGenieDialogComponent,
+      PatternViewerComponent
 
   ],
   entryComponents: [

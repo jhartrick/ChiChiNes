@@ -1,6 +1,6 @@
 import { NgZone } from '@angular/core';
 
-import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart,  ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU, GameGenieCode, ChiChiCheats  } from 'chichi';
+import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart, ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU, GameGenieCode, ChiChiCheats  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
@@ -27,11 +27,35 @@ export class KeyBindings {
     start = 83;
 }
 
-export class WishBoneControlPad {
+class WishboneKeyHandler {
     kuSub: Subscription;
     kdSub: Subscription;
     keydownEvent: Observable<any> = Observable.fromEvent(document, 'keydown');
     keyupEvent: Observable<any> = Observable.fromEvent(document, 'keyup');
+
+    constructor(private pads: WishBoneControlPad[]) {
+        const zone = new NgZone({enableLongStackTrace: false});
+        zone.runOutsideAngular(() => {
+            if (this.kdSub) {
+                this.kdSub.unsubscribe();
+                this.kuSub.unsubscribe();
+            }
+            this.kdSub = this.keydownEvent.subscribe((event) => {
+                for (let i = 0; i < this.pads.length; ++i) {
+                    this.pads[i].handleKeyDownEvent(event);
+                }
+            });
+            this.kuSub = this.keyupEvent.subscribe((event) => {
+                for (let i = 0; i < this.pads.length; ++i) {
+                    this.pads[i].handleKeyUpEvent(event);
+                }
+            });
+        });
+
+    }
+}
+
+export class WishBoneControlPad {
     gamepad: Gamepad;
 
     gamepadConnected: Observable<any> = Observable.fromEvent(window, 'gamepadconnected');
@@ -46,37 +70,26 @@ export class WishBoneControlPad {
         }
     }
 
-    constructor(private machine: WishboneMachine) {
+    constructor(private machine: WishboneMachine, private controllerId: string) {
+        const ctrl = localStorage.getItem(this.controllerId + 'KeyBindings');
+        if (ctrl) {
+            this.bindings = JSON.parse(ctrl);
+        }
 
-        this.attach();
+        this.attach(this.bindings);
         this.gamepadConnected.subscribe((e) => {
             console.log('Gamepad connected at index %d: %s. %d buttons, %d axes.',
             e.gamepad.index, e.gamepad.id,
             e.gamepad.buttons.length, e.gamepad.axes.length);
         });
+
     }
 
     attach(bindings?: KeyBindings) {
-        const zone = new NgZone({enableLongStackTrace: false});
-        zone.runOutsideAngular(() => {
-            if (this.kdSub) {
-                this.kdSub.unsubscribe();
-                this.kuSub.unsubscribe();
-            }
-            if (bindings) {
-                this.bindings = Object.assign({}, bindings);
-            }
-            this.kdSub = this.keydownEvent.subscribe((event) => {
-                zone.runOutsideAngular(() => {
-                    this.handleKeyDownEvent(event);
-                });
-            });
-            this.kuSub = this.keyupEvent.subscribe((event) => {
-                zone.runOutsideAngular(() => {
-                    this.handleKeyUpEvent(event);
-                });
-            });
-        });
+        if (bindings) {
+            this.bindings = Object.assign({}, bindings);
+            localStorage.setItem(this.controllerId + 'KeyBindings', JSON.stringify(this.bindings));
+        }
     }
 
     bindings: KeyBindings = new KeyBindings();
@@ -157,6 +170,7 @@ export class WishbonePPU extends ChiChiPPU {
 }
 
 export class WishboneMachine  {
+    keyHandler: WishboneKeyHandler;
     ppuStatus: PpuStatus = new PpuStatus();
     cpuStatus: CpuStatus = new CpuStatus();
     fps = 0;
@@ -176,14 +190,16 @@ export class WishboneMachine  {
         this.WaveForms = new WavSharer();
         this.SoundBopper = new WishBopper(this.WaveForms, this);
         this.SoundBopper.RebuildSound();
-        
+
         this.ppu = new WishbonePPU();
         this.Cpu = new WishboneCPPU(this.SoundBopper, this.ppu);
         this.ppu.cpu = this.Cpu;
         this.Cart = new WishboneCart();
-        this.PadOne = new WishBoneControlPad(this);
-        this.PadTwo = new WishBoneControlPad(this);
-        this.PadTwo.bindings = new KeyBindings();
+
+        this.PadOne = new WishBoneControlPad(this, 'padOne');
+        this.PadTwo = new WishBoneControlPad(this, 'padTwo');
+
+        this.keyHandler = new WishboneKeyHandler([this.PadOne, this.PadTwo]);
 
         const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../../assets/emulator.worker.bootstrap.js');
 
