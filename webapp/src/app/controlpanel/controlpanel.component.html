@@ -1,53 +1,63 @@
-﻿  <mat-expansion-panel>
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        System
-      </mat-panel-title>
-    </mat-expansion-panel-header>
+﻿<mat-expansion-panel>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      System
+    </mat-panel-title>
+  </mat-expansion-panel-header>
 
-    <div class="">
-      <mat-button-toggle (change)="powertoggle()" >
-        {{ powerstate }}
-      </mat-button-toggle>
+  <div class="">
+    <mat-button-toggle (change)="powertoggle()" >
+      {{ powerstate }}
+    </mat-button-toggle>
 
-      <button mat-button (click)="wishbone.Reset()">Reset</button>
+    <button mat-button (click)="wishbone.Reset()">Reset</button>
+  </div>
+  <div class="fileLoader">
+    <input type="file" id="input-file-id" class="ng-hide" style="display:none" (change)="handleFile($event)">
+    <div class="loader-button mat-button-toggle mat-button-toggle-checked mat-button-toggle-standalone">
+      <label for="input-file-id" class="mat-button-toggle-label">
+        <div class="mat-button-toggle-label-content">
+          Choose File
+        </div></label>
+      <div class="mat-button-toggle-focus-overlay"></div>
     </div>
-    <div class="fileLoader">
-      <input type="file" id="input-file-id" class="ng-hide" style="display:none" (change)="handleFile($event)">
-      <div class="loader-button mat-button-toggle mat-button-toggle-checked mat-button-toggle-standalone">
-        <label for="input-file-id" class="mat-button-toggle-label">
-          <div class="mat-button-toggle-label-content">
-            Choose File
-          </div></label>
-        <div class="mat-button-toggle-focus-overlay"></div>
-      </div>
-    </div>
-    <div *ngIf="wishbone.Cart.MapperID > -1" >
-      <p>Loaded: {{ wishbone.Cart.CartName }}</p>
-       <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
-        <p>Mapper: {{ wishbone.Cart.MapperName }} ({{ wishbone.Cart.MapperID }})  </p>
-        <p>CRC: {{ wishbone.Cart.ROMHashFunction }} </p>
-        <p>Prg Roms: {{ wishbone.Cart.NumberOfPrgRoms }}</p>
-        <p>Chr Roms: {{ wishbone.Cart.NumberOfChrRoms }}</p>
-    </div>
-    <div>
-      FPS: {{ wishbone.fps }}
-    </div>
+  </div>
+  <div *ngIf="wishbone.Cart.MapperID > -1" >
+    <p>Loaded: {{ wishbone.Cart.CartName }}</p>
+      <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
+      <p>Mapper: {{ wishbone.Cart.MapperName }} ({{ wishbone.Cart.MapperID }})  </p>
+      <p>CRC: {{ wishbone.Cart.ROMHashFunction }} </p>
+      <p>Prg Roms: {{ wishbone.Cart.NumberOfPrgRoms }}</p>
+      <p>Chr Roms: {{ wishbone.Cart.NumberOfChrRoms }}</p>
+  </div>
+  <div>
+    FPS: {{ wishbone.fps }}
+  </div>
 
-  </mat-expansion-panel>
-  
-<chichines-controlconfig></chichines-controlconfig>
+</mat-expansion-panel>
+
 <mat-expansion-panel>
   <mat-expansion-panel-header>
     <mat-panel-title>
       Audio Settings
     </mat-panel-title>
   </mat-expansion-panel-header>
-    <chichi-audiosettings></chichi-audiosettings>
-  </mat-expansion-panel>
   <mat-button-toggle (change)="wishbone.EnableSound = !wishbone.EnableSound" >
     {{ wishbone.EnableSound ? 'sound on' : 'sound off' }}
   </mat-button-toggle>
-  <button mat-button (click)="showDebugger()">Open Debugger</button>
  
-  <chichi-gamegenie></chichi-gamegenie>
+    <chichi-audiosettings></chichi-audiosettings>
+  </mat-expansion-panel>
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Extra
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <chichines-controlconfig></chichines-controlconfig>
+    <button mat-button (click)="showDebugger()">Open Debugger</button>  
+    <chichi-gamegenie></chichi-gamegenie>
+  </mat-expansion-panel>
+  
+ 
+  

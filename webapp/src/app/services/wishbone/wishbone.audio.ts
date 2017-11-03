@@ -46,7 +46,7 @@ class ChiChiThreeJSAudio
 	private wishbone: WishboneMachine;
 
 	bufferBlockSize: number = 2048;
-	bufferBlockCountBits: number = 	4;
+	bufferBlockCountBits: number = 	2;
 	bufferSize: number = this.bufferBlockSize << this.bufferBlockCountBits;
 
 	nesBufferWritePos: number = 0;
