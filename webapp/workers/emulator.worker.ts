@@ -45,6 +45,10 @@ export class tendoWrapper {
 
     createMachine() {
           this.machine = new ChiChiMachine();
+          this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer;
+          this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer;
+          this.machine.SoundBopper.audioSettings = this.buffers.audioSettings;
+
           this.machine.Drawscreen = () => {
               // flush audio
               // globals.postMessage({ frame: true, fps: framesPerSecond });
@@ -265,10 +269,10 @@ export class tendoWrapper {
     }
 
     reset() {
-        setTimeout(()=>{},10);
         const machine = this.machine;
-        machine.Cpu.Debugging = this.Debugging;
+        //setTimeout(()=>{
         machine.Reset();
+        //},16);
         this.runStatus = this.machine.RunState;
     }
 
@@ -280,30 +284,28 @@ export class tendoWrapper {
         this.runStatus = this.machine.RunState;
     }
 
+    buffers: any = {};
+
     handleMessage(event: MessageEvent) {
         let machine = this.machine;
 
         switch (event.data.command) {
             case 'create':
+            this.buffers = event.data;
                 this.createMachine();
-                this.machine.Cpu.ppu.byteOutBuffer = event.data.vbuffer;
-                this.machine.SoundBopper.writer.SharedBuffer = this.sharedAudioBuffer = event.data.abuffer;
-                this.machine.SoundBopper.audioSettings = event.data.audioSettings;
-                this.sharedAudioBufferPos = 0;
+//                this.sharedAudioBufferPos = 0;
                 this.iops = event.data.iops;
                 break;
             case 'cheats':
                 this.machine.Cpu.cheating = event.data.cheats.length > 0;
-                this.machine.Cpu.genieCodes = event.data.cheats;//: this.Cpu.genieCodes
-                
-
+                this.machine.Cpu.genieCodes = event.data.cheats;
                 break;                
             case 'loadrom':
-                
                 this.stop();
-                //this.createMachine();
+                this.machine = undefined;
+                this.createMachine();
                 this.machine.EnableSound = false;
-
+                //this.createMachine();
                 this.machine.LoadCart(event.data.rom);
                 this.updateBuffers();
                break;

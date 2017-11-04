@@ -31,6 +31,10 @@ export class WishboneCart {
         return this.realCart ? this.realCart.MapperName : '';
     }
 
+    get submapperId(): number {
+        return this.realCart.submapperId > 0 ? this.realCart.submapperId : 0;
+    }
+
 
     BankSwitchesChanged: boolean;
     BankStartCache: any;

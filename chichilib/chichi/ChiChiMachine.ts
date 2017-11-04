@@ -47,10 +47,9 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
         }
 
         set EnableSound(value: boolean) {
-            this.SoundBopper.Muted = !value;
             this._enableSound = value;
             if (this._enableSound) {
-                this.SoundBopper.RebuildSound();
+                 this.SoundBopper.RebuildSound();
             }
         }
 
@@ -73,12 +72,12 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
         Reset(): void {
             if (this.Cpu  && this.Cart && this.Cart.supported) {
                 // ForceStop();
-                this.SoundBopper.RebuildSound();
-                this.ppu.Initialize();
-                this.Cart.InitializeCart();
+                //this.ppu.Initialize();
+                //this.Cart.InitializeCart();
                 this.Cpu.ResetCPU();
+                this.SoundBopper.RebuildSound();
                 //ClearGenieCodes();
-                this.Cpu.PowerOn();
+                //this.Cpu.PowerOn();
                 this.RunState = RunningStatuses.Running;
             }
         }
@@ -90,7 +89,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                 // if (this.SRAMReader !=  null && this.Cart.UsesSRAM) {
                 //     this.Cart.SRAM = this.SRAMReader(this.Cart.ChiChiNES$INESCart$CheckSum);
                 // }
-                this.Cpu.ResetCPU();
+                //this.Cpu.ResetCPU();
                 //ClearGenieCodes();
                 this.Cpu.PowerOn();
                 this.SoundBopper.RebuildSound();
@@ -367,8 +366,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
         public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
 
         constructor(bopper: ChiChiBopper, ppu: ChiChiPPU) {
-            //this.$initialize();
-            // BuildOpArray();
+
             this.SoundBopper = bopper;
 
             bopper.NMIHandler = this.IRQUpdater;
@@ -381,8 +379,6 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
             for (let i = 0; i < this._instructionHistory.length; ++i) {
                 this._instructionHistory[i] = new ChiChiInstruction();
             }
-            //this.vBuffer = System.Array.init(61440, 0, System.Byte);
-            //ChiChiNES.CPU2A03.GetPalRGBA();
 
         }
 
@@ -1299,20 +1295,20 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
         GetByte(address: number): number {
             var result = 0;
             // check high byte, find appropriate handler
-            switch (address & 61440) {
+            switch (address & 0xF000) {
                 case 0:
-                case 4096:
+                case 0x1000:
                     if (address < 2048) {
                         result = this.Rams[address];
                     } else {
                         result = address >> 8;
                     }
                     break;
-                case 8192:
-                case 12288:
+                case 0x2000:
+                case 0x3000:
                     result = this.ppu.GetByte(this.clock, address);
                     break;
-                case 16384:
+                case 0x4000:
                     switch (address) {
                         case 16406:
                             result = this._padOne.GetByte(this.clock, address);
@@ -1324,7 +1320,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                             result = this.SoundBopper.GetByte(this.clock, address);
                             break;
                         default:
-                            // return open bus?
+                            // result = this.Cart.GetByte(this.clock, address);
                             result = address >> 8;
                             break;
                     }

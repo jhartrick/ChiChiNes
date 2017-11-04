@@ -4,14 +4,20 @@
 export class WavSharer  {
     readonly NES_BYTES_WRITTEN = 0;
     readonly WAVSHARER_BLOCKTHREAD = 1;
-    controlBuffer = new Int32Array(<any>new SharedArrayBuffer(2 * Int32Array.BYTES_PER_ELEMENT));
+    readonly WAVSHARER_BUFFERPOS = 2;
+    controlBuffer = new Int32Array(<any>new SharedArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
     sharedAudioBufferPos: number = 0;
+
+    get bufferPosition(): number {
+        return <any>Atomics.load(this.controlBuffer, this.WAVSHARER_BUFFERPOS); 
+    }
+
     bufferWasRead: boolean;
     static sample_size = 1;
 
     SharedBuffer: Float32Array;
     SharedBufferLength: number = 8192;
-    chunkSize: number = 2048;
+    chunkSize: number = 1024;
 
     constructor() {
         this.SharedBuffer = new Float32Array(this.SharedBufferLength);
@@ -33,7 +39,9 @@ export class WavSharer  {
 
         while (this.audioBytesWritten >= this.chunkSize)
         {
+            <any>Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
             <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
+            //this.sharedAudioBufferPos = <any>Atomics.load(this.controlBuffer, this.WAVSHARER_BUFFERPOS);
         }
     }
 
@@ -1307,7 +1315,7 @@ export class ChiChiBopper {
         this.RebuildSound();
     }
 
-    Muted: boolean;
+    //Muted: boolean;
     InterruptRaised: boolean;
     get EnableSquare0(): boolean {
         return this.square0.Gain > 0;

@@ -57,6 +57,11 @@ class WishboneKeyHandler {
 
 export class WishBoneControlPad {
     gamepad: Gamepad;
+    private controlByteSubject : Subject<number> = new Subject<number>();
+
+    public controlByteChange() : Observable<number> {
+        return this.controlByteSubject.asObservable();
+    }
 
     gamepadConnected: Observable<any> = Observable.fromEvent(window, 'gamepadconnected');
 
@@ -127,7 +132,8 @@ export class WishBoneControlPad {
                 break;
         }
         // debugger;
-        this.machine.nesInterop[2] = this.padOneState;
+        this.controlByteSubject.next(this.padOneState);
+        //this.machine.nesInterop[2] = this.padOneState;
         // this.nesInterop[2] = this.padOneState & 0xFF;
         // this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
     }
@@ -159,10 +165,13 @@ export class WishBoneControlPad {
                 this.padOneState &= ~4 & 0xFF;
                 break;
         }
-        this.machine.nesInterop[2] = this.padOneState;
+        this.controlByteSubject.next(this.padOneState);
+        //this.machine.nesInterop[2] = this.padOneState;
 
         // this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
     }
+
+    
 
 }
 
@@ -179,6 +188,8 @@ export class WishboneMachine  {
     private worker: Worker;
 
     readonly NES_GAME_LOOP_CONTROL = 0;
+    readonly NES_CONTROL_PAD_0 = 2;
+    readonly NES_CONTROL_PAD_1 = 4;
     readonly NES_AUDIO_AVAILABLE = 3;
 
     private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT);
@@ -195,9 +206,16 @@ export class WishboneMachine  {
         this.Cpu = new WishboneCPPU(this.SoundBopper, this.ppu);
         this.ppu.cpu = this.Cpu;
         this.Cart = new WishboneCart();
-
+        
+        
         this.PadOne = new WishBoneControlPad(this, 'padOne');
+        this.PadOne.controlByteChange().subscribe((val:number)=>{
+            this.nesInterop[this.NES_CONTROL_PAD_0] = val & 0xFF;// | (this.nesInterop[2] & 0xFF00);
+        })
         this.PadTwo = new WishBoneControlPad(this, 'padTwo');
+        this.PadTwo.controlByteChange().subscribe((val:number)=>{
+            this.nesInterop[this.NES_CONTROL_PAD_1] = (val & 0xFF);// << 8 | (this.nesInterop[2] & 0x00FF);
+        })
 
         this.keyHandler = new WishboneKeyHandler([this.PadOne, this.PadTwo]);
 
@@ -367,15 +385,6 @@ export class WishboneMachine  {
 
     SoundBopper: WishBopper;
     WaveForms: WavSharer;
-
-    get nesAudioDataAvailable(): number {
-        return <any>Atomics.load(this.nesInterop, this.NES_AUDIO_AVAILABLE);
-    }
-
-    set nesAudioDataAvailable(value: number) {
-        <any>Atomics.store(this.nesInterop, this.NES_AUDIO_AVAILABLE, value);
-        <any>Atomics.wake(this.nesInterop, this.NES_AUDIO_AVAILABLE, 321);
-    }
 
     private _soundEnabled = false;
 
