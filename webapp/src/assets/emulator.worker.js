@@ -463,7 +463,7 @@ module.exports =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ 	return __webpack_require__(__webpack_require__.s = 10);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -481,9 +481,9 @@ module.exports =
 
 
 
-var base64 = __webpack_require__(11)
-var ieee754 = __webpack_require__(12)
-var isArray = __webpack_require__(13)
+var base64 = __webpack_require__(12)
+var ieee754 = __webpack_require__(13)
+var isArray = __webpack_require__(14)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -2261,7 +2261,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11)))
 
 /***/ }),
 /* 1 */
@@ -2309,6 +2309,828 @@ exports.default = function (model, calc) {
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var NameTableMirroring;
+(function (NameTableMirroring) {
+    NameTableMirroring[NameTableMirroring["OneScreen"] = 0] = "OneScreen";
+    NameTableMirroring[NameTableMirroring["Vertical"] = 1] = "Vertical";
+    NameTableMirroring[NameTableMirroring["Horizontal"] = 2] = "Horizontal";
+    NameTableMirroring[NameTableMirroring["FourScreen"] = 3] = "FourScreen";
+})(NameTableMirroring = exports.NameTableMirroring || (exports.NameTableMirroring = {}));
+var BaseCart = /** @class */ (function () {
+    //ChrRamStart: number;
+    function BaseCart() {
+        var _this = this;
+        this.mapperName = 'base';
+        this.supported = true;
+        this.submapperId = 0;
+        this.mapsBelow6000 = false;
+        // shared components
+        this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
+        this.ppuBankStarts = new Uint32Array(new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
+        this.bankStartCache = new Uint32Array(new SharedArrayBuffer(4096 * Uint32Array.BYTES_PER_ELEMENT));
+        this.iNesHeader = new Uint8Array(16);
+        this.romControlBytes = new Uint8Array(2);
+        this.nesCart = null;
+        this.chrRom = null;
+        this.current8 = -1;
+        this.currentA = -1;
+        this.currentC = -1;
+        this.currentE = -1;
+        this.SRAMCanWrite = false;
+        this.SRAMEnabled = false;
+        this.SRAMCanSave = false;
+        this.prgRomCount = 0;
+        this.chrRomOffset = 0;
+        this.chrRamStart = 0;
+        this.chrRomCount = 0;
+        this.mapperId = 0;
+        this.bank8start = 0;
+        this.bankAstart = 0;
+        this.bankCstart = 0;
+        this.bankEstart = 0;
+        this.ROMHashFunction = null;
+        this.checkSum = null;
+        this.mirroring = -1;
+        this.updateIRQ = function () {
+            _this.NMIHandler();
+        };
+        this.bankSwitchesChanged = false;
+        this.oneScreenOffset = 0;
+        this.irqRaised = false;
+        this.DebugEvents = null;
+        //IRQAsserted: boolean;
+        //NextEventAt: number;
+        //PpuBankStarts: any;
+        //BankStartCache: any;
+        this.CurrentBank = 0;
+        //BankSwitchesChanged: boolean;
+        //OneScreenOffset: number;
+        this.UsesSRAM = false;
+        this.prgRomBank6.fill(0);
+        for (var i = 0; i < 16; i = (i + 1) | 0) {
+            this.ppuBankStarts[i] = i * 1024;
+        }
+    }
+    // compatible with .net array.copy method
+    BaseCart.arrayCopy = function (src, spos, dest, dpos, len) {
+        if (!dest) {
+            throw new Error("dest Value cannot be null");
+        }
+        if (!src) {
+            throw new Error("src Value cannot be null");
+        }
+        if (spos < 0 || dpos < 0 || len < 0) {
+            throw new Error("Number was less than the array's lower bound in the first dimension");
+        }
+        if (len > (src.length - spos) || len > (dest.length - dpos)) {
+            throw new Error("Destination array was not long enough. Check destIndex and length, and the array's lower bounds");
+        }
+        if (spos < dpos && src === dest) {
+            while (--len >= 0) {
+                dest[dpos + len] = src[spos + len];
+            }
+        }
+        else {
+            for (var i = 0; i < len; i++) {
+                dest[dpos + i] = src[spos + i];
+            }
+        }
+    };
+    Object.defineProperty(BaseCart.prototype, "NumberOfPrgRoms", {
+        // external api
+        get: function () {
+            return this.prgRomCount;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BaseCart.prototype, "NumberOfChrRoms", {
+        get: function () {
+            return this.chrRomCount;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BaseCart.prototype, "MapperID", {
+        get: function () {
+            return this.mapperId;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BaseCart.prototype, "MapperName", {
+        get: function () {
+            return this.mapperName;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BaseCart.prototype.ClearDebugEvents = function () {
+        //this.DebugEvents.clear();
+    };
+    BaseCart.prototype.LoadiNESCart = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
+        this.romControlBytes[0] = header[6];
+        this.romControlBytes[1] = header[7];
+        this.mapperId = (this.romControlBytes[0] & 240) >> 4;
+        this.mapperId = (this.mapperId + (this.romControlBytes[1] & 240)) | 0;
+        this.chrRomOffset = chrRomOffset;
+        /*
+        .NES file format
+        ---------------------------------------------------------------------------
+        0-3      String "NES^Z" used to recognize .NES files.
+        4        Number of 16kB ROM banks.
+        5        Number of 8kB VROM banks.
+        6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
+                bit 1     1 for battery-backed RAM at $6000-$7FFF
+                bit 2     1 for a 512-byte trainer at $7000-$71FF
+                bit 3     1 for a four-screen VRAM layout
+                bit 4-7   Four lower bits of ROM Mapper Type.
+        7        bit 0-3   Reserved, must be zeroes!
+                bit 4-7   Four higher bits of ROM Mapper Type.
+        8-15     Reserved, must be zeroes!
+        16-...   ROM banks, in ascending order. If a trainer i6s present, its
+                512 bytes precede the ROM bank contents.
+        ...-EOF  VROM banks, in ascending order.
+        ---------------------------------------------------------------------------
+        */
+        this.iNesHeader = new Uint8Array(header.slice(0, 16));
+        //System.Array.copy(header, 0, this.iNesHeader, 0, header.length);
+        this.prgRomCount = prgRoms;
+        this.chrRomCount = chrRoms;
+        //  this.nesCart = System.Array.init(prgRomData.length, 0, System.Byte);
+        // System.Array.copy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
+        this.nesCart = new Uint8Array(prgRomData.length);
+        BaseCart.arrayCopy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
+        if (this.chrRomCount === 0) {
+            // chrRom is going to be RAM
+            chrRomData = new Uint8Array(32768); //System.Array.init(32768, 0, System.Byte);
+            chrRomData.fill(0);
+        }
+        var chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 4096) * Uint8Array.BYTES_PER_ELEMENT);
+        this.chrRom = new Uint8Array(chrRomBuffer); //     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
+        this.chrRamStart = chrRomData.length;
+        BaseCart.arrayCopy(chrRomData, 0, this.chrRom, 0, chrRomData.length);
+        this.prgRomCount = this.iNesHeader[4];
+        this.chrRomCount = this.iNesHeader[5];
+        this.romControlBytes[0] = this.iNesHeader[6];
+        this.romControlBytes[1] = this.iNesHeader[7];
+        this.SRAMCanSave = (this.romControlBytes[0] & 2) === 2;
+        this.SRAMEnabled = true;
+        this.UsesSRAM = (this.romControlBytes[0] & 2) === 2;
+        // rom0.0=0 is horizontal mirroring, rom0.0=1 is vertical mirroring
+        // by default  have to call Mirror() at least once to set up the bank offsets
+        this.Mirror(0, 0);
+        if ((this.romControlBytes[0] & 1) === 1) {
+            this.Mirror(0, 1);
+        }
+        else {
+            this.Mirror(0, 2);
+        }
+        if ((this.romControlBytes[0] & 8) === 8) {
+            this.Mirror(0, 3);
+        }
+        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
+        this.InitializeCart();
+    };
+    BaseCart.prototype.GetByte = function (clock, address) {
+        var bank = 0;
+        switch (address & 0xE000) {
+            case 0x6000:
+                return this.prgRomBank6[address & 0x1FFF];
+            case 0x8000:
+                bank = this.bank8start;
+                break;
+            case 0xA000:
+                bank = this.bankAstart;
+                break;
+            case 0xC000:
+                bank = this.bankCstart;
+                break;
+            case 0xE000:
+                bank = this.bankEstart;
+                break;
+        }
+        return this.nesCart[bank + (address & 0x1FFF)];
+    };
+    BaseCart.prototype.SetByte = function (clock, address, data) {
+        // throw new Error('Method not implemented.');
+    };
+    BaseCart.prototype.GetPPUByte = function (clock, address) {
+        var bank = address >> 10;
+        var newAddress = this.ppuBankStarts[bank] + (address & 0x3FF);
+        //while (newAddress > chrRamStart)
+        //{
+        //    newAddress -= chrRamStart;
+        //}
+        return this.chrRom[newAddress];
+    };
+    BaseCart.prototype.SetPPUByte = function (clock, address, data) {
+        var bank = address >> 10; //, 1024)) | 0;
+        var newAddress = this.ppuBankStarts[bank] + (address & 0x3FF);
+        this.chrRom[newAddress] = data;
+    };
+    BaseCart.prototype.SetupBankStarts = function (reg8, regA, regC, regE) {
+        reg8 = this.MaskBankAddress(reg8);
+        regA = this.MaskBankAddress(regA);
+        regC = this.MaskBankAddress(regC);
+        regE = this.MaskBankAddress(regE);
+        this.current8 = reg8;
+        this.currentA = regA;
+        this.currentC = regC;
+        this.currentE = regE;
+        this.bank8start = reg8 * 8192;
+        this.bankAstart = regA * 8192;
+        this.bankCstart = regC * 8192;
+        this.bankEstart = regE * 8192;
+    };
+    BaseCart.prototype.MaskBankAddress = function (bank) {
+        if (bank >= this.prgRomCount * 2) {
+            var i = 255;
+            while ((bank & i) >= this.prgRomCount * 2) {
+                i = i >> 1;
+            }
+            return (bank & i);
+        }
+        else {
+            return bank;
+        }
+    };
+    BaseCart.prototype.WriteState = function (state) {
+        // throw new Error('Method not implemented.');
+    };
+    BaseCart.prototype.ReadState = function (state) {
+        // throw new Error('Method not implemented.');
+    };
+    BaseCart.prototype.HandleEvent = function (Clock) {
+        //  throw new Error('Method not implemented.');
+    };
+    BaseCart.prototype.ResetClock = function (Clock) {
+        // throw new Error('Method not implemented.');
+    };
+    BaseCart.prototype.ResetBankStartCache = function () {
+        // if (currentBank > 0)
+        this.CurrentBank = 0;
+        // Array.Clear(bankStartCache, 0, 16 * 256 * 256);
+        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, 0, 16);
+        // this.bankStartCache.fill(0);
+        // for (let i = 0; i < 16; ++i) {
+        //     this.bankStartCache[i] = this.ppuBankStarts[i];
+        // }
+        //Mirror(-1, this.mirroring);
+        //chrRamStart = ppuBankStarts[8];
+        //Array.Copy(ppuBankStarts, 0, bankStartCache[0], 0, 16 * 4);
+        //bankSwitchesChanged = false;
+    };
+    BaseCart.prototype.UpdateBankStartCache = function () {
+        this.CurrentBank = 0; // (this.CurrentBank + 1) | 0;
+        // for (let i = 0; i < 16; ++i) {
+        //     this.bankStartCache[(this.CurrentBank * 16) + i] = this.ppuBankStarts[i];
+        // }
+        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, this.CurrentBank * 16, 16);
+        this.Whizzler.UpdatePixelInfo();
+        return this.CurrentBank;
+    };
+    BaseCart.prototype.ActualChrRomOffset = function (address) {
+        var bank = address >> 10 | 0;
+        //int newAddress = ppuBankStarts[bank] + (address & 0x3FF);
+        var newAddress = (this.bankStartCache[(this.CurrentBank * 16) + bank] + (address & 1023));
+        return newAddress;
+    };
+    BaseCart.prototype.Mirror = function (clockNum, mirroring) {
+        //    //            A11 A10 Effect
+        //    //----------------------------------------------------------
+        //    // 0   0  All four screen buffers are mapped to the same
+        //    //        area of memory which repeats at $2000, $2400,
+        //    //        $2800, and $2C00.
+        //    // 0   x  "Upper" and "lower" screen buffers are mapped to
+        //    //        separate areas of memory at $2000, $2400 and
+        //    //        $2800, $2C00. ( horizontal mirroring)
+        //    // x   0  "Left" and "right" screen buffers are mapped to
+        //    //        separate areas of memory at $2000, $2800 and
+        //    //        $2400,$2C00.  (vertical mirroring)
+        //    // x   x  All four screen buffers are mapped to separate
+        //    //        areas of memory. In this case, the cartridge
+        //    //        must contain 2kB of additional VRAM 
+        this.mirroring = mirroring;
+        if (clockNum > -1) {
+            this.Whizzler.DrawTo(clockNum);
+        }
+        //Console.WriteLine("Mirroring set to {0}", mirroring);
+        switch (mirroring) {
+            case 0:
+                this.ppuBankStarts[8] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                this.ppuBankStarts[9] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                this.ppuBankStarts[10] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                this.ppuBankStarts[11] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                break;
+            case 1:
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[9] = (this.chrRamStart + 1024) | 0;
+                this.ppuBankStarts[10] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[11] = (this.chrRamStart + 1024) | 0;
+                break;
+            case 2:
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[9] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[10] = (this.chrRamStart + 1024) | 0;
+                this.ppuBankStarts[11] = (this.chrRamStart + 1024) | 0;
+                break;
+            case 3:
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[9] = (this.chrRamStart + 1024) | 0;
+                this.ppuBankStarts[10] = (this.chrRamStart + 2048) | 0;
+                this.ppuBankStarts[11] = (this.chrRamStart + 3072) | 0;
+                break;
+        }
+        this.UpdateBankStartCache();
+        this.Whizzler.UpdatePixelInfo();
+    };
+    // utility functions used by mappers
+    // CopyBanksXX sets up chrRom bankswitching
+    BaseCart.prototype.CopyBanks = function (clock, dest, src, numberOf8kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src << 3;
+        var oneKdest = dest << 3;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf8kBanks << 3); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    BaseCart.prototype.CopyBanks4k = function (clock, dest, src, numberOf4kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src << 2;
+        var oneKdest = dest << 2;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    BaseCart.prototype.CopyBanks2k = function (clock, dest, src, numberOf2kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src << 1;
+        var oneKdest = dest << 1;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf2kBanks << 1); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    BaseCart.prototype.CopyBanks1k = function (clock, dest, src, numberOf1kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src;
+        var oneKdest = dest;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < numberOf1kBanks; i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    BaseCart.prototype.InitializeCart = function () {
+        //throw new Error('Method not implemented.');
+    };
+    BaseCart.prototype.UpdateScanlineCounter = function () {
+        //throw new Error('Method not implemented.');
+    };
+    return BaseCart;
+}());
+exports.BaseCart = BaseCart;
+var BaseCart4k = /** @class */ (function () {
+    //ChrRamStart: number;
+    function BaseCart4k() {
+        var _this = this;
+        this.mapperName = 'base';
+        this.supported = true;
+        this.submapperId = 0;
+        this.mapsBelow6000 = false;
+        // compatible with .net array.copy method
+        // shared components
+        this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
+        this.ppuBankStarts = new Uint32Array(new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
+        this.bankStartCache = new Uint32Array(new SharedArrayBuffer(4096 * Uint32Array.BYTES_PER_ELEMENT));
+        this.iNesHeader = new Uint8Array(16);
+        this.romControlBytes = new Uint8Array(2);
+        this.nesCart = null;
+        this.chrRom = null;
+        this.current8 = -1;
+        this.current9 = -1;
+        this.currentA = -1;
+        this.currentB = -1;
+        this.currentC = -1;
+        this.currentD = -1;
+        this.currentE = -1;
+        this.currentF = -1;
+        this.SRAMCanWrite = false;
+        this.SRAMEnabled = false;
+        this.SRAMCanSave = false;
+        this.prgRomCount = 0;
+        this.chrRomOffset = 0;
+        this.chrRamStart = 0;
+        this.chrRomCount = 0;
+        this.mapperId = 0;
+        this.bank8start = 0;
+        this.bank9start = 0;
+        this.bankAstart = 0;
+        this.bankBstart = 0;
+        this.bankCstart = 0;
+        this.bankDstart = 0;
+        this.bankEstart = 0;
+        this.bankFstart = 0;
+        this.ROMHashFunction = null;
+        this.checkSum = null;
+        this.mirroring = -1;
+        this.updateIRQ = function () {
+            _this.NMIHandler();
+        };
+        this.bankSwitchesChanged = false;
+        this.oneScreenOffset = 0;
+        this.irqRaised = false;
+        this.DebugEvents = null;
+        //IRQAsserted: boolean;
+        //NextEventAt: number;
+        //PpuBankStarts: any;
+        //BankStartCache: any;
+        this.CurrentBank = 0;
+        //BankSwitchesChanged: boolean;
+        //OneScreenOffset: number;
+        this.UsesSRAM = false;
+        this.prgRomBank6.fill(0);
+        for (var i = 0; i < 16; i = (i + 1) | 0) {
+            this.ppuBankStarts[i] = i * 1024;
+        }
+    }
+    Object.defineProperty(BaseCart4k.prototype, "NumberOfPrgRoms", {
+        // external api
+        get: function () {
+            return this.prgRomCount;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BaseCart4k.prototype, "NumberOfChrRoms", {
+        get: function () {
+            return this.chrRomCount;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BaseCart4k.prototype, "MapperID", {
+        get: function () {
+            return this.mapperId;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BaseCart4k.prototype, "MapperName", {
+        get: function () {
+            return this.mapperName;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BaseCart4k.prototype.ClearDebugEvents = function () {
+        //this.DebugEvents.clear();
+    };
+    BaseCart4k.prototype.LoadiNESCart = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
+        this.romControlBytes[0] = header[6];
+        this.romControlBytes[1] = header[7];
+        this.mapperId = (this.romControlBytes[0] & 240) >> 4;
+        this.mapperId = (this.mapperId + (this.romControlBytes[1] & 240)) | 0;
+        this.chrRomOffset = chrRomOffset;
+        /*
+        .NES file format
+        ---------------------------------------------------------------------------
+        0-3      String "NES^Z" used to recognize .NES files.
+        4        Number of 16kB ROM banks.
+        5        Number of 8kB VROM banks.
+        6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
+                bit 1     1 for battery-backed RAM at $6000-$7FFF
+                bit 2     1 for a 512-byte trainer at $7000-$71FF
+                bit 3     1 for a four-screen VRAM layout
+                bit 4-7   Four lower bits of ROM Mapper Type.
+        7        bit 0-3   Reserved, must be zeroes!
+                bit 4-7   Four higher bits of ROM Mapper Type.
+        8-15     Reserved, must be zeroes!
+        16-...   ROM banks, in ascending order. If a trainer i6s present, its
+                512 bytes precede the ROM bank contents.
+        ...-EOF  VROM banks, in ascending order.
+        ---------------------------------------------------------------------------
+        */
+        this.iNesHeader = new Uint8Array(header.slice(0, 16));
+        //System.Array.copy(header, 0, this.iNesHeader, 0, header.length);
+        this.prgRomCount = prgRoms;
+        this.chrRomCount = chrRoms;
+        //  this.nesCart = System.Array.init(prgRomData.length, 0, System.Byte);
+        // System.Array.copy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
+        this.nesCart = new Uint8Array(prgRomData.length);
+        BaseCart.arrayCopy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
+        if (this.chrRomCount === 0) {
+            // chrRom is going to be RAM
+            chrRomData = new Uint8Array(32768); //System.Array.init(32768, 0, System.Byte);
+            chrRomData.fill(0);
+        }
+        var chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 4096) * Uint8Array.BYTES_PER_ELEMENT);
+        this.chrRom = new Uint8Array(chrRomBuffer); //     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
+        this.chrRamStart = chrRomData.length;
+        BaseCart.arrayCopy(chrRomData, 0, this.chrRom, 0, chrRomData.length);
+        this.prgRomCount = this.iNesHeader[4];
+        this.chrRomCount = this.iNesHeader[5];
+        this.romControlBytes[0] = this.iNesHeader[6];
+        this.romControlBytes[1] = this.iNesHeader[7];
+        this.SRAMCanSave = (this.romControlBytes[0] & 2) === 2;
+        this.SRAMEnabled = true;
+        this.UsesSRAM = (this.romControlBytes[0] & 2) === 2;
+        // rom0.0=0 is horizontal mirroring, rom0.0=1 is vertical mirroring
+        // by default  have to call Mirror() at least once to set up the bank offsets
+        this.Mirror(0, 0);
+        if ((this.romControlBytes[0] & 1) === 1) {
+            this.Mirror(0, 1);
+        }
+        else {
+            this.Mirror(0, 2);
+        }
+        if ((this.romControlBytes[0] & 8) === 8) {
+            this.Mirror(0, 3);
+        }
+        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
+        this.InitializeCart();
+    };
+    BaseCart4k.prototype.GetByte = function (clock, address) {
+        var bank = 0;
+        switch (address & 0xF000) {
+            case 0x6000:
+            case 0x7000:
+                return this.prgRomBank6[address & 0x1FFF];
+            case 0x8000:
+                bank = this.bank8start;
+                break;
+            case 0x9000:
+                bank = this.bank9start;
+                break;
+            case 0xA000:
+                bank = this.bankAstart;
+                break;
+            case 0xB000:
+                bank = this.bankBstart;
+                break;
+            case 0xC000:
+                bank = this.bankCstart;
+                break;
+            case 0xD000:
+                bank = this.bankDstart;
+                break;
+            case 0xE000:
+                bank = this.bankEstart;
+                break;
+            case 0xF000:
+                bank = this.bankFstart;
+                break;
+        }
+        return this.nesCart[bank + (address & 0xFFF)];
+    };
+    BaseCart4k.prototype.SetByte = function (clock, address, data) {
+        // throw new Error('Method not implemented.');
+    };
+    BaseCart4k.prototype.GetPPUByte = function (clock, address) {
+        var bank = address >> 10;
+        var newAddress = this.ppuBankStarts[bank] + (address & 0x3FF);
+        return this.chrRom[newAddress];
+    };
+    BaseCart4k.prototype.SetPPUByte = function (clock, address, data) {
+        var bank = address >> 10; //, 1024)) | 0;
+        var newAddress = this.ppuBankStarts[bank] + (address & 0x3FF);
+        this.chrRom[newAddress] = data;
+    };
+    BaseCart4k.prototype.SetupBankStarts = function (reg8, reg9, regA, regB, regC, regD, regE, regF) {
+        this.current8 = reg8 = this.maskBankAddress(reg8);
+        this.current9 = reg9 = this.maskBankAddress(reg9);
+        this.currentA = regA = this.maskBankAddress(regA);
+        this.currentB = regB = this.maskBankAddress(regB);
+        this.currentC = regC = this.maskBankAddress(regC);
+        this.currentD = regD = this.maskBankAddress(regD);
+        this.currentE = regE = this.maskBankAddress(regE);
+        this.currentF = regF = this.maskBankAddress(regF);
+        this.bank8start = reg8 * 4096;
+        this.bank9start = reg9 * 4096;
+        this.bankAstart = regA * 4096;
+        this.bankBstart = regB * 4096;
+        this.bankCstart = regC * 4096;
+        this.bankDstart = regD * 4096;
+        this.bankEstart = regE * 4096;
+        this.bankFstart = regF * 4096;
+    };
+    BaseCart4k.prototype.maskBankAddress = function (bank) {
+        if (bank >= this.prgRomCount * 4) {
+            var i = 0xFFFF;
+            while ((bank & i) >= this.prgRomCount * 4) {
+                i = i >> 1;
+            }
+            return (bank & i);
+        }
+        else {
+            return bank;
+        }
+    };
+    BaseCart4k.prototype.WriteState = function (state) {
+        // throw new Error('Method not implemented.');
+    };
+    BaseCart4k.prototype.ReadState = function (state) {
+        // throw new Error('Method not implemented.');
+    };
+    BaseCart4k.prototype.HandleEvent = function (Clock) {
+        //  throw new Error('Method not implemented.');
+    };
+    BaseCart4k.prototype.ResetClock = function (Clock) {
+        // throw new Error('Method not implemented.');
+    };
+    BaseCart4k.prototype.ResetBankStartCache = function () {
+        // if (currentBank > 0)
+        this.CurrentBank = 0;
+        // Array.Clear(bankStartCache, 0, 16 * 256 * 256);
+        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, 0, 16);
+        this.bankStartCache.fill(0);
+        for (var i = 0; i < 16; ++i) {
+            this.bankStartCache[i] = this.ppuBankStarts[i];
+        }
+        //Mirror(-1, this.mirroring);
+        //chrRamStart = ppuBankStarts[8];
+        //Array.Copy(ppuBankStarts, 0, bankStartCache[0], 0, 16 * 4);
+        //bankSwitchesChanged = false;
+    };
+    BaseCart4k.prototype.UpdateBankStartCache = function () {
+        this.CurrentBank = 0; // (this.CurrentBank + 1) | 0;
+        for (var i = 0; i < 16; ++i) {
+            this.bankStartCache[(this.CurrentBank * 16) + i] = this.ppuBankStarts[i];
+        }
+        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, this.CurrentBank * 16, 16);
+        this.Whizzler.UpdatePixelInfo();
+        return this.CurrentBank;
+    };
+    BaseCart4k.prototype.ActualChrRomOffset = function (address) {
+        var bank = address >> 10 | 0;
+        //int newAddress = ppuBankStarts[bank] + (address & 0x3FF);
+        var newAddress = (this.bankStartCache[(this.CurrentBank * 16) + bank] + (address & 1023));
+        return newAddress;
+    };
+    BaseCart4k.prototype.Mirror = function (clockNum, mirroring) {
+        //    //            A11 A10 Effect
+        //    //----------------------------------------------------------
+        //    // 0   0  All four screen buffers are mapped to the same
+        //    //        area of memory which repeats at $2000, $2400,
+        //    //        $2800, and $2C00.
+        //    // 0   x  "Upper" and "lower" screen buffers are mapped to
+        //    //        separate areas of memory at $2000, $2400 and
+        //    //        $2800, $2C00. ( horizontal mirroring)
+        //    // x   0  "Left" and "right" screen buffers are mapped to
+        //    //        separate areas of memory at $2000, $2800 and
+        //    //        $2400,$2C00.  (vertical mirroring)
+        //    // x   x  All four screen buffers are mapped to separate
+        //    //        areas of memory. In this case, the cartridge
+        //    //        must contain 2kB of additional VRAM 
+        this.mirroring = mirroring;
+        if (clockNum > -1) {
+            this.Whizzler.DrawTo(clockNum);
+        }
+        //Console.WriteLine("Mirroring set to {0}", mirroring);
+        switch (mirroring) {
+            case 0:
+                this.ppuBankStarts[8] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                this.ppuBankStarts[9] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                this.ppuBankStarts[10] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                this.ppuBankStarts[11] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                break;
+            case 1:
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[9] = (this.chrRamStart + 1024) | 0;
+                this.ppuBankStarts[10] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[11] = (this.chrRamStart + 1024) | 0;
+                break;
+            case 2:
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[9] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[10] = (this.chrRamStart + 1024) | 0;
+                this.ppuBankStarts[11] = (this.chrRamStart + 1024) | 0;
+                break;
+            case 3:
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
+                this.ppuBankStarts[9] = (this.chrRamStart + 1024) | 0;
+                this.ppuBankStarts[10] = (this.chrRamStart + 2048) | 0;
+                this.ppuBankStarts[11] = (this.chrRamStart + 3072) | 0;
+                break;
+        }
+        this.UpdateBankStartCache();
+        this.Whizzler.UpdatePixelInfo();
+    };
+    // utility functions used by mappers
+    // CopyBanksXX sets up chrRom bankswitching
+    BaseCart4k.prototype.CopyBanks = function (clock, dest, src, numberOf8kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src << 3;
+        var oneKdest = dest << 3;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf8kBanks << 3); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    BaseCart4k.prototype.CopyBanks4k = function (clock, dest, src, numberOf4kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src << 2;
+        var oneKdest = dest << 2;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    BaseCart4k.prototype.CopyBanks2k = function (clock, dest, src, numberOf2kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src << 1;
+        var oneKdest = dest << 1;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf2kBanks << 1); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    BaseCart4k.prototype.CopyBanks1k = function (clock, dest, src, numberOf1kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src;
+        var oneKdest = dest;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < numberOf1kBanks; i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    BaseCart4k.prototype.InitializeCart = function () {
+        //throw new Error('Method not implemented.');
+    };
+    BaseCart4k.prototype.UpdateScanlineCounter = function () {
+        //throw new Error('Method not implemented.');
+    };
+    return BaseCart4k;
+}());
+exports.BaseCart4k = BaseCart4k;
+var UnsupportedCart = /** @class */ (function (_super) {
+    __extends(UnsupportedCart, _super);
+    function UnsupportedCart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.supported = false;
+        return _this;
+    }
+    UnsupportedCart.prototype.InitializeCart = function () {
+        this.mapperName = 'unsupported';
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.Mirror(0, 0);
+    };
+    return UnsupportedCart;
+}(BaseCart));
+exports.UnsupportedCart = UnsupportedCart;
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2433,13 +3255,13 @@ exports.AudioSettings = AudioSettings;
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiTypes_1 = __webpack_require__(3);
+var ChiChiTypes_1 = __webpack_require__(4);
 var ChiChiMemMap = /** @class */ (function () {
     function ChiChiMemMap() {
     }
@@ -3218,17 +4040,17 @@ exports.ChiChiPPU = ChiChiPPU;
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiCarts_1 = __webpack_require__(6);
-var ChiChiAudio_1 = __webpack_require__(7);
-var ChiChiTypes_1 = __webpack_require__(3);
-var ChiChiControl_1 = __webpack_require__(8);
-var ChiChiPPU_1 = __webpack_require__(4);
+var ChiChiCarts_1 = __webpack_require__(7);
+var ChiChiAudio_1 = __webpack_require__(8);
+var ChiChiTypes_1 = __webpack_require__(4);
+var ChiChiControl_1 = __webpack_require__(9);
+var ChiChiPPU_1 = __webpack_require__(5);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -3650,7 +4472,7 @@ var ChiChiCPPU = /** @class */ (function () {
         }
         //FetchNextInstruction();
         this._currentInstruction_Address = this._programCounter;
-        this._currentInstruction_OpCode = this.GetByte(this._programCounter++);
+        this._currentInstruction_OpCode = this.GetByte((this._programCounter++) & 0xFFFF);
         this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
         //FetchInstructionParameters();
         switch (this._currentInstruction_AddressingMode) {
@@ -3659,8 +4481,8 @@ var ChiChiCPPU = /** @class */ (function () {
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.AbsoluteY:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Indirect:
                 // case AddressingModes.IndirectAbsoluteX:
-                this._currentInstruction_Parameters0 = this.GetByte(this._programCounter++);
-                this._currentInstruction_Parameters1 = this.GetByte(this._programCounter++);
+                this._currentInstruction_Parameters0 = this.GetByte((this._programCounter++) & 0xFFFF);
+                this._currentInstruction_Parameters1 = this.GetByte((this._programCounter++) & 0xFFFF);
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.ZeroPage:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.ZeroPageX:
@@ -3670,7 +4492,7 @@ var ChiChiCPPU = /** @class */ (function () {
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.IndirectIndexed:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.IndirectZeroPage:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Immediate:
-                this._currentInstruction_Parameters0 = this.GetByte(this._programCounter++);
+                this._currentInstruction_Parameters0 = this.GetByte((this._programCounter++) & 0xFFFF);
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Accumulator:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Implicit:
@@ -4432,9 +5254,11 @@ var ChiChiCPPU = /** @class */ (function () {
         if ((addr & 128) === 128) {
             addr = addr - 256;
             this._programCounter += addr;
+            this._programCounter &= 0xFFFF;
         }
         else {
             this._programCounter += addr;
+            this._programCounter &= 0xFFFF;
         }
         if ((this._programCounter & 255) < addr) {
             this._currentInstruction_ExtraTiming = 2;
@@ -4495,8 +5319,10 @@ var ChiChiCPPU = /** @class */ (function () {
                         result = this.SoundBopper.GetByte(this.clock, address);
                         break;
                     default:
-                        // result = this.Cart.GetByte(this.clock, address);
-                        result = address >> 8;
+                        if (this.Cart.mapsBelow6000)
+                            result = this.Cart.GetByte(this.clock, address);
+                        else
+                            result = address >> 8;
                         break;
                 }
                 break;
@@ -4665,6 +5491,9 @@ var ChiChiCPPU = /** @class */ (function () {
                         this._padOne.SetByte(this.clock, address, data & 1);
                         this._padTwo.SetByte(this.clock, address, data & 1);
                         break;
+                    default:
+                        if (this.Cart.mapsBelow6000)
+                            this.Cart.SetByte(this.clock, address, data);
                 }
                 break;
         }
@@ -4730,28 +5559,74 @@ exports.ChiChiCPPU = ChiChiCPPU;
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(Buffer) {
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-var crc = __webpack_require__(14);
+var BaseCart_1 = __webpack_require__(3);
+var Discrete = __webpack_require__(15);
+var Multi = __webpack_require__(16);
+var MMC1 = __webpack_require__(17);
+var MMC2 = __webpack_require__(18);
+var MMC3 = __webpack_require__(19);
+var M068 = __webpack_require__(20);
+var Nsf = __webpack_require__(21);
+var crc = __webpack_require__(22);
+var VS = __webpack_require__(34);
+var MapperFactory = /** @class */ (function () {
+    function MapperFactory() {
+        this[0] = Discrete.NesCart;
+        this[1] = MMC1.MMC1Cart;
+        this[2] = Discrete.UxROMCart;
+        this[3] = Discrete.CNROMCart;
+        this[4] = MMC3.MMC3Cart;
+        this[7] = Discrete.AxROMCart;
+        this[9] = MMC2.MMC2Cart;
+        this[10] = MMC2.MMC4Cart;
+        this[11] = Discrete.ColorDreams;
+        this[13] = Discrete.Mapper013Cart;
+        this[30] = Discrete.Mapper030Cart;
+        this[31] = Nsf.Mapper031Cart;
+        this[34] = Discrete.BNROMCart;
+        this[38] = Discrete.BitCorp038Cart;
+        this[51] = Multi.Mapper051Cart;
+        this[58] = Multi.Mapper058Cart;
+        this[66] = Discrete.MHROMCart;
+        this[68] = M068.Mapper068Cart;
+        this[70] = Discrete.Mapper070Cart;
+        this[71] = Discrete.Mapper071Cart;
+        this[77] = Discrete.Mapper077Cart;
+        this[81] = Discrete.Mapper081Cart;
+        this[87] = Discrete.Mapper087Cart;
+        this[93] = Discrete.Mapper093Cart;
+        this[97] = Discrete.Irem097Cart;
+        this[99] = VS.VSCart;
+        this[140] = Discrete.JF1xCart;
+        this[145] = Discrete.Mapper145Cart;
+        this[152] = Discrete.Mapper152Cart;
+        this[180] = Discrete.NesCart;
+        this[190] = Discrete.Mapper190Cart;
+        this[202] = Multi.Mapper202Cart;
+        this[212] = Multi.Mapper212Cart;
+    }
+    MapperFactory.prototype.createCart = function (mapper) {
+        if (this[mapper]) {
+            return new this[mapper]();
+        }
+        else {
+            return new BaseCart_1.UnsupportedCart();
+        }
+    };
+    return MapperFactory;
+}());
 var iNESFileHandler = /** @class */ (function () {
     function iNESFileHandler() {
     }
     iNESFileHandler.LoadROM = function (cpu, thefile) {
         var _cart = null;
+        var mf = new MapperFactory();
         var iNesHeader = thefile.slice(0, 16);
         var bytesRead = 16;
         /*
@@ -4806,88 +5681,16 @@ var iNESFileHandler = /** @class */ (function () {
         // var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
         // chrRom.fill(0);
         var chrOffset = 0;
+        // create cart
         // bytesRead = zipStream.Read(theRom, 0, theRom.Length);
-        BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
+        BaseCart_1.BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
         chrOffset = (16 + theRom.length) | 0;
         var len = chrRom.length;
         if (((chrOffset + chrRom.length) | 0) > thefile.length) {
             len = (thefile.length - chrOffset) | 0;
         }
-        BaseCart.arrayCopy(thefile, chrOffset, chrRom, 0, len);
-        // zipStream.Read(chrRom, 0, chrRom.Length);
-        switch (mapperId) {
-            case 58:
-                _cart = new Mapper058Cart();
-                break;
-            case 9:
-                _cart = new MMC2Cart();
-                break;
-            case 93:
-                _cart = new Mapper093Cart();
-                break;
-            case 77:
-                _cart = new Mapper077Cart();
-                break;
-            case 2:
-                _cart = new UxROMCart();
-                break;
-            case 71:
-                _cart = new Mapper071Cart();
-                break;
-            case 0:
-            case 180:
-                _cart = new NesCart();
-                break;
-            case 3:
-                _cart = new CNROMCart();
-                break;
-            case 87:
-                _cart = new Mapper087Cart();
-                break;
-            case 145:
-                _cart = new Mapper145Cart();
-                break;
-            case 97:
-                _cart = new Irem097Cart();
-                break;
-            case 7:
-                _cart = new AxROMCart();
-                break;
-            case 11:
-                _cart = new ColorDreams();
-                break;
-            case 66:
-                _cart = new MHROMCart();
-                break;
-            case 70:
-                _cart = new Mapper070Cart();
-                break;
-            case 152:
-                _cart = new Mapper152Cart();
-                break;
-            case 140:
-                _cart = new JF1xCart();
-                break;
-            case 38:
-                _cart = new BitCorp038Cart();
-                break;
-            case 34:
-                if (chrRomCount > 0) {
-                    _cart = new NINA001Cart();
-                }
-                else {
-                    _cart = new BNROMCart();
-                }
-                break;
-            case 1:
-                _cart = new MMC1Cart();
-                break;
-            case 4:
-                _cart = new MMC3Cart();
-                break;
-            default:
-                _cart = new UnsupportedCart();
-        }
+        BaseCart_1.BaseCart.arrayCopy(thefile, chrOffset, chrRom, 0, len);
+        _cart = mf.createCart(mapperId);
         _cart.submapperId = submapperId;
         if (_cart != null) {
             _cart.Whizzler = cpu.ppu;
@@ -4902,1582 +5705,17 @@ var iNESFileHandler = /** @class */ (function () {
     return iNESFileHandler;
 }());
 exports.iNESFileHandler = iNESFileHandler;
-var NameTableMirroring;
-(function (NameTableMirroring) {
-    NameTableMirroring[NameTableMirroring["OneScreen"] = 0] = "OneScreen";
-    NameTableMirroring[NameTableMirroring["Vertical"] = 1] = "Vertical";
-    NameTableMirroring[NameTableMirroring["Horizontal"] = 2] = "Horizontal";
-    NameTableMirroring[NameTableMirroring["FourScreen"] = 3] = "FourScreen";
-})(NameTableMirroring = exports.NameTableMirroring || (exports.NameTableMirroring = {}));
-var BaseCart = /** @class */ (function () {
-    //ChrRamStart: number;
-    function BaseCart() {
-        var _this = this;
-        this.mapperName = 'base';
-        this.supported = true;
-        this.submapperId = 0;
-        this.mapsBelow6000 = false;
-        // shared components
-        this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
-        this.ppuBankStarts = new Uint32Array(new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
-        this.bankStartCache = new Uint32Array(new SharedArrayBuffer(4096 * Uint32Array.BYTES_PER_ELEMENT));
-        this.iNesHeader = new Uint8Array(16);
-        this.romControlBytes = new Uint8Array(2);
-        this.nesCart = null;
-        this.chrRom = null;
-        this.current8 = -1;
-        this.currentA = -1;
-        this.currentC = -1;
-        this.currentE = -1;
-        this.SRAMCanWrite = false;
-        this.SRAMEnabled = false;
-        this.SRAMCanSave = false;
-        this.prgRomCount = 0;
-        this.chrRomOffset = 0;
-        this.chrRamStart = 0;
-        this.chrRomCount = 0;
-        this.mapperId = 0;
-        this.bank8start = 0;
-        this.bankAstart = 0;
-        this.bankCstart = 0;
-        this.bankEstart = 0;
-        this.ROMHashFunction = null;
-        this.checkSum = null;
-        this.mirroring = -1;
-        this.updateIRQ = function () {
-            _this.NMIHandler();
-        };
-        this.bankSwitchesChanged = false;
-        this.oneScreenOffset = 0;
-        this.irqRaised = false;
-        this.DebugEvents = null;
-        //IRQAsserted: boolean;
-        //NextEventAt: number;
-        //PpuBankStarts: any;
-        //BankStartCache: any;
-        this.CurrentBank = 0;
-        //BankSwitchesChanged: boolean;
-        //OneScreenOffset: number;
-        this.UsesSRAM = false;
-        this.prgRomBank6.fill(0);
-        for (var i = 0; i < 16; i = (i + 1) | 0) {
-            this.ppuBankStarts[i] = i * 1024;
-        }
-    }
-    // compatible with .net array.copy method
-    BaseCart.arrayCopy = function (src, spos, dest, dpos, len) {
-        if (!dest) {
-            throw new Error("dest Value cannot be null");
-        }
-        if (!src) {
-            throw new Error("src Value cannot be null");
-        }
-        if (spos < 0 || dpos < 0 || len < 0) {
-            throw new Error("Number was less than the array's lower bound in the first dimension");
-        }
-        if (len > (src.length - spos) || len > (dest.length - dpos)) {
-            throw new Error("Destination array was not long enough. Check destIndex and length, and the array's lower bounds");
-        }
-        if (spos < dpos && src === dest) {
-            while (--len >= 0) {
-                dest[dpos + len] = src[spos + len];
-            }
-        }
-        else {
-            for (var i = 0; i < len; i++) {
-                dest[dpos + i] = src[spos + i];
-            }
-        }
-    };
-    Object.defineProperty(BaseCart.prototype, "NumberOfPrgRoms", {
-        // external api
-        get: function () {
-            return this.prgRomCount;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(BaseCart.prototype, "NumberOfChrRoms", {
-        get: function () {
-            return this.chrRomCount;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(BaseCart.prototype, "MapperID", {
-        get: function () {
-            return this.mapperId;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(BaseCart.prototype, "MapperName", {
-        get: function () {
-            return this.mapperName;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    BaseCart.prototype.ClearDebugEvents = function () {
-        //this.DebugEvents.clear();
-    };
-    BaseCart.prototype.LoadiNESCart = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
-        this.romControlBytes[0] = header[6];
-        this.romControlBytes[1] = header[7];
-        this.mapperId = (this.romControlBytes[0] & 240) >> 4;
-        this.mapperId = (this.mapperId + (this.romControlBytes[1] & 240)) | 0;
-        this.chrRomOffset = chrRomOffset;
-        /*
-        .NES file format
-        ---------------------------------------------------------------------------
-        0-3      String "NES^Z" used to recognize .NES files.
-        4        Number of 16kB ROM banks.
-        5        Number of 8kB VROM banks.
-        6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
-                bit 1     1 for battery-backed RAM at $6000-$7FFF
-                bit 2     1 for a 512-byte trainer at $7000-$71FF
-                bit 3     1 for a four-screen VRAM layout
-                bit 4-7   Four lower bits of ROM Mapper Type.
-        7        bit 0-3   Reserved, must be zeroes!
-                bit 4-7   Four higher bits of ROM Mapper Type.
-        8-15     Reserved, must be zeroes!
-        16-...   ROM banks, in ascending order. If a trainer i6s present, its
-                512 bytes precede the ROM bank contents.
-        ...-EOF  VROM banks, in ascending order.
-        ---------------------------------------------------------------------------
-        */
-        this.iNesHeader = new Uint8Array(header.slice(0, 16));
-        //System.Array.copy(header, 0, this.iNesHeader, 0, header.length);
-        this.prgRomCount = prgRoms;
-        this.chrRomCount = chrRoms;
-        //  this.nesCart = System.Array.init(prgRomData.length, 0, System.Byte);
-        // System.Array.copy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
-        this.nesCart = new Uint8Array(prgRomData.length);
-        BaseCart.arrayCopy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
-        if (this.chrRomCount === 0) {
-            // chrRom is going to be RAM
-            chrRomData = new Uint8Array(32768); //System.Array.init(32768, 0, System.Byte);
-            chrRomData.fill(0);
-        }
-        var chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 4096) * Uint8Array.BYTES_PER_ELEMENT);
-        this.chrRom = new Uint8Array(chrRomBuffer); //     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
-        this.chrRamStart = chrRomData.length;
-        BaseCart.arrayCopy(chrRomData, 0, this.chrRom, 0, chrRomData.length);
-        this.prgRomCount = this.iNesHeader[4];
-        this.chrRomCount = this.iNesHeader[5];
-        this.romControlBytes[0] = this.iNesHeader[6];
-        this.romControlBytes[1] = this.iNesHeader[7];
-        this.SRAMCanSave = (this.romControlBytes[0] & 2) === 2;
-        this.SRAMEnabled = true;
-        this.UsesSRAM = (this.romControlBytes[0] & 2) === 2;
-        // rom0.0=0 is horizontal mirroring, rom0.0=1 is vertical mirroring
-        // by default  have to call Mirror() at least once to set up the bank offsets
-        this.Mirror(0, 0);
-        if ((this.romControlBytes[0] & 1) === 1) {
-            this.Mirror(0, 1);
-        }
-        else {
-            this.Mirror(0, 2);
-        }
-        if ((this.romControlBytes[0] & 8) === 8) {
-            this.Mirror(0, 3);
-        }
-        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
-        this.InitializeCart();
-    };
-    BaseCart.prototype.GetByte = function (clock, address) {
-        var bank = 0;
-        switch (address & 57344) {
-            case 24576:
-                return this.prgRomBank6[address & 8191];
-            case 32768:
-                bank = this.bank8start;
-                break;
-            case 40960:
-                bank = this.bankAstart;
-                break;
-            case 49152:
-                bank = this.bankCstart;
-                break;
-            case 57344:
-                bank = this.bankEstart;
-                break;
-        }
-        return this.nesCart[((bank + (address & 8191)) | 0)];
-    };
-    BaseCart.prototype.SetByte = function (clock, address, data) {
-        // throw new Error('Method not implemented.');
-    };
-    BaseCart.prototype.GetPPUByte = function (clock, address) {
-        var bank = address >> 10;
-        var newAddress = this.ppuBankStarts[bank] + (address & 1023);
-        //while (newAddress > chrRamStart)
-        //{
-        //    newAddress -= chrRamStart;
-        //}
-        return this.chrRom[newAddress];
-    };
-    BaseCart.prototype.SetPPUByte = function (clock, address, data) {
-        var bank = address >> 10; //, 1024)) | 0;
-        var newAddress = this.bankStartCache[(this.CurrentBank << 4) + bank] + (address & 1023); // ppuBankStarts[bank] + (address & 0x3FF);
-        this.chrRom[newAddress] = data;
-    };
-    BaseCart.prototype.SetupBankStarts = function (reg8, regA, regC, regE) {
-        reg8 = this.MaskBankAddress(reg8);
-        regA = this.MaskBankAddress(regA);
-        regC = this.MaskBankAddress(regC);
-        regE = this.MaskBankAddress(regE);
-        this.current8 = reg8;
-        this.currentA = regA;
-        this.currentC = regC;
-        this.currentE = regE;
-        this.bank8start = reg8 * 8192;
-        this.bankAstart = regA * 8192;
-        this.bankCstart = regC * 8192;
-        this.bankEstart = regE * 8192;
-    };
-    BaseCart.prototype.MaskBankAddress = function (bank) {
-        if (bank >= this.prgRomCount * 2) {
-            var i = 255;
-            while ((bank & i) >= this.prgRomCount * 2) {
-                i = i >> 1;
-            }
-            return (bank & i);
-        }
-        else {
-            return bank;
-        }
-    };
-    BaseCart.prototype.WriteState = function (state) {
-        // throw new Error('Method not implemented.');
-    };
-    BaseCart.prototype.ReadState = function (state) {
-        // throw new Error('Method not implemented.');
-    };
-    BaseCart.prototype.HandleEvent = function (Clock) {
-        //  throw new Error('Method not implemented.');
-    };
-    BaseCart.prototype.ResetClock = function (Clock) {
-        // throw new Error('Method not implemented.');
-    };
-    BaseCart.prototype.ResetBankStartCache = function () {
-        // if (currentBank > 0)
-        this.CurrentBank = 0;
-        // Array.Clear(bankStartCache, 0, 16 * 256 * 256);
-        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, 0, 16);
-        this.bankStartCache.fill(0);
-        for (var i = 0; i < 16; ++i) {
-            this.bankStartCache[i] = this.ppuBankStarts[i];
-        }
-        //Mirror(-1, this.mirroring);
-        //chrRamStart = ppuBankStarts[8];
-        //Array.Copy(ppuBankStarts, 0, bankStartCache[0], 0, 16 * 4);
-        //bankSwitchesChanged = false;
-    };
-    BaseCart.prototype.UpdateBankStartCache = function () {
-        this.CurrentBank = 0; // (this.CurrentBank + 1) | 0;
-        for (var i = 0; i < 16; ++i) {
-            this.bankStartCache[(this.CurrentBank * 16) + i] = this.ppuBankStarts[i];
-        }
-        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, this.CurrentBank * 16, 16);
-        this.Whizzler.UpdatePixelInfo();
-        return this.CurrentBank;
-    };
-    BaseCart.prototype.ActualChrRomOffset = function (address) {
-        var bank = address >> 10 | 0;
-        //int newAddress = ppuBankStarts[bank] + (address & 0x3FF);
-        var newAddress = (this.bankStartCache[(this.CurrentBank * 16) + bank] + (address & 1023));
-        return newAddress;
-    };
-    BaseCart.prototype.Mirror = function (clockNum, mirroring) {
-        //    //            A11 A10 Effect
-        //    //----------------------------------------------------------
-        //    // 0   0  All four screen buffers are mapped to the same
-        //    //        area of memory which repeats at $2000, $2400,
-        //    //        $2800, and $2C00.
-        //    // 0   x  "Upper" and "lower" screen buffers are mapped to
-        //    //        separate areas of memory at $2000, $2400 and
-        //    //        $2800, $2C00. ( horizontal mirroring)
-        //    // x   0  "Left" and "right" screen buffers are mapped to
-        //    //        separate areas of memory at $2000, $2800 and
-        //    //        $2400,$2C00.  (vertical mirroring)
-        //    // x   x  All four screen buffers are mapped to separate
-        //    //        areas of memory. In this case, the cartridge
-        //    //        must contain 2kB of additional VRAM 
-        this.mirroring = mirroring;
-        if (clockNum > -1) {
-            this.Whizzler.DrawTo(clockNum);
-        }
-        //Console.WriteLine("Mirroring set to {0}", mirroring);
-        switch (mirroring) {
-            case 0:
-                this.ppuBankStarts[8] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
-                this.ppuBankStarts[9] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
-                this.ppuBankStarts[10] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
-                this.ppuBankStarts[11] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
-                break;
-            case 1:
-                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[9] = (this.chrRamStart + 1024) | 0;
-                this.ppuBankStarts[10] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[11] = (this.chrRamStart + 1024) | 0;
-                break;
-            case 2:
-                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[9] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[10] = (this.chrRamStart + 1024) | 0;
-                this.ppuBankStarts[11] = (this.chrRamStart + 1024) | 0;
-                break;
-            case 3:
-                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[9] = (this.chrRamStart + 1024) | 0;
-                this.ppuBankStarts[10] = (this.chrRamStart + 2048) | 0;
-                this.ppuBankStarts[11] = (this.chrRamStart + 3072) | 0;
-                break;
-        }
-        this.UpdateBankStartCache();
-        this.Whizzler.UpdatePixelInfo();
-    };
-    BaseCart.prototype.InitializeCart = function () {
-        //throw new Error('Method not implemented.');
-    };
-    BaseCart.prototype.UpdateScanlineCounter = function () {
-        //throw new Error('Method not implemented.');
-    };
-    return BaseCart;
-}());
-exports.BaseCart = BaseCart;
-var UnsupportedCart = /** @class */ (function (_super) {
-    __extends(UnsupportedCart, _super);
-    function UnsupportedCart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.supported = false;
-        return _this;
-    }
-    UnsupportedCart.prototype.InitializeCart = function () {
-        this.mapperName = 'unsupported';
-        this.SetupBankStarts(0, 1, 2, 3);
-        this.Mirror(0, 0);
-    };
-    return UnsupportedCart;
-}(BaseCart));
-exports.UnsupportedCart = UnsupportedCart;
-var NesCart = /** @class */ (function (_super) {
-    __extends(NesCart, _super);
-    function NesCart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    // prevBSSrc = new Uint8Array(8);
-    NesCart.prototype.InitializeCart = function () {
-        //for (var i = 0; i < 8; i = (i + 1) | 0) {
-        //    this.prevBSSrc[i] = -1;
-        //}
-        //SRAMEnabled = SRAMCanSave;
-        switch (this.mapperId) {
-            case 0:
-                this.mapperName = 'NROM';
-                break;
-            case 3:
-                this.mapperName = 'CNROM';
-                break;
-            case 180:
-                this.mapperName = 'UNROM (Crazy Climber?)';
-                break;
-        }
-        switch (this.mapperId) {
-            case 0:
-            case 180:
-            case 3:
-                if (this.chrRomCount > 0) {
-                    this.CopyBanks(0, 0, 0, 1);
-                }
-                this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-                break;
-            default:
-                throw new Error("Mapper " + (this.mapperId.toString() || "") + " not implemented.");
-        }
-    };
-    NesCart.prototype.CopyBanks = function (clock, dest, src, numberOf8kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
-        }
-        var oneKsrc = src << 3;
-        var oneKdest = dest << 3;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
-        for (var i = 0; i < (numberOf8kBanks << 3); i++) {
-            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
-        }
-        this.UpdateBankStartCache();
-    };
-    NesCart.prototype.CopyBanks4k = function (clock, dest, src, numberOf4kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
-        }
-        var oneKsrc = src << 2;
-        var oneKdest = dest << 2;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
-        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
-            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
-        }
-        this.UpdateBankStartCache();
-    };
-    NesCart.prototype.CopyBanks2k = function (clock, dest, src, numberOf2kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
-        }
-        var oneKsrc = src << 1;
-        var oneKdest = dest << 1;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
-        for (var i = 0; i < (numberOf2kBanks << 1); i++) {
-            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
-        }
-        this.UpdateBankStartCache();
-    };
-    NesCart.prototype.CopyBanks1k = function (clock, dest, src, numberOf1kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
-        }
-        var oneKsrc = src;
-        var oneKdest = dest;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
-        for (var i = 0; i < numberOf1kBanks; i++) {
-            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
-        }
-        this.UpdateBankStartCache();
-    };
-    NesCart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 24576 && address <= 32767) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 8191] = val & 255;
-            }
-            return;
-        }
-        if (this.mapperId === 3 && address >= 0x8000) {
-            this.CopyBanks(clock, 0, val, 1);
-        }
-        if (this.mapperId === 180 && address >= 32768) {
-            var newbankC1 = 0;
-            newbankC1 = val * 2;
-            // keep two LOW banks, swap high banks
-            // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
-            this.SetupBankStarts(this.current8, this.currentA, newbankC1, ((newbankC1 + 1) | 0));
-        }
-    };
-    return NesCart;
-}(BaseCart));
-exports.NesCart = NesCart;
-var UxROMCart = /** @class */ (function (_super) {
-    __extends(UxROMCart, _super);
-    function UxROMCart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    UxROMCart.prototype.InitializeCart = function () {
-        this.mapperName = 'UxROM';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    UxROMCart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000) {
-            var newbank81 = 0;
-            newbank81 = val << 1;
-            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
-        }
-    };
-    return UxROMCart;
-}(NesCart));
-exports.UxROMCart = UxROMCart;
-var Mapper071Cart = /** @class */ (function (_super) {
-    __extends(Mapper071Cart, _super);
-    function Mapper071Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Mapper071Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'Camerica UNROM';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    Mapper071Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000) {
-            var newbank81 = 0;
-            newbank81 = val << 1;
-            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
-        }
-    };
-    return Mapper071Cart;
-}(NesCart));
-exports.Mapper071Cart = Mapper071Cart;
-var CNROMCart = /** @class */ (function (_super) {
-    __extends(CNROMCart, _super);
-    function CNROMCart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    //for (var i = 0; i < 8; i = (i + 1) | 0) {
-    //    this.prevBSSrc[i] = -1;
-    //}
-    //SRAMEnabled = SRAMCanSave;
-    CNROMCart.prototype.InitializeCart = function () {
-        this.mapperName = 'CNROM';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    CNROMCart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000) {
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, val, 1);
-        }
-    };
-    return CNROMCart;
-}(NesCart));
-exports.CNROMCart = CNROMCart;
-var Mapper058Cart = /** @class */ (function (_super) {
-    __extends(Mapper058Cart, _super);
-    function Mapper058Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Mapper058Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'Charlie Multi-Cart';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, 2, 3);
-    };
-    Mapper058Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000) {
-            var mode = (address >> 6) & 0x01;
-            if (mode) {
-                // 16k banks 
-                var newbank81 = (address & 7) << 1;
-                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
-            }
-            else {
-                // 32k banks 
-                var newbank81 = 0;
-                newbank81 = (address & 7) << 2;
-                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
-            }
-            this.Whizzler.DrawTo(clock);
-            this.Mirror(clock, ((address >> 7) & 0x1) + 1);
-            this.CopyBanks(clock, 0, (address >> 3) & 7, 1);
-        }
-    };
-    return Mapper058Cart;
-}(NesCart));
-exports.Mapper058Cart = Mapper058Cart;
-var Mapper087Cart = /** @class */ (function (_super) {
-    __extends(Mapper087Cart, _super);
-    function Mapper087Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    //for (var i = 0; i < 8; i = (i + 1) | 0) {
-    //    this.prevBSSrc[i] = -1;
-    //}
-    //SRAMEnabled = SRAMCanSave;
-    Mapper087Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'CNROM Clone';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    Mapper087Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x6000 && address <= 0x7FFF) {
-            var chrbank = ((val & 0x1) << 1) | ((val & 0x2) >> 1);
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-        }
-    };
-    return Mapper087Cart;
-}(NesCart));
-exports.Mapper087Cart = Mapper087Cart;
-var Mapper145Cart = /** @class */ (function (_super) {
-    __extends(Mapper145Cart, _super);
-    function Mapper145Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    //for (var i = 0; i < 8; i = (i + 1) | 0) {
-    //    this.prevBSSrc[i] = -1;
-    //}
-    //SRAMEnabled = SRAMCanSave;
-    Mapper145Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'Sachen Sidewinder';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, 2, 3);
-    };
-    Mapper145Cart.prototype.SetByte = function (clock, address, val) {
-        if ((address & 0xE100) == 0x4100) {
-            var chrbank = val;
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-        }
-    };
-    return Mapper145Cart;
-}(NesCart));
-exports.Mapper145Cart = Mapper145Cart;
-var VSSystemGames = /** @class */ (function (_super) {
-    __extends(VSSystemGames, _super);
-    function VSSystemGames() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        //for (var i = 0; i < 8; i = (i + 1) | 0) {
-        //    this.prevBSSrc[i] = -1;
-        //}
-        //SRAMEnabled = SRAMCanSave;
-        _this.supported = false;
-        return _this;
-    }
-    VSSystemGames.prototype.InitializeCart = function () {
-        this.mapperName = 'VS System';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    VSSystemGames.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x6000 && address <= 0x7FFF) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 8191] = val & 255;
-            }
-            return;
-        }
-        // TODO: Cpu.ppu mem mapping needs changing vs unisystem and pc10 (new machine extensions?)
-        if (address >= 4016) {
-            var chrbank = val;
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-        }
-    };
-    return VSSystemGames;
-}(NesCart));
-exports.VSSystemGames = VSSystemGames;
-var ColorDreams = /** @class */ (function (_super) {
-    __extends(ColorDreams, _super);
-    function ColorDreams() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    // https://wiki.nesdev.com/w/index.php/Color_Dreams
-    ColorDreams.prototype.InitializeCart = function () {
-        this.mapperName = 'Color Dreams';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, 2, 3);
-    };
-    ColorDreams.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000 && address <= 0xFFFF) {
-            var prgbank = (val & 0x3) << 2;
-            var chrbank = ((val >> 4) & 0xf);
-            // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
-            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
-            // two high bits set mirroring
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-        }
-        //         %00 = 1ScA
-        //         %01 = Horz
-        //         %10 = Vert
-        //         %11 = 1ScB
-        //this.Mirror(clock,(val >> 6));
-    };
-    return ColorDreams;
-}(NesCart));
-exports.ColorDreams = ColorDreams;
-var MHROMCart = /** @class */ (function (_super) {
-    __extends(MHROMCart, _super);
-    function MHROMCart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    MHROMCart.prototype.InitializeCart = function () {
-        this.mapperName = 'GxROM';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, 2, 3);
-    };
-    MHROMCart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000 && address <= 0xFFFF) {
-            var newbank81 = 0;
-            var chrbank = (val) & 0x3;
-            var prgbank = ((val >> 4) & 0x3) << 2;
-            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-        }
-    };
-    return MHROMCart;
-}(NesCart));
-exports.MHROMCart = MHROMCart;
-var Mapper070Cart = /** @class */ (function (_super) {
-    __extends(Mapper070Cart, _super);
-    function Mapper070Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Mapper070Cart.prototype.InitializeCart = function () {
-        this.mapperName = '~Family Trainer';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    Mapper070Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000 && address <= 0xFFFF) {
-            var newbank81 = 0;
-            var chrbank = (val) & 0xF;
-            var prgbank = ((val >> 4) & 0xF) << 1;
-            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-        }
-    };
-    return Mapper070Cart;
-}(NesCart));
-exports.Mapper070Cart = Mapper070Cart;
-var Mapper077Cart = /** @class */ (function (_super) {
-    __extends(Mapper077Cart, _super);
-    function Mapper077Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Mapper077Cart.prototype.InitializeCart = function () {
-        this.mapperName = '~Mapper 077';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    Mapper077Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000 && address <= 0xFFFF) {
-            var prgbank = (val & 0xF) << 2;
-            var chrbank = ((val >> 4) & 0xF);
-            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks2k(clock, 0, chrbank, 1);
-        }
-    };
-    return Mapper077Cart;
-}(NesCart));
-exports.Mapper077Cart = Mapper077Cart;
-var Mapper093Cart = /** @class */ (function (_super) {
-    __extends(Mapper093Cart, _super);
-    function Mapper093Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Mapper093Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'Sunsoft-2';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    Mapper093Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000 && address <= 0xFFFF) {
-            var prgbank = ((val >> 4) & 0x7) << 1;
-            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
-        }
-    };
-    return Mapper093Cart;
-}(NesCart));
-exports.Mapper093Cart = Mapper093Cart;
-var Mapper152Cart = /** @class */ (function (_super) {
-    __extends(Mapper152Cart, _super);
-    function Mapper152Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Mapper152Cart.prototype.InitializeCart = function () {
-        this.mapperName = '~FT + mirroring';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-    };
-    Mapper152Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000 && address <= 0xFFFF) {
-            var newbank81 = 0;
-            var chrbank = (val) & 0xF;
-            var prgbank = ((val >> 4) & 0x31) << 1;
-            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-            this.oneScreenOffset = (val >> 7) == 1 ? 1024 : 0;
-            this.Mirror(clock, 0);
-        }
-    };
-    return Mapper152Cart;
-}(NesCart));
-exports.Mapper152Cart = Mapper152Cart;
-var JF1xCart = /** @class */ (function (_super) {
-    __extends(JF1xCart, _super);
-    function JF1xCart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    JF1xCart.prototype.InitializeCart = function () {
-        this.mapperName = 'Jaleco JF-11, JF-14';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, 2, 3);
-    };
-    JF1xCart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x6000 && address <= 0x7FFF) {
-            var newbank81 = 0;
-            var chrbank = (val) & 0xF;
-            var prgbank = ((val >> 4) & 0x3) << 2;
-            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-        }
-    };
-    return JF1xCart;
-}(NesCart));
-exports.JF1xCart = JF1xCart;
-var Irem097Cart = /** @class */ (function (_super) {
-    __extends(Irem097Cart, _super);
-    function Irem097Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Irem097Cart.prototype.InitializeCart = function () {
-        this.mapperName = '~Irem TAM-S1 IC';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts((this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1, 0, 1);
-    };
-    Irem097Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 24576 && address <= 32767) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 8191] = val & 255;
-            }
-            return;
-        }
-        var newbankC1 = 0;
-        newbankC1 = (val & 0xF) * 2;
-        // keep two LOW banks, swap high banks
-        // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
-        this.SetupBankStarts(this.current8, this.currentA, newbankC1, ((newbankC1 + 1) | 0));
-        // two high bits set mirroring
-        this.Whizzler.DrawTo(clock);
-        //         %00 = 1ScA
-        //         %01 = Horz
-        //         %10 = Vert
-        //         %11 = 1ScB
-        this.Mirror(clock, (val >> 6));
-    };
-    return Irem097Cart;
-}(NesCart));
-exports.Irem097Cart = Irem097Cart;
-var BitCorp038Cart = /** @class */ (function (_super) {
-    __extends(BitCorp038Cart, _super);
-    function BitCorp038Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    BitCorp038Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'Bit Corp Crime Busters';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
-        }
-        this.SetupBankStarts(0, 1, 2, 3);
-    };
-    BitCorp038Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x7000 && address <= 0x7FFF) {
-            var newbank81 = 0;
-            var prgbank = (val & 0x3) << 2;
-            var chrbank = ((val >> 2) & 0x3);
-            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, chrbank, 1);
-        }
-    };
-    return BitCorp038Cart;
-}(NesCart));
-exports.BitCorp038Cart = BitCorp038Cart;
-//  Mapper 7 and derivatives 34
-var AxROMCart = /** @class */ (function (_super) {
-    __extends(AxROMCart, _super);
-    function AxROMCart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    // prevBSSrc = new Uint8Array(8);
-    AxROMCart.prototype.InitializeCart = function () {
-        this.mapperName = 'AxROM';
-        this.SetupBankStarts(0, 1, 2, 3);
-        this.Mirror(0, 0);
-    };
-    AxROMCart.prototype.SetByte = function (clock, address, val) {
-        if (address < 0x5000)
-            return;
-        if (address >= 24576 && address <= 32767) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 8191] = val & 255;
-            }
-            return;
-        }
-        // val selects which bank to swap, 32k at a time
-        var newbank8 = 0;
-        newbank8 = (val & 15) << 2;
-        this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
-        // whizzler.DrawTo(clock);
-        if ((val & 16) === 16) {
-            this.oneScreenOffset = 1024;
-        }
-        else {
-            this.oneScreenOffset = 0;
-        }
-        this.Whizzler.DrawTo(clock);
-        this.Mirror(clock, 0);
-    };
-    return AxROMCart;
-}(BaseCart));
-exports.AxROMCart = AxROMCart;
-var BNROMCart = /** @class */ (function (_super) {
-    __extends(BNROMCart, _super);
-    function BNROMCart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    BNROMCart.prototype.InitializeCart = function () {
-        this.mapperName = 'BNROM';
-        this.SetupBankStarts(0, 1, 2, 3);
-        //this.Mirror(0, 0);
-    };
-    BNROMCart.prototype.SetByte = function (clock, address, val) {
-        if (address < 0x5000)
-            return;
-        if (address >= 24576 && address <= 32767) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 8191] = val & 255;
-            }
-            return;
-        }
-        // val selects which bank to swap, 32k at a time
-        var newbank8 = 0;
-        newbank8 = (val & 15) << 2;
-        this.Whizzler.DrawTo(clock);
-        this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
-        // whizzler.DrawTo(clock);
-    };
-    return BNROMCart;
-}(AxROMCart));
-exports.BNROMCart = BNROMCart;
-var NINA001Cart = /** @class */ (function (_super) {
-    __extends(NINA001Cart, _super);
-    function NINA001Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    NINA001Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'NINA-001';
-        this.SetupBankStarts(0, 1, 2, 3);
-        this.Mirror(0, 1);
-    };
-    NINA001Cart.prototype.CopyBanks = function (clock, dest, src, numberOf4kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = (this.chrRomCount - 1) | 0;
-        }
-        var oneKsrc = src << 2;
-        var oneKdest = dest << 2;
-        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
-            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
-        }
-        this.UpdateBankStartCache();
-    };
-    NINA001Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 24576 && address <= 32767) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 8191] = val & 255;
-            }
-            return;
-        }
-        switch (address) {
-            case 0x7FFD:
-                // val selects which bank to swap, 32k at a time
-                var newbank8 = 0;
-                newbank8 = (val & 1) << 2;
-                this.SetupBankStarts(newbank8, ((newbank8 + 1) | 0), ((newbank8 + 2) | 0), ((newbank8 + 3) | 0));
-                break;
-            case 0x7FFE:
-                // Select 4 KB CHR ROM bank for PPU $0000-$0FFF
-                this.CopyBanks(clock, 0, val & 0xf, 1);
-                break;
-            case 0x7FFF:
-                // Select 4 KB CHR ROM bank for PPU $1000-$1FFF
-                this.CopyBanks(clock, 1, val & 0xf, 1);
-                break;
-        }
-    };
-    return NINA001Cart;
-}(AxROMCart));
-exports.NINA001Cart = NINA001Cart;
-// MMC 
-var MMC1Cart = /** @class */ (function (_super) {
-    __extends(MMC1Cart, _super);
-    function MMC1Cart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.chrRomBankMode = 0;
-        _this.prgRomBankMode = 0;
-        _this.lastClock = 0;
-        _this.sequence = 0;
-        _this.accumulator = 0;
-        _this.bank_select = 0;
-        _this._registers = new Array(4);
-        _this.lastwriteAddress = 0;
-        return _this;
-    }
-    MMC1Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'MMC1';
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 4);
-        }
-        this._registers[0] = 12;
-        this._registers[1] = 0;
-        this._registers[2] = 0;
-        this._registers[3] = 0;
-        this.SetupBankStarts(0, 1, ((this.prgRomCount * 2 - 2) | 0), ((this.prgRomCount * 2 - 1) | 0));
-        this.sequence = 0;
-        this.accumulator = 0;
-    };
-    MMC1Cart.prototype.MaskBankAddress$1 = function (bank) {
-        if (bank >= (this.prgRomCount << 1)) {
-            var i;
-            i = 255;
-            while ((bank & i) >= this.prgRomCount * 2) {
-                i = (i >> 1) & 255;
-            }
-            return (bank & i);
-        }
-        else {
-            return bank;
-        }
-    };
-    MMC1Cart.prototype.CopyBanks = function (dest, src, numberOf4kBanks) {
-        if (this.chrRomCount > 0) {
-            var oneKdest = dest * 4;
-            var oneKsrc = src * 4;
-            //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-            //  setup ppuBankStarts in 0x400 block chunks 
-            for (var i = 0; i < (numberOf4kBanks << 2); i = (i + 1) | 0) {
-                this.ppuBankStarts[((oneKdest + i) | 0)] = (((oneKsrc + i) | 0)) << 10;
-            }
-            //Array.Copy(chrRom, src * 0x1000, whizzler.cartCopyVidRAM, dest * 0x1000, numberOf4kBanks * 0x1000);
-        }
-        this.UpdateBankStartCache();
-    };
-    MMC1Cart.prototype.SetByte = function (clock, address, val) {
-        // if write is to a different register, reset
-        this.lastClock = clock;
-        switch (address & 0xF000) {
-            case 0x6000:
-            case 0x7000:
-                this.prgRomBank6[address & 8191] = val & 255;
-                break;
-            default:
-                this.lastwriteAddress = address;
-                if ((val & 128) === 128) {
-                    this._registers[0] = this._registers[0] | 12;
-                    this.accumulator = 0; // _registers[(address / 0x2000) & 3];
-                    this.sequence = 0;
-                }
-                else {
-                    if ((val & 1) === 1) {
-                        this.accumulator = this.accumulator | (1 << this.sequence);
-                    }
-                    this.sequence = (this.sequence + 1) | 0;
-                }
-                if (this.sequence === 5) {
-                    var regnum = (address & 32767) >> 13;
-                    this._registers[(address & 32767) >> 13] = this.accumulator;
-                    this.sequence = 0;
-                    this.accumulator = 0;
-                    switch (regnum) {
-                        case 0:
-                            // 4bit0
-                            // -----
-                            // CPPMM
-                            // |||||
-                            // |||++- Mirroring (0: one-screen, lower bank; 1: one-screen, upper bank;
-                            // |||               2: vertical; 3: horizontal)
-                            // |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
-                            // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
-                            // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
-                            // +----- CHR ROM bank mode (0: switch 8 KB at a time; 1: switch two separate 4 KB banks)
-                            this.SetMMC1Mirroring(clock);
-                            this.prgRomBankMode = (this._registers[0] >> 2) & 0x3;
-                            this.chrRomBankMode = (this._registers[0] >> 4) & 0x1;
-                            break;
-                        case 1:
-                        case 2:
-                            this.SetMMC1ChrBanking(clock);
-                            break;
-                        case 3:
-                            this.SetMMC1PrgBanking();
-                            break;
-                    }
-                }
-                break;
-        }
-    };
-    MMC1Cart.prototype.SetMMC1ChrBanking = function (clock) {
-        //	bit 4 - sets 8KB or 4KB CHRROM switching mode
-        // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
-        this.Whizzler.DrawTo(clock);
-        //if ((this._registers[0] & 16) === 16) {
-        if (this.chrRomBankMode === 1) {
-            this.CopyBanks(0, this._registers[1], 1);
-            this.CopyBanks(1, this._registers[2], 1);
-        }
-        else {
-            //CopyBanks(0, _registers[1], 2);
-            this.CopyBanks(0, this._registers[1], 1);
-            this.CopyBanks(1, ((this._registers[1] + 1) | 0), 1);
-        }
-        this.bankSwitchesChanged = true;
-        this.Whizzler.UpdatePixelInfo();
-    };
-    MMC1Cart.prototype.SetMMC1PrgBanking = function () {
-        var reg = 0;
-        if (this.prgRomCount === 32) {
-            this.bank_select = (this._registers[1] & 16) << 1;
-        }
-        else {
-            this.bank_select = 0;
-        }
-        // |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
-        // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
-        // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
-        switch (this.prgRomBankMode) {
-            case 0:
-            case 1:
-                reg = (4 * ((this._registers[3] >> 1) & 0xF) + this.bank_select) | 0;
-                this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
-                break;
-            case 2:
-                reg = (2 * (this._registers[3]) + this.bank_select) | 0;
-                this.SetupBankStarts(0, 1, reg, reg + 1);
-                break;
-            case 3:
-                reg = (2 * (this._registers[3]) + this.bank_select) | 0;
-                this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
-                break;
-        }
-    };
-    MMC1Cart.prototype.SetMMC1Mirroring = function (clock) {
-        //bit 1 - toggles between H/V and "one-screen" mirroring
-        //0 = one-screen mirroring, 1 = H/V mirroring
-        this.Whizzler.DrawTo(clock);
-        switch (this._registers[0] & 3) {
-            case 0:
-                this.oneScreenOffset = 0;
-                this.Mirror(clock, 0);
-                break;
-            case 1:
-                this.oneScreenOffset = 1024;
-                this.Mirror(clock, 0);
-                break;
-            case 2:
-                this.Mirror(clock, 1); // vertical
-                break;
-            case 3:
-                this.Mirror(clock, 2); // horizontal
-                break;
-        }
-        this.bankSwitchesChanged = true;
-        this.Whizzler.UpdatePixelInfo();
-    };
-    return MMC1Cart;
-}(BaseCart));
-exports.MMC1Cart = MMC1Cart;
-var MMC2Cart = /** @class */ (function (_super) {
-    __extends(MMC2Cart, _super);
-    function MMC2Cart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.selector = [0, 0];
-        _this.banks = [0, 0, 0, 0];
-        return _this;
-    }
-    MMC2Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'MMC2';
-        this.selector[0] = 1;
-        this.selector[1] = 2;
-        this.banks[0] = 0;
-        this.banks[1] = 0;
-        this.banks[2] = 0;
-        this.banks[3] = 0;
-        // prg.SwapBank<SIZE_32K,0x0000>(~0U);
-        this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        // chr.SetAccessor( this, &Mmc2::Access_Chr );
-        this.CopyBanks(0, 0, this.banks[this.selector[0]], 1);
-        this.CopyBanks(0, 1, this.banks[this.selector[1]], 1);
-        // Map( 0xA000U, 0xAFFFU, PRG_SWAP_8K_0    );
-        // Map( 0xB000U, 0xEFFFU, &Mmc2::Poke_B000 );
-        // Map( 0xF000U, 0xFFFFU, NMT_SWAP_HV      );
-    };
-    MMC2Cart.prototype.CopyBanks = function (clock, dest, src, numberOf4kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = (this.chrRomCount - 1) | 0;
-        }
-        var oneKsrc = src << 2;
-        var oneKdest = dest << 2;
-        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
-            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
-        }
-        this.UpdateBankStartCache();
-    };
-    MMC2Cart.prototype.GetPPUByte = function (clock, address) {
-        var bank = 0;
-        if (address == 0xFD8) {
-            bank = (address >> 11) & 0x2;
-            this.selector[0] = bank;
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
-        }
-        else if (address == 0xFE8) {
-            bank = ((address >> 11) & 0x2) | 0x1;
-            this.selector[0] = bank;
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
-        }
-        else if (address >= 0x1FD8 && address <= 0x1FDF) {
-            bank = (address >> 11) & 0x2;
-            this.selector[1] = bank;
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
-        }
-        else if (address >= 0x1FE8 && address <= 0x1FEF) {
-            bank = ((address >> 11) & 0x2) | 0x1;
-            this.selector[1] = bank;
-            this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
-        }
-        bank = address >> 10;
-        var newAddress = this.ppuBankStarts[bank] + (address & 1023);
-        //while (newAddress > chrRamStart)
-        //{
-        //    newAddress -= chrRamStart;
-        //}
-        var data = this.chrRom[newAddress];
-        return data;
-    };
-    MMC2Cart.prototype.SetByte = function (clock, address, val) {
-        this.Whizzler.DrawTo(clock);
-        switch (address >> 12) {
-            case 0x6:
-            case 0x7:
-                if (this.SRAMEnabled && this.SRAMCanWrite) {
-                    this.prgRomBank6[address & 8191] = val & 255;
-                }
-                break;
-            case 0xA:
-                this.SetupBankStarts((val & 0xF), this.currentA, this.currentC, this.currentE);
-                break;
-            case 0xB:
-            case 0xC:
-                this.banks[(address - 0xB000) >> 12] = val & 0x1f;
-                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.Whizzler.DrawTo(clock);
-                this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
-                this.Whizzler.UnpackSprites();
-                break;
-            case 0xD:
-            case 0xE:
-                this.banks[(address - 0xB000) >> 12] = val & 0x1f;
-                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.Whizzler.DrawTo(clock);
-                this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
-                break;
-            case 0xF:
-                this.Mirror(clock, (val & 0x1) + 1);
-                break;
-        }
-        // this.SetupBankStarts()
-        //chr.SwapBanks<SIZE_4K,0x0000>( banks[selector[0]], banks[selector[1]] );
-    };
-    return MMC2Cart;
-}(BaseCart));
-exports.MMC2Cart = MMC2Cart;
-var MMC3Cart = /** @class */ (function (_super) {
-    __extends(MMC3Cart, _super);
-    function MMC3Cart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this._registers = new Uint8Array(4);
-        _this.chr2kBank0 = 0;
-        _this.chr2kBank1 = 1;
-        _this.chr1kBank0 = 0;
-        _this.chr1kBank1 = 0;
-        _this.chr1kBank2 = 0;
-        _this.chr1kBank3 = 0;
-        _this.prgSwap = 0;
-        _this.prgSwitch1 = 0;
-        _this.prgSwitch2 = 0;
-        _this.prevBSSrc = new Uint8Array(8);
-        _this._mmc3Command = 0;
-        _this._mmc3ChrAddr = 0;
-        _this._mmc3IrqVal = 0;
-        _this._mmc3TmpVal = 0;
-        _this.scanlineCounter = 0;
-        _this._mmc3IrcOn = false;
-        _this.ppuBankSwap = false;
-        _this.PPUBanks = new Uint32Array(8);
-        return _this;
-    }
-    MMC3Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'MMC3';
-        this._registers.fill(0);
-        this.PPUBanks.fill(0);
-        this.prevBSSrc.fill(0);
-        this.prgSwap = 1;
-        //SetupBanks(0, 1, 0xFE, 0xFF);
-        this.prgSwitch1 = 0;
-        this.prgSwitch2 = 1;
-        this.SwapPrgRomBanks();
-        this._mmc3IrqVal = 0;
-        this._mmc3IrcOn = false;
-        this._mmc3TmpVal = 0;
-        this.chr2kBank0 = 0;
-        this.chr2kBank1 = 0;
-        this.chr1kBank0 = 0;
-        this.chr1kBank1 = 0;
-        this.chr1kBank2 = 0;
-        this.chr1kBank3 = 0;
-        if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 8);
-        }
-    };
-    MMC3Cart.prototype.MaskBankAddress = function (bank) {
-        if (bank >= this.prgRomCount * 2) {
-            var i = 255;
-            while ((bank & i) >= this.prgRomCount * 2) {
-                i = i >> 1;
-            }
-            return (bank & i);
-        }
-        else {
-            return bank;
-        }
-    };
-    MMC3Cart.prototype.CopyBanks = function (dest, src, numberOf1kBanks) {
-        var $t;
-        if (this.chrRomCount > 0) {
-            for (var i = 0; i < numberOf1kBanks; i = (i + 1) | 0) {
-                this.ppuBankStarts[((dest + i) | 0)] = (src + i) * 1024;
-            }
-            this.bankSwitchesChanged = true;
-            //Array.Copy(chrRom, src * 0x400, whizzler.cartCopyVidRAM, dest * 0x400, numberOf1kBanks * 0x400);
-        }
-    };
-    MMC3Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 24576 && address < 32768) {
-            if (this.SRAMEnabled && this.SRAMCanWrite) {
-                this.prgRomBank6[address & 8191] = val & 255;
-            }
-            return;
-        }
-        //Bank select ($8000-$9FFE, even)
-        //7  bit  0
-        //---- ----
-        //CPxx xRRR
-        //||    |||
-        //||    +++- Specify which bank register to update on next write to Bank Data register
-        //_mmc3Command
-        //||         0: Select 2 KB CHR bank at PPU $0000-$07FF (or $1000-$17FF);
-        //||         1: Select 2 KB CHR bank at PPU $0800-$0FFF (or $1800-$1FFF);
-        //||         2: Select 1 KB CHR bank at PPU $1000-$13FF (or $0000-$03FF);
-        //||         3: Select 1 KB CHR bank at PPU $1400-$17FF (or $0400-$07FF);
-        //||         4: Select 1 KB CHR bank at PPU $1800-$1BFF (or $0800-$0BFF);
-        //||         5: Select 1 KB CHR bank at PPU $1C00-$1FFF (or $0C00-$0FFF);
-        //||         6: Select 8 KB PRG bank at $8000-$9FFF (or $C000-$DFFF);
-        //||         7: Select 8 KB PRG bank at $A000-$BFFF
-        //|+-------- PRG ROM bank configuration (0: $8000-$9FFF swappable, $C000-$DFFF fixed to second-last bank;
-        //|                                      1: $C000-$DFFF swappable, $8000-$9FFF fixed to second-last bank)
-        //+--------- CHR ROM bank configuration (0: two 2 KB banks at $0000-$0FFF, four 1 KB banks at $1000-$1FFF;
-        //                                       1: four 1 KB banks at $0000-$0FFF, two 2 KB banks at $1000-$1FFF)
-        switch (address & 57345) {
-            case 32768:
-                this._mmc3Command = val & 7;
-                if ((val & 128) === 128) {
-                    this.ppuBankSwap = true;
-                    this._mmc3ChrAddr = 4096;
-                }
-                else {
-                    this.ppuBankSwap = false;
-                    this._mmc3ChrAddr = 0;
-                }
-                if ((val & 64) === 64) {
-                    this.prgSwap = 1;
-                }
-                else {
-                    this.prgSwap = 0;
-                }
-                this.SwapPrgRomBanks();
-                break;
-            case 32769:
-                switch (this._mmc3Command) {
-                    case 0:
-                        this.chr2kBank0 = val;
-                        this.SwapChrBanks();
-                        // CopyBanks(0, val, 1);
-                        // CopyBanks(1, val + 1, 1);
-                        break;
-                    case 1:
-                        this.chr2kBank1 = val;
-                        this.SwapChrBanks();
-                        // CopyBanks(2, val, 1);
-                        // CopyBanks(3, val + 1, 1);
-                        break;
-                    case 2:
-                        this.chr1kBank0 = val;
-                        this.SwapChrBanks();
-                        //CopyBanks(4, val, 1);
-                        break;
-                    case 3:
-                        this.chr1kBank1 = val;
-                        this.SwapChrBanks();
-                        //CopyBanks(5, val, 1);
-                        break;
-                    case 4:
-                        this.chr1kBank2 = val;
-                        this.SwapChrBanks();
-                        //CopyBanks(6, val, 1);
-                        break;
-                    case 5:
-                        this.chr1kBank3 = val;
-                        this.SwapChrBanks();
-                        //CopyBanks(7, val, 1);
-                        break;
-                    case 6:
-                        this.prgSwitch1 = val;
-                        this.SwapPrgRomBanks();
-                        break;
-                    case 7:
-                        this.prgSwitch2 = val;
-                        this.SwapPrgRomBanks();
-                        break;
-                }
-                break;
-            case 40960:
-                if ((val & 1) === 1) {
-                    this.Mirror(clock, 2);
-                }
-                else {
-                    this.Mirror(clock, 1);
-                }
-                break;
-            case 40961:
-                //PRG RAM protect ($A001-$BFFF, odd)
-                //7  bit  0
-                //---- ----
-                //RWxx xxxx
-                //||
-                //|+-------- Write protection (0: allow writes; 1: deny writes)
-                //+--------- Chip enable (0: disable chip; 1: enable chip)
-                this.SRAMCanWrite = ((val & 64) === 0);
-                this.SRAMEnabled = ((val & 128) === 128);
-                break;
-            case 49152:
-                this._mmc3IrqVal = val;
-                if (val === 0) {
-                    // special treatment for one-time irq handling
-                    this.scanlineCounter = 0;
-                }
-                break;
-            case 49153:
-                this._mmc3TmpVal = this._mmc3IrqVal;
-                break;
-            case 57344:
-                this._mmc3IrcOn = false;
-                this._mmc3IrqVal = this._mmc3TmpVal;
-                this.irqRaised = false;
-                if (this.updateIRQ) {
-                    this.updateIRQ();
-                }
-                break;
-            case 57345:
-                this._mmc3IrcOn = true;
-                break;
-        }
-    };
-    MMC3Cart.prototype.SwapChrBanks = function () {
-        if (this.ppuBankSwap) {
-            this.CopyBanks(0, this.chr1kBank0, 1);
-            this.CopyBanks(1, this.chr1kBank1, 1);
-            this.CopyBanks(2, this.chr1kBank2, 1);
-            this.CopyBanks(3, this.chr1kBank3, 1);
-            this.CopyBanks(4, this.chr2kBank0, 2);
-            this.CopyBanks(6, this.chr2kBank1, 2);
-        }
-        else {
-            this.CopyBanks(4, this.chr1kBank0, 1);
-            this.CopyBanks(5, this.chr1kBank1, 1);
-            this.CopyBanks(6, this.chr1kBank2, 1);
-            this.CopyBanks(7, this.chr1kBank3, 1);
-            this.CopyBanks(0, this.chr2kBank0, 2);
-            this.CopyBanks(2, this.chr2kBank1, 2);
-        }
-    };
-    MMC3Cart.prototype.SwapPrgRomBanks = function () {
-        //|+-------- PRG ROM bank configuration (0: $8000-$9FFF swappable, $C000-$DFFF fixed to second-last bank;
-        //|                                      1: $C000-$DFFF swappable, $8000-$9FFF fixed to second-last bank)
-        if (this.prgSwap === 1) {
-            this.SetupBankStarts(((this.prgRomCount * 2 - 2) | 0), this.prgSwitch2, this.prgSwitch1, ((this.prgRomCount * 2 - 1) | 0));
-        }
-        else {
-            this.SetupBankStarts(this.prgSwitch1, this.prgSwitch2, ((this.prgRomCount * 2 - 2) | 0), ((this.prgRomCount * 2 - 1) | 0));
-        }
-    };
-    MMC3Cart.prototype.UpdateScanlineCounter = function () {
-        //if (scanlineCounter == -1) return;
-        if (this.scanlineCounter === 0) {
-            this.scanlineCounter = this._mmc3IrqVal;
-            //Writing $00 to $C000 will result in a single IRQ being generated on the next rising edge of PPU A12. 
-            //No more IRQs will be generated until $C000 is changed to a non-zero value, upon which the 
-            // counter will start counting from the new value, generating an IRQ once it reaches zero. 
-            if (this._mmc3IrqVal === 0) {
-                if (this._mmc3IrcOn) {
-                    this.irqRaised = true;
-                    this.updateIRQ();
-                }
-                this.scanlineCounter = -1;
-                return;
-            }
-        }
-        if (this._mmc3TmpVal !== 0) {
-            this.scanlineCounter = this._mmc3TmpVal;
-            this._mmc3TmpVal = 0;
-        }
-        else {
-            this.scanlineCounter = (((this.scanlineCounter - 1) | 0)) & 255;
-        }
-        if (this.scanlineCounter === 0) {
-            if (this._mmc3IrcOn) {
-                this.irqRaised = true;
-                if (this.updateIRQ) {
-                    this.updateIRQ();
-                }
-            }
-            if (this._mmc3IrqVal > 0) {
-                this.scanlineCounter = this._mmc3IrqVal;
-            }
-        }
-    };
-    return MMC3Cart;
-}(BaseCart));
-exports.MMC3Cart = MMC3Cart;
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiTypes_1 = __webpack_require__(3);
+var ChiChiTypes_1 = __webpack_require__(4);
 // shared buffer to get sound out
 var WavSharer = /** @class */ (function () {
     function WavSharer() {
@@ -7952,7 +7190,7 @@ exports.ChiChiBopper = ChiChiBopper;
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8013,29 +7251,30 @@ exports.ChiChiControlPad = ChiChiControlPad;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiMachine_1 = __webpack_require__(5);
+var ChiChiMachine_1 = __webpack_require__(6);
 exports.ChiChiCPPU = ChiChiMachine_1.ChiChiCPPU;
 exports.ChiChiMachine = ChiChiMachine_1.ChiChiMachine;
-var ChiChiNsfMachine_1 = __webpack_require__(26);
+var ChiChiNsfMachine_1 = __webpack_require__(35);
 exports.ChiChiNsfCPPU = ChiChiNsfMachine_1.ChiChiNsfCPPU;
 exports.ChiChiNsfMachine = ChiChiNsfMachine_1.ChiChiNsfMachine;
-var ChiChiCarts_1 = __webpack_require__(6);
-exports.BaseCart = ChiChiCarts_1.BaseCart;
+var BaseCart_1 = __webpack_require__(3);
+exports.BaseCart = BaseCart_1.BaseCart;
+var ChiChiCarts_1 = __webpack_require__(7);
 exports.iNESFileHandler = ChiChiCarts_1.iNESFileHandler;
-var ChiChiControl_1 = __webpack_require__(8);
+var ChiChiControl_1 = __webpack_require__(9);
 exports.ChiChiInputHandler = ChiChiControl_1.ChiChiInputHandler;
-var ChiChiAudio_1 = __webpack_require__(7);
+var ChiChiAudio_1 = __webpack_require__(8);
 exports.WavSharer = ChiChiAudio_1.WavSharer;
 exports.ChiChiBopper = ChiChiAudio_1.ChiChiBopper;
-var ChiChiPPU_1 = __webpack_require__(4);
+var ChiChiPPU_1 = __webpack_require__(5);
 exports.ChiChiPPU = ChiChiPPU_1.ChiChiPPU;
-var ChiChiTypes_1 = __webpack_require__(3);
+var ChiChiTypes_1 = __webpack_require__(4);
 exports.RunningStatuses = ChiChiTypes_1.RunningStatuses;
 exports.ChiChiCPPU_AddressingModes = ChiChiTypes_1.ChiChiCPPU_AddressingModes;
 exports.CpuStatus = ChiChiTypes_1.CpuStatus;
@@ -8043,13 +7282,13 @@ exports.PpuStatus = ChiChiTypes_1.PpuStatus;
 exports.ChiChiInstruction = ChiChiTypes_1.ChiChiInstruction;
 exports.ChiChiSprite = ChiChiTypes_1.ChiChiSprite;
 exports.AudioSettings = ChiChiTypes_1.AudioSettings;
-var ChiChiCheats_1 = __webpack_require__(27);
+var ChiChiCheats_1 = __webpack_require__(36);
 exports.GameGenieCode = ChiChiCheats_1.GameGenieCode;
 exports.ChiChiCheats = ChiChiCheats_1.ChiChiCheats;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports) {
 
 var g;
@@ -8076,7 +7315,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8197,7 +7436,7 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -8287,7 +7526,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -8298,28 +7537,1740 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 14 */
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(3);
+//  Simple discrete logic mappers
+var NesCart = /** @class */ (function (_super) {
+    __extends(NesCart, _super);
+    function NesCart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    // prevBSSrc = new Uint8Array(8);
+    NesCart.prototype.InitializeCart = function () {
+        //for (var i = 0; i < 8; i = (i + 1) | 0) {
+        //    this.prevBSSrc[i] = -1;
+        //}
+        //SRAMEnabled = SRAMCanSave;
+        switch (this.mapperId) {
+            case 0:
+                this.mapperName = 'NROM';
+                break;
+            case 180:
+                this.mapperName = 'UNROM (Crazy Climber?)';
+                break;
+        }
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    NesCart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+            return;
+        }
+        if (this.mapperId === 3 && address >= 0x8000) {
+            this.CopyBanks(clock, 0, val, 1);
+        }
+        if (this.mapperId === 180 && address >= 32768) {
+            var newbankC1 = 0;
+            newbankC1 = val * 2;
+            // keep two LOW banks, swap high banks
+            // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
+            this.SetupBankStarts(this.current8, this.currentA, newbankC1, ((newbankC1 + 1) | 0));
+        }
+    };
+    return NesCart;
+}(BaseCart_1.BaseCart));
+exports.NesCart = NesCart;
+var UxROMCart = /** @class */ (function (_super) {
+    __extends(UxROMCart, _super);
+    function UxROMCart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    UxROMCart.prototype.InitializeCart = function () {
+        this.mapperName = 'UxROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    UxROMCart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var newbank81 = 0;
+            newbank81 = val << 1;
+            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
+        }
+    };
+    return UxROMCart;
+}(BaseCart_1.BaseCart));
+exports.UxROMCart = UxROMCart;
+var Mapper081Cart = /** @class */ (function (_super) {
+    __extends(Mapper081Cart, _super);
+    function Mapper081Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper081Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Super Gun';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper081Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var newbank81 = 0;
+            newbank81 = ((val >> 2) & 3) << 1;
+            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
+            var chrBank = val & 3;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrBank, 1);
+        }
+    };
+    return Mapper081Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper081Cart = Mapper081Cart;
+var Mapper030Cart = /** @class */ (function (_super) {
+    __extends(Mapper030Cart, _super);
+    function Mapper030Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper030Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'UNROM-512';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper030Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var newbank81 = 0;
+            newbank81 = (val & 0x1F) << 1;
+            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
+            var chrBank = (val >> 5) & 3;
+            this.Whizzler.DrawTo(clock);
+            this.Mirror(0, (val >> 7) & 0x1);
+            this.CopyBanks(clock, 0, chrBank, 1);
+        }
+    };
+    return Mapper030Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper030Cart = Mapper030Cart;
+var Mapper071Cart = /** @class */ (function (_super) {
+    __extends(Mapper071Cart, _super);
+    function Mapper071Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper071Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Camerica UNROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper071Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var newbank81 = 0;
+            newbank81 = val << 1;
+            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
+        }
+    };
+    return Mapper071Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper071Cart = Mapper071Cart;
+var Mapper013Cart = /** @class */ (function (_super) {
+    __extends(Mapper013Cart, _super);
+    function Mapper013Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    //SRAMEnabled = SRAMCanSave;
+    Mapper013Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'NES-CPROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks4k(0, 0, 0, 1);
+            this.CopyBanks4k(0, 1, 1, 1);
+        }
+        // one 32k prg rom
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.Mirror(0, 2);
+    };
+    Mapper013Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks4k(clock, 1, (val & 3), 1);
+        }
+    };
+    return Mapper013Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper013Cart = Mapper013Cart;
+var CNROMCart = /** @class */ (function (_super) {
+    __extends(CNROMCart, _super);
+    function CNROMCart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    //for (var i = 0; i < 8; i = (i + 1) | 0) {
+    //    this.prevBSSrc[i] = -1;
+    //}
+    //SRAMEnabled = SRAMCanSave;
+    CNROMCart.prototype.InitializeCart = function () {
+        this.mapperName = 'CNROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    CNROMCart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, val, 1);
+        }
+    };
+    return CNROMCart;
+}(BaseCart_1.BaseCart));
+exports.CNROMCart = CNROMCart;
+var Mapper185Cart = /** @class */ (function (_super) {
+    __extends(Mapper185Cart, _super);
+    function Mapper185Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    //for (var i = 0; i < 8; i = (i + 1) | 0) {
+    //    this.prevBSSrc[i] = -1;
+    //}
+    //SRAMEnabled = SRAMCanSave;
+    Mapper185Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'CNROM + CP';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper185Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, val, 1);
+        }
+    };
+    return Mapper185Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper185Cart = Mapper185Cart;
+var Mapper190Cart = /** @class */ (function (_super) {
+    __extends(Mapper190Cart, _super);
+    function Mapper190Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    //for (var i = 0; i < 8; i = (i + 1) | 0) {
+    //    this.prevBSSrc[i] = -1;
+    //}
+    //SRAMEnabled = SRAMCanSave;
+    Mapper190Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'MKGGROM';
+        this.CopyBanks(0, 0, 0, 1);
+        this.SetupBankStarts(0, 1, 0, 1);
+    };
+    Mapper190Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x6000 && address <= 0x7FFF) {
+            this.prgRomBank6[address & 8191] = val & 255;
+        }
+        // prgBank = A14, D2, D1, D0
+        if (address >= 0x8000 && address <= 0x9FFF) {
+            var prgBank = (val & 7) << 1;
+            this.SetupBankStarts(prgBank, prgBank + 1, this.currentC, this.currentE);
+        }
+        if (address >= 0xC000 && address <= 0xDFFF) {
+            var prgBank = ((val & 7) + 8) << 1;
+            this.SetupBankStarts(prgBank, prgBank + 1, this.currentC, this.currentE);
+        }
+        if (address >= 0xA000 && address <= 0xBFFF) {
+            this.CopyBanks2k(clock, address & 3, val, 1);
+        }
+    };
+    return Mapper190Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper190Cart = Mapper190Cart;
+var Mapper087Cart = /** @class */ (function (_super) {
+    __extends(Mapper087Cart, _super);
+    function Mapper087Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    //for (var i = 0; i < 8; i = (i + 1) | 0) {
+    //    this.prevBSSrc[i] = -1;
+    //}
+    //SRAMEnabled = SRAMCanSave;
+    Mapper087Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'CNROM Clone';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper087Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x6000 && address <= 0x7FFF) {
+            var chrbank = ((val & 0x1) << 1) | ((val & 0x2) >> 1);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    };
+    return Mapper087Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper087Cart = Mapper087Cart;
+var Mapper145Cart = /** @class */ (function (_super) {
+    __extends(Mapper145Cart, _super);
+    function Mapper145Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    //for (var i = 0; i < 8; i = (i + 1) | 0) {
+    //    this.prevBSSrc[i] = -1;
+    //}
+    //SRAMEnabled = SRAMCanSave;
+    Mapper145Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Sachen Sidewinder';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    };
+    Mapper145Cart.prototype.SetByte = function (clock, address, val) {
+        if ((address & 0xE100) == 0x4100) {
+            var chrbank = val;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    };
+    return Mapper145Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper145Cart = Mapper145Cart;
+var ColorDreams = /** @class */ (function (_super) {
+    __extends(ColorDreams, _super);
+    function ColorDreams() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    // https://wiki.nesdev.com/w/index.php/Color_Dreams
+    ColorDreams.prototype.InitializeCart = function () {
+        this.mapperName = 'Color Dreams';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    };
+    ColorDreams.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var prgbank = (val & 0x3) << 2;
+            var chrbank = ((val >> 4) & 0xf);
+            // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            // two high bits set mirroring
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+        //         %00 = 1ScA
+        //         %01 = Horz
+        //         %10 = Vert
+        //         %11 = 1ScB
+        //this.Mirror(clock,(val >> 6));
+    };
+    return ColorDreams;
+}(BaseCart_1.BaseCart));
+exports.ColorDreams = ColorDreams;
+var MHROMCart = /** @class */ (function (_super) {
+    __extends(MHROMCart, _super);
+    function MHROMCart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    MHROMCart.prototype.InitializeCart = function () {
+        this.mapperName = 'GxROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    };
+    MHROMCart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var newbank81 = 0;
+            var chrbank = (val) & 0x3;
+            var prgbank = ((val >> 4) & 0x3) << 2;
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    };
+    return MHROMCart;
+}(BaseCart_1.BaseCart));
+exports.MHROMCart = MHROMCart;
+var Mapper070Cart = /** @class */ (function (_super) {
+    __extends(Mapper070Cart, _super);
+    function Mapper070Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper070Cart.prototype.InitializeCart = function () {
+        this.mapperName = '~Family Trainer';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper070Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var newbank81 = 0;
+            var chrbank = (val) & 0xF;
+            var prgbank = ((val >> 4) & 0xF) << 1;
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    };
+    return Mapper070Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper070Cart = Mapper070Cart;
+var Mapper077Cart = /** @class */ (function (_super) {
+    __extends(Mapper077Cart, _super);
+    function Mapper077Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper077Cart.prototype.InitializeCart = function () {
+        this.mapperName = '~Mapper 077';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper077Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var prgbank = (val & 0xF) << 2;
+            var chrbank = ((val >> 4) & 0xF);
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks2k(clock, 0, chrbank, 1);
+        }
+    };
+    return Mapper077Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper077Cart = Mapper077Cart;
+var Mapper093Cart = /** @class */ (function (_super) {
+    __extends(Mapper093Cart, _super);
+    function Mapper093Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper093Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Sunsoft-2';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper093Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var prgbank = ((val >> 4) & 0x7) << 1;
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+        }
+    };
+    return Mapper093Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper093Cart = Mapper093Cart;
+var Mapper152Cart = /** @class */ (function (_super) {
+    __extends(Mapper152Cart, _super);
+    function Mapper152Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper152Cart.prototype.InitializeCart = function () {
+        this.mapperName = '~FT + mirroring';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper152Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var newbank81 = 0;
+            var chrbank = (val) & 0xF;
+            var prgbank = ((val >> 4) & 0x31) << 1;
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+            this.oneScreenOffset = (val >> 7) == 1 ? 1024 : 0;
+            this.Mirror(clock, 0);
+        }
+    };
+    return Mapper152Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper152Cart = Mapper152Cart;
+var JF1xCart = /** @class */ (function (_super) {
+    __extends(JF1xCart, _super);
+    function JF1xCart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    JF1xCart.prototype.InitializeCart = function () {
+        this.mapperName = 'Jaleco JF-11, JF-14';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    };
+    JF1xCart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x6000 && address <= 0x7FFF) {
+            var newbank81 = 0;
+            var chrbank = (val) & 0xF;
+            var prgbank = ((val >> 4) & 0x3) << 2;
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    };
+    return JF1xCart;
+}(BaseCart_1.BaseCart));
+exports.JF1xCart = JF1xCart;
+var Irem097Cart = /** @class */ (function (_super) {
+    __extends(Irem097Cart, _super);
+    function Irem097Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Irem097Cart.prototype.InitializeCart = function () {
+        this.mapperName = '~Irem TAM-S1 IC';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts((this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1, 0, 1);
+    };
+    Irem097Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+            return;
+        }
+        var newbankC1 = 0;
+        newbankC1 = (val & 0xF) * 2;
+        // keep two LOW banks, swap high banks
+        // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
+        this.SetupBankStarts(this.current8, this.currentA, newbankC1, ((newbankC1 + 1) | 0));
+        // two high bits set mirroring
+        this.Whizzler.DrawTo(clock);
+        //         %00 = 1ScA
+        //         %01 = Horz
+        //         %10 = Vert
+        //         %11 = 1ScB
+        this.Mirror(clock, (val >> 6));
+    };
+    return Irem097Cart;
+}(BaseCart_1.BaseCart));
+exports.Irem097Cart = Irem097Cart;
+var BitCorp038Cart = /** @class */ (function (_super) {
+    __extends(BitCorp038Cart, _super);
+    function BitCorp038Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    BitCorp038Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Bit Corp Crime Busters';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    };
+    BitCorp038Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x7000 && address <= 0x7FFF) {
+            var newbank81 = 0;
+            var prgbank = (val & 0x3) << 2;
+            var chrbank = ((val >> 2) & 0x3);
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    };
+    return BitCorp038Cart;
+}(BaseCart_1.BaseCart));
+exports.BitCorp038Cart = BitCorp038Cart;
+//  Mapper 7 and derivatives 34
+var AxROMCart = /** @class */ (function (_super) {
+    __extends(AxROMCart, _super);
+    function AxROMCart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    // prevBSSrc = new Uint8Array(8);
+    AxROMCart.prototype.InitializeCart = function () {
+        this.mapperName = 'AxROM';
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.Mirror(0, 0);
+    };
+    AxROMCart.prototype.SetByte = function (clock, address, val) {
+        if (address < 0x5000)
+            return;
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+            return;
+        }
+        // val selects which bank to swap, 32k at a time
+        var newbank8 = 0;
+        newbank8 = (val & 15) << 2;
+        this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
+        // whizzler.DrawTo(clock);
+        if ((val & 16) === 16) {
+            this.oneScreenOffset = 1024;
+        }
+        else {
+            this.oneScreenOffset = 0;
+        }
+        this.Whizzler.DrawTo(clock);
+        this.Mirror(clock, 0);
+    };
+    return AxROMCart;
+}(BaseCart_1.BaseCart));
+exports.AxROMCart = AxROMCart;
+// BNROM (34)
+var BNROMCart = /** @class */ (function (_super) {
+    __extends(BNROMCart, _super);
+    function BNROMCart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.isNina = false;
+        return _this;
+    }
+    BNROMCart.prototype.InitializeCart = function () {
+        this.mapperName = 'BNROM';
+        if (this.chrRomCount > 1) {
+            this.mapperName = 'NINA-001';
+            this.isNina = true;
+            this.SetByte = this.SetByteNina;
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+        //this.Mirror(0, 0);
+    };
+    BNROMCart.prototype.SetByte = function (clock, address, val) {
+        if (address < 0x5000)
+            return;
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+            return;
+        }
+        // val selects which bank to swap, 32k at a time
+        var newbank8 = 0;
+        newbank8 = (val & 15) << 2;
+        this.Whizzler.DrawTo(clock);
+        this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
+        // whizzler.DrawTo(clock);
+    };
+    BNROMCart.prototype.SetByteNina = function (clock, address, val) {
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+            return;
+        }
+        switch (address) {
+            case 0x7FFD:
+                // val selects which bank to swap, 32k at a time
+                var newbank8 = 0;
+                newbank8 = (val & 1) << 2;
+                this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
+                break;
+            case 0x7FFE:
+                // Select 4 KB CHR ROM bank for PPU $0000-$0FFF
+                this.CopyBanks4k(clock, 0, val & 0xf, 1);
+                break;
+            case 0x7FFF:
+                // Select 4 KB CHR ROM bank for PPU $1000-$1FFF
+                this.CopyBanks4k(clock, 1, val & 0xf, 1);
+                break;
+        }
+    };
+    return BNROMCart;
+}(AxROMCart));
+exports.BNROMCart = BNROMCart;
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(3);
+// simple discrete logic multi-carts, various pirate xxxxx-in-1s
+var Mapper051Cart = /** @class */ (function (_super) {
+    __extends(Mapper051Cart, _super);
+    function Mapper051Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper051Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Charlie Multi-Cart';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    };
+    Mapper051Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var mode = (val >> 6) & 0x01;
+            if (mode) {
+                // 16k banks 
+                var newbank81 = (val) << 1;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
+            }
+            else {
+                // 32k banks 
+                var newbank81 = 0;
+                newbank81 = (val) << 2;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
+            }
+            this.Whizzler.DrawTo(clock);
+            this.Mirror(clock, ((val >> 7) & 0x1) + 1);
+            this.CopyBanks(clock, 0, (val >> 3) & 7, 1);
+        }
+    };
+    return Mapper051Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper051Cart = Mapper051Cart;
+var Mapper058Cart = /** @class */ (function (_super) {
+    __extends(Mapper058Cart, _super);
+    function Mapper058Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper058Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Charlie Multi-Cart';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    };
+    Mapper058Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var mode = (address >> 6) & 0x01;
+            if (mode) {
+                // 16k banks 
+                var newbank81 = (address & 7) << 1;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
+            }
+            else {
+                // 32k banks 
+                var newbank81 = 0;
+                newbank81 = (address & 7) << 2;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
+            }
+            this.Whizzler.DrawTo(clock);
+            this.Mirror(clock, ((address >> 7) & 0x1) + 1);
+            this.CopyBanks(clock, 0, (address >> 3) & 7, 1);
+        }
+    };
+    return Mapper058Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper058Cart = Mapper058Cart;
+var Mapper202Cart = /** @class */ (function (_super) {
+    __extends(Mapper202Cart, _super);
+    function Mapper202Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper202Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Multi-Cart';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 0, 1);
+    };
+    Mapper202Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            //let mode = ((address >> 14) & 0x01)==0x01;
+            var bank = (address >> 1) & 7;
+            if ((address & 1) | ((address >> 2) & 2)) {
+                var newbank81 = (bank >> 1) << 2;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
+            }
+            else {
+                var newbank81 = (bank >> 1) << 1;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
+            }
+            this.Whizzler.DrawTo(clock);
+            this.Mirror(clock, ((address) & 0x1) + 1);
+            this.CopyBanks(clock, 0, bank, 1);
+        }
+    };
+    return Mapper202Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper202Cart = Mapper202Cart;
+var Mapper212Cart = /** @class */ (function (_super) {
+    __extends(Mapper212Cart, _super);
+    function Mapper212Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper212Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Multi-Cart212';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 2);
+        }
+        this.SetupBankStarts(0, 1, 3, 4);
+    };
+    Mapper212Cart.prototype.GetByte = function (clock, address) {
+        var bank = 0;
+        // if (address & 0xE010) {
+        //     return (address & 0xFF) | 0xA;
+        // }
+        switch (address & 0xE000) {
+            case 0x6000:
+                return (address >> 8) & 0xFF | 0xA;
+            case 0x8000:
+                bank = this.bank8start;
+                break;
+            case 0xA000:
+                bank = this.bankAstart;
+                break;
+            case 0xC000:
+                bank = this.bankCstart;
+                break;
+            case 0xE000:
+                bank = this.bankEstart;
+                break;
+        }
+        return this.nesCart[bank + (address & 0x1FFF)];
+    };
+    Mapper212Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var mode = ((address >> 14) & 0x01) == 0x01;
+            var bank = address & 7;
+            // Write $8000-$FFFF:
+            // A~[1o.. .... .... MBBb]
+            if (mode) {
+                // When it's 1, BB is 32 KiB PRG bank at CPU $8000.
+                var newbank81 = (address & 6) << 2;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
+            }
+            else {
+                // When Banking style is 0, BBb specifies a 16 KiB PRG bank at both CPU $8000 and $C000. 
+                var newbank81 = bank << 1;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
+            }
+            this.Whizzler.DrawTo(clock);
+            this.Mirror(clock, ((address >> 3) & 0x1) + 1);
+            this.CopyBanks(clock, 0, bank, 1);
+        }
+    };
+    return Mapper212Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper212Cart = Mapper212Cart;
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(3);
+// MMC 
+var MMC1Cart = /** @class */ (function (_super) {
+    __extends(MMC1Cart, _super);
+    function MMC1Cart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.chrRomBankMode = 0;
+        _this.prgRomBankMode = 0;
+        _this.lastClock = 0;
+        _this.sequence = 0;
+        _this.accumulator = 0;
+        _this.bank_select = 0;
+        _this._registers = new Array(4);
+        _this.lastwriteAddress = 0;
+        return _this;
+    }
+    MMC1Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'MMC1';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 2);
+        }
+        this._registers[0] = 12;
+        this._registers[1] = 0;
+        this._registers[2] = 0;
+        this._registers[3] = 0;
+        this.SetupBankStarts(0, 1, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.sequence = 0;
+        this.accumulator = 0;
+    };
+    MMC1Cart.prototype.SetByte = function (clock, address, val) {
+        // if write is to a different register, reset
+        this.lastClock = clock;
+        switch (address & 0xF000) {
+            case 0x6000:
+            case 0x7000:
+                this.prgRomBank6[address & 8191] = val & 255;
+                break;
+            default:
+                this.lastwriteAddress = address;
+                if ((val & 128) === 128) {
+                    this._registers[0] = this._registers[0] | 12;
+                    this.accumulator = 0; // _registers[(address / 0x2000) & 3];
+                    this.sequence = 0;
+                }
+                else {
+                    if ((val & 1) === 1) {
+                        this.accumulator = this.accumulator | (1 << this.sequence);
+                    }
+                    this.sequence = (this.sequence + 1) | 0;
+                }
+                if (this.sequence === 5) {
+                    var regnum = (address & 32767) >> 13;
+                    this._registers[(address & 32767) >> 13] = this.accumulator;
+                    this.sequence = 0;
+                    this.accumulator = 0;
+                    switch (regnum) {
+                        case 0:
+                            // 4bit0
+                            // -----
+                            // CPPMM
+                            // |||||
+                            // |||++- Mirroring (0: one-screen, lower bank; 1: one-screen, upper bank;
+                            // |||               2: vertical; 3: horizontal)
+                            // |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
+                            // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
+                            // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
+                            // +----- CHR ROM bank mode (0: switch 8 KB at a time; 1: switch two separate 4 KB banks)
+                            this.setMMC1Mirroring(clock);
+                            this.prgRomBankMode = (this._registers[0] >> 2) & 0x3;
+                            this.chrRomBankMode = (this._registers[0] >> 4) & 0x1;
+                            break;
+                        case 1:
+                        case 2:
+                            this.setMMC1ChrBanking(clock);
+                            break;
+                        case 3:
+                            this.setMMC1PrgBanking();
+                            break;
+                    }
+                }
+                break;
+        }
+    };
+    MMC1Cart.prototype.setMMC1ChrBanking = function (clock) {
+        //	bit 4 - sets 8KB or 4KB CHRROM switching mode
+        // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
+        this.Whizzler.DrawTo(clock);
+        //if ((this._registers[0] & 16) === 16) {
+        if (this.chrRomBankMode === 1) {
+            this.CopyBanks4k(0, 0, this._registers[1], 1);
+            this.CopyBanks4k(0, 1, this._registers[2], 1);
+        }
+        else {
+            //CopyBanks(0, _registers[1], 2);
+            this.CopyBanks4k(0, 0, this._registers[1], 1);
+            this.CopyBanks4k(0, 1, ((this._registers[1] + 1) | 0), 1);
+        }
+        this.bankSwitchesChanged = true;
+        this.Whizzler.UpdatePixelInfo();
+    };
+    MMC1Cart.prototype.setMMC1PrgBanking = function () {
+        var reg = 0;
+        if (this.prgRomCount === 32) {
+            this.bank_select = (this._registers[1] & 16) << 1;
+        }
+        else {
+            this.bank_select = 0;
+        }
+        // |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
+        // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
+        // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
+        switch (this.prgRomBankMode) {
+            case 0:
+            case 1:
+                reg = (4 * ((this._registers[3] >> 1) & 0xF) + this.bank_select) | 0;
+                this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
+                break;
+            case 2:
+                reg = (2 * (this._registers[3]) + this.bank_select) | 0;
+                this.SetupBankStarts(0, 1, reg, reg + 1);
+                break;
+            case 3:
+                reg = (2 * (this._registers[3]) + this.bank_select) | 0;
+                this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
+                break;
+        }
+    };
+    MMC1Cart.prototype.setMMC1Mirroring = function (clock) {
+        //bit 1 - toggles between H/V and "one-screen" mirroring
+        //0 = one-screen mirroring, 1 = H/V mirroring
+        this.Whizzler.DrawTo(clock);
+        switch (this._registers[0] & 3) {
+            case 0:
+                this.oneScreenOffset = 0;
+                this.Mirror(clock, 0);
+                break;
+            case 1:
+                this.oneScreenOffset = 1024;
+                this.Mirror(clock, 0);
+                break;
+            case 2:
+                this.Mirror(clock, 1); // vertical
+                break;
+            case 3:
+                this.Mirror(clock, 2); // horizontal
+                break;
+        }
+        this.bankSwitchesChanged = true;
+        this.Whizzler.UpdatePixelInfo();
+    };
+    return MMC1Cart;
+}(BaseCart_1.BaseCart));
+exports.MMC1Cart = MMC1Cart;
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// MMC2 and MMC4
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(3);
+var MMC2Cart = /** @class */ (function (_super) {
+    __extends(MMC2Cart, _super);
+    function MMC2Cart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.selector = [0, 0];
+        _this.banks = [0, 0, 0, 0];
+        return _this;
+    }
+    MMC2Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'MMC2';
+        this.selector[0] = 1;
+        this.selector[1] = 2;
+        this.banks[0] = 0;
+        this.banks[1] = 0;
+        this.banks[2] = 0;
+        this.banks[3] = 0;
+        this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.CopyBanks(0, 0, this.banks[this.selector[0]], 1);
+        this.CopyBanks(0, 1, this.banks[this.selector[1]], 1);
+    };
+    MMC2Cart.prototype.CopyBanks = function (clock, dest, src, numberOf4kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = (this.chrRomCount - 1) | 0;
+        }
+        var oneKsrc = src << 2;
+        var oneKdest = dest << 2;
+        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
+            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    MMC2Cart.prototype.GetPPUByte = function (clock, address) {
+        var bank = 0;
+        if (address == 0xFD8) {
+            bank = (address >> 11) & 0x2;
+            this.selector[0] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+        }
+        else if (address == 0xFE8) {
+            bank = ((address >> 11) & 0x2) | 0x1;
+            this.selector[0] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+        }
+        else if (address >= 0x1FD8 && address <= 0x1FDF) {
+            bank = (address >> 11) & 0x2;
+            this.selector[1] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+        }
+        else if (address >= 0x1FE8 && address <= 0x1FEF) {
+            bank = ((address >> 11) & 0x2) | 0x1;
+            this.selector[1] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+        }
+        bank = address >> 10;
+        var newAddress = this.ppuBankStarts[bank] + (address & 1023);
+        var data = this.chrRom[newAddress];
+        return data;
+    };
+    MMC2Cart.prototype.SetByte = function (clock, address, val) {
+        this.Whizzler.DrawTo(clock);
+        switch (address >> 12) {
+            case 0x6:
+            case 0x7:
+                if (this.SRAMEnabled && this.SRAMCanWrite) {
+                    this.prgRomBank6[address & 8191] = val & 255;
+                }
+                break;
+            case 0xA:
+                this.SetupBankStarts((val & 0xF), this.currentA, this.currentC, this.currentE);
+                break;
+            case 0xB:
+            case 0xC:
+                this.banks[(address - 0xB000) >> 12] = val & 0x1f;
+                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
+                this.Whizzler.DrawTo(clock);
+                this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+                this.Whizzler.UnpackSprites();
+                break;
+            case 0xD:
+            case 0xE:
+                this.banks[(address - 0xB000) >> 12] = val & 0x1f;
+                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
+                this.Whizzler.DrawTo(clock);
+                this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+                break;
+            case 0xF:
+                this.Mirror(clock, (val & 0x1) + 1);
+                break;
+        }
+        // this.SetupBankStarts()
+        //chr.SwapBanks<SIZE_4K,0x0000>( banks[selector[0]], banks[selector[1]] );
+    };
+    return MMC2Cart;
+}(BaseCart_1.BaseCart));
+exports.MMC2Cart = MMC2Cart;
+var MMC4Cart = /** @class */ (function (_super) {
+    __extends(MMC4Cart, _super);
+    function MMC4Cart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.selector = [0, 0];
+        _this.banks = [0, 0, 0, 0];
+        return _this;
+    }
+    MMC4Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'MMC4';
+        this.selector[0] = 1;
+        this.selector[1] = 2;
+        this.banks[0] = 0;
+        this.banks[1] = 0;
+        this.banks[2] = 0;
+        this.banks[3] = 0;
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.CopyBanks(0, 0, this.banks[this.selector[0]], 1);
+        this.CopyBanks(0, 1, this.banks[this.selector[1]], 1);
+    };
+    MMC4Cart.prototype.CopyBanks = function (clock, dest, src, numberOf4kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = (this.chrRomCount - 1) | 0;
+        }
+        var oneKsrc = src << 2;
+        var oneKdest = dest << 2;
+        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
+            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    MMC4Cart.prototype.GetPPUByte = function (clock, address) {
+        var bank = 0;
+        if (address >= 0xFD8 && address <= 0xFDF) {
+            bank = (address >> 11) & 0x2;
+            this.selector[0] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+        }
+        else if (address >= 0xFE8 && address <= 0xFEF) {
+            bank = ((address >> 11) & 0x2) | 0x1;
+            this.selector[0] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+        }
+        else if (address >= 0x1FD8 && address <= 0x1FDF) {
+            bank = (address >> 11) & 0x2;
+            this.selector[1] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+        }
+        else if (address >= 0x1FE8 && address <= 0x1FEF) {
+            bank = ((address >> 11) & 0x2) | 0x1;
+            this.selector[1] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+        }
+        bank = address >> 10;
+        var newAddress = this.ppuBankStarts[bank] + (address & 1023);
+        var data = this.chrRom[newAddress];
+        return data;
+    };
+    MMC4Cart.prototype.SetByte = function (clock, address, val) {
+        this.Whizzler.DrawTo(clock);
+        switch (address >> 12) {
+            case 0x6:
+            case 0x7:
+                if (this.SRAMEnabled && this.SRAMCanWrite) {
+                    this.prgRomBank6[address & 8191] = val & 255;
+                }
+                break;
+            case 0xA:
+                var bank8 = (val & 0xF) << 1;
+                this.SetupBankStarts(bank8, bank8 + 1, this.currentC, this.currentE);
+                break;
+            case 0xB:
+            case 0xC:
+                this.banks[(address - 0xB000) >> 12] = val & 0x1f;
+                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
+                this.Whizzler.DrawTo(clock);
+                this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+                this.Whizzler.UnpackSprites();
+                break;
+            case 0xD:
+            case 0xE:
+                this.banks[(address - 0xB000) >> 12] = val & 0x1f;
+                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
+                this.Whizzler.DrawTo(clock);
+                this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+                break;
+            case 0xF:
+                this.Mirror(clock, (val & 0x1) + 1);
+                break;
+        }
+    };
+    return MMC4Cart;
+}(BaseCart_1.BaseCart));
+exports.MMC4Cart = MMC4Cart;
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(3);
+var MMC3Cart = /** @class */ (function (_super) {
+    __extends(MMC3Cart, _super);
+    function MMC3Cart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this._registers = new Uint8Array(4);
+        _this.chr2kBank0 = 0;
+        _this.chr2kBank1 = 1;
+        _this.chr1kBank0 = 0;
+        _this.chr1kBank1 = 0;
+        _this.chr1kBank2 = 0;
+        _this.chr1kBank3 = 0;
+        _this.prgSwap = 0;
+        _this.prgSwitch1 = 0;
+        _this.prgSwitch2 = 0;
+        _this.prevBSSrc = new Uint8Array(8);
+        _this._mmc3Command = 0;
+        _this._mmc3ChrAddr = 0;
+        _this._mmc3IrqVal = 0;
+        _this._mmc3TmpVal = 0;
+        _this.scanlineCounter = 0;
+        _this._mmc3IrcOn = false;
+        _this.ppuBankSwap = false;
+        _this.PPUBanks = new Uint32Array(8);
+        return _this;
+    }
+    MMC3Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'MMC3';
+        this._registers.fill(0);
+        this.PPUBanks.fill(0);
+        this.prevBSSrc.fill(0);
+        this.prgSwap = 1;
+        //SetupBanks(0, 1, 0xFE, 0xFF);
+        this.prgSwitch1 = 0;
+        this.prgSwitch2 = 1;
+        this.SwapPrgRomBanks();
+        this._mmc3IrqVal = 0;
+        this._mmc3IrcOn = false;
+        this._mmc3TmpVal = 0;
+        this.chr2kBank0 = 0;
+        this.chr2kBank1 = 0;
+        this.chr1kBank0 = 0;
+        this.chr1kBank1 = 0;
+        this.chr1kBank2 = 0;
+        this.chr1kBank3 = 0;
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 8);
+        }
+    };
+    MMC3Cart.prototype.MaskBankAddress = function (bank) {
+        if (bank >= this.prgRomCount * 2) {
+            var i = 255;
+            while ((bank & i) >= this.prgRomCount * 2) {
+                i = i >> 1;
+            }
+            return (bank & i);
+        }
+        else {
+            return bank;
+        }
+    };
+    MMC3Cart.prototype.CopyBanks = function (dest, src, numberOf1kBanks) {
+        var $t;
+        if (this.chrRomCount > 0) {
+            for (var i = 0; i < numberOf1kBanks; i = (i + 1) | 0) {
+                this.ppuBankStarts[((dest + i) | 0)] = (src + i) * 1024;
+            }
+            this.bankSwitchesChanged = true;
+            //Array.Copy(chrRom, src * 0x400, whizzler.cartCopyVidRAM, dest * 0x400, numberOf1kBanks * 0x400);
+        }
+    };
+    MMC3Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 24576 && address < 32768) {
+            if (this.SRAMEnabled && this.SRAMCanWrite) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+            return;
+        }
+        //Bank select ($8000-$9FFE, even)
+        //7  bit  0
+        //---- ----
+        //CPxx xRRR
+        //||    |||
+        //||    +++- Specify which bank register to update on next write to Bank Data register
+        //_mmc3Command
+        //||         0: Select 2 KB CHR bank at PPU $0000-$07FF (or $1000-$17FF);
+        //||         1: Select 2 KB CHR bank at PPU $0800-$0FFF (or $1800-$1FFF);
+        //||         2: Select 1 KB CHR bank at PPU $1000-$13FF (or $0000-$03FF);
+        //||         3: Select 1 KB CHR bank at PPU $1400-$17FF (or $0400-$07FF);
+        //||         4: Select 1 KB CHR bank at PPU $1800-$1BFF (or $0800-$0BFF);
+        //||         5: Select 1 KB CHR bank at PPU $1C00-$1FFF (or $0C00-$0FFF);
+        //||         6: Select 8 KB PRG bank at $8000-$9FFF (or $C000-$DFFF);
+        //||         7: Select 8 KB PRG bank at $A000-$BFFF
+        //|+-------- PRG ROM bank configuration (0: $8000-$9FFF swappable, $C000-$DFFF fixed to second-last bank;
+        //|                                      1: $C000-$DFFF swappable, $8000-$9FFF fixed to second-last bank)
+        //+--------- CHR ROM bank configuration (0: two 2 KB banks at $0000-$0FFF, four 1 KB banks at $1000-$1FFF;
+        //                                       1: four 1 KB banks at $0000-$0FFF, two 2 KB banks at $1000-$1FFF)
+        switch (address & 57345) {
+            case 32768:
+                this._mmc3Command = val & 7;
+                if ((val & 128) === 128) {
+                    this.ppuBankSwap = true;
+                    this._mmc3ChrAddr = 4096;
+                }
+                else {
+                    this.ppuBankSwap = false;
+                    this._mmc3ChrAddr = 0;
+                }
+                if ((val & 64) === 64) {
+                    this.prgSwap = 1;
+                }
+                else {
+                    this.prgSwap = 0;
+                }
+                this.SwapPrgRomBanks();
+                break;
+            case 32769:
+                switch (this._mmc3Command) {
+                    case 0:
+                        this.chr2kBank0 = val;
+                        this.SwapChrBanks();
+                        // CopyBanks(0, val, 1);
+                        // CopyBanks(1, val + 1, 1);
+                        break;
+                    case 1:
+                        this.chr2kBank1 = val;
+                        this.SwapChrBanks();
+                        // CopyBanks(2, val, 1);
+                        // CopyBanks(3, val + 1, 1);
+                        break;
+                    case 2:
+                        this.chr1kBank0 = val;
+                        this.SwapChrBanks();
+                        //CopyBanks(4, val, 1);
+                        break;
+                    case 3:
+                        this.chr1kBank1 = val;
+                        this.SwapChrBanks();
+                        //CopyBanks(5, val, 1);
+                        break;
+                    case 4:
+                        this.chr1kBank2 = val;
+                        this.SwapChrBanks();
+                        //CopyBanks(6, val, 1);
+                        break;
+                    case 5:
+                        this.chr1kBank3 = val;
+                        this.SwapChrBanks();
+                        //CopyBanks(7, val, 1);
+                        break;
+                    case 6:
+                        this.prgSwitch1 = val;
+                        this.SwapPrgRomBanks();
+                        break;
+                    case 7:
+                        this.prgSwitch2 = val;
+                        this.SwapPrgRomBanks();
+                        break;
+                }
+                break;
+            case 40960:
+                if ((val & 1) === 1) {
+                    this.Mirror(clock, 2);
+                }
+                else {
+                    this.Mirror(clock, 1);
+                }
+                break;
+            case 40961:
+                //PRG RAM protect ($A001-$BFFF, odd)
+                //7  bit  0
+                //---- ----
+                //RWxx xxxx
+                //||
+                //|+-------- Write protection (0: allow writes; 1: deny writes)
+                //+--------- Chip enable (0: disable chip; 1: enable chip)
+                this.SRAMCanWrite = ((val & 64) === 0);
+                this.SRAMEnabled = ((val & 128) === 128);
+                break;
+            case 49152:
+                this._mmc3IrqVal = val;
+                if (val === 0) {
+                    // special treatment for one-time irq handling
+                    this.scanlineCounter = 0;
+                }
+                break;
+            case 49153:
+                this._mmc3TmpVal = this._mmc3IrqVal;
+                break;
+            case 57344:
+                this._mmc3IrcOn = false;
+                this._mmc3IrqVal = this._mmc3TmpVal;
+                this.irqRaised = false;
+                if (this.updateIRQ) {
+                    this.updateIRQ();
+                }
+                break;
+            case 57345:
+                this._mmc3IrcOn = true;
+                break;
+        }
+    };
+    MMC3Cart.prototype.SwapChrBanks = function () {
+        if (this.ppuBankSwap) {
+            this.CopyBanks(0, this.chr1kBank0, 1);
+            this.CopyBanks(1, this.chr1kBank1, 1);
+            this.CopyBanks(2, this.chr1kBank2, 1);
+            this.CopyBanks(3, this.chr1kBank3, 1);
+            this.CopyBanks(4, this.chr2kBank0, 2);
+            this.CopyBanks(6, this.chr2kBank1, 2);
+        }
+        else {
+            this.CopyBanks(4, this.chr1kBank0, 1);
+            this.CopyBanks(5, this.chr1kBank1, 1);
+            this.CopyBanks(6, this.chr1kBank2, 1);
+            this.CopyBanks(7, this.chr1kBank3, 1);
+            this.CopyBanks(0, this.chr2kBank0, 2);
+            this.CopyBanks(2, this.chr2kBank1, 2);
+        }
+    };
+    MMC3Cart.prototype.SwapPrgRomBanks = function () {
+        //|+-------- PRG ROM bank configuration (0: $8000-$9FFF swappable, $C000-$DFFF fixed to second-last bank;
+        //|                                      1: $C000-$DFFF swappable, $8000-$9FFF fixed to second-last bank)
+        if (this.prgSwap === 1) {
+            this.SetupBankStarts(((this.prgRomCount * 2 - 2) | 0), this.prgSwitch2, this.prgSwitch1, ((this.prgRomCount * 2 - 1) | 0));
+        }
+        else {
+            this.SetupBankStarts(this.prgSwitch1, this.prgSwitch2, ((this.prgRomCount * 2 - 2) | 0), ((this.prgRomCount * 2 - 1) | 0));
+        }
+    };
+    MMC3Cart.prototype.UpdateScanlineCounter = function () {
+        //if (scanlineCounter == -1) return;
+        if (this.scanlineCounter === 0) {
+            this.scanlineCounter = this._mmc3IrqVal;
+            //Writing $00 to $C000 will result in a single IRQ being generated on the next rising edge of PPU A12. 
+            //No more IRQs will be generated until $C000 is changed to a non-zero value, upon which the 
+            // counter will start counting from the new value, generating an IRQ once it reaches zero. 
+            if (this._mmc3IrqVal === 0) {
+                if (this._mmc3IrcOn) {
+                    this.irqRaised = true;
+                    this.updateIRQ();
+                }
+                this.scanlineCounter = -1;
+                return;
+            }
+        }
+        if (this._mmc3TmpVal !== 0) {
+            this.scanlineCounter = this._mmc3TmpVal;
+            this._mmc3TmpVal = 0;
+        }
+        else {
+            this.scanlineCounter = (((this.scanlineCounter - 1) | 0)) & 255;
+        }
+        if (this.scanlineCounter === 0) {
+            if (this._mmc3IrcOn) {
+                this.irqRaised = true;
+                if (this.updateIRQ) {
+                    this.updateIRQ();
+                }
+            }
+            if (this._mmc3IrqVal > 0) {
+                this.scanlineCounter = this._mmc3IrqVal;
+            }
+        }
+    };
+    return MMC3Cart;
+}(BaseCart_1.BaseCart));
+exports.MMC3Cart = MMC3Cart;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(3);
+// BNROM (34)
+var Mapper068Cart = /** @class */ (function (_super) {
+    __extends(Mapper068Cart, _super);
+    function Mapper068Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper068Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Sunsoft-4';
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        //this.Mirror(0, 0);
+    };
+    Mapper068Cart.prototype.SetByte = function (clock, address, val) {
+        if (address < 0x5000)
+            return;
+        if (address >= 24576 && address <= 32767) {
+            if (this.SRAMEnabled) {
+                this.prgRomBank6[address & 8191] = val & 255;
+            }
+            return;
+        }
+        switch (address & 0xF000) {
+            case 0xF000:
+                var newbank8 = (val * 0xF) << 1;
+                this.SetupBankStarts(newbank8, newbank8 + 1, this.currentC, this.currentE);
+                break;
+            case 0x8000:
+                //Map a 2 KiB CHR ROM bank into PPU $0000.    
+                this.CopyBanks2k(clock, 0, val, 1);
+                break;
+            case 0x9000:
+                // Map a 2 KiB CHR ROM bank into PPU $0800.  
+                this.CopyBanks2k(clock, 1, val, 1);
+                break;
+            case 0xA000:
+                // Map a 2 KiB CHR ROM bank into PPU $1000.  
+                this.CopyBanks2k(clock, 2, val, 1);
+                break;
+            case 0xB000:
+                // Map a 2 KiB CHR ROM bank into PPU $1800.   
+                this.CopyBanks2k(clock, 3, val, 1);
+                break;
+            case 0xC000:
+                // Map a 1 KiB CHR ROM bank in place of the lower nametable (CIRAM $000-$3FF). Only D6-D0 are used; D7 is ignored and treated as 1, so nametables must be in the last 128 KiB of CHR ROM.   
+                this.CopyBanks1k(clock, 8, val | 0x80, 1);
+                break;
+            case 0xD000:
+                // Map a 1 KiB CHR ROM bank in place of the upper nametable (CIRAM $400-$7FF). Only D6-D0 are used; D7 is ignored and treated as 1.  
+                this.CopyBanks1k(clock, 9, val | 0x80, 1);
+                break;
+            case 0xE000:
+                this.Whizzler.DrawTo(clock);
+                this.Mirror(clock, val & 0x3);
+                var useCRAM = (val & 0x10) == 0x10;
+                break;
+        }
+        // this.Whizzler.DrawTo(clock);
+        // whizzler.DrawTo(clock);
+    };
+    return Mapper068Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper068Cart = Mapper068Cart;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(3);
+// simple discrete logic multi-carts, various pirate xxxxx-in-1s
+var Mapper031Cart = /** @class */ (function (_super) {
+    __extends(Mapper031Cart, _super);
+    function Mapper031Cart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.registers = [0, 0, 0, 0, 0, 0, 0, 0xFF];
+        return _this;
+    }
+    Mapper031Cart.prototype.InitializeCart = function () {
+        this.mapsBelow6000 = true;
+        this.mapperName = 'NSF Compilation';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 0, 0, 0, (this.prgRomCount * 4) - 4, (this.prgRomCount * 4) - 3, (this.prgRomCount * 4) - 2, (this.prgRomCount * 4) - 1);
+    };
+    Mapper031Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x6000 && address <= 0x7FFF) {
+            this.prgRomBank6[address & 8191] = val & 255;
+        }
+        switch (address) {
+            case 0x5FF8:
+                this.registers[address & 0x7] = val;
+                //AAA  PPPP PPPP
+                this.SetupBankStarts(val, this.current9, this.currentA, this.currentB, this.currentC, this.currentD, this.currentE, this.currentF);
+                break;
+            case 0x5FF9:
+                this.registers[address & 0x7] = val;
+                this.SetupBankStarts(this.current8, val, this.currentA, this.currentB, this.currentC, this.currentD, this.currentE, this.currentF);
+                break;
+            case 0x5FFA:
+                this.registers[address & 0x7] = val;
+                this.SetupBankStarts(this.current8, this.current9, val, this.currentB, this.currentC, this.currentD, this.currentE, this.currentF);
+                break;
+            case 0x5FFB:
+                this.registers[address & 0x7] = val;
+                this.SetupBankStarts(this.current8, this.current9, this.currentA, val, this.currentC, this.currentD, this.currentE, this.currentF);
+                break;
+            case 0x5FFC:
+                this.registers[address & 0x7] = val;
+                this.SetupBankStarts(this.current8, this.current9, this.currentA, this.currentB, val, this.currentD, this.currentE, this.currentF);
+                break;
+            case 0x5FFD:
+                this.registers[address & 0x7] = val;
+                this.SetupBankStarts(this.current8, this.current9, this.currentA, this.currentB, this.currentC, val, this.currentE, this.currentF);
+                break;
+            case 0x5FFE:
+                this.registers[address & 0x7] = val;
+                this.SetupBankStarts(this.current8, this.current9, this.currentA, this.currentB, this.currentC, this.currentD, val, this.currentF);
+                break;
+            case 0x5FFF:
+                this.registers[address & 0x7] = val;
+                this.SetupBankStarts(this.current8, this.current9, this.currentA, this.currentB, this.currentC, this.currentD, this.currentE, val);
+                break;
+        }
+    };
+    Mapper031Cart.prototype.GetByte = function (clock, address) {
+        var bank = 0;
+        switch (address & 0xF000) {
+            // case 0x5000: 
+            //     return this.registers[address & 0x7];
+            case 0x6000:
+            case 0x7000:
+                return this.prgRomBank6[address & 0x1FFF];
+            case 0x8000:
+                bank = this.bank8start;
+                break;
+            case 0x9000:
+                bank = this.bank9start;
+                break;
+            case 0xA000:
+                bank = this.bankAstart;
+                break;
+            case 0xB000:
+                bank = this.bankBstart;
+                break;
+            case 0xC000:
+                bank = this.bankCstart;
+                break;
+            case 0xD000:
+                bank = this.bankDstart;
+                break;
+            case 0xE000:
+                bank = this.bankEstart;
+                break;
+            case 0xF000:
+                bank = this.bankFstart;
+                break;
+        }
+        return this.nesCart[bank + (address & 0xFFF)];
+    };
+    return Mapper031Cart;
+}(BaseCart_1.BaseCart4k));
+exports.Mapper031Cart = Mapper031Cart;
+
+
+/***/ }),
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 module.exports = {
-  crc1: __webpack_require__(15),
-  crc8: __webpack_require__(16),
-  crc81wire: __webpack_require__(17),
-  crc16: __webpack_require__(18),
-  crc16ccitt: __webpack_require__(19),
-  crc16modbus: __webpack_require__(20),
-  crc16xmodem: __webpack_require__(21),
-  crc16kermit: __webpack_require__(22),
-  crc24: __webpack_require__(23),
-  crc32: __webpack_require__(24),
-  crcjam: __webpack_require__(25)
+  crc1: __webpack_require__(23),
+  crc8: __webpack_require__(24),
+  crc81wire: __webpack_require__(25),
+  crc16: __webpack_require__(26),
+  crc16ccitt: __webpack_require__(27),
+  crc16modbus: __webpack_require__(28),
+  crc16xmodem: __webpack_require__(29),
+  crc16kermit: __webpack_require__(30),
+  crc24: __webpack_require__(31),
+  crc32: __webpack_require__(32),
+  crcjam: __webpack_require__(33)
 };
 
 /***/ }),
-/* 15 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8353,7 +9304,7 @@ module.exports = (0, _define_crc2.default)('crc1', function (buf, previous) {
 });
 
 /***/ }),
-/* 16 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8390,7 +9341,7 @@ module.exports = (0, _define_crc2.default)('crc-8', function (buf, previous) {
 });
 
 /***/ }),
-/* 17 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8427,7 +9378,7 @@ module.exports = (0, _define_crc2.default)('dallas-1-wire', function (buf, previ
 });
 
 /***/ }),
-/* 18 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8464,7 +9415,7 @@ module.exports = (0, _define_crc2.default)('crc-16', function (buf, previous) {
 });
 
 /***/ }),
-/* 19 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8501,7 +9452,7 @@ module.exports = (0, _define_crc2.default)('ccitt', function (buf, previous) {
 });
 
 /***/ }),
-/* 20 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8538,7 +9489,7 @@ module.exports = (0, _define_crc2.default)('crc-16-modbus', function (buf, previ
 });
 
 /***/ }),
-/* 21 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8579,7 +9530,7 @@ module.exports = (0, _define_crc2.default)('xmodem', function (buf, previous) {
 });
 
 /***/ }),
-/* 22 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8616,7 +9567,7 @@ module.exports = (0, _define_crc2.default)('kermit', function (buf, previous) {
 });
 
 /***/ }),
-/* 23 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8653,7 +9604,7 @@ module.exports = (0, _define_crc2.default)('crc-24', function (buf, previous) {
 });
 
 /***/ }),
-/* 24 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8690,7 +9641,7 @@ module.exports = (0, _define_crc2.default)('crc-32', function (buf, previous) {
 });
 
 /***/ }),
-/* 25 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8729,7 +9680,7 @@ module.exports = (0, _define_crc2.default)('jam', function (buf) {
 });
 
 /***/ }),
-/* 26 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8745,8 +9696,61 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiMachine_1 = __webpack_require__(5);
-var ChiChiPPU_1 = __webpack_require__(4);
+var BaseCart_1 = __webpack_require__(3);
+var VSCart = /** @class */ (function (_super) {
+    __extends(VSCart, _super);
+    function VSCart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        //for (var i = 0; i < 8; i = (i + 1) | 0) {
+        //    this.prevBSSrc[i] = -1;
+        //}
+        //SRAMEnabled = SRAMCanSave;
+        _this.bankSelect = 0;
+        return _this;
+    }
+    VSCart.prototype.InitializeCart = function () {
+        this.mapperName = 'VS Unisystem';
+        this.mapsBelow6000 = true;
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    VSCart.prototype.SetByte = function (clock, address, val) {
+        if (address == 0x4016) {
+            this.bankSelect = val;
+            var chrbank = (val >> 2) & 0x1;
+            if (this.prgRomCount > 2) {
+                this.SetupBankStarts(chrbank, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+            }
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, chrbank, 1);
+        }
+    };
+    return VSCart;
+}(BaseCart_1.BaseCart));
+exports.VSCart = VSCart;
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChiChiMachine_1 = __webpack_require__(6);
+var ChiChiPPU_1 = __webpack_require__(5);
 var ChiChiNsfMachine = /** @class */ (function (_super) {
     __extends(ChiChiNsfMachine, _super);
     function ChiChiNsfMachine() {
@@ -8849,7 +9853,7 @@ exports.ChiChiNsfCPPU = ChiChiNsfCPPU;
 
 
 /***/ }),
-/* 27 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

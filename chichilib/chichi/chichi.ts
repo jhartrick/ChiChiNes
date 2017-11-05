@@ -1,6 +1,7 @@
 export { ChiChiCPPU, ChiChiMachine } from './ChiChiMachine';
 export { ChiChiNsfCPPU, ChiChiNsfMachine } from './ChiChiNsfMachine';
-export { BaseCart, iNESFileHandler } from './ChiChiCarts';
+export { IBaseCart, BaseCart } from './Carts/BaseCart';
+export { iNESFileHandler } from './ChiChiCarts';
 export { ChiChiInputHandler } from './ChiChiControl';
 export { WavSharer, ChiChiBopper } from './ChiChiAudio';
 export { ChiChiPPU } from './ChiChiPPU';

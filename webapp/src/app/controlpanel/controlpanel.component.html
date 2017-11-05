@@ -22,13 +22,13 @@
       <div class="mat-button-toggle-focus-overlay"></div>
     </div>
   </div>
-  <div *ngIf="wishbone.Cart.MapperID > -1" >
+  <div *ngIf="wishbone.Cart.mapperID > -1" >
     <p>Loaded: {{ wishbone.Cart.CartName }}</p>
       <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
-      <p>Mapper: {{ wishbone.Cart.MapperName }} ({{ wishbone.Cart.MapperID }}<span *ngIf="wishbone.Cart.submapperId">, {{ wishbone.Cart.submapperId }}</span>)</p>
+      <p>Mapper: {{ wishbone.Cart.mapperName }} ({{ wishbone.Cart.mapperID }}<span *ngIf="wishbone.Cart.submapperId">, {{ wishbone.Cart.submapperId }}</span>)</p>
       <p>CRC: {{ wishbone.Cart.ROMHashFunction }} </p>
-      <p>Prg Roms: {{ wishbone.Cart.NumberOfPrgRoms }}</p>
-      <p>Chr Roms: {{ wishbone.Cart.NumberOfChrRoms }}</p>
+      <p>Prg Roms: {{ wishbone.Cart.prgRomCount }}</p>
+      <p>Chr Roms: {{ wishbone.Cart.chrRomCount }}</p>
   </div>
   <div>
     FPS: {{ wishbone.fps }}

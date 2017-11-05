@@ -1,6 +1,6 @@
 import { NgZone } from '@angular/core';
 
-import { CpuStatus, BaseCart, NesCart, MMC1Cart, MMC3Cart, ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU, GameGenieCode, ChiChiCheats  } from 'chichi';
+import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU, GameGenieCode, ChiChiCheats  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
@@ -432,16 +432,13 @@ export class WishboneMachine  {
         this.postNesMessage({ command: 'stop' });
     }
 
-    LoadCart(rom: any) {
-        const cartName = this.Cart.CartName;
-        const cart = iNESFileHandler.LoadROM(this.Cpu, rom);
+    LoadCart(rom: number[], romName: string) {
         this.Cart = new WishboneCart();
-        this.Cart.realCart = cart;
+        this.Cart.CartName = romName;
+        this.Cart.realCart = <BaseCart>iNESFileHandler.LoadROM(this.Cpu, rom);
         this.Cart.realCart.CPU = this.Cpu;
         this.Cart.realCart.Whizzler = this.ppu;
-
-        this.Cart.CartName = cartName;
-        this.Cart.ROMHashFunction = cart.ROMHashFunction;
+        this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
 
         this.tileDoodler = new TileDoodler(this.ppu);
         this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });

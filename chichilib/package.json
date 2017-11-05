@@ -16,7 +16,7 @@
   },
   "files": [
     "chichi.js",
-    "lib/chichi"
+    "lib/chichi/chichi"
   ],
   "devDependencies": {}
 }

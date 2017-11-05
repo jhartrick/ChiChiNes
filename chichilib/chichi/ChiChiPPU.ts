@@ -1,5 +1,5 @@
-import { BaseCart } from './ChiChiCarts'
-import { ChiChiSprite, PpuStatus } from './ChiChiTypes'
+import { BaseCart, IBaseCart } from './Carts/BaseCart';
+import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from "./ChiChiMachine";
 import { ChiChiBopper } from "./ChiChiAudio";
 
@@ -29,7 +29,7 @@ export class ChiChiPPU {
     }
 
     // Rom handler
-    chrRomHandler: BaseCart;
+    chrRomHandler: IBaseCart;
     
     // private members
     // scanline position
@@ -63,10 +63,10 @@ export class ChiChiPPU {
     backgroundPatternTableIndex: number = 0;
 
 
-    set ChrRomHandler(value: BaseCart) {
+    set ChrRomHandler(value: IBaseCart) {
         this.chrRomHandler = value;
     }
-    get ChrRomHandler(): BaseCart {
+    get ChrRomHandler(): IBaseCart {
         return this.chrRomHandler;
     }
 

@@ -1,6 +1,14 @@
-﻿import { BaseCart, ChiChiCPPU } from 'chichi';
+﻿import { IBaseCart, BaseCart, ChiChiCPPU } from 'chichi';
 
 export class WishboneCart {
+    
+    get supported() : boolean {
+        return this.realCart ? this.realCart.supported : false;
+    }
+
+    mapsBelow6000: boolean;
+    irqRaised: boolean;
+
 
     realCart: BaseCart = null;
 
@@ -15,20 +23,20 @@ export class WishboneCart {
     Mirroring: ChiChiNES.NameTableMirroring;
     CartName: string;
 
-    get NumberOfPrgRoms(): number {
-        return this.realCart ? this.realCart.NumberOfPrgRoms : -1;
+    get prgRomCount(): number {
+        return this.realCart ? this.realCart.prgRomCount : -1;
     }
 
-    get NumberOfChrRoms(): number {
-        return this.realCart ? this.realCart.NumberOfChrRoms : -1;
+    get chrRomCount(): number {
+        return this.realCart ? this.realCart.chrRomCount : -1;
     }
 
-    get MapperID(): number {
-        return this.realCart ? this.realCart.MapperID : -1;
+    get mapperID(): number {
+        return this.realCart ? this.realCart.mapperId : -1;
     }
 
-    get MapperName(): string {
-        return this.realCart ? this.realCart.MapperName : '';
+    get mapperName(): string {
+        return this.realCart ? this.realCart.mapperName : '';
     }
 
     get submapperId(): number {

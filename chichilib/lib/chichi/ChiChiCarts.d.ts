@@ -91,7 +91,31 @@ export declare class NesCart extends BaseCart {
     CopyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void;
     SetByte(clock: number, address: number, val: number): void;
 }
+export declare class UxROMCart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class Mapper071Cart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
 export declare class CNROMCart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class Mapper051Cart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class Mapper058Cart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class Mapper202Cart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class Mapper212Cart extends NesCart {
     InitializeCart(): void;
     SetByte(clock: number, address: number, val: number): void;
 }
@@ -121,6 +145,10 @@ export declare class Mapper070Cart extends NesCart {
     SetByte(clock: number, address: number, val: number): void;
 }
 export declare class Mapper077Cart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class Mapper093Cart extends NesCart {
     InitializeCart(): void;
     SetByte(clock: number, address: number, val: number): void;
 }
@@ -171,6 +199,14 @@ export declare class MMC1Cart extends BaseCart {
     SetMMC1Mirroring(clock: number): void;
 }
 export declare class MMC2Cart extends BaseCart {
+    selector: number[];
+    banks: number[];
+    InitializeCart(): void;
+    CopyBanks(clock: number, dest: number, src: number, numberOf4kBanks: number): void;
+    GetPPUByte(clock: number, address: number): number;
+    SetByte(clock: number, address: number, val: number): void;
+}
+export declare class MMC4Cart extends BaseCart {
     selector: number[];
     banks: number[];
     InitializeCart(): void;

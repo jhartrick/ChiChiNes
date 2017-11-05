@@ -1,4 +1,4 @@
-import { BaseCart } from './ChiChiCarts';
+import { BaseCart, IBaseCart } from './Carts/BaseCart';
 import { WavSharer, ChiChiBopper } from './ChiChiAudio';
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, RunningStatuses, CpuStatus } from './ChiChiTypes';
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl';
@@ -138,7 +138,7 @@ export declare class ChiChiCPPU {
     removeDebugEvent(value: (sender: any, e: any) => void): void;
     CurrentInstruction: ChiChiInstruction;
     SoundBopper: ChiChiBopper;
-    Cart: BaseCart;
+    Cart: IBaseCart;
     FrameOn: boolean;
     CurrentFrame: number[];
     Clock: number;

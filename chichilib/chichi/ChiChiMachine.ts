@@ -1,4 +1,5 @@
-﻿import { BaseCart, NesCart, MMC1Cart, MMC3Cart, AxROMCart, iNESFileHandler } from './ChiChiCarts'
+﻿import { iNESFileHandler } from './ChiChiCarts'
+import { BaseCart, IBaseCart } from './Carts/BaseCart'
 import { WavSharer, ChiChiBopper } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
@@ -34,7 +35,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
         ppu: ChiChiPPU;
         Cpu: ChiChiCPPU;
         get Cart(): BaseCart {
-            return this.Cpu.Cart;
+            return <BaseCart>this.Cpu.Cart;
         }
 
         SoundBopper: ChiChiBopper;
@@ -412,7 +413,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
 
         SoundBopper: ChiChiBopper;
 
-        Cart: BaseCart;
+        Cart: IBaseCart;
 
         FrameOn: boolean;
 
@@ -518,7 +519,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
 
             //FetchNextInstruction();
             this._currentInstruction_Address = this._programCounter;
-            this._currentInstruction_OpCode = this.GetByte(this._programCounter++);
+            this._currentInstruction_OpCode = this.GetByte((this._programCounter++) & 0xFFFF);
             this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
 
             //FetchInstructionParameters();
@@ -528,8 +529,8 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                 case ChiChiCPPU_AddressingModes.AbsoluteY:
                 case ChiChiCPPU_AddressingModes.Indirect:
                     // case AddressingModes.IndirectAbsoluteX:
-                    this._currentInstruction_Parameters0 = this.GetByte(this._programCounter++);
-                    this._currentInstruction_Parameters1 = this.GetByte(this._programCounter++);
+                    this._currentInstruction_Parameters0 = this.GetByte((this._programCounter++) & 0xFFFF);
+                    this._currentInstruction_Parameters1 = this.GetByte((this._programCounter++) & 0xFFFF);
                     break;
                 case ChiChiCPPU_AddressingModes.ZeroPage:
                 case ChiChiCPPU_AddressingModes.ZeroPageX:
@@ -539,7 +540,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                 case ChiChiCPPU_AddressingModes.IndirectIndexed:
                 case ChiChiCPPU_AddressingModes.IndirectZeroPage:
                 case ChiChiCPPU_AddressingModes.Immediate:
-                    this._currentInstruction_Parameters0 = this.GetByte(this._programCounter++);
+                    this._currentInstruction_Parameters0 = this.GetByte((this._programCounter++) & 0xFFFF);
                     break;
                 case ChiChiCPPU_AddressingModes.Accumulator:
                 case ChiChiCPPU_AddressingModes.Implicit:
@@ -1253,8 +1254,10 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
             if ((addr & 128) === 128) {
                 addr = addr - 256;
                 this._programCounter += addr;
+                this._programCounter &= 0xFFFF;
             } else {
                 this._programCounter += addr;
+                this._programCounter &= 0xFFFF;
             }
 
             if ((this._programCounter & 255) < addr) {
@@ -1322,9 +1325,11 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                             result = this.SoundBopper.GetByte(this.clock, address);
                             break;
                         default:
-                            // result = this.Cart.GetByte(this.clock, address);
-                            result = address >> 8;
-                            break;
+                            if (this.Cart.mapsBelow6000)
+                                result = this.Cart.GetByte(this.clock, address);
+                            else
+                                result = address >> 8;
+                          break;
                     }
                     break;
                 case 20480:
@@ -1497,6 +1502,9 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                             this._padOne.SetByte(this.clock, address, data & 1);
                             this._padTwo.SetByte(this.clock, address, data & 1);
                             break;
+                        default:
+                            if (this.Cart.mapsBelow6000)
+                                this.Cart.SetByte(this.clock, address, data);
                     }
                     break;
             }

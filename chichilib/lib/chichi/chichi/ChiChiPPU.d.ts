@@ -1,4 +1,4 @@
-import { BaseCart } from './ChiChiCarts';
+import { BaseCart, IBaseCart } from './Carts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from "./ChiChiMachine";
 import { ChiChiBopper } from "./ChiChiAudio";
@@ -17,7 +17,7 @@ export declare class ChiChiPPU {
     frameFinished: () => void;
     cpu: ChiChiCPPU;
     constructor();
-    chrRomHandler: BaseCart;
+    chrRomHandler: IBaseCart;
     private yPosition;
     private xPosition;
     private vbufLocation;
@@ -37,7 +37,7 @@ export declare class ChiChiPPU {
     private _spritesAreVisible;
     private nameTableMemoryStart;
     backgroundPatternTableIndex: number;
-    ChrRomHandler: BaseCart;
+    ChrRomHandler: IBaseCart;
     PPU_IRQAsserted: boolean;
     readonly NextEventAt: number;
     PPU_SpriteCopyHasHappened: boolean;

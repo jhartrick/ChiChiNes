@@ -43,7 +43,7 @@ export class TileDoodler {
             const entryLoc = (PatternTable + (TileIndex << 4))  + i;
             const patternEntry = this.ppu.ChrRomHandler.GetPPUByte(0, entryLoc);
 
-            actualAddress[i] = this.ppu.ChrRomHandler.ActualChrRomOffset(entryLoc);
+            actualAddress[i] = this.ppu.ChrRomHandler.GetPPUByte(0, entryLoc);
 
             const patternEntryBit2 = this.ppu.ChrRomHandler.GetPPUByte(0, entryLoc + 8);
 
