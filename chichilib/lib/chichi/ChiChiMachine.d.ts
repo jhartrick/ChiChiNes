@@ -28,6 +28,7 @@ export declare class ChiChiMachine {
     PowerOn(): void;
     PowerOff(): void;
     Step(): void;
+    evenFrame: boolean;
     RunFrame(): void;
     EjectCart(): void;
     LoadNSF(rom: any): void;

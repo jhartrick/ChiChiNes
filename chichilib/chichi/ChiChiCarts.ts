@@ -56,8 +56,6 @@ export class iNESFileHandler  {
 
 // byte 12 (video RAM size) 
 
-
-
                 let prgRomCount: number = iNesHeader[4]; // | (upperPrgRomSize << 8);
                 let chrRomCount: number = iNesHeader[5]; // | (upperChrRomSize << 8);
                 const prgRomLength = prgRomCount * 16384;
@@ -83,11 +81,25 @@ export class iNESFileHandler  {
                 BaseCart.arrayCopy(thefile, chrOffset, chrRom, 0, len);
                 // zipStream.Read(chrRom, 0, chrRom.Length);
                 switch (mapperId) {
+                    case 58: 
+                        _cart = new Mapper058Cart();
+                        break;
                     case 9: 
-                    _cart = new MMC2Cart();
-                    break;
-                    case 0:
+                        _cart = new MMC2Cart();
+                        break;
+                    case 93: 
+                        _cart = new Mapper093Cart();
+                        break;                        
+                    case 77: 
+                        _cart = new Mapper077Cart();
+                        break;
                     case 2:
+                        _cart = new UxROMCart();
+                        break;
+                    case 71:
+                        _cart = new Mapper071Cart();
+                        break;
+                    case 0:
                     case 180:
                         _cart = new NesCart();
                         break;
@@ -156,48 +168,11 @@ export class iNESFileHandler  {
                 return _cart;
             }
     
-            static LoadNSF(cpu: ChiChiCPPU, thefile: number[]): BaseCart {
-                let _cart: NsfCart = null;
-    
-                let iNesHeader = thefile.slice(0, 0x80);
-                let bytesRead = 0x80;
-
-                let mapperId = (iNesHeader[6] & 240);
-                mapperId = mapperId >> 4;
-                mapperId = (mapperId + iNesHeader[7]) | 0;
-    
-                const prgRomLength = thefile.length - 0x80; 
-                const theRom = new Array<number>(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
-                theRom.fill(0);
-                const chrRom = new Array<number>(0);
-                chrRom.fill(0);
-    
-                //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-                //chrRom.fill(0);
-                let chrOffset = 0;
-    
-                //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
-                BaseCart.arrayCopy(thefile, 0x80, theRom, 0, theRom.length);
-    
-                //zipStream.Read(chrRom, 0, chrRom.Length);
-                _cart = new NsfCart();
-                if (_cart != null) {
-                    _cart.Whizzler = cpu.ppu;
-                    _cart.CPU = cpu;
-                    cpu.Cart = _cart;
-                    cpu.ppu.ChrRomHandler = _cart;
-                    _cart.ROMHashFunction = null; //Hashers.HashFunction;
-                    //_cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-                }
-    
-                return _cart;
-            }
-            
         }
     
 
 
-        export enum NameTableMirroring {
+export enum NameTableMirroring {
     OneScreen = 0,
     Vertical = 1,
     Horizontal = 2,
@@ -628,9 +603,6 @@ export class NesCart extends BaseCart {
         case 0:
             this.mapperName = 'NROM';
             break;
-        case 2:
-            this.mapperName = 'UxROM';
-            break;
         case 3:
             this.mapperName = 'CNROM';
             break;
@@ -642,7 +614,6 @@ export class NesCart extends BaseCart {
 
         switch (this.mapperId) {
             case 0:
-            case 2:
             case 180:
             
             case 3:
@@ -658,19 +629,69 @@ export class NesCart extends BaseCart {
     CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void {
 
         if (dest >= this.chrRomCount) {
-            dest = (this.chrRomCount - 1) | 0;
+            dest = this.chrRomCount - 1;
         }
 
         var oneKsrc = src << 3;
         var oneKdest = dest << 3;
         //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
         //  setup ppuBankStarts in 0x400 block chunks 
-        for (var i = 0; i < (numberOf8kBanks << 3); i = (i + 1) | 0) {
-            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
+        for (var i = 0; i < (numberOf8kBanks << 3); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
 
         }
         this.UpdateBankStartCache();
     }
+    CopyBanks4k(clock: number, dest: number, src: number, numberOf4kBanks: number): void {
+        
+
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+
+        var oneKsrc = src << 2;
+        var oneKdest = dest << 2;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+
+        }
+        this.UpdateBankStartCache();
+    }    
+    CopyBanks2k(clock: number, dest: number, src: number, numberOf2kBanks: number): void {
+        
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+
+        var oneKsrc = src << 1;
+        var oneKdest = dest << 1;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf2kBanks << 1); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+
+        }
+        this.UpdateBankStartCache();
+    }
+    CopyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
+        
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+
+        var oneKsrc = src ;
+        var oneKdest = dest ;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < numberOf1kBanks ; i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+
+        }
+        this.UpdateBankStartCache();
+    }    
+
     SetByte(clock: number, address: number, val: number): void {
         if (address >= 24576 && address <= 32767) {
             if (this.SRAMEnabled) {
@@ -685,16 +706,6 @@ export class NesCart extends BaseCart {
             this.CopyBanks(clock, 0, val, 1);
         }
 
-        if (this.mapperId === 2 && address >= 32768) {
-            let newbank81 = 0;
-
-            newbank81 = val * 2;
-            // keep two high banks, swap low banks
-
-            // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
-            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
-        }
-
         if (this.mapperId === 180 && address >= 32768) {
             let newbankC1 = 0;
 
@@ -707,6 +718,51 @@ export class NesCart extends BaseCart {
 
     }
 }
+
+export class UxROMCart extends NesCart {
+    InitializeCart(): void {
+        this.mapperName = 'UxROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x8000) {
+            let newbank81 = 0;
+
+            newbank81 = val << 1;
+            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
+        }
+
+    }
+    
+}
+
+export class Mapper071Cart extends NesCart {
+    InitializeCart(): void {
+        this.mapperName = 'Camerica UNROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x8000) {
+            let newbank81 = 0;
+
+            newbank81 = val << 1;
+            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
+        }
+
+    }
+    
+}
+
 
 export class CNROMCart extends NesCart {
 
@@ -726,6 +782,40 @@ export class CNROMCart extends NesCart {
         if (address >= 0x8000) {
             this.Whizzler.DrawTo(clock);
             this.CopyBanks(clock, 0, val, 1);
+        }
+    }
+    
+}
+
+export class Mapper058Cart extends NesCart {
+    InitializeCart() {
+        this.mapperName = 'Charlie Multi-Cart';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1,  2, 3);
+       }
+
+    SetByte(clock: number, address: number, val: number): void {
+        if (address >= 0x8000) {
+            let mode = (address >> 6) & 0x01;
+
+            if (mode)  {
+                // 16k banks 
+                let newbank81 = (address & 7) << 1;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
+                    
+            } else {
+                // 32k banks 
+                let newbank81 = 0;
+                newbank81 = (address & 7) << 2;
+                this.SetupBankStarts(newbank81, newbank81 + 1 ,  newbank81 + 2,  newbank81 + 3);
+        
+            }
+
+            this.Whizzler.DrawTo(clock);
+            this.Mirror(clock, (( address >> 7) & 0x1) + 1 );
+            this.CopyBanks(clock, 0,(address >> 3) & 7, 1);
         }
     }
     
@@ -779,7 +869,6 @@ export class Mapper145Cart extends NesCart {
         
 }
 
-
 export class VSSystemGames extends NesCart {
     
             //for (var i = 0; i < 8; i = (i + 1) | 0) {
@@ -813,7 +902,6 @@ export class VSSystemGames extends NesCart {
         
 }
 
-
 export class ColorDreams extends NesCart {
     // https://wiki.nesdev.com/w/index.php/Color_Dreams
     InitializeCart(): void {
@@ -846,7 +934,6 @@ export class ColorDreams extends NesCart {
     }
 
 }
-
 
 export class MHROMCart extends NesCart {
     InitializeCart(): void {
@@ -898,6 +985,56 @@ export class Mapper070Cart extends NesCart {
             
             this.Whizzler.DrawTo(clock);
             this.CopyBanks(clock, 0, chrbank, 1);
+        }
+
+    }
+
+}
+
+export class Mapper077Cart extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = '~Mapper 077';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            const prgbank = (val & 0xF) << 2;
+            const chrbank = ((val >> 4) & 0xF);
+
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks2k(clock, 0, chrbank, 1);
+        }
+
+    }
+
+}
+
+export class Mapper093Cart extends NesCart {
+    InitializeCart(): void {
+        
+        this.mapperName = 'Sunsoft-2';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            
+            const prgbank = ((val >> 4) & 0x7) << 1;
+
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+            
         }
 
     }
@@ -1069,102 +1206,7 @@ export class AxROMCart extends BaseCart {
  
  
  }
- 
 
-
- export class NsfCart extends BaseCart {copyright: string;
-    artist: string;songName: string;
-    firstSong: number;songCount: number;
-    runNsfAt: number;
-    initNsfAt: number;
-    loadNsfAt: number = 0;
-    bank_select = 0;
-    rams = new Uint8Array(0xFFFFFFFF);
-    InitializeCart() {
-        this.mapperName = 'NSF';
-        
-    }
-
-    GetPPUByte(clock: number, address: number): number {
-        return 0;
-    }
-
-    GetByte(clock: number, address: number): number {
-        return this.rams[address];
-    }
-
-    __SetByte(address: number, data: number) {
-        var bank = 0;
-        this.rams[address] = data;
-    }
-
-    LoadNSFFile(header: number[], prgRoms: number, chrRoms: number, prgRomData: number[], chrRomData: number[], chrRomOffset: number): void {
-        this.mapperId = -1;
-        //        $000    5   STRING  'N', 'E', 'S', 'M', $1A(denotes an NES sound format file)
-        //        $005    1   BYTE    Version number (currently $01)
-        //        $006    1   BYTE    Total songs   (1 = 1 song, 2 = 2 songs, etc)
-        //        $007    1   BYTE    Starting song (1 = 1st song, 2 = 2nd song, etc)
-        //        $008    2   WORD    (lo, hi) load address of data ($8000 - FFFF)
-        //        $00A    2   WORD    (lo, hi) init address of data ($8000 - FFFF)
-        //        $00C    2   WORD    (lo, hi) play address of data ($8000 - FFFF)
-        //        $00E    32  STRING  The name of the song, null terminated
-        //        $02E    32  STRING  The artist, if known, null terminated
-        //        $04E    32  STRING  The copyright holder, null terminated
-        //        $06E    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, NTSC(see text)
-        //        $070    8   BYTE    Bankswitch init values (see text, and FDS section)
-        //        $078    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, PAL(see text)
-        //        $07A    1   BYTE    PAL/ NTSC bits
-        //        bit 0: if clear, this is an NTSC tune
-        //        bit 0: if set, this is a PAL tune
-        //        bit 1: if set, this is a dual PAL/ NTSC tune
-        //        bits 2- 7: not used.they * must * be 0
-        //        $07B    1   BYTE    Extra Sound Chip Support
-        //        bit 0: if set, this song uses VRC6 audio
-        //        bit 1: if set, this song uses VRC7 audio
-        //        bit 2: if set, this song uses FDS audio
-        //        bit 3: if set, this song uses MMC5 audio
-        //        bit 4: if set, this song uses Namco 163 audio
-        //        bit 5: if set, this song uses Sunsoft 5B audio
-        //        bits 6, 7: future expansion: they * must * be 0
-        //        $07C    1   BYTE    Extra Sound Chip Support (Cont.)
-        //        bits 0- 3: future expansion: they * must * be 0
-        //        bits 4- 7: unavailable(conflicts with NSF2 backwards compatibility)
-        //        $07D    3   ----    3 extra bytes for expansion (must be $00)
-        //        $080    nnn ----    The music program/ data follows until end of file
-        this.prgRomCount = prgRoms;
-        this.chrRomCount = chrRoms;
-
-        this.SetupBankStarts(0, 1, 3, 4);
-        this.songCount = header[0x06];
-        this.firstSong = header[0x07];
-
-        this.loadNsfAt = (header[0x09] << 8) + header[0x08];
-        this.initNsfAt = (header[0x0B] << 8) + header[0x0A];
-        this.runNsfAt = (header[0x0D] << 8) + header[0x0C];
-
-
-        this.songName = header.slice(0x0E, 0x0e + 32).map((v) => { return String.fromCharCode(v); }).join('').trim();
-        this.artist = header.slice(0x02E, 0x0e + 32).map((v) => { return String.fromCharCode(v); }).join('').trim();
-        this.copyright = header.slice(0x4E, 0x0e + 32).map((v) => { return String.fromCharCode(v); }).join('').trim();
-
-        let address = this.loadNsfAt;
-        for (let i = 0; i < prgRomData.length - 0x80; ++i) {
-            this.__SetByte(address + i, prgRomData[0x80 + i]);
-        }
-        // set init code at reset spot
-        this.__SetByte(0xFFFC, header[0x0A]);
-        this.__SetByte(0xFFFD, header[0x0B]);// << 8)
-
-        this.prgRomCount = prgRomData.length / 1024;
-        this.chrRomCount = 0;//this.iNesHeader[5];
-
-        this.SRAMEnabled = true;
-        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
-
-        this.InitializeCart();
-    }
-
-}
 
 export class BNROMCart extends AxROMCart {
     InitializeCart(): void {
@@ -1454,7 +1496,7 @@ export class MMC2Cart extends BaseCart {
     
     InitializeCart() {
         this.mapperName='MMC2';
-        this.selector[0] = 0;
+        this.selector[0] = 1;
         this.selector[1] = 2;
 
         this.banks[0] = 0;
@@ -1490,22 +1532,30 @@ export class MMC2Cart extends BaseCart {
     }
     GetPPUByte(clock: number, address: number) : number {
         var bank: number =0;
-        switch (address & 0xFF8)
+        if (address == 0xFD8)
         {
-            case 0xFD8: 
-                bank = (address >> 11 & 0x2) | 0x0; 
-                this.selector[address >> 12] = bank;
+                bank = (address >> 11) & 0x2; 
+                this.selector[0] = bank;
                 this.Whizzler.DrawTo(clock);
-                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.CopyBanks(clock,1,this.banks[this.selector[1]], 1);
-                break;
-            case 0xFE8: 
-                bank = (address >> 11 & 0x2) | 0x1; 
-                this.selector[address >> 12] = bank;
+                this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
+        }else if (address == 0xFE8) {
+            
+                bank = ((address >> 11) & 0x2) | 0x1; 
+                this.selector[0] = bank;
                 this.Whizzler.DrawTo(clock);
-               // this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
+                this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
+        }else if (address >= 0x1FD8 && address <= 0x1FDF)
+        {
+                bank = (address >> 11) & 0x2; 
+                this.selector[1] = bank;
+                this.Whizzler.DrawTo(clock);
                 this.CopyBanks(clock,1,this.banks[this.selector[1]], 1);
-                break;
+        }else if (address >= 0x1FE8 && address <= 0x1FEF) {
+            
+                bank = ((address >> 11) & 0x2) | 0x1; 
+                this.selector[1] = bank;
+                this.Whizzler.DrawTo(clock);
+                this.CopyBanks(clock,1,this.banks[this.selector[1]], 1);
         }
 
         bank = address >> 10 ;

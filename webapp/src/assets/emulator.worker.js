@@ -3237,6 +3237,7 @@ var ChiChiMachine = /** @class */ (function () {
         this.frameOn = false;
         this.totalCPUClocks = 0;
         this._enableSound = false;
+        this.evenFrame = true;
         var wavSharer = new ChiChiAudio_1.WavSharer();
         this.SoundBopper = new ChiChiAudio_1.ChiChiBopper(wavSharer);
         this.WaveForms = wavSharer;
@@ -4815,11 +4816,25 @@ var iNESFileHandler = /** @class */ (function () {
         BaseCart.arrayCopy(thefile, chrOffset, chrRom, 0, len);
         // zipStream.Read(chrRom, 0, chrRom.Length);
         switch (mapperId) {
+            case 58:
+                _cart = new Mapper058Cart();
+                break;
             case 9:
                 _cart = new MMC2Cart();
                 break;
-            case 0:
+            case 93:
+                _cart = new Mapper093Cart();
+                break;
+            case 77:
+                _cart = new Mapper077Cart();
+                break;
             case 2:
+                _cart = new UxROMCart();
+                break;
+            case 71:
+                _cart = new Mapper071Cart();
+                break;
+            case 0:
             case 180:
                 _cart = new NesCart();
                 break;
@@ -4881,35 +4896,6 @@ var iNESFileHandler = /** @class */ (function () {
             cpu.ppu.ChrRomHandler = _cart;
             _cart.ROMHashFunction = crc.crc32(new Buffer(thefile.slice(16, thefile.length))).toString(16).toUpperCase(); //Hashers.HashFunction;
             _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-        }
-        return _cart;
-    };
-    iNESFileHandler.LoadNSF = function (cpu, thefile) {
-        var _cart = null;
-        var iNesHeader = thefile.slice(0, 0x80);
-        var bytesRead = 0x80;
-        var mapperId = (iNesHeader[6] & 240);
-        mapperId = mapperId >> 4;
-        mapperId = (mapperId + iNesHeader[7]) | 0;
-        var prgRomLength = thefile.length - 0x80;
-        var theRom = new Array(prgRomLength); //System.Array.init(Bridge.Int.mul(prgRomCount, 16384), 0, System.Byte);
-        theRom.fill(0);
-        var chrRom = new Array(0);
-        chrRom.fill(0);
-        //var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-        //chrRom.fill(0);
-        var chrOffset = 0;
-        //bytesRead = zipStream.Read(theRom, 0, theRom.Length);
-        BaseCart.arrayCopy(thefile, 0x80, theRom, 0, theRom.length);
-        //zipStream.Read(chrRom, 0, chrRom.Length);
-        _cart = new NsfCart();
-        if (_cart != null) {
-            _cart.Whizzler = cpu.ppu;
-            _cart.CPU = cpu;
-            cpu.Cart = _cart;
-            cpu.ppu.ChrRomHandler = _cart;
-            _cart.ROMHashFunction = null; //Hashers.HashFunction;
-            //_cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
         }
         return _cart;
     };
@@ -5291,9 +5277,6 @@ var NesCart = /** @class */ (function (_super) {
             case 0:
                 this.mapperName = 'NROM';
                 break;
-            case 2:
-                this.mapperName = 'UxROM';
-                break;
             case 3:
                 this.mapperName = 'CNROM';
                 break;
@@ -5303,7 +5286,6 @@ var NesCart = /** @class */ (function (_super) {
         }
         switch (this.mapperId) {
             case 0:
-            case 2:
             case 180:
             case 3:
                 if (this.chrRomCount > 0) {
@@ -5317,14 +5299,53 @@ var NesCart = /** @class */ (function (_super) {
     };
     NesCart.prototype.CopyBanks = function (clock, dest, src, numberOf8kBanks) {
         if (dest >= this.chrRomCount) {
-            dest = (this.chrRomCount - 1) | 0;
+            dest = this.chrRomCount - 1;
         }
         var oneKsrc = src << 3;
         var oneKdest = dest << 3;
         //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
         //  setup ppuBankStarts in 0x400 block chunks 
-        for (var i = 0; i < (numberOf8kBanks << 3); i = (i + 1) | 0) {
-            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
+        for (var i = 0; i < (numberOf8kBanks << 3); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    NesCart.prototype.CopyBanks4k = function (clock, dest, src, numberOf4kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src << 2;
+        var oneKdest = dest << 2;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    NesCart.prototype.CopyBanks2k = function (clock, dest, src, numberOf2kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src << 1;
+        var oneKdest = dest << 1;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < (numberOf2kBanks << 1); i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
+        }
+        this.UpdateBankStartCache();
+    };
+    NesCart.prototype.CopyBanks1k = function (clock, dest, src, numberOf1kBanks) {
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 1;
+        }
+        var oneKsrc = src;
+        var oneKdest = dest;
+        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
+        //  setup ppuBankStarts in 0x400 block chunks 
+        for (var i = 0; i < numberOf1kBanks; i++) {
+            this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
         }
         this.UpdateBankStartCache();
     };
@@ -5338,13 +5359,6 @@ var NesCart = /** @class */ (function (_super) {
         if (this.mapperId === 3 && address >= 0x8000) {
             this.CopyBanks(clock, 0, val, 1);
         }
-        if (this.mapperId === 2 && address >= 32768) {
-            var newbank81 = 0;
-            newbank81 = val * 2;
-            // keep two high banks, swap low banks
-            // SetupBanks(newbank8, newbank8 + 1, currentC, currentE);
-            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
-        }
         if (this.mapperId === 180 && address >= 32768) {
             var newbankC1 = 0;
             newbankC1 = val * 2;
@@ -5356,6 +5370,50 @@ var NesCart = /** @class */ (function (_super) {
     return NesCart;
 }(BaseCart));
 exports.NesCart = NesCart;
+var UxROMCart = /** @class */ (function (_super) {
+    __extends(UxROMCart, _super);
+    function UxROMCart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    UxROMCart.prototype.InitializeCart = function () {
+        this.mapperName = 'UxROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    UxROMCart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var newbank81 = 0;
+            newbank81 = val << 1;
+            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
+        }
+    };
+    return UxROMCart;
+}(NesCart));
+exports.UxROMCart = UxROMCart;
+var Mapper071Cart = /** @class */ (function (_super) {
+    __extends(Mapper071Cart, _super);
+    function Mapper071Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper071Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Camerica UNROM';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper071Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var newbank81 = 0;
+            newbank81 = val << 1;
+            this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
+        }
+    };
+    return Mapper071Cart;
+}(NesCart));
+exports.Mapper071Cart = Mapper071Cart;
 var CNROMCart = /** @class */ (function (_super) {
     __extends(CNROMCart, _super);
     function CNROMCart() {
@@ -5381,6 +5439,40 @@ var CNROMCart = /** @class */ (function (_super) {
     return CNROMCart;
 }(NesCart));
 exports.CNROMCart = CNROMCart;
+var Mapper058Cart = /** @class */ (function (_super) {
+    __extends(Mapper058Cart, _super);
+    function Mapper058Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper058Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Charlie Multi-Cart';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, 2, 3);
+    };
+    Mapper058Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000) {
+            var mode = (address >> 6) & 0x01;
+            if (mode) {
+                // 16k banks 
+                var newbank81 = (address & 7) << 1;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
+            }
+            else {
+                // 32k banks 
+                var newbank81 = 0;
+                newbank81 = (address & 7) << 2;
+                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
+            }
+            this.Whizzler.DrawTo(clock);
+            this.Mirror(clock, ((address >> 7) & 0x1) + 1);
+            this.CopyBanks(clock, 0, (address >> 3) & 7, 1);
+        }
+    };
+    return Mapper058Cart;
+}(NesCart));
+exports.Mapper058Cart = Mapper058Cart;
 var Mapper087Cart = /** @class */ (function (_super) {
     __extends(Mapper087Cart, _super);
     function Mapper087Cart() {
@@ -5550,6 +5642,51 @@ var Mapper070Cart = /** @class */ (function (_super) {
     return Mapper070Cart;
 }(NesCart));
 exports.Mapper070Cart = Mapper070Cart;
+var Mapper077Cart = /** @class */ (function (_super) {
+    __extends(Mapper077Cart, _super);
+    function Mapper077Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper077Cart.prototype.InitializeCart = function () {
+        this.mapperName = '~Mapper 077';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper077Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var prgbank = (val & 0xF) << 2;
+            var chrbank = ((val >> 4) & 0xF);
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks2k(clock, 0, chrbank, 1);
+        }
+    };
+    return Mapper077Cart;
+}(NesCart));
+exports.Mapper077Cart = Mapper077Cart;
+var Mapper093Cart = /** @class */ (function (_super) {
+    __extends(Mapper093Cart, _super);
+    function Mapper093Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper093Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Sunsoft-2';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper093Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var prgbank = ((val >> 4) & 0x7) << 1;
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+        }
+    };
+    return Mapper093Cart;
+}(NesCart));
+exports.Mapper093Cart = Mapper093Cart;
 var Mapper152Cart = /** @class */ (function (_super) {
     __extends(Mapper152Cart, _super);
     function Mapper152Cart() {
@@ -5700,88 +5837,6 @@ var AxROMCart = /** @class */ (function (_super) {
     return AxROMCart;
 }(BaseCart));
 exports.AxROMCart = AxROMCart;
-var NsfCart = /** @class */ (function (_super) {
-    __extends(NsfCart, _super);
-    function NsfCart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.loadNsfAt = 0;
-        _this.bank_select = 0;
-        _this.rams = new Uint8Array(0xFFFFFFFF);
-        return _this;
-    }
-    NsfCart.prototype.InitializeCart = function () {
-        this.mapperName = 'NSF';
-    };
-    NsfCart.prototype.GetPPUByte = function (clock, address) {
-        return 0;
-    };
-    NsfCart.prototype.GetByte = function (clock, address) {
-        return this.rams[address];
-    };
-    NsfCart.prototype.__SetByte = function (address, data) {
-        var bank = 0;
-        this.rams[address] = data;
-    };
-    NsfCart.prototype.LoadNSFFile = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
-        this.mapperId = -1;
-        //        $000    5   STRING  'N', 'E', 'S', 'M', $1A(denotes an NES sound format file)
-        //        $005    1   BYTE    Version number (currently $01)
-        //        $006    1   BYTE    Total songs   (1 = 1 song, 2 = 2 songs, etc)
-        //        $007    1   BYTE    Starting song (1 = 1st song, 2 = 2nd song, etc)
-        //        $008    2   WORD    (lo, hi) load address of data ($8000 - FFFF)
-        //        $00A    2   WORD    (lo, hi) init address of data ($8000 - FFFF)
-        //        $00C    2   WORD    (lo, hi) play address of data ($8000 - FFFF)
-        //        $00E    32  STRING  The name of the song, null terminated
-        //        $02E    32  STRING  The artist, if known, null terminated
-        //        $04E    32  STRING  The copyright holder, null terminated
-        //        $06E    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, NTSC(see text)
-        //        $070    8   BYTE    Bankswitch init values (see text, and FDS section)
-        //        $078    2   WORD    (lo, hi) Play speed, in 1 / 1000000th sec ticks, PAL(see text)
-        //        $07A    1   BYTE    PAL/ NTSC bits
-        //        bit 0: if clear, this is an NTSC tune
-        //        bit 0: if set, this is a PAL tune
-        //        bit 1: if set, this is a dual PAL/ NTSC tune
-        //        bits 2- 7: not used.they * must * be 0
-        //        $07B    1   BYTE    Extra Sound Chip Support
-        //        bit 0: if set, this song uses VRC6 audio
-        //        bit 1: if set, this song uses VRC7 audio
-        //        bit 2: if set, this song uses FDS audio
-        //        bit 3: if set, this song uses MMC5 audio
-        //        bit 4: if set, this song uses Namco 163 audio
-        //        bit 5: if set, this song uses Sunsoft 5B audio
-        //        bits 6, 7: future expansion: they * must * be 0
-        //        $07C    1   BYTE    Extra Sound Chip Support (Cont.)
-        //        bits 0- 3: future expansion: they * must * be 0
-        //        bits 4- 7: unavailable(conflicts with NSF2 backwards compatibility)
-        //        $07D    3   ----    3 extra bytes for expansion (must be $00)
-        //        $080    nnn ----    The music program/ data follows until end of file
-        this.prgRomCount = prgRoms;
-        this.chrRomCount = chrRoms;
-        this.SetupBankStarts(0, 1, 3, 4);
-        this.songCount = header[0x06];
-        this.firstSong = header[0x07];
-        this.loadNsfAt = (header[0x09] << 8) + header[0x08];
-        this.initNsfAt = (header[0x0B] << 8) + header[0x0A];
-        this.runNsfAt = (header[0x0D] << 8) + header[0x0C];
-        this.songName = header.slice(0x0E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
-        this.artist = header.slice(0x02E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
-        this.copyright = header.slice(0x4E, 0x0e + 32).map(function (v) { return String.fromCharCode(v); }).join('').trim();
-        var address = this.loadNsfAt;
-        for (var i = 0; i < prgRomData.length - 0x80; ++i) {
-            this.__SetByte(address + i, prgRomData[0x80 + i]);
-        }
-        // set init code at reset spot
-        this.__SetByte(0xFFFC, header[0x0A]);
-        this.__SetByte(0xFFFD, header[0x0B]); // << 8)
-        this.prgRomCount = prgRomData.length / 1024;
-        this.chrRomCount = 0; //this.iNesHeader[5];
-        this.SRAMEnabled = true;
-        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
-        this.InitializeCart();
-    };
-    return NsfCart;
-}(BaseCart));
-exports.NsfCart = NsfCart;
 var BNROMCart = /** @class */ (function (_super) {
     __extends(BNROMCart, _super);
     function BNROMCart() {
@@ -6047,7 +6102,7 @@ var MMC2Cart = /** @class */ (function (_super) {
     }
     MMC2Cart.prototype.InitializeCart = function () {
         this.mapperName = 'MMC2';
-        this.selector[0] = 0;
+        this.selector[0] = 1;
         this.selector[1] = 2;
         this.banks[0] = 0;
         this.banks[1] = 0;
@@ -6075,21 +6130,29 @@ var MMC2Cart = /** @class */ (function (_super) {
     };
     MMC2Cart.prototype.GetPPUByte = function (clock, address) {
         var bank = 0;
-        switch (address & 0xFF8) {
-            case 0xFD8:
-                bank = (address >> 11 & 0x2) | 0x0;
-                this.selector[address >> 12] = bank;
-                this.Whizzler.DrawTo(clock);
-                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
-                break;
-            case 0xFE8:
-                bank = (address >> 11 & 0x2) | 0x1;
-                this.selector[address >> 12] = bank;
-                this.Whizzler.DrawTo(clock);
-                // this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
-                break;
+        if (address == 0xFD8) {
+            bank = (address >> 11) & 0x2;
+            this.selector[0] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+        }
+        else if (address == 0xFE8) {
+            bank = ((address >> 11) & 0x2) | 0x1;
+            this.selector[0] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+        }
+        else if (address >= 0x1FD8 && address <= 0x1FDF) {
+            bank = (address >> 11) & 0x2;
+            this.selector[1] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+        }
+        else if (address >= 0x1FE8 && address <= 0x1FEF) {
+            bank = ((address >> 11) & 0x2) | 0x1;
+            this.selector[1] = bank;
+            this.Whizzler.DrawTo(clock);
+            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
         }
         bank = address >> 10;
         var newAddress = this.ppuBankStarts[bank] + (address & 1023);
@@ -7964,11 +8027,6 @@ exports.ChiChiNsfCPPU = ChiChiNsfMachine_1.ChiChiNsfCPPU;
 exports.ChiChiNsfMachine = ChiChiNsfMachine_1.ChiChiNsfMachine;
 var ChiChiCarts_1 = __webpack_require__(6);
 exports.BaseCart = ChiChiCarts_1.BaseCart;
-exports.NesCart = ChiChiCarts_1.NesCart;
-exports.AxROMCart = ChiChiCarts_1.AxROMCart;
-exports.NsfCart = ChiChiCarts_1.NsfCart;
-exports.MMC1Cart = ChiChiCarts_1.MMC1Cart;
-exports.MMC3Cart = ChiChiCarts_1.MMC3Cart;
 exports.iNESFileHandler = ChiChiCarts_1.iNESFileHandler;
 var ChiChiControl_1 = __webpack_require__(8);
 exports.ChiChiInputHandler = ChiChiControl_1.ChiChiInputHandler;

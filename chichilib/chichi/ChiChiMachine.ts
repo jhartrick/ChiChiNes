@@ -1,4 +1,4 @@
-﻿import { BaseCart, NesCart, MMC1Cart, MMC3Cart, NsfCart, AxROMCart, iNESFileHandler } from './ChiChiCarts'
+﻿import { BaseCart, NesCart, MMC1Cart, MMC3Cart, AxROMCart, iNESFileHandler } from './ChiChiCarts'
 import { WavSharer, ChiChiBopper } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
@@ -116,6 +116,8 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                 this.frameJustEnded = true;
             }
         }
+
+        evenFrame=true;
 
         RunFrame(): void {
             this.frameOn = true;

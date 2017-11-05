@@ -2,7 +2,6 @@ import { ChiChiCPPU } from './ChiChiMachine';
 import { ChiChiPPU } from './ChiChiPPU';
 export declare class iNESFileHandler {
     static LoadROM(cpu: ChiChiCPPU, thefile: number[]): BaseCart;
-    static LoadNSF(cpu: ChiChiCPPU, thefile: number[]): BaseCart;
 }
 export declare enum NameTableMirroring {
     OneScreen = 0,
@@ -87,6 +86,9 @@ export declare class UnsupportedCart extends BaseCart {
 export declare class NesCart extends BaseCart {
     InitializeCart(): void;
     CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void;
+    CopyBanks4k(clock: number, dest: number, src: number, numberOf4kBanks: number): void;
+    CopyBanks2k(clock: number, dest: number, src: number, numberOf2kBanks: number): void;
+    CopyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void;
     SetByte(clock: number, address: number, val: number): void;
 }
 export declare class CNROMCart extends NesCart {
@@ -118,6 +120,10 @@ export declare class Mapper070Cart extends NesCart {
     InitializeCart(): void;
     SetByte(clock: number, address: number, val: number): void;
 }
+export declare class Mapper077Cart extends NesCart {
+    InitializeCart(): void;
+    SetByte(clock: number, address: number, val: number): void;
+}
 export declare class Mapper152Cart extends NesCart {
     InitializeCart(): void;
     SetByte(clock: number, address: number, val: number): void;
@@ -137,23 +143,6 @@ export declare class BitCorp038Cart extends NesCart {
 export declare class AxROMCart extends BaseCart {
     InitializeCart(): void;
     SetByte(clock: number, address: number, val: number): void;
-}
-export declare class NsfCart extends BaseCart {
-    copyright: string;
-    artist: string;
-    songName: string;
-    firstSong: number;
-    songCount: number;
-    runNsfAt: number;
-    initNsfAt: number;
-    loadNsfAt: number;
-    bank_select: number;
-    rams: Uint8Array;
-    InitializeCart(): void;
-    GetPPUByte(clock: number, address: number): number;
-    GetByte(clock: number, address: number): number;
-    __SetByte(address: number, data: number): void;
-    LoadNSFFile(header: number[], prgRoms: number, chrRoms: number, prgRomData: number[], chrRomData: number[], chrRomOffset: number): void;
 }
 export declare class BNROMCart extends AxROMCart {
     InitializeCart(): void;
