@@ -2,7 +2,7 @@ import { Blip } from "./CommonAudio";
 
 export class DMCChannel  {
     curSample: number;
-    freqs = [
+    pitchTable = [
         0x1AC * 12,
         0x17C * 12,
         0x154 * 12,
@@ -56,7 +56,7 @@ export class DMCChannel  {
         switch (register) {
         case 0:
             this.regs.ctrl = data;
-            this.frequency = this.freqs[data & this.REG0_FREQUENCY];
+            this.frequency = this.pitchTable[data & this.REG0_FREQUENCY];
             break;
         case 1:
             this.out.dac = data & 0x7F;

@@ -1,20 +1,19 @@
 ﻿{
   "compileOnSave": false,
   "compilerOptions": {
-    //"outDir": "../src/assets/",
-    "outFile": "../dist/chichi.worker.js",
+    "outDir": "../dist/workers/",
+    //"outFile": "../src/assets/emulator.worker.js",
     "sourceMap": false,
     "declaration": false,
     "moduleResolution": "node",
-    "module": "amd",
+    "module": "commonjs",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es5",
     "noImplicitAny": true,
     "suppressImplicitAnyIndexErrors": true,
     "typeRoots": [
-      "node_modules/@types",
-      "../chichi/types"
+      "node_modules/@types"
     ],
     "lib": [
       "webworker",

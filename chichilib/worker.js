@@ -1,14 +1,5 @@
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else if(typeof exports === 'object')
-		exports["emulator.worker"] = factory();
-	else
-		root["emulator.worker"] = factory();
-})(this, function() {
-return /******/ (function(modules) { // webpackBootstrap
+module.exports =
+/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -70,7 +61,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 11);
+/******/ 	return __webpack_require__(__webpack_require__.s = 41);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -88,9 +79,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-var base64 = __webpack_require__(14)
-var ieee754 = __webpack_require__(15)
-var isArray = __webpack_require__(16)
+var base64 = __webpack_require__(13)
+var ieee754 = __webpack_require__(14)
+var isArray = __webpack_require__(15)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -1868,7 +1859,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12)))
 
 /***/ }),
 /* 1 */
@@ -5758,17 +5749,17 @@ exports.ChiChiCPPU = ChiChiCPPU;
 /* WEBPACK VAR INJECTION */(function(Buffer) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var BaseCart_1 = __webpack_require__(1);
-var Discrete = __webpack_require__(17);
-var Multi = __webpack_require__(18);
-var MMC1 = __webpack_require__(19);
-var MMC2 = __webpack_require__(20);
-var MMC3 = __webpack_require__(21);
-var M068 = __webpack_require__(22);
-var Nsf = __webpack_require__(23);
-var Smb2j = __webpack_require__(24);
-var crc = __webpack_require__(25);
-var VS = __webpack_require__(37);
-var VRC = __webpack_require__(38);
+var Discrete = __webpack_require__(16);
+var Multi = __webpack_require__(17);
+var MMC1 = __webpack_require__(18);
+var MMC2 = __webpack_require__(19);
+var MMC3 = __webpack_require__(20);
+var M068 = __webpack_require__(21);
+var Nsf = __webpack_require__(22);
+var Smb2j = __webpack_require__(23);
+var crc = __webpack_require__(24);
+var VS = __webpack_require__(36);
+var VRC = __webpack_require__(37);
 var MapperFactory = /** @class */ (function () {
     function MapperFactory() {
         this[0] = Discrete.NesCart;
@@ -5913,7 +5904,7 @@ exports.iNESFileHandler = iNESFileHandler;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiTypes_1 = __webpack_require__(4);
-var DMCChannel_1 = __webpack_require__(39);
+var DMCChannel_1 = __webpack_require__(38);
 var CommonAudio_1 = __webpack_require__(5);
 var NoiseChannel = /** @class */ (function () {
     function NoiseChannel(bleeper, chan) {
@@ -6886,333 +6877,10 @@ exports.ChiChiControlPad = ChiChiControlPad;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var chichi_1 = __webpack_require__(12);
-var NesInfo = /** @class */ (function () {
-    function NesInfo() {
-        this.bufferupdate = false;
-        this.stateupdate = true;
-        this.runStatus = {};
-        this.cartInfo = {};
-        this.sound = {};
-        this.Cpu = {};
-        this.Cart = {};
-        this.debug = {
-            currentCpuStatus: {
-                PC: 0,
-                A: 0,
-                X: 0,
-                Y: 0,
-                SP: 0,
-                SR: 0
-            },
-            currentPPUStatus: {}
-        };
-    }
-    return NesInfo;
-}());
-var tendoWrapper = /** @class */ (function () {
-    function tendoWrapper() {
-        this.framesRendered = 0;
-        this.startTime = 0;
-        this.runTimeout = 0;
-        this.Debugging = false;
-        this.frameFinished = false;
-        this.ready = false;
-        this.framesPerSecond = 0;
-        this.iops = new Int32Array(16);
-        this.cartName = 'unk';
-        this.sharedAudioBufferPos = 0;
-        this.audioBytesWritten = 0;
-        this.buffers = {};
-        this.machine = new chichi_1.ChiChiMachine();
-    }
-    tendoWrapper.prototype.createMachine = function () {
-        var _this = this;
-        this.machine = new chichi_1.ChiChiMachine();
-        this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer;
-        this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer;
-        this.machine.SoundBopper.audioSettings = this.buffers.audioSettings;
-        this.machine.Drawscreen = function () {
-            // flush audio
-            // globals.postMessage({ frame: true, fps: framesPerSecond });
-        };
-        this.ready = true;
-        this.machine.Cpu.addDebugEvent(function () {
-            var info = new NesInfo();
-            info.debug = {
-                currentCpuStatus: _this.machine.Cpu.GetStatus ? _this.machine.Cpu.GetStatus() : {
-                    PC: 0,
-                    A: 0,
-                    X: 0,
-                    Y: 0,
-                    SP: 0,
-                    SR: 0
-                },
-                currentPPUStatus: _this.machine.ppu.GetPPUStatus ? _this.machine.ppu.GetPPUStatus() : {},
-                InstructionHistory: {
-                    Buffer: _this.machine.Cpu.InstructionHistory.slice(0),
-                    Index: _this.machine.Cpu.InstructionHistoryPointer,
-                    Finish: false
-                }
-            };
-            postMessage(info);
-            //this.updateState();
-        });
-        this.machine.Cpu.Debugging = false;
-    };
-    tendoWrapper.prototype.updateBuffers = function () {
-        var machine = this.machine;
-        var info = new NesInfo();
-        info.bufferupdate = true;
-        info.stateupdate = false;
-        if (this.machine && this.machine.Cart) {
-            info.Cpu = {
-                Rams: this.machine.Cpu.Rams,
-                spriteRAM: this.machine.Cpu.ppu.spriteRAM
-            };
-            info.Cart = {
-                //buffers
-                chrRom: this.machine.Cart.chrRom,
-                prgRomBank6: this.machine.Cart.prgRomBank6,
-                ppuBankStarts: this.machine.Cart.ppuBankStarts,
-                bankStartCache: this.machine.Cart.bankStartCache,
-            };
-            info.sound = {
-                waveForms_controlBuffer: this.machine.WaveForms.controlBuffer
-            };
-        }
-        postMessage(info);
-    };
-    tendoWrapper.prototype.updateState = function () {
-        var machine = this.machine;
-        var info = new NesInfo();
-        if (this.machine && this.machine.Cart) {
-            info.Cpu = {
-                //Rams: this.machine.Cpu.Rams,
-                status: this.machine.Cpu.GetStatus(),
-                ppuStatus: this.machine.Cpu.ppu.GetPPUStatus(),
-                backgroundPatternTableIndex: this.machine.Cpu.ppu.backgroundPatternTableIndex,
-                _PPUControlByte0: this.machine.Cpu.ppu._PPUControlByte0,
-                _PPUControlByte1: this.machine.Cpu.ppu._PPUControlByte1
-            };
-            info.cartInfo = {
-                mapperId: this.machine.Cart.MapperID,
-                name: this.cartName,
-                prgRomCount: this.machine.Cart.NumberOfPrgRoms,
-                chrRomCount: this.machine.Cart.NumberOfChrRoms
-            };
-            info.Cart = {
-                //buffers
-                //chrRom: (<any>this.machine.Cart).chrRom,
-                //prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
-                //ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
-                //bankStartCache: (<any>this.machine.Cart).bankStartCache,
-                CurrentBank: this.machine.Cart.CurrentBank,
-                // integers
-                current8: this.machine.Cart.current8,
-                currentA: this.machine.Cart.currentA,
-                currentC: this.machine.Cart.currentC,
-                currentE: this.machine.Cart.currentE,
-                bank8start: this.machine.Cart.bank8start,
-                bankAstart: this.machine.Cart.bankAstart,
-                bankCstart: this.machine.Cart.bankCstart,
-                bankEstart: this.machine.Cart.bankEstart
-            };
-        }
-        if (machine) {
-            if (machine.SoundBopper && machine.SoundBopper.audioSettings) {
-                info.sound = {
-                    soundEnabled: machine.EnableSound,
-                    settings: machine.SoundBopper.audioSettings
-                };
-            }
-            if (this.machine.Cpu.Debugging) {
-                info.debug = {
-                    currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
-                        PC: 0,
-                        A: 0,
-                        X: 0,
-                        Y: 0,
-                        SP: 0,
-                        SR: 0
-                    },
-                    currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
-                    InstructionHistory: {
-                        Buffer: this.machine.Cpu.InstructionHistory.slice(0),
-                        Index: this.machine.Cpu.InstructionHistoryPointer,
-                        Finish: true
-                    }
-                };
-            }
-        }
-        postMessage(info);
-    };
-    tendoWrapper.prototype.drawScreen = function () { };
-    tendoWrapper.prototype.stop = function () {
-        clearInterval(this.interval);
-        this.machine.PowerOff();
-        this.runStatus = this.machine.RunState;
-    };
-    tendoWrapper.prototype.flushAudio = function () {
-        //  debugger;
-        var len = this.machine.WaveForms.SharedBufferLength;
-        for (var i = 0; i < len; ++i) {
-            this.sharedAudioBufferPos++;
-            if (this.sharedAudioBufferPos >= this.sharedAudioBuffer.length) {
-                this.sharedAudioBufferPos = 0;
-            }
-            this.sharedAudioBuffer[this.sharedAudioBufferPos] = this.machine.WaveForms.SharedBuffer[i];
-            this.audioBytesWritten++;
-        }
-        while (this.audioBytesWritten >= this.sharedAudioBuffer.length >> 2) {
-            Atomics.store(this.iops, 3, this.audioBytesWritten);
-            Atomics.wait(this.iops, 3, this.audioBytesWritten);
-            this.audioBytesWritten = Atomics.load(this.iops, 3);
-        }
-    };
-    tendoWrapper.prototype.runInnerLoop = function () {
-        this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
-        this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
-        this.machine.RunFrame();
-        this.framesPerSecond = 0;
-        //this.flushAudio();
-        if ((this.framesRendered++) === 60) {
-            // this.updateState();
-            this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
-            this.framesRendered = 0;
-            this.startTime = new Date().getTime();
-            this.iops[1] = this.framesPerSecond;
-            // if (this.framesPerSecond < 60 && this.runTimeout > 0) {
-            //     this.runTimeout--;
-            // } else if (this.runTimeout < 50) {
-            //     this.runTimeout++;
-            // }
-        }
-        //this.runInnerLoop();
-        //setTimeout(() => { this.runInnerLoop(); }, this.runTimeout); 
-    };
-    tendoWrapper.prototype.run = function (reset) {
-        var _this = this;
-        this.iops[3] = 12312312;
-        var framesRendered = 0;
-        var machine = this.machine;
-        if (reset) {
-            machine.Reset();
-        }
-        machine.Cpu.Debugging = false;
-        this.startTime = new Date().getTime();
-        clearInterval(this.interval);
-        this.interval = setInterval(function () {
-            _this.iops[0] = 1;
-            while (_this.iops[0] == 1) {
-                _this.runInnerLoop();
-            }
-        }, 1);
-        this.runStatus = machine.RunState; // runStatuses.Running;
-    };
-    tendoWrapper.prototype.runFrame = function () {
-        clearInterval(this.interval);
-        this.frameFinished = false;
-        var machine = this.machine;
-        machine.Cpu.Debugging = this.Debugging;
-        // intervalId = setInterval(() => 
-        machine.RunFrame();
-        this.runStatus = this.machine.RunState;
-        this.frameFinished = true;
-    };
-    tendoWrapper.prototype.reset = function () {
-        var machine = this.machine;
-        //setTimeout(()=>{
-        machine.Reset();
-        //},16);
-        this.runStatus = this.machine.RunState;
-    };
-    tendoWrapper.prototype.step = function () {
-        clearInterval(this.interval);
-        var machine = this.machine;
-        machine.Cpu.Debugging = this.Debugging;
-        machine.Step();
-        this.runStatus = this.machine.RunState;
-    };
-    tendoWrapper.prototype.handleMessage = function (event) {
-        var machine = this.machine;
-        switch (event.data.command) {
-            case 'create':
-                this.buffers = event.data;
-                this.createMachine();
-                //                this.sharedAudioBufferPos = 0;
-                this.iops = event.data.iops;
-                break;
-            case 'cheats':
-                this.machine.Cpu.cheating = event.data.cheats.length > 0;
-                this.machine.Cpu.genieCodes = event.data.cheats;
-                break;
-            case 'loadrom':
-                this.stop();
-                this.machine = undefined;
-                this.createMachine();
-                this.machine.EnableSound = false;
-                //this.createMachine();
-                this.machine.LoadCart(event.data.rom);
-                this.updateBuffers();
-                break;
-            case 'loadnsf':
-                this.stop();
-                //this.createNsfMachine();
-                this.updateBuffers();
-                break;
-            case 'audiosettings':
-                this.machine.SoundBopper.audioSettings = event.data.settings;
-                break;
-            case 'mute':
-                this.machine.EnableSound = false;
-                break;
-            case 'unmute':
-                this.machine.EnableSound = true;
-                break;
-            case 'run':
-                this.Debugging = false;
-                this.run(true);
-                break;
-            case 'runframe':
-                this.Debugging = true;
-                this.runFrame();
-                break;
-            case 'step':
-                this.Debugging = true;
-                this.step();
-                break;
-            case 'continue':
-                this.run(false);
-                break;
-            case 'stop':
-                this.machine.EnableSound = false;
-                this.stop();
-                break;
-            case 'reset':
-                this.reset();
-                break;
-            default:
-                return;
-        }
-        this.updateState();
-    };
-    return tendoWrapper;
-}());
-exports.tendoWrapper = tendoWrapper;
-
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiMachine_1 = __webpack_require__(7);
 exports.ChiChiCPPU = ChiChiMachine_1.ChiChiCPPU;
 exports.ChiChiMachine = ChiChiMachine_1.ChiChiMachine;
-var ChiChiNsfMachine_1 = __webpack_require__(40);
+var ChiChiNsfMachine_1 = __webpack_require__(39);
 exports.ChiChiNsfCPPU = ChiChiNsfMachine_1.ChiChiNsfCPPU;
 exports.ChiChiNsfMachine = ChiChiNsfMachine_1.ChiChiNsfMachine;
 var BaseCart_1 = __webpack_require__(1);
@@ -7235,13 +6903,13 @@ exports.PpuStatus = ChiChiTypes_1.PpuStatus;
 exports.ChiChiInstruction = ChiChiTypes_1.ChiChiInstruction;
 exports.ChiChiSprite = ChiChiTypes_1.ChiChiSprite;
 exports.AudioSettings = ChiChiTypes_1.AudioSettings;
-var ChiChiCheats_1 = __webpack_require__(41);
+var ChiChiCheats_1 = __webpack_require__(40);
 exports.GameGenieCode = ChiChiCheats_1.GameGenieCode;
 exports.ChiChiCheats = ChiChiCheats_1.ChiChiCheats;
 
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports) {
 
 var g;
@@ -7268,7 +6936,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7389,7 +7057,7 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -7479,7 +7147,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -7490,7 +7158,7 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8150,7 +7818,7 @@ exports.BNROMCart = BNROMCart;
 
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8330,7 +7998,7 @@ exports.Mapper212Cart = Mapper212Cart;
 
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8502,7 +8170,7 @@ exports.MMC1Cart = MMC1Cart;
 
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8720,7 +8388,7 @@ exports.MMC4Cart = MMC4Cart;
 
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9007,7 +8675,7 @@ exports.MMC3Cart = MMC3Cart;
 
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9088,7 +8756,7 @@ exports.Mapper068Cart = Mapper068Cart;
 
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9207,7 +8875,7 @@ exports.Mapper031Cart = Mapper031Cart;
 
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9315,28 +8983,28 @@ exports.Smb2jCart = Smb2jCart;
 
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 module.exports = {
-  crc1: __webpack_require__(26),
-  crc8: __webpack_require__(27),
-  crc81wire: __webpack_require__(28),
-  crc16: __webpack_require__(29),
-  crc16ccitt: __webpack_require__(30),
-  crc16modbus: __webpack_require__(31),
-  crc16xmodem: __webpack_require__(32),
-  crc16kermit: __webpack_require__(33),
-  crc24: __webpack_require__(34),
-  crc32: __webpack_require__(35),
-  crcjam: __webpack_require__(36)
+  crc1: __webpack_require__(25),
+  crc8: __webpack_require__(26),
+  crc81wire: __webpack_require__(27),
+  crc16: __webpack_require__(28),
+  crc16ccitt: __webpack_require__(29),
+  crc16modbus: __webpack_require__(30),
+  crc16xmodem: __webpack_require__(31),
+  crc16kermit: __webpack_require__(32),
+  crc24: __webpack_require__(33),
+  crc32: __webpack_require__(34),
+  crcjam: __webpack_require__(35)
 };
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9370,7 +9038,7 @@ module.exports = (0, _define_crc2.default)('crc1', function (buf, previous) {
 });
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9407,7 +9075,7 @@ module.exports = (0, _define_crc2.default)('crc-8', function (buf, previous) {
 });
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9444,7 +9112,7 @@ module.exports = (0, _define_crc2.default)('dallas-1-wire', function (buf, previ
 });
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9481,7 +9149,7 @@ module.exports = (0, _define_crc2.default)('crc-16', function (buf, previous) {
 });
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9518,7 +9186,7 @@ module.exports = (0, _define_crc2.default)('ccitt', function (buf, previous) {
 });
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9555,7 +9223,7 @@ module.exports = (0, _define_crc2.default)('crc-16-modbus', function (buf, previ
 });
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9596,7 +9264,7 @@ module.exports = (0, _define_crc2.default)('xmodem', function (buf, previous) {
 });
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9633,7 +9301,7 @@ module.exports = (0, _define_crc2.default)('kermit', function (buf, previous) {
 });
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9670,7 +9338,7 @@ module.exports = (0, _define_crc2.default)('crc-24', function (buf, previous) {
 });
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9707,7 +9375,7 @@ module.exports = (0, _define_crc2.default)('crc-32', function (buf, previous) {
 });
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9746,7 +9414,7 @@ module.exports = (0, _define_crc2.default)('jam', function (buf) {
 });
 
 /***/ }),
-/* 37 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9799,7 +9467,7 @@ exports.VSCart = VSCart;
 
 
 /***/ }),
-/* 38 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9875,7 +9543,7 @@ exports.KonamiVRC1Cart = KonamiVRC1Cart;
 
 
 /***/ }),
-/* 39 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9953,7 +9621,7 @@ exports.DMCChannel = DMCChannel;
 
 
 /***/ }),
-/* 40 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10073,7 +9741,7 @@ exports.ChiChiNsfCPPU = ChiChiNsfCPPU;
 
 
 /***/ }),
-/* 41 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10204,6 +9872,328 @@ var XmlHolder = /** @class */ (function () {
 }());
 
 
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var chichi_1 = __webpack_require__(11);
+var NesInfo = /** @class */ (function () {
+    function NesInfo() {
+        this.bufferupdate = false;
+        this.stateupdate = true;
+        this.runStatus = {};
+        this.cartInfo = {};
+        this.sound = {};
+        this.Cpu = {};
+        this.Cart = {};
+        this.debug = {
+            currentCpuStatus: {
+                PC: 0,
+                A: 0,
+                X: 0,
+                Y: 0,
+                SP: 0,
+                SR: 0
+            },
+            currentPPUStatus: {}
+        };
+    }
+    return NesInfo;
+}());
+var tendoWrapper = /** @class */ (function () {
+    function tendoWrapper() {
+        this.framesRendered = 0;
+        this.startTime = 0;
+        this.runTimeout = 0;
+        this.Debugging = false;
+        this.frameFinished = false;
+        this.ready = false;
+        this.framesPerSecond = 0;
+        this.iops = new Int32Array(16);
+        this.cartName = 'unk';
+        this.sharedAudioBufferPos = 0;
+        this.audioBytesWritten = 0;
+        this.buffers = {};
+        this.machine = new chichi_1.ChiChiMachine();
+    }
+    tendoWrapper.prototype.createMachine = function () {
+        var _this = this;
+        this.machine = new chichi_1.ChiChiMachine();
+        this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer;
+        this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer;
+        this.machine.SoundBopper.audioSettings = this.buffers.audioSettings;
+        this.machine.Drawscreen = function () {
+            // flush audio
+            // globals.postMessage({ frame: true, fps: framesPerSecond });
+        };
+        this.ready = true;
+        this.machine.Cpu.addDebugEvent(function () {
+            var info = new NesInfo();
+            info.debug = {
+                currentCpuStatus: _this.machine.Cpu.GetStatus ? _this.machine.Cpu.GetStatus() : {
+                    PC: 0,
+                    A: 0,
+                    X: 0,
+                    Y: 0,
+                    SP: 0,
+                    SR: 0
+                },
+                currentPPUStatus: _this.machine.ppu.GetPPUStatus ? _this.machine.ppu.GetPPUStatus() : {},
+                InstructionHistory: {
+                    Buffer: _this.machine.Cpu.InstructionHistory.slice(0),
+                    Index: _this.machine.Cpu.InstructionHistoryPointer,
+                    Finish: false
+                }
+            };
+            postMessage(info);
+            //this.updateState();
+        });
+        this.machine.Cpu.Debugging = false;
+    };
+    tendoWrapper.prototype.updateBuffers = function () {
+        var machine = this.machine;
+        var info = new NesInfo();
+        info.bufferupdate = true;
+        info.stateupdate = false;
+        if (this.machine && this.machine.Cart) {
+            info.Cpu = {
+                Rams: this.machine.Cpu.Rams,
+                spriteRAM: this.machine.Cpu.ppu.spriteRAM
+            };
+            info.Cart = {
+                //buffers
+                chrRom: this.machine.Cart.chrRom,
+                prgRomBank6: this.machine.Cart.prgRomBank6,
+                ppuBankStarts: this.machine.Cart.ppuBankStarts,
+                bankStartCache: this.machine.Cart.bankStartCache,
+            };
+            info.sound = {
+                waveForms_controlBuffer: this.machine.WaveForms.controlBuffer
+            };
+        }
+        postMessage(info);
+    };
+    tendoWrapper.prototype.updateState = function () {
+        var machine = this.machine;
+        var info = new NesInfo();
+        if (this.machine && this.machine.Cart) {
+            info.Cpu = {
+                //Rams: this.machine.Cpu.Rams,
+                status: this.machine.Cpu.GetStatus(),
+                ppuStatus: this.machine.Cpu.ppu.GetPPUStatus(),
+                backgroundPatternTableIndex: this.machine.Cpu.ppu.backgroundPatternTableIndex,
+                _PPUControlByte0: this.machine.Cpu.ppu._PPUControlByte0,
+                _PPUControlByte1: this.machine.Cpu.ppu._PPUControlByte1
+            };
+            info.cartInfo = {
+                mapperId: this.machine.Cart.MapperID,
+                name: this.cartName,
+                prgRomCount: this.machine.Cart.NumberOfPrgRoms,
+                chrRomCount: this.machine.Cart.NumberOfChrRoms
+            };
+            info.Cart = {
+                //buffers
+                //chrRom: (<any>this.machine.Cart).chrRom,
+                //prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
+                //ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
+                //bankStartCache: (<any>this.machine.Cart).bankStartCache,
+                CurrentBank: this.machine.Cart.CurrentBank,
+                // integers
+                current8: this.machine.Cart.current8,
+                currentA: this.machine.Cart.currentA,
+                currentC: this.machine.Cart.currentC,
+                currentE: this.machine.Cart.currentE,
+                bank8start: this.machine.Cart.bank8start,
+                bankAstart: this.machine.Cart.bankAstart,
+                bankCstart: this.machine.Cart.bankCstart,
+                bankEstart: this.machine.Cart.bankEstart
+            };
+        }
+        if (machine) {
+            if (machine.SoundBopper && machine.SoundBopper.audioSettings) {
+                info.sound = {
+                    soundEnabled: machine.EnableSound,
+                    settings: machine.SoundBopper.audioSettings
+                };
+            }
+            if (this.machine.Cpu.Debugging) {
+                info.debug = {
+                    currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
+                        PC: 0,
+                        A: 0,
+                        X: 0,
+                        Y: 0,
+                        SP: 0,
+                        SR: 0
+                    },
+                    currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
+                    InstructionHistory: {
+                        Buffer: this.machine.Cpu.InstructionHistory.slice(0),
+                        Index: this.machine.Cpu.InstructionHistoryPointer,
+                        Finish: true
+                    }
+                };
+            }
+        }
+        postMessage(info);
+    };
+    tendoWrapper.prototype.drawScreen = function () { };
+    tendoWrapper.prototype.stop = function () {
+        clearInterval(this.interval);
+        this.machine.PowerOff();
+        this.runStatus = this.machine.RunState;
+    };
+    tendoWrapper.prototype.flushAudio = function () {
+        //  debugger;
+        var len = this.machine.WaveForms.SharedBufferLength;
+        for (var i = 0; i < len; ++i) {
+            this.sharedAudioBufferPos++;
+            if (this.sharedAudioBufferPos >= this.sharedAudioBuffer.length) {
+                this.sharedAudioBufferPos = 0;
+            }
+            this.sharedAudioBuffer[this.sharedAudioBufferPos] = this.machine.WaveForms.SharedBuffer[i];
+            this.audioBytesWritten++;
+        }
+        while (this.audioBytesWritten >= this.sharedAudioBuffer.length >> 2) {
+            Atomics.store(this.iops, 3, this.audioBytesWritten);
+            Atomics.wait(this.iops, 3, this.audioBytesWritten);
+            this.audioBytesWritten = Atomics.load(this.iops, 3);
+        }
+    };
+    tendoWrapper.prototype.runInnerLoop = function () {
+        this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
+        this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
+        this.machine.RunFrame();
+        this.framesPerSecond = 0;
+        //this.flushAudio();
+        if ((this.framesRendered++) === 60) {
+            // this.updateState();
+            this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
+            this.framesRendered = 0;
+            this.startTime = new Date().getTime();
+            this.iops[1] = this.framesPerSecond;
+            // if (this.framesPerSecond < 60 && this.runTimeout > 0) {
+            //     this.runTimeout--;
+            // } else if (this.runTimeout < 50) {
+            //     this.runTimeout++;
+            // }
+        }
+        //this.runInnerLoop();
+        //setTimeout(() => { this.runInnerLoop(); }, this.runTimeout); 
+    };
+    tendoWrapper.prototype.run = function (reset) {
+        var _this = this;
+        this.iops[3] = 12312312;
+        var framesRendered = 0;
+        var machine = this.machine;
+        if (reset) {
+            machine.Reset();
+        }
+        machine.Cpu.Debugging = false;
+        this.startTime = new Date().getTime();
+        clearInterval(this.interval);
+        this.interval = setInterval(function () {
+            _this.iops[0] = 1;
+            while (_this.iops[0] == 1) {
+                _this.runInnerLoop();
+            }
+        }, 1);
+        this.runStatus = machine.RunState; // runStatuses.Running;
+    };
+    tendoWrapper.prototype.runFrame = function () {
+        clearInterval(this.interval);
+        this.frameFinished = false;
+        var machine = this.machine;
+        machine.Cpu.Debugging = this.Debugging;
+        // intervalId = setInterval(() => 
+        machine.RunFrame();
+        this.runStatus = this.machine.RunState;
+        this.frameFinished = true;
+    };
+    tendoWrapper.prototype.reset = function () {
+        var machine = this.machine;
+        //setTimeout(()=>{
+        machine.Reset();
+        //},16);
+        this.runStatus = this.machine.RunState;
+    };
+    tendoWrapper.prototype.step = function () {
+        clearInterval(this.interval);
+        var machine = this.machine;
+        machine.Cpu.Debugging = this.Debugging;
+        machine.Step();
+        this.runStatus = this.machine.RunState;
+    };
+    tendoWrapper.prototype.handleMessage = function (event) {
+        var machine = this.machine;
+        switch (event.data.command) {
+            case 'create':
+                this.buffers = event.data;
+                this.createMachine();
+                //                this.sharedAudioBufferPos = 0;
+                this.iops = event.data.iops;
+                break;
+            case 'cheats':
+                this.machine.Cpu.cheating = event.data.cheats.length > 0;
+                this.machine.Cpu.genieCodes = event.data.cheats;
+                break;
+            case 'loadrom':
+                this.stop();
+                this.machine = undefined;
+                this.createMachine();
+                this.machine.EnableSound = false;
+                //this.createMachine();
+                this.machine.LoadCart(event.data.rom);
+                this.updateBuffers();
+                break;
+            case 'loadnsf':
+                this.stop();
+                //this.createNsfMachine();
+                this.updateBuffers();
+                break;
+            case 'audiosettings':
+                this.machine.SoundBopper.audioSettings = event.data.settings;
+                break;
+            case 'mute':
+                this.machine.EnableSound = false;
+                break;
+            case 'unmute':
+                this.machine.EnableSound = true;
+                break;
+            case 'run':
+                this.Debugging = false;
+                this.run(true);
+                break;
+            case 'runframe':
+                this.Debugging = true;
+                this.runFrame();
+                break;
+            case 'step':
+                this.Debugging = true;
+                this.step();
+                break;
+            case 'continue':
+                this.run(false);
+                break;
+            case 'stop':
+                this.machine.EnableSound = false;
+                this.stop();
+                break;
+            case 'reset':
+                this.reset();
+                break;
+            default:
+                return;
+        }
+        this.updateState();
+    };
+    return tendoWrapper;
+}());
+exports.tendoWrapper = tendoWrapper;
+
+
 /***/ })
 /******/ ]);
-});
