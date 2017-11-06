@@ -19,9 +19,12 @@ export interface IBaseCart {
 
     mapsBelow6000: boolean;
     irqRaised: boolean;
-    
+    nextEventAt: number;
+    handleNextEvent(clock: number): void;
+    advanceClock(clock: number): void;
     Whizzler: ChiChiPPU;
     CPU: ChiChiCPPU;
+
     LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: Uint8Array, chrRomData: Uint8Array, chrRomOffset: number): void;
 
     InitializeCart(): void;
@@ -35,6 +38,9 @@ export interface IBaseCart {
 }
 
 export class BaseCart implements IBaseCart {
+    handleNextEvent(clock: number){};
+    advanceClock(clock: number){}
+    fourScreen: boolean = false;
     mapperName: string = 'base';
     supported: boolean = true;
     submapperId: number = 0;
@@ -69,14 +75,15 @@ export class BaseCart implements IBaseCart {
     }
 
     // shared components
-
+    nextEventAt = 0;
+    
     prgRomBank6 = new Uint8Array(<any>new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
     ppuBankStarts: Uint32Array = new Uint32Array(<any>new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
     bankStartCache = new Uint32Array(<any>new SharedArrayBuffer(4096 * Uint32Array.BYTES_PER_ELEMENT));
 
-    private iNesHeader = new Uint8Array(16);
+    iNesHeader = new Uint8Array(16);
+    romControlBytes = new Uint8Array(2);
 
-    private romControlBytes = new Uint8Array(2);
     nesCart: Uint8Array = null;
     chrRom: Uint8Array = null;
 
@@ -224,12 +231,9 @@ export class BaseCart implements IBaseCart {
         // rom0.0=0 is horizontal mirroring, rom0.0=1 is vertical mirroring
 
         // by default  have to call Mirror() at least once to set up the bank offsets
-        this.Mirror(0, 0);
-        if ((this.romControlBytes[0] & 1) === 1) {
-            this.Mirror(0, 1);
-        } else {
-            this.Mirror(0, 2);
-        }
+        this.Mirror(0, (this.romControlBytes[0] & 1) + 1);
+
+        this.fourScreen = (this.romControlBytes[0] & 8) === 8; 
 
         if ((this.romControlBytes[0] & 8) === 8) {
             this.Mirror(0, 3);
@@ -506,10 +510,13 @@ export class BaseCart implements IBaseCart {
 }
 
 export class BaseCart4k implements IBaseCart {
+    handleNextEvent(clock: number){};
+    advanceClock(clock: number){}    
     mapperName: string = 'base';
     supported: boolean = true;
     submapperId: number = 0;
     mapsBelow6000: boolean = false;
+    nextEventAt: number = 0;
     // compatible with .net array.copy method
     // shared components
 

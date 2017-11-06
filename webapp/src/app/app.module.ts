@@ -23,6 +23,8 @@ import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/c
 import { GameGenieComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie';
 import { GameGenieDialogComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie.dialog';
 import { PatternViewerComponent } from './debugoutput/pattern.viewer/patternviewer.component';
+import { WishboneCheats } from './services/wishbone/wishbone.cheats';
+import { WishboneMachine } from './services/wishbone/wishbone';
 
 @NgModule({
   declarations: [

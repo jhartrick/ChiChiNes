@@ -193,7 +193,7 @@ export class NesCart extends BaseCart {
      SetByte(clock: number, address: number, val: number): void {
          if (address >= 0x8000) {
              this.Whizzler.DrawTo(clock);
-             this.CopyBanks(clock, 0, val, 1);
+             this.CopyBanks(clock, 0, val & 0xFF, 1);
          }
      }
      

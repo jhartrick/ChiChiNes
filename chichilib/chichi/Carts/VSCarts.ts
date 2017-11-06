@@ -20,7 +20,7 @@ export class VSCart extends BaseCart {
             if (address == 0x4016) {
                 this.bankSelect = val;
                 const chrbank =(val >> 2) & 0x1;
-                if (this.prgRomCount > 2){ 
+                if (this.prgRomCount > 2) { 
                     this.SetupBankStarts(chrbank, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
                 }
                 this.Whizzler.DrawTo(clock);

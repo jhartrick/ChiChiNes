@@ -8,8 +8,10 @@ import * as MMC2 from './Carts/MMC2Carts'
 import * as MMC3 from './Carts/MMC3Carts'
 import * as M068 from './Carts/Mapper068'
 import * as Nsf from './Carts/Nsf031Cart'
+import * as Smb2j from './Carts/Smb2jCart'
 import * as crc from 'crc';
 import * as  VS  from './Carts/VSCarts';
+import * as VRC from './Carts/KonamiVRC1';
 
 class MapperFactory {
     0 = Discrete.NesCart;
@@ -26,12 +28,14 @@ class MapperFactory {
     31 = Nsf.Mapper031Cart;
     34 = Discrete.BNROMCart;
     38 = Discrete.BitCorp038Cart;
+    40 = Smb2j.Smb2jCart;
     51 = Multi.Mapper051Cart;
     58 = Multi.Mapper058Cart;
     66 = Discrete.MHROMCart;
     68 = M068.Mapper068Cart;
     70 = Discrete.Mapper070Cart;
     71 = Discrete.Mapper071Cart;
+    75 = VRC.KonamiVRC1Cart;
     77 = Discrete.Mapper077Cart;
     81 = Discrete.Mapper081Cart;
     87 = Discrete.Mapper087Cart;
@@ -41,6 +45,7 @@ class MapperFactory {
     140 = Discrete.JF1xCart;
     145 = Discrete.Mapper145Cart;
     152 = Discrete.Mapper152Cart;
+    151 = VRC.KonamiVRC1Cart;
     180 = Discrete.NesCart;
     190 = Discrete.Mapper190Cart;
     202 =  Multi.Mapper202Cart;

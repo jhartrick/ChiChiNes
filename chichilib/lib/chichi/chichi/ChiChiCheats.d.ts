@@ -10,6 +10,5 @@ export declare class GeniePatch {
     active: boolean;
 }
 export declare class ChiChiCheats {
-    getCheatsForGame(crc: string): Array<GameGenieCode>;
     gameGenieCodeToPatch(code: string): GeniePatch;
 }

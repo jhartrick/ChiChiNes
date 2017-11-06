@@ -1,10 +1,11 @@
 ﻿import { iNESFileHandler } from './ChiChiCarts'
 import { BaseCart, IBaseCart } from './Carts/BaseCart'
-import { WavSharer, ChiChiBopper } from './ChiChiAudio'
+import {  ChiChiBopper } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
 import { ChiChiPPU } from "./ChiChiPPU";
 import { GameGenieCode, GeniePatch } from './ChiChiCheats';
+import { WavSharer } from './Audio/CommonAudio';
 
 
     //machine wrapper
@@ -215,7 +216,19 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
         private _reset = false;
 
         //timing
-        private clock = 0;
+        private _clock =0;
+        get clock() : number {
+            return this._clock;
+        }  
+        set clock(value : number ){
+            this._clock = value;
+        }  
+        private advanceClock(value: number) {
+            this.ppu.DrawTo(this._clock);
+            this.Cart.advanceClock(value);
+            this._clock += value;
+
+        }
         private _ticks = 0;
 
         // CPU Status
@@ -501,19 +514,16 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
         Step(): void {
             //let tickCount = 0;
             this._currentInstruction_ExtraTiming = 0;
-
-            // this.ppu.DrawTo(this.clock);
-            if (this.nextEvent <= this.clock) {
-                this.HandleNextEvent();
-            }
+            //this.FindNextEvent();
+            
 
             if (this._handleNMI) {
+                this.advanceClock(7);
                 this._handleNMI = false;
-                this.clock += 7;
                 this.NonMaskableInterrupt();
             } else if (this._handleIRQ) {
+                this.advanceClock(7);
                 this._handleIRQ = false;
-                this.clock += 7;
                 this.InterruptRequest();
             }
 
@@ -522,7 +532,21 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
             this._currentInstruction_OpCode = this.GetByte((this._programCounter++) & 0xFFFF);
             this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
 
-            //FetchInstructionParameters();
+            this.fetchInstructionParameters();
+
+            this.execute();
+
+            //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
+            if (this._debugging) {
+                this.WriteInstructionHistoryAndUsage();
+                this._operationCounter++;
+            }
+            this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
+            this.advanceClock(this._currentInstruction_ExtraTiming);
+            //this.clock += ;
+        }
+
+        fetchInstructionParameters(): any {
             switch (this._currentInstruction_AddressingMode) {
                 case ChiChiCPPU_AddressingModes.Absolute:
                 case ChiChiCPPU_AddressingModes.AbsoluteX:
@@ -549,18 +573,9 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                     //  throw new Error("Invalid address mode!!");
                     break;
             }
-
-            this.Execute();
-
-            //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
-            if (this._debugging) {
-                this.WriteInstructionHistoryAndUsage();
-                this._operationCounter++;
-            }
-
-            this.clock += ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode] + this._currentInstruction_ExtraTiming;
+            
         }
-
+    
         ResetCPU(): void {
             this._statusRegister = 52;
             this._operationCounter = 0;
@@ -697,7 +712,7 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
             }
         }
 
-        Execute(): void {
+        execute(): void {
             let data = 0;
             let lowByte = 0;
             let highByte = 0;
@@ -1512,11 +1527,11 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
 
         FindNextEvent(): void {
             // it'll either be the ppu's NMI, or an irq from either the apu or the cart
-            this.nextEvent = this.clock + this.ppu.NextEventAt;
+            this.nextEvent = 0;;//this.clock + this.ppu.NextEventAt | this.Cart.nextEventAt;
         }
         HandleNextEvent(): void {
-            this.ppu.HandleEvent(this.clock);
-            this.FindNextEvent();
+           // this.ppu.HandleEvent(this.clock);
+           // this.FindNextEvent();
         }
         ResetInstructionHistory(): void {
             //_instructionHistory = new Instruction[0x100];
@@ -1545,17 +1560,17 @@ import { GameGenieCode, GeniePatch } from './ChiChiCheats';
                 this.FireDebugEvent("instructionHistoryFull");
             }
         }
+
         FireDebugEvent(s: string): void {
             for (let i = 0; i < this.debugEvents.length; ++i) {
                 this.debugEvents[i].call(this, s);
             }
             //throw new Error('Method not implemented.');
         }
+
         PeekInstruction(address: number): ChiChiInstruction {
             throw new Error('Method not implemented.');
         }
-
-
 
         GetStatus(): CpuStatus {
             return {

@@ -1,21 +1,5 @@
 import { AudioSettings } from './ChiChiTypes';
-export declare class WavSharer {
-    readonly NES_BYTES_WRITTEN: number;
-    readonly WAVSHARER_BLOCKTHREAD: number;
-    readonly WAVSHARER_BUFFERPOS: number;
-    controlBuffer: Int32Array;
-    sharedAudioBufferPos: number;
-    readonly bufferPosition: number;
-    bufferWasRead: boolean;
-    static sample_size: number;
-    SharedBuffer: Float32Array;
-    SharedBufferLength: number;
-    chunkSize: number;
-    constructor();
-    audioBytesWritten: number;
-    wakeSleepers(): void;
-    synchronize(): void;
-}
+import { WavSharer } from './Audio/CommonAudio';
 export declare class ChiChiBopper {
     writer: WavSharer;
     audioSettings: AudioSettings;

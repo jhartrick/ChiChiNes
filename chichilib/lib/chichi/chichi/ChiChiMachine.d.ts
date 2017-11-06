@@ -1,9 +1,10 @@
 import { BaseCart, IBaseCart } from './Carts/BaseCart';
-import { WavSharer, ChiChiBopper } from './ChiChiAudio';
+import { ChiChiBopper } from './ChiChiAudio';
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, RunningStatuses, CpuStatus } from './ChiChiTypes';
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl';
 import { ChiChiPPU } from "./ChiChiPPU";
 import { GeniePatch } from './ChiChiCheats';
+import { WavSharer } from './Audio/CommonAudio';
 export declare class ChiChiMachine {
     private frameJustEnded;
     private frameOn;
@@ -53,7 +54,9 @@ export declare class ChiChiCPPU {
     private static cpuTiming;
     private static addressModes;
     private _reset;
-    private clock;
+    private _clock;
+    clock: number;
+    private advanceClock(value);
     private _ticks;
     _statusRegister: number;
     _programCounter: number;
@@ -149,6 +152,7 @@ export declare class ChiChiCPPU {
     CheckEvent(): void;
     RunFast(): void;
     Step(): void;
+    fetchInstructionParameters(): any;
     ResetCPU(): void;
     PowerOn(): void;
     GetState(outStream: any): void;
@@ -157,7 +161,7 @@ export declare class ChiChiCPPU {
     DecodeAddress(): number;
     HandleBadOperation(): void;
     DecodeOperand(): number;
-    Execute(): void;
+    execute(): void;
     SetZNFlags(data: number): void;
     Compare(data: number): void;
     Branch(): void;

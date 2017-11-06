@@ -8,6 +8,8 @@ import { TileDoodler } from './wishbone.tiledoodler';
 import { WishboneCart } from './wishbone.cart';
 import { WishBopper } from './wishbone.audio';
 import { KeyboardSettings } from '../keyboardsettings';
+import { WishboneCheats } from './wishbone.cheats';
+import { Http } from '@angular/http';
 
 
 export class KeyBindings {
@@ -195,7 +197,6 @@ export class WishboneMachine  {
     private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT);
     nesInterop: Int32Array = new Int32Array(<any>this.nesControlBuf);
 
-
     constructor() {
         // initialize sound
         this.WaveForms = new WavSharer();
@@ -232,18 +233,7 @@ export class WishboneMachine  {
     private _cheats: GameGenieCode[];
 
     get cheats(): GameGenieCode[] {
-        let ggCodes = new ChiChiCheats().getCheatsForGame(this.Cart.realCart.ROMHashFunction);
-        if (this._cheats) {
-           const cheats = this._cheats;
-           ggCodes = ggCodes.map((ggCode) => {
-            const existingCode = cheats.find((cheat) => cheat.code === ggCode.code);
-             if (existingCode) {
-               ggCode.active = existingCode.active;
-             }
-             return ggCode;
-           });
-        }
-        this._cheats = ggCodes;
+        //let ggCodes = new ChiChiCheats().getCheatsForGame(this.Cart.realCart.ROMHashFunction);
         return this._cheats;
     }
 
