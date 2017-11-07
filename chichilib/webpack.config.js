@@ -40,4 +40,26 @@ const configChiChiWorker = {
     }
 }
 
-module.exports = [configChiChi, configChiChiWorker];
+const configRomLoader = {
+    entry: {
+        'romloader.worker': './romloader/romloader.worker.ts'
+    },
+    output: {
+        path: path.resolve(__dirname, 'dist/workers'),
+        filename: '[name].js',
+        sourceMapFilename: '[name].map',
+        library: 'romloader',
+        libraryTarget: 'umd'
+
+    },
+    resolve: {
+        extensions: ['.webpack.js', '.web.js', '.ts', '.js']
+    },
+    module: {
+        loaders: [
+            { test: /\.ts$/, loader: 'ts-loader' }
+        ]
+    }
+}
+
+module.exports = [configChiChi, configChiChiWorker, configRomLoader];

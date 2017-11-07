@@ -1,6 +1,7 @@
 import { NgZone } from '@angular/core';
 
-import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper, WavSharer, ChiChiCPPU, ChiChiMachine, iNESFileHandler, ChiChiPPU, GameGenieCode, ChiChiCheats  } from 'chichi';
+import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper,
+        WavSharer, ChiChiCPPU, ChiChiMachine, ChiChiPPU, GameGenieCode, ChiChiCheats, IBaseCart  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
@@ -422,17 +423,29 @@ export class WishboneMachine  {
         this.postNesMessage({ command: 'stop' });
     }
 
-    LoadCart(rom: number[], romName: string) {
-        this.Cart = new WishboneCart();
-        this.Cart.CartName = romName;
-        this.Cart.realCart = <BaseCart>iNESFileHandler.LoadROM(this.Cpu, rom);
-        this.Cart.realCart.CPU = this.Cpu;
-        this.Cart.realCart.Whizzler = this.ppu;
-        this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
+    loadCart(rom: number[], name: string) {
+        return new Observable<IBaseCart>((subj) => {
+            
+            (require as any).ensure(['../../../assets/romloader.worker.js'], (require) => {
+                let romLoader = require('../../../assets/romloader.worker.js');
 
-        this.tileDoodler = new TileDoodler(this.ppu);
-        this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
-        //        this.machine.LoadCart(rom);
+                const cart = romLoader.loader.loadRom(rom, name);
+                cart.installCart(this.ppu, this.Cpu);
+                this.Cart.realCart = cart;
+                this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
+                this.Cart.CartName = this.Cart.realCart.CartName;
+                this.ppu.ChrRomHandler = this.Cart.realCart;
+                this.tileDoodler = new TileDoodler(this.ppu);
+                subj.next(<IBaseCart>cart);
+
+                this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
+
+                romLoader = undefined;
+            });
+        });
+    }
+
+    LoadCart(rom: number[], romName: string) {
     }
 }
 

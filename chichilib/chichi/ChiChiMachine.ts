@@ -1,6 +1,5 @@
-﻿import { iNESFileHandler } from './ChiChiCarts'
-import { BaseCart, IBaseCart } from './Carts/BaseCart'
-import {  ChiChiBopper } from './ChiChiAudio'
+﻿import { BaseCart, IBaseCart } from './Carts/BaseCart'
+import { ChiChiBopper } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
 import { ChiChiPPU } from "./ChiChiPPU";
@@ -13,7 +12,6 @@ import { WavSharer } from './Audio/CommonAudio';
         private frameJustEnded = true;
         private frameOn = false;
         private totalCPUClocks = 0;
-
 
         constructor(cpu? : ChiChiCPPU) {
             var wavSharer = new WavSharer();
@@ -152,22 +150,23 @@ import { WavSharer } from './Audio/CommonAudio';
 
         }
 
+
+
         LoadCart(rom: any): void {
             this.EjectCart();
-
-            var cart = iNESFileHandler.LoadROM(this.Cpu, rom);
-            if (cart != null) {
-                this.Cpu.cheating = false;
-                this.Cpu.genieCodes = new Array<GeniePatch>();
-                this.Cpu.Cart = cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
-                this.Cart.NMIHandler = () => { this.Cpu.InterruptRequest() };
-                this.ppu.ChrRomHandler = this.Cart;
-
+            // var cart = iNESFileHandler.LoadROM(this.Cpu, rom);
+            // if (cart != null) {
+            //     this.Cpu.cheating = false;
+            //     this.Cpu.genieCodes = new Array<GeniePatch>();
+            //     this.Cpu.Cart = cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
+            //     this.Cart.NMIHandler = () => { this.Cpu.InterruptRequest() };
+            //     this.ppu.ChrRomHandler = this.Cart;
 
 
-            } else {
-                throw new Error("Unsupported ROM type - load failed.");
-            }
+
+            // } else {
+            //     throw new Error("Unsupported ROM type - load failed.");
+            // }
         }
 
         HasState(index: number): boolean {

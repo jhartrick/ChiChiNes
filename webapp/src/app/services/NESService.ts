@@ -248,7 +248,10 @@ export class Emulator {
     // rom loading
     LoadRom(rom: number[],  romName :string) {
         this.wishbone.Cart.CartName = romName;
-        this.wishbone.LoadCart(rom, romName);
+        //this.wishbone.LoadCart(rom, romName);
+        this.wishbone.loadCart(rom, romName).subscribe((d) => { 
+            console.log(romName + " loaded " + d );
+        });
     }
 
     LoadNsf(rom: number[], romName: string) {

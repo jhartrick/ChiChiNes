@@ -5,8 +5,9 @@ require({
 },
     ["require",  "emulator.worker"],
 
-    function (require,  tendo) {
+    function (req,  tendo) {
         var tend = new tendo.tendoWrapper();
+        tend.require = require;
         onmessage = (e) => {
             try {
                 // send message to the nintendo wrapper

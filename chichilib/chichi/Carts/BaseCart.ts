@@ -27,7 +27,10 @@ export interface IBaseCart {
 
     LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: Uint8Array, chrRomData: Uint8Array, chrRomOffset: number): void;
 
+    installCart(ppu:ChiChiPPU, cpu: ChiChiCPPU) : void;
+
     InitializeCart(): void;
+
     ResetBankStartCache(): void;
     UpdateScanlineCounter(): void;
 
@@ -228,10 +231,15 @@ export class BaseCart implements IBaseCart {
 
         this.UsesSRAM = (this.romControlBytes[0] & 2) === 2;
 
-        // rom0.0=0 is horizontal mirroring, rom0.0=1 is vertical mirroring
+        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
 
-        // by default  have to call Mirror() at least once to set up the bank offsets
-//        this.Mirror(0, (this.romControlBytes[0] & 1) + 1);
+    }
+
+    installCart(ppu: ChiChiPPU, cpu: ChiChiCPPU) {
+        this.Whizzler = ppu;
+        this.CPU = cpu;
+
+        //setup mirroring 
         this.Mirror(0, 0);
         if ((this.romControlBytes[0] & 1) === 1) {
             this.Mirror(0, 1);
@@ -239,16 +247,12 @@ export class BaseCart implements IBaseCart {
             this.Mirror(0, 2);
         }
 
-
         this.fourScreen = (this.romControlBytes[0] & 8) === 8; 
 
         if ((this.romControlBytes[0] & 8) === 8) {
             this.Mirror(0, 3);
         }
-
-
-        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
-
+        //initialize
         this.InitializeCart();
     }
 
@@ -517,6 +521,7 @@ export class BaseCart implements IBaseCart {
 }
 
 export class BaseCart4k implements IBaseCart {
+    fourScreen: boolean =false;
     handleNextEvent(clock: number){};
     advanceClock(clock: number){}    
     mapperName: string = 'base';
@@ -685,10 +690,13 @@ export class BaseCart4k implements IBaseCart {
         this.SRAMEnabled = true;
 
         this.UsesSRAM = (this.romControlBytes[0] & 2) === 2;
+    }
 
-        // rom0.0=0 is horizontal mirroring, rom0.0=1 is vertical mirroring
+    installCart(ppu: ChiChiPPU, cpu: ChiChiCPPU) {
+        this.Whizzler = ppu;
+        this.CPU = cpu;
 
-        // by default  have to call Mirror() at least once to set up the bank offsets
+        //setup mirroring 
         this.Mirror(0, 0);
         if ((this.romControlBytes[0] & 1) === 1) {
             this.Mirror(0, 1);
@@ -696,15 +704,15 @@ export class BaseCart4k implements IBaseCart {
             this.Mirror(0, 2);
         }
 
+        this.fourScreen = (this.romControlBytes[0] & 8) === 8; 
+
         if ((this.romControlBytes[0] & 8) === 8) {
             this.Mirror(0, 3);
         }
-
-
-        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
-
+        //initialize
         this.InitializeCart();
     }
+
 
     GetByte(clock: number, address: number): number {
         var bank = 0;

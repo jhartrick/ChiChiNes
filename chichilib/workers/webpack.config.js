@@ -24,14 +24,12 @@ const WatchIgnorePlugin = require('webpack/lib/WatchIgnorePlugin');
 
 module.exports = {
   entry: {
-    'emulator.worker': './emulator.worker.ts'
+    'romloader.worker': './romloader.worker.ts'
   },
   output: {
     path: helper.getRoot('src/assets'),
     filename: "[name].js",
-    sourceMapFilename: '[name].map',
-    library: 'emulator.worker',
-    libraryTarget: 'umd'
+    sourceMapFilename: '[name].map'
   },
   devtool: 'source-map',
   resolve: {

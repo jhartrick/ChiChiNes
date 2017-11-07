@@ -1,5 +1,6 @@
 ﻿declare var Atomics: any;
 import { ChiChiMachine, RunningStatuses } from '../chichi/chichi'
+import { GeniePatch } from '../chichi/ChiChiCheats';
 
 class NesInfo {
     bufferupdate = false;
@@ -286,6 +287,34 @@ export class tendoWrapper {
 
     buffers: any = {};
 
+    // attach require.js "require" fn here in bootstrapper
+    require: any = {};
+
+    loadCart(rom: number[], name: string) {
+        var loader: any;
+        this.require(
+            { 
+                baseUrl: "./assets" 
+            },['romloader.worker'], (romloader: any) => {
+                const cart = romloader.loader.loadRom(rom, name);
+                cart.installCart(this.machine.ppu, this.machine.Cpu);
+
+                if (cart != null) {
+                this.machine.Cpu.Cart = cart;
+
+                this.machine.Cart.NMIHandler = () => { this.machine.Cpu.InterruptRequest() };
+                this.machine.ppu.ChrRomHandler = this.machine.Cart;
+    
+                this.machine.Cpu.cheating = false;
+                this.machine.Cpu.genieCodes = new Array<GeniePatch>();
+
+                this.updateBuffers();
+                romloader = undefined;
+            }
+        });
+
+    }
+
     handleMessage(event: MessageEvent) {
         let machine = this.machine;
 
@@ -306,8 +335,7 @@ export class tendoWrapper {
                 this.createMachine();
                 this.machine.EnableSound = false;
                 //this.createMachine();
-                this.machine.LoadCart(event.data.rom);
-                this.updateBuffers();
+                this.loadCart(event.data.rom, event.data.name);
                break;
             case 'loadnsf':
                 this.stop();
