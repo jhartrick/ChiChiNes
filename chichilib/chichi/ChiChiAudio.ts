@@ -759,8 +759,8 @@ export class ChiChiBopper {
         this.noise = new NoiseChannel(this.myBlipper, 3);
         this.noise.Gain = this.noiseGain; this.noise.Period = 0;
 
-        this.dmc = new DMCChannel(this.myBlipper, 4);
-        this.dmc.Gain = 873; this.dmc.Period = 10;
+        this.dmc = new DMCChannel(this.myBlipper, 4, null);
+      //  this.dmc.Gain = 873; this.dmc.Period = 10;
     }
 
     GetByte(Clock: number, address: number): number {

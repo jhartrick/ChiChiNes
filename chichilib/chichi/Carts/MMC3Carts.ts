@@ -196,9 +196,7 @@ export class MMC3Cart extends BaseCart {
                 this._mmc3IrcOn = false;
                 this._mmc3IrqVal = this._mmc3TmpVal;
                 this.irqRaised = false;
-                if (this.updateIRQ) {
-                    this.updateIRQ();
-                }
+                this.CPU._handleIRQ = true;
                 break;
             case 57345:
                 this._mmc3IrcOn = true;
@@ -247,8 +245,9 @@ export class MMC3Cart extends BaseCart {
             // counter will start counting from the new value, generating an IRQ once it reaches zero. 
             if (this._mmc3IrqVal === 0) {
                 if (this._mmc3IrcOn) {
+                    this.CPU._handleIRQ = true;
                     this.irqRaised = true;
-                    this.updateIRQ();
+                    //this.updateIRQ();
                 }
                 this.scanlineCounter = -1;
                 return;
@@ -265,9 +264,7 @@ export class MMC3Cart extends BaseCart {
         if (this.scanlineCounter === 0) {
             if (this._mmc3IrcOn) {
                 this.irqRaised = true;
-                if (this.updateIRQ) {
-                    this.updateIRQ();
-                }
+                this.CPU._handleIRQ = true;
             }
             if (this._mmc3IrqVal > 0) {
                 this.scanlineCounter = this._mmc3IrqVal;

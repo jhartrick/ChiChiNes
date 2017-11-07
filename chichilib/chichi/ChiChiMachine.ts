@@ -227,7 +227,7 @@ import { WavSharer } from './Audio/CommonAudio';
             this.ppu.DrawTo(this._clock);
             this.Cart.advanceClock(value);
             this._clock += value;
-
+            
         }
         private _ticks = 0;
 
@@ -1527,7 +1527,7 @@ import { WavSharer } from './Audio/CommonAudio';
 
         FindNextEvent(): void {
             // it'll either be the ppu's NMI, or an irq from either the apu or the cart
-            this.nextEvent = 0;;//this.clock + this.ppu.NextEventAt | this.Cart.nextEventAt;
+            this.nextEvent = this.clock + this.ppu.NextEventAt;//| this.Cart.nextEventAt;
         }
         HandleNextEvent(): void {
            // this.ppu.HandleEvent(this.clock);

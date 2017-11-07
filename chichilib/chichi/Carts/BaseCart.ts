@@ -231,7 +231,14 @@ export class BaseCart implements IBaseCart {
         // rom0.0=0 is horizontal mirroring, rom0.0=1 is vertical mirroring
 
         // by default  have to call Mirror() at least once to set up the bank offsets
-        this.Mirror(0, (this.romControlBytes[0] & 1) + 1);
+//        this.Mirror(0, (this.romControlBytes[0] & 1) + 1);
+        this.Mirror(0, 0);
+        if ((this.romControlBytes[0] & 1) === 1) {
+            this.Mirror(0, 1);
+        } else {
+            this.Mirror(0, 2);
+        }
+
 
         this.fourScreen = (this.romControlBytes[0] & 8) === 8; 
 

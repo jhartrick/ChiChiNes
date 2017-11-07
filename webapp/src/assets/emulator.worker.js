@@ -2062,7 +2062,14 @@ var BaseCart = /** @class */ (function () {
         this.UsesSRAM = (this.romControlBytes[0] & 2) === 2;
         // rom0.0=0 is horizontal mirroring, rom0.0=1 is vertical mirroring
         // by default  have to call Mirror() at least once to set up the bank offsets
-        this.Mirror(0, (this.romControlBytes[0] & 1) + 1);
+        //        this.Mirror(0, (this.romControlBytes[0] & 1) + 1);
+        this.Mirror(0, 0);
+        if ((this.romControlBytes[0] & 1) === 1) {
+            this.Mirror(0, 1);
+        }
+        else {
+            this.Mirror(0, 2);
+        }
         this.fourScreen = (this.romControlBytes[0] & 8) === 8;
         if ((this.romControlBytes[0] & 8) === 8) {
             this.Mirror(0, 3);
@@ -5691,8 +5698,7 @@ var ChiChiCPPU = /** @class */ (function () {
     };
     ChiChiCPPU.prototype.FindNextEvent = function () {
         // it'll either be the ppu's NMI, or an irq from either the apu or the cart
-        this.nextEvent = 0;
-        ; //this.clock + this.ppu.NextEventAt | this.Cart.nextEventAt;
+        this.nextEvent = this.clock + this.ppu.NextEventAt; //| this.Cart.nextEventAt;
     };
     ChiChiCPPU.prototype.HandleNextEvent = function () {
         // this.ppu.HandleEvent(this.clock);
@@ -5769,6 +5775,7 @@ var Smb2j = __webpack_require__(24);
 var crc = __webpack_require__(25);
 var VS = __webpack_require__(37);
 var VRC = __webpack_require__(38);
+var VRC2 = __webpack_require__(39);
 var MapperFactory = /** @class */ (function () {
     function MapperFactory() {
         this[0] = Discrete.NesCart;
@@ -5781,6 +5788,7 @@ var MapperFactory = /** @class */ (function () {
         this[10] = MMC2.MMC4Cart;
         this[11] = Discrete.ColorDreams;
         this[13] = Discrete.Mapper013Cart;
+        this[23] = VRC2.KonamiVRC2Cart;
         this[30] = Discrete.Mapper030Cart;
         this[31] = Nsf.Mapper031Cart;
         this[34] = Discrete.BNROMCart;
@@ -5796,6 +5804,7 @@ var MapperFactory = /** @class */ (function () {
         this[77] = Discrete.Mapper077Cart;
         this[81] = Discrete.Mapper081Cart;
         this[87] = Discrete.Mapper087Cart;
+        //89 = Discrete.Mapper089Cart;
         this[93] = Discrete.Mapper093Cart;
         this[97] = Discrete.Irem097Cart;
         this[99] = VS.VSCart;
@@ -5804,6 +5813,7 @@ var MapperFactory = /** @class */ (function () {
         this[152] = Discrete.Mapper152Cart;
         this[151] = VRC.KonamiVRC1Cart;
         this[180] = Discrete.NesCart;
+        //184 = Discrete.Mapper184Cart;
         this[190] = Discrete.Mapper190Cart;
         this[202] = Multi.Mapper202Cart;
         this[212] = Multi.Mapper212Cart;
@@ -5913,7 +5923,7 @@ exports.iNESFileHandler = iNESFileHandler;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiTypes_1 = __webpack_require__(4);
-var DMCChannel_1 = __webpack_require__(39);
+var DMCChannel_1 = __webpack_require__(40);
 var CommonAudio_1 = __webpack_require__(5);
 var NoiseChannel = /** @class */ (function () {
     function NoiseChannel(bleeper, chan) {
@@ -6669,9 +6679,8 @@ var ChiChiBopper = /** @class */ (function () {
         this.noise = new NoiseChannel(this.myBlipper, 3);
         this.noise.Gain = this.noiseGain;
         this.noise.Period = 0;
-        this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4);
-        this.dmc.Gain = 873;
-        this.dmc.Period = 10;
+        this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, null);
+        //  this.dmc.Gain = 873; this.dmc.Period = 10;
     };
     ChiChiBopper.prototype.GetByte = function (Clock, address) {
         if (address === 16384) {
@@ -7212,7 +7221,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiMachine_1 = __webpack_require__(7);
 exports.ChiChiCPPU = ChiChiMachine_1.ChiChiCPPU;
 exports.ChiChiMachine = ChiChiMachine_1.ChiChiMachine;
-var ChiChiNsfMachine_1 = __webpack_require__(40);
+var ChiChiNsfMachine_1 = __webpack_require__(41);
 exports.ChiChiNsfCPPU = ChiChiNsfMachine_1.ChiChiNsfCPPU;
 exports.ChiChiNsfMachine = ChiChiNsfMachine_1.ChiChiNsfMachine;
 var BaseCart_1 = __webpack_require__(1);
@@ -7235,7 +7244,7 @@ exports.PpuStatus = ChiChiTypes_1.PpuStatus;
 exports.ChiChiInstruction = ChiChiTypes_1.ChiChiInstruction;
 exports.ChiChiSprite = ChiChiTypes_1.ChiChiSprite;
 exports.AudioSettings = ChiChiTypes_1.AudioSettings;
-var ChiChiCheats_1 = __webpack_require__(41);
+var ChiChiCheats_1 = __webpack_require__(42);
 exports.GameGenieCode = ChiChiCheats_1.GameGenieCode;
 exports.ChiChiCheats = ChiChiCheats_1.ChiChiCheats;
 
@@ -8929,9 +8938,7 @@ var MMC3Cart = /** @class */ (function (_super) {
                 this._mmc3IrcOn = false;
                 this._mmc3IrqVal = this._mmc3TmpVal;
                 this.irqRaised = false;
-                if (this.updateIRQ) {
-                    this.updateIRQ();
-                }
+                this.CPU._handleIRQ = true;
                 break;
             case 57345:
                 this._mmc3IrcOn = true;
@@ -8975,8 +8982,9 @@ var MMC3Cart = /** @class */ (function (_super) {
             // counter will start counting from the new value, generating an IRQ once it reaches zero. 
             if (this._mmc3IrqVal === 0) {
                 if (this._mmc3IrcOn) {
+                    this.CPU._handleIRQ = true;
                     this.irqRaised = true;
-                    this.updateIRQ();
+                    //this.updateIRQ();
                 }
                 this.scanlineCounter = -1;
                 return;
@@ -8992,9 +9000,7 @@ var MMC3Cart = /** @class */ (function (_super) {
         if (this.scanlineCounter === 0) {
             if (this._mmc3IrcOn) {
                 this.irqRaised = true;
-                if (this.updateIRQ) {
-                    this.updateIRQ();
-                }
+                this.CPU._handleIRQ = true;
             }
             if (this._mmc3IrqVal > 0) {
                 this.scanlineCounter = this._mmc3IrqVal;
@@ -9880,72 +9886,309 @@ exports.KonamiVRC1Cart = KonamiVRC1Cart;
 
 "use strict";
 
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(1);
+var KonamiVRC2Cart = /** @class */ (function (_super) {
+    __extends(KonamiVRC2Cart, _super);
+    function KonamiVRC2Cart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.chrbank0 = 0;
+        _this.chrbank0_1 = 0;
+        _this.chrbank1 = 0;
+        _this.chrbank1_1 = 0;
+        _this.chrbankc1_1 = 0;
+        _this.chrbankc1 = 0;
+        _this.chrbankc0_1 = 0;
+        _this.chrbankc0 = 0;
+        _this.chrbankd1_1 = 0;
+        _this.chrbankd1 = 0;
+        _this.chrbankd0_1 = 0;
+        _this.chrbankd0 = 0;
+        _this.chrbanke1_1 = 0;
+        _this.chrbanke1 = 0;
+        _this.chrbanke0_1 = 0;
+        _this.chrbanke0 = 0;
+        _this.latches = [
+            0, 0,
+            0, 0,
+            0, 0,
+            0, 0,
+            0, 0,
+            0, 0,
+            0, 0,
+            0, 0,
+        ];
+        _this.regNums = [
+            0x00,
+            0x01,
+            0x02,
+            0x03,
+        ];
+        _this.irqLatch = 0;
+        return _this;
+    }
+    KonamiVRC2Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'KonamiVRC2';
+        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.CopyBanks4k(0, 0, 0, 2);
+        switch (this.ROMHashFunction) {
+            case 'C1FBF659': // boku dracula kun
+            case '91328C1D':// tiny toon adventures j
+                this.regNums = [
+                    0x00,
+                    0x04,
+                    0x08,
+                    0x0c,
+                ];
+                break;
+        }
+    };
+    KonamiVRC2Cart.prototype.SetByte = function (clock, address, data) {
+        switch (address & 0xF000) {
+            case 0x6000:
+                break;
+            case 0x8000:
+                // 8kib prg rom at 8000
+                var bank8 = data & 0x1F;
+                this.SetupBankStarts(bank8, this.currentA, this.currentC, this.currentE);
+                break;
+            case 0xA000:
+                // 8kib prg rom at A000
+                var bankA = data & 0x1F;
+                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+                break;
+            case 0x9000:
+                if (address <= 0x9003) {
+                    switch (data & 7) {
+                        case 0:// vertical
+                            this.Mirror(clock, 2);
+                            break;
+                        case 1:// horizontal
+                            this.Mirror(clock, 1);
+                            break;
+                        case 2:// onescreen - low
+                            this.oneScreenOffset = 0;
+                            this.Mirror(clock, 0);
+                            break;
+                        case 3:// onescreen - high
+                            this.oneScreenOffset = 0x400;
+                            this.Mirror(clock, 0);
+                            break;
+                    }
+                }
+                // this.CopyBanks4k(clock, 0, this.chrbank0 , 1);
+                // this.CopyBanks4k(clock, 1, this.chrbank1 , 1);
+                break;
+            case 0xB000:
+                if ((address & 0xFFF) == this.regNums[0]) {
+                    this.chrbank0 = data & 0xF;
+                }
+                if ((address & 0xFFF) == this.regNums[1]) {
+                    this.chrbank0_1 = (data & 0xf) << 4;
+                }
+                if ((address & 0xFFF) == this.regNums[2]) {
+                    this.chrbank1 = data & 0xF;
+                }
+                if ((address & 0xFFF) == this.regNums[3]) {
+                    this.chrbank1_1 = (data & 0xf) << 4;
+                }
+                this.CopyBanks1k(clock, 0, this.chrbank0 | this.chrbank0_1, 1);
+                this.CopyBanks1k(clock, 1, this.chrbank1 | this.chrbank1_1, 1);
+                break;
+            case 0xc000:
+                if ((address & 0xFFF) == this.regNums[0]) {
+                    this.chrbankc0 = data & 0xF;
+                }
+                if ((address & 0xFFF) == this.regNums[1]) {
+                    this.chrbankc0_1 = (data & 0xf) << 4;
+                }
+                if ((address & 0xFFF) == this.regNums[2]) {
+                    this.chrbankc1 = data & 0xF;
+                }
+                if ((address & 0xFFF) == this.regNums[3]) {
+                    this.chrbankc1_1 = (data & 0xf) << 4;
+                }
+                this.CopyBanks1k(clock, 2, this.chrbankc0 | this.chrbankc0_1, 1);
+                this.CopyBanks1k(clock, 3, this.chrbankc1 | this.chrbankc1_1, 1);
+                break;
+            case 0xd000:
+                if ((address & 0xFFF) == this.regNums[0]) {
+                    this.chrbankd0 = data & 0xF;
+                }
+                if ((address & 0xFFF) == this.regNums[1]) {
+                    this.chrbankd0_1 = (data & 0xf) << 4;
+                }
+                if ((address & 0xFFF) == this.regNums[2]) {
+                    this.chrbankd1 = data & 0xF;
+                }
+                if ((address & 0xFFF) == this.regNums[3]) {
+                    this.chrbankd1_1 = (data & 0xf) << 4;
+                }
+                this.CopyBanks1k(clock, 4, this.chrbankd0 | this.chrbankd0_1, 1);
+                this.CopyBanks1k(clock, 5, this.chrbankd1 | this.chrbankd1_1, 1);
+                break;
+            case 0xe000:
+                if ((address & 0xFFF) == this.regNums[0]) {
+                    this.chrbanke0 = data & 0xF;
+                }
+                if ((address & 0xFFF) == this.regNums[1]) {
+                    this.chrbanke0_1 = (data & 0xf) << 4;
+                }
+                if ((address & 0xFFF) == this.regNums[2]) {
+                    this.chrbanke1 = data & 0xF;
+                }
+                if ((address & 0xFFF) == this.regNums[3]) {
+                    this.chrbanke1_1 = (data & 0xf) << 4;
+                }
+                this.CopyBanks1k(clock, 6, this.chrbanke0 | this.chrbanke0_1, 1);
+                this.CopyBanks1k(clock, 7, this.chrbanke1 | this.chrbanke1_1, 1);
+                break;
+        }
+    };
+    return KonamiVRC2Cart;
+}(BaseCart_1.BaseCart));
+exports.KonamiVRC2Cart = KonamiVRC2Cart;
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
 var DMCChannel = /** @class */ (function () {
-    function DMCChannel(bleeper, chan) {
-        this.freqs = [
-            0x1AC * 12,
-            0x17C * 12,
-            0x154 * 12,
-            0x140 * 12,
-            0x11E * 12,
-            0x0FE * 12,
-            0x0E2 * 12,
-            0x0D6 * 12,
-            0x0BE * 12,
-            0x0A0 * 12,
-            0x08E * 12,
-            0x080 * 12,
-            0x06A * 12,
-            0x054 * 12,
-            0x048 * 12,
-            0x036 * 12
+    function DMCChannel(bleeper, chan, cpu) {
+        this.cpu = cpu;
+        this.internalClock = 0;
+        this.fetching = false;
+        this.buffer = 0;
+        this.bufempty = false;
+        this.outbits = 0;
+        this.freqTable = [
+            0x1AC, 0x17C, 0x154, 0x140, 0x11E, 0x0FE, 0x0E2, 0x0D6,
+            0x0BE, 0x0A0, 0x08E, 0x080, 0x06A, 0x054, 0x048, 0x036,
         ];
-        this.regs = {
-            ctrl: 0,
-            address: 0,
-            lengthCounter: 0
-        };
-        this.out = {
-            shifter: 0,
-            dac: 0,
-            buffer: 0,
-            active: false
-        };
-        this.REG0_FREQUENCY = 0x0F;
-        this.REG0_LOOP = 0x40;
-        this.REG0_IRQ_ENABLE = 0x80;
-        this.INP_STEP = 8;
+        this.shiftreg = 0;
+        this.silenced = false;
+        this.cycles = 0;
+        this.curAddr = 0;
+        this.lengthCtr = 0;
+        this.length = 0;
+        this.addr = 0;
+        this.pos = 0;
+        this.pcmdata = 0;
+        this.doirq = 0;
+        this.frequency = 0;
+        this.wavehold = 0;
+        this._chan = 0;
+        this.delta = 0;
+        this._bleeper = null;
+        this._bleeper = bleeper;
+        this._chan = chan;
     }
     DMCChannel.prototype.WriteRegister = function (register, data, time) {
         switch (register) {
             case 0:
-                this.regs.ctrl = data;
-                this.frequency = this.freqs[data & this.REG0_FREQUENCY];
+                this.frequency = data & 0xF;
+                this.wavehold = (data >> 6) & 0x1;
+                this.doirq = data >> 7;
+                if (!this.doirq) {
+                    //CPU::WantIRQ &= ~IRQ_DPCM;
+                }
                 break;
             case 1:
-                this.out.dac = data & 0x7F;
-                this.curSample = this.out.dac * this.Volume;
+                this.pcmdata = data & 0x7F;
+                this.pos = (this.pcmdata - 0x40) * 3;
                 break;
             case 2:
-                this.regs.address = 0xC000 | (data << 6);
+                this.addr = data;
                 break;
             case 3:
-                this.regs.lengthCounter = (data << 4) + 1;
+                this.length = data;
+                break;
+            case 4:
+                if (data) {
+                    if (!this.lengthCtr) {
+                        this.curAddr = 0xC000 | (this.addr << 6);
+                        this.lengthCtr = (this.length << 4) + 1;
+                    }
+                }
+                else {
+                    this.lengthCtr = 0;
+                }
+                // CPU::WantIRQ &= ~IRQ_DPCM;
                 break;
         }
     };
     DMCChannel.prototype.Run = function (end_time) {
-        //throw new Error('Method not implemented.');
+        // this uses pre-decrement due to the lookup table
+        for (; this.time < end_time; this.time++) {
+            if (!--this.cycles) {
+                this.cycles = this.freqTable[this.frequency];
+                if (!this.silenced) {
+                    if (this.shiftreg & 1) {
+                        if (this.pcmdata <= 0x7D)
+                            this.pcmdata += 2;
+                    }
+                    else {
+                        if (this.pcmdata >= 0x02)
+                            this.pcmdata -= 2;
+                    }
+                    this.shiftreg >>= 1;
+                    this.pos = (this.pcmdata - 0x40) * 3;
+                }
+                if (!--this.outbits) {
+                    this.outbits = 8;
+                    if (!this.bufempty) {
+                        this.shiftreg = this.buffer;
+                        this.bufempty = true;
+                        this.silenced = false;
+                    }
+                    else {
+                        this.silenced = true;
+                    }
+                }
+            }
+            if (this.bufempty && !this.fetching && this.lengthCtr && (this.internalClock & 1)) {
+                this.fetching = true;
+                //CPU::EnableDMA |= DMA_PCM;
+                // decrement LengthCtr now, so $4015 reads are updated in time
+                this.lengthCtr--;
+            }
+        }
+    };
+    DMCChannel.prototype.fetch = function () {
+        this.buffer = this.cpu.GetByte(this.curAddr);
+        this.bufempty = false;
+        this.fetching = false;
+        if (++this.curAddr == 0x10000)
+            this.curAddr = 0x8000;
+        if (!this.lengthCtr) {
+            if (this.wavehold) {
+                this.curAddr = 0xC000 | (this.addr << 6);
+                this.lengthCtr = (this.length << 4) + 1;
+            }
+            else if (this.doirq) {
+                this.cpu._handleIRQ = true;
+            }
+        }
     };
     DMCChannel.prototype.UpdateAmplitude = function (new_amp) {
-        // throw new Error('Method not implemented.');
     };
     DMCChannel.prototype.EndFrame = function (time) {
-        //  throw new Error('Method not implemented.');
     };
     DMCChannel.prototype.FrameClock = function (time, step) {
-        //  throw new Error('Method not implemented.');
     };
     return DMCChannel;
 }());
@@ -9953,7 +10196,7 @@ exports.DMCChannel = DMCChannel;
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10073,7 +10316,7 @@ exports.ChiChiNsfCPPU = ChiChiNsfCPPU;
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
