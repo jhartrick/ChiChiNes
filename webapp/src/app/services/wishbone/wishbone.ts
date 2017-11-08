@@ -433,7 +433,7 @@ export class WishboneMachine  {
                 cart.installCart(this.ppu, this.Cpu);
                 this.Cart.realCart = cart;
                 this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
-                this.Cart.CartName = this.Cart.realCart.CartName;
+                this.Cart.CartName = this.Cart.realCart.CartName = name;
                 this.ppu.ChrRomHandler = this.Cart.realCart;
                 this.tileDoodler = new TileDoodler(this.ppu);
                 subj.next(<IBaseCart>cart);

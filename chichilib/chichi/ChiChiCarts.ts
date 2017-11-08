@@ -26,6 +26,7 @@ class MapperFactory {
     11 = Discrete.ColorDreams;
     13 = Discrete.Mapper013Cart;
     21 = VRC2.Konami021Cart;
+    22 = VRC2.KonamiVRC022Cart;
     23 = VRC2.KonamiVRC2Cart;
     25 = VRC2.Konami025Cart;
     30 = Discrete.Mapper030Cart;
