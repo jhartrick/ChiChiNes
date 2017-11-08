@@ -1,10 +1,10 @@
 import { GameGenieCode } from 'chichi';
 import { Http } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs';
+import { Subject } from 'rxjs/Subject';
 
 export class WishboneCheats {
-    constructor(private http: Http){
+    constructor(private http: Http) {
     }
 
     getCheatsForGame(crc: string): Observable<Array<GameGenieCode>> {

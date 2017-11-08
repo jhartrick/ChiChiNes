@@ -3,6 +3,7 @@ import { Emulator } from '../../services/NESService';
 import { Observable } from 'rxjs/Observable';
 import { AudioSettings } from 'chichi';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
+import { IAudioHandler } from '../../services/wishbone/wishbone.audio';
 
 @Component({
   selector: 'chichi-audiosettings',
@@ -15,15 +16,27 @@ export class AudioSettingsComponent {
     audioSettings: AudioSettings = new AudioSettings();
 
     wishbone: WishboneMachine;
-
+    audioHandler: IAudioHandler;
 
     constructor(public nesService: Emulator ) {
         this.wishbone = nesService.wishbone;
-        this.audioSettings = this.wishbone.SoundBopper.audioSettings;
-        // this.wishbone.asObservable().subscribe((machine) => {
-        //     if (machine && machine.SoundBopper) {
-        //     }
-        // });
+        this.audioHandler = { volume: 1,
+            rebuild:  () => { return; }
+        };
+        this.wishbone.asObservable().subscribe((machine) => {
+            if (machine && machine.SoundBopper) {
+                this.audioSettings = this.wishbone.SoundBopper.audioSettings;
+                this.audioHandler = this.wishbone.SoundBopper.audioHandler;
+            }
+        });
+    }
+
+    get volume(): number {
+        return this.audioHandler.volume;
+    }
+
+    volumeChange(e) {
+        this.audioHandler.volume = e.value;
     }
 
     get enableSquare0(): boolean {

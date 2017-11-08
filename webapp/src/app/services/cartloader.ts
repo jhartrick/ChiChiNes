@@ -3,7 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 export class CartLoader {
-    
+
     static doLoadCart(rom: number[], name: string, machine: any) {
         return new Observable<BaseCart>((subj) => {
             (require as any).ensure(['../../assets/romloader.worker.js'], (require) => {

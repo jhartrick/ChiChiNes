@@ -16,28 +16,51 @@ export class Konami026Cart extends BaseCart {
     irqEnable = false;
     irqLatch: number = 0;
 
+    prescaler = 341;
+
     registers = [0,0,0,0,0,0,0,0];
 
-    advanceClock(clock: number) {
-        if (this.runCounter) {
-            this.irqCounter -= clock;
-            if (this.irqCounter <= 0) {
-                this.runCounter = false;
-                console.log('trigger irq')
-                this.CPU._handleIRQ = true;
+    tickIrq() {
+        this.irqCounter++;
+        if (this.irqCounter == 0xFF) {
+            this.irqCounter = this.irqLatch;
+            this.CPU._handleIRQ = true;
+        }
+    }
+
+    tick(ticks: number) {
+        if (this.irqMode) {
+            for(let i =0; i < ticks;++i) {
+                this.tickIrq();
             }
+
+        } else {
+            this.prescaler -= ticks;
+            if (this.prescaler <= 0) {
+                this.tickIrq();
+                this.prescaler+=341;
+            }
+        }
+    }
+
+    advanceClock(clock: number) {
+        if (this.irqEnable) {
+            this.tick(clock);
         }
     }
 
     ackIrq() {
         console.log('ack irq')
-        if (this.irqEnableAfterAck) {
-            this.irqEnable = true;
-            this.runCounter = true;
+        this.irqEnable = this.irqEnableAfterAck;
+    }
+
+    set irqControl(val: number) {
+        this.irqEnableAfterAck = (val & 0x1) == 0x1;
+        this.irqEnable = (val & 0x2) == 0x2;
+        this.irqMode = (val & 0x4) == 0x4;
+        if (this.irqEnable) {
+            this.prescaler = 341;
             this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * (113 + (2/3))) | 0;
-            
-        } else {
-            this.irqEnable = false;
         }
     }
 
@@ -177,36 +200,29 @@ export class Konami026Cart extends BaseCart {
 
         this.CopyBanks1k(clock, 11, this.registers[7], 1); 
         
-        switch(this.chrselect & 0xF) {
-            case 0:
-            case 7:
-                this.Mirror(clock,1);
-                break;
-            case 4: case 3:
-                this.Mirror(clock,2);
-                break;
-            case 8: case 0xF:
-                this.oneScreenOffset = 0;
-                this.Mirror(clock,0);
-                break;
-            case 8: case 0xF:
-                this.oneScreenOffset = 0x400;
-                this.Mirror(clock,0);
-                break;
+        if ((this.chrselect & 0x20) == 0x20) {
+            switch(this.chrselect & 0xF) {
+                case 0:
+                case 7:
+                    this.Mirror(clock,1);
+                    break;
+                case 4: case 3:
+                    this.Mirror(clock,2);
+                    break;
+                case 8: case 0xF:
+                    this.oneScreenOffset = 0;
+                    this.Mirror(clock,0);
+                    break;
+                case 8: case 0xF:
+                    this.oneScreenOffset = 0x400;
+                    this.Mirror(clock,0);
+                    break;
+            }
         }
+
 
     }
 
-    set irqControl(val: number) {
-        this.irqEnableAfterAck = (val & 0x1) == 0x1;
-        this.irqEnable = (val & 0x2) == 0x2;
-        this.irqMode = (val & 0x4) == 0x4;
-        if (this.irqEnable) {
-            this.runCounter = true;
-            this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * (113 + (2/3))) | 0;
-        }
-        
-    }
 
     InitializeCart() {
         this.mapperName = 'KonamiVRC2';

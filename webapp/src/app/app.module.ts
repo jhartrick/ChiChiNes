@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { HttpModule } from '@angular/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import { MatTableModule, MatPaginatorModule, MatGridListModule, MatTabsModule } from '@angular/material';
-import { MatButtonModule, MatCheckboxModule, MatSidenavModule } from '@angular/material';
+import { MatButtonModule, MatCheckboxModule, MatSidenavModule, MatSliderModule } from '@angular/material';
 import { MatButtonToggleModule, MatExpansionModule, MatDialogModule } from '@angular/material';
 import * as JSZip from 'jszip';
 
@@ -66,7 +66,8 @@ import { WishboneMachine } from './services/wishbone/wishbone';
       MatPaginatorModule,
       MatGridListModule,
       MatTabsModule,
-      MatDialogModule
+      MatDialogModule,
+      MatSliderModule
   ],
   providers: [HttpModule, Emulator, RomLoader],
   bootstrap: [AppComponent]
