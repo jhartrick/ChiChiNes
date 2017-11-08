@@ -4897,6 +4897,9 @@ var BaseCart = /** @class */ (function () {
         this.InitializeCart();
     };
     BaseCart.prototype.GetByte = function (clock, address) {
+        return this.baseGetByte(clock, address);
+    };
+    BaseCart.prototype.baseGetByte = function (clock, address) {
         var bank = 0;
         switch (address & 0xE000) {
             case 0x6000:

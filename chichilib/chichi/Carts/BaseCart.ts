@@ -255,8 +255,12 @@ export class BaseCart implements IBaseCart {
         //initialize
         this.InitializeCart();
     }
-
+    
     GetByte(clock: number, address: number): number {
+        return this.baseGetByte(clock, address);
+    }
+        
+    baseGetByte(clock: number, address: number): number {
         var bank = 0;
 
         switch (address & 0xE000) {
