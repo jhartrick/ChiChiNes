@@ -441,7 +441,61 @@ export class Mapper087Cart extends BaseCart {
      }
  
  }
- 
+
+ export class Mapper184Cart extends BaseCart {
+    InitializeCart(): void {
+        
+        this.mapperName = 'Sunsoft-1';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x6000 && address <= 0x7FFF) {
+            const lobank = val & 0x7;
+            const hibank = (val >> 4) & 0x7;
+            this.CopyBanks4k(clock, 0, lobank, 1);
+            this.CopyBanks4k(clock, 1, hibank, 1);
+        }
+
+    }
+
+}
+
+export class Mapper089Cart extends BaseCart {
+    InitializeCart(): void {
+        
+        this.mapperName = 'Sunsoft-2 on 3';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            let lobank = val & 0x7;
+            lobank |= (val >> 4) & 8
+            const prgbank = ((val >> 4) & 0x7) << 1;
+
+            let mirror = (val >> 3) & 1;
+            this.oneScreenOffset = mirror * 1024;
+            this.Mirror(clock,0);
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+            this.CopyBanks(clock, 0, lobank, 1);
+
+        }
+
+    }
+
+}
+
  export class Mapper152Cart extends BaseCart {
      InitializeCart(): void {
          
@@ -568,7 +622,8 @@ export class Mapper087Cart extends BaseCart {
  }
  
  //  Mapper 7 and derivatives 34
-export class AxROMCart extends BaseCart {
+
+ export class AxROMCart extends BaseCart {
     // prevBSSrc = new Uint8Array(8);
 
  

@@ -2824,7 +2824,7 @@ var MapperFactory = /** @class */ (function () {
         this[77] = Discrete.Mapper077Cart;
         this[81] = Discrete.Mapper081Cart;
         this[87] = Discrete.Mapper087Cart;
-        //89 = Discrete.Mapper089Cart;
+        this[89] = Discrete.Mapper089Cart;
         this[93] = Discrete.Mapper093Cart;
         this[97] = Discrete.Irem097Cart;
         this[99] = VS.VSCart;
@@ -2833,7 +2833,7 @@ var MapperFactory = /** @class */ (function () {
         this[152] = Discrete.Mapper152Cart;
         this[151] = VRC.KonamiVRC1Cart;
         this[180] = Discrete.NesCart;
-        //184 = Discrete.Mapper184Cart;
+        this[184] = Discrete.Mapper184Cart;
         this[190] = Discrete.Mapper190Cart;
         this[202] = Multi.Mapper202Cart;
         this[212] = Multi.Mapper212Cart;
@@ -3704,6 +3704,56 @@ var Mapper093Cart = /** @class */ (function (_super) {
     return Mapper093Cart;
 }(BaseCart_1.BaseCart));
 exports.Mapper093Cart = Mapper093Cart;
+var Mapper184Cart = /** @class */ (function (_super) {
+    __extends(Mapper184Cart, _super);
+    function Mapper184Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper184Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Sunsoft-1';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper184Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x6000 && address <= 0x7FFF) {
+            var lobank = val & 0x7;
+            var hibank = (val >> 4) & 0x7;
+            this.CopyBanks4k(clock, 0, lobank, 1);
+            this.CopyBanks4k(clock, 1, hibank, 1);
+        }
+    };
+    return Mapper184Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper184Cart = Mapper184Cart;
+var Mapper089Cart = /** @class */ (function (_super) {
+    __extends(Mapper089Cart, _super);
+    function Mapper089Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper089Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Sunsoft-2 on 3';
+        if (this.chrRomCount > 0) {
+            this.CopyBanks(0, 0, 0, 1);
+        }
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper089Cart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            var lobank = val & 0x7;
+            lobank |= (val >> 4) & 8;
+            var prgbank = ((val >> 4) & 0x7) << 1;
+            var mirror = (val >> 3) & 1;
+            this.oneScreenOffset = mirror * 1024;
+            this.Mirror(clock, 0);
+            this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
+            this.CopyBanks(clock, 0, lobank, 1);
+        }
+    };
+    return Mapper089Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper089Cart = Mapper089Cart;
 var Mapper152Cart = /** @class */ (function (_super) {
     __extends(Mapper152Cart, _super);
     function Mapper152Cart() {
@@ -4292,21 +4342,21 @@ var MMC2Cart = /** @class */ (function (_super) {
     __extends(MMC2Cart, _super);
     function MMC2Cart() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.selector = [0, 0];
+        _this.latches = [0, 0];
         _this.banks = [0, 0, 0, 0];
         return _this;
     }
     MMC2Cart.prototype.InitializeCart = function () {
         this.mapperName = 'MMC2';
-        this.selector[0] = 1;
-        this.selector[1] = 2;
+        this.latches[0] = 1;
+        this.latches[1] = 2;
         this.banks[0] = 0;
         this.banks[1] = 0;
         this.banks[2] = 0;
         this.banks[3] = 0;
         this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.CopyBanks(0, 0, this.banks[this.selector[0]], 1);
-        this.CopyBanks(0, 1, this.banks[this.selector[1]], 1);
+        this.CopyBanks(0, 0, this.banks[this.latches[0]], 1);
+        this.CopyBanks(0, 1, this.banks[this.latches[1]], 1);
     };
     MMC2Cart.prototype.CopyBanks = function (clock, dest, src, numberOf4kBanks) {
         if (dest >= this.chrRomCount) {
@@ -4323,27 +4373,27 @@ var MMC2Cart = /** @class */ (function (_super) {
         var bank = 0;
         if (address == 0xFD8) {
             bank = (address >> 11) & 0x2;
-            this.selector[0] = bank;
+            this.latches[0] = bank;
             this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+            this.CopyBanks(clock, 0, this.banks[this.latches[0]], 1);
         }
         else if (address == 0xFE8) {
             bank = ((address >> 11) & 0x2) | 0x1;
-            this.selector[0] = bank;
+            this.latches[0] = bank;
             this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+            this.CopyBanks(clock, 0, this.banks[this.latches[0]], 1);
         }
         else if (address >= 0x1FD8 && address <= 0x1FDF) {
             bank = (address >> 11) & 0x2;
-            this.selector[1] = bank;
+            this.latches[1] = bank;
             this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+            this.CopyBanks(clock, 1, this.banks[this.latches[1]], 1);
         }
         else if (address >= 0x1FE8 && address <= 0x1FEF) {
             bank = ((address >> 11) & 0x2) | 0x1;
-            this.selector[1] = bank;
+            this.latches[1] = bank;
             this.Whizzler.DrawTo(clock);
-            this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+            this.CopyBanks(clock, 1, this.banks[this.latches[1]], 1);
         }
         bank = address >> 10;
         var newAddress = this.ppuBankStarts[bank] + (address & 1023);
@@ -4367,7 +4417,7 @@ var MMC2Cart = /** @class */ (function (_super) {
                 this.banks[(address - 0xB000) >> 12] = val & 0x1f;
                 //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
                 this.Whizzler.DrawTo(clock);
-                this.CopyBanks(clock, 0, this.banks[this.selector[0]], 1);
+                this.CopyBanks(clock, 0, this.banks[this.latches[0]], 1);
                 this.Whizzler.UnpackSprites();
                 break;
             case 0xD:
@@ -4375,14 +4425,12 @@ var MMC2Cart = /** @class */ (function (_super) {
                 this.banks[(address - 0xB000) >> 12] = val & 0x1f;
                 //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
                 this.Whizzler.DrawTo(clock);
-                this.CopyBanks(clock, 1, this.banks[this.selector[1]], 1);
+                this.CopyBanks(clock, 1, this.banks[this.latches[1]], 1);
                 break;
             case 0xF:
                 this.Mirror(clock, (val & 0x1) + 1);
                 break;
         }
-        // this.SetupBankStarts()
-        //chr.SwapBanks<SIZE_4K,0x0000>( banks[selector[0]], banks[selector[1]] );
     };
     return MMC2Cart;
 }(BaseCart_1.BaseCart));

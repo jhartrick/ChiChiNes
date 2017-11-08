@@ -41,7 +41,7 @@ class MapperFactory {
     77 = Discrete.Mapper077Cart;
     81 = Discrete.Mapper081Cart;
     87 = Discrete.Mapper087Cart;
-    //89 = Discrete.Mapper089Cart;
+    89 = Discrete.Mapper089Cart;
     93 = Discrete.Mapper093Cart;
     97 = Discrete.Irem097Cart;
     99 = VS.VSCart;
@@ -50,7 +50,7 @@ class MapperFactory {
     152 = Discrete.Mapper152Cart;
     151 = VRC.KonamiVRC1Cart;
     180 = Discrete.NesCart;
-    //184 = Discrete.Mapper184Cart;
+    184 = Discrete.Mapper184Cart;
     190 = Discrete.Mapper190Cart;
     202 =  Multi.Mapper202Cart;
     212 = Multi.Mapper212Cart;
