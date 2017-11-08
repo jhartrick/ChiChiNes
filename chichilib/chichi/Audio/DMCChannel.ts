@@ -75,47 +75,48 @@ export class DMCChannel  {
     Run(end_time: number): void {
         // this uses pre-decrement due to the lookup table
         for (; this.time < end_time; this.time ++) {
-            if (!--this.cycles)
-            {
-                this.cycles = this.freqTable[this.frequency];
-                if (!this.silenced)
+            for(let i =0; i< 8; ++i) {
+                if (!--this.cycles)
                 {
-                    if (this.shiftreg & 1)
+                    this.cycles = this.freqTable[this.frequency];
+                    if (!this.silenced)
                     {
-                        if (this.pcmdata <= 0x7D)
-                        this.pcmdata += 2;
+                        if (this.shiftreg & 1)
+                        {
+                            if (this.pcmdata <= 0x7D)
+                            this.pcmdata += 2;
+                        }
+                        else
+                        {
+                            if (this.pcmdata >= 0x02)
+                            this.pcmdata -= 2;
+                        }
+                        this.shiftreg >>= 1;
+                        this.pos = (this.pcmdata - 0x40) * 3;
                     }
-                    else
+                    if (!--this.outbits)
                     {
-                        if (this.pcmdata >= 0x02)
-                        this.pcmdata -= 2;
+                        this.outbits = 8;
+                        if (!this.bufempty)
+                        {
+                            this.shiftreg = this.buffer;
+                            this.bufempty = true;
+                            this.silenced = false;
+                        }
+                        else 
+                        {
+                            this.silenced = true;
+                        }
                     }
-                    this.shiftreg >>= 1;
-                    this.pos = (this.pcmdata - 0x40) * 3;
                 }
-                if (!--this.outbits)
+                if (this.bufempty && !this.fetching && this.lengthCtr && (this.internalClock & 1))
                 {
-                    this.outbits = 8;
-                    if (!this.bufempty)
-                    {
-                        this.shiftreg = this.buffer;
-                        this.bufempty = true;
-                        this.silenced = false;
-                    }
-                    else 
-                    {
-                        this.silenced = true;
-                    }
+                    this.fetching = true;
+                    //CPU::EnableDMA |= DMA_PCM;
+                    // decrement LengthCtr now, so $4015 reads are updated in time
+                    this.lengthCtr--;
                 }
             }
-            if (this.bufempty && !this.fetching && this.lengthCtr && (this.internalClock & 1))
-            {
-                this.fetching = true;
-                //CPU::EnableDMA |= DMA_PCM;
-                // decrement LengthCtr now, so $4015 reads are updated in time
-                this.lengthCtr--;
-            }
-
         }
 
     }

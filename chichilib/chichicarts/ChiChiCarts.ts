@@ -13,6 +13,7 @@ import * as crc from 'crc';
 import * as  VS  from './VSCarts';
 import * as VRC from './KonamiVRC1';
 import * as VRC2 from './KonamiVRC2';
+import * as VRC6 from './KonamiVRC6';
 
 class MapperFactory {
     0 = Discrete.NesCart;
@@ -28,7 +29,9 @@ class MapperFactory {
     21 = VRC2.Konami021Cart;
     22 = VRC2.KonamiVRC022Cart;
     23 = VRC2.KonamiVRC2Cart;
+    24 = VRC6.Konami026Cart;
     25 = VRC2.Konami025Cart;
+    26 = VRC6.Konami026Cart;
     30 = Discrete.Mapper030Cart;
     31 = Nsf.Mapper031Cart;
     34 = Discrete.BNROMCart;
