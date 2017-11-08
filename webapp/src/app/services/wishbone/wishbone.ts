@@ -425,7 +425,6 @@ export class WishboneMachine  {
 
     loadCart(rom: number[], name: string) {
         return new Observable<IBaseCart>((subj) => {
-            
             (require as any).ensure(['../../../assets/romloader.worker.js'], (require) => {
                 let romLoader = require('../../../assets/romloader.worker.js');
 
@@ -439,8 +438,9 @@ export class WishboneMachine  {
                 subj.next(<IBaseCart>cart);
 
                 this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
-
-                romLoader = undefined;
+                delete romLoader.loader;
+                
+                delete require.cache[require.resolve('../../../assets/romloader.worker.js')];
             });
         });
     }
