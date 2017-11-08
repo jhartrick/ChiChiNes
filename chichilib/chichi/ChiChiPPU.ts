@@ -1,4 +1,4 @@
-import { BaseCart, IBaseCart } from './Carts/BaseCart';
+import { BaseCart, IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from "./ChiChiMachine";
 import { ChiChiBopper } from "./ChiChiAudio";

@@ -1,5 +1,5 @@
-import { ChiChiCPPU } from '../ChiChiMachine';
-import { ChiChiPPU } from '../ChiChiPPU';
+import { ChiChiCPPU } from '../chichi/ChiChiMachine';
+import { ChiChiPPU } from '../chichi/ChiChiPPU';
 import * as crc from 'crc';
 
 

@@ -2769,9 +2769,15 @@ var ChiChiCarts_1 = __webpack_require__(5);
 var romLoader = /** @class */ (function () {
     function romLoader() {
     }
-    romLoader.prototype.loadRom = function (data, name) {
-        var rom = ChiChiCarts_1.iNESFileHandler.loadRomFile(data);
-        return rom;
+    romLoader.prototype.loadRom = function (data, name, machine) {
+        var cart = ChiChiCarts_1.iNESFileHandler.loadRomFile(data);
+        cart.installCart(machine.ppu, machine.Cpu);
+        machine.Cpu.Cart = cart;
+        machine.Cart.NMIHandler = function () { machine.Cpu._handleIRQ = true; };
+        machine.ppu.ChrRomHandler = machine.Cart;
+        machine.Cpu.cheating = false;
+        machine.Cpu.genieCodes = new Array();
+        return cart;
     };
     return romLoader;
 }());

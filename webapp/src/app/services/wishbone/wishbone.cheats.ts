@@ -5,13 +5,11 @@ import { Subject } from 'rxjs';
 
 export class WishboneCheats {
     constructor(private http: Http){
-        
     }
-    getCheatsForGame(crc: string) : Observable<Array<GameGenieCode>> {
-        let resp = new Subject<Array<GameGenieCode>> ();
-        
-        this.http.get('assets/geniecodes.xml').subscribe((response)=>{
 
+    getCheatsForGame(crc: string): Observable<Array<GameGenieCode>> {
+        const resp = new Subject<Array<GameGenieCode>> ();
+        this.http.get('assets/geniecodes.xml').subscribe((response) => {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(response.text(), 'text/xml');
                 const ggCodes = new Array<GameGenieCode>();
@@ -27,7 +25,7 @@ export class WishboneCheats {
                     result = nodes.iterateNext();
                 }
                 resp.next(ggCodes);
-            },(error)=>{
+            }, (error) => {
                 console.log(error);
                 resp.next(new Array<GameGenieCode>());
             }

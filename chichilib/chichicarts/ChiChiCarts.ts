@@ -1,18 +1,18 @@
-﻿import { ChiChiCPPU } from './ChiChiMachine';
-import { ChiChiPPU } from './ChiChiPPU';
-import { BaseCart, UnsupportedCart, NameTableMirroring, IBaseCart } from './Carts/BaseCart';
-import * as Discrete from './Carts/DiscreteCarts'
-import * as Multi from './Carts/MultiCarts'
-import * as MMC1 from './Carts/MMC1Carts'
-import * as MMC2 from './Carts/MMC2Carts'
-import * as MMC3 from './Carts/MMC3Carts'
-import * as M068 from './Carts/Mapper068'
-import * as Nsf from './Carts/Nsf031Cart'
-import * as Smb2j from './Carts/Smb2jCart'
+﻿import { ChiChiCPPU } from '../chichi/ChiChiMachine';
+import { ChiChiPPU } from '../chichi/ChiChiPPU';
+import { BaseCart, UnsupportedCart, NameTableMirroring, IBaseCart } from './BaseCart';
+import * as Discrete from './DiscreteCarts'
+import * as Multi from './MultiCarts'
+import * as MMC1 from './MMC1Carts'
+import * as MMC2 from './MMC2Carts'
+import * as MMC3 from './MMC3Carts'
+import * as M068 from './Mapper068'
+import * as Nsf from './Nsf031Cart'
+import * as Smb2j from './Smb2jCart'
 import * as crc from 'crc';
-import * as  VS  from './Carts/VSCarts';
-import * as VRC from './Carts/KonamiVRC1';
-import * as VRC2 from './Carts/KonamiVRC2';
+import * as  VS  from './VSCarts';
+import * as VRC from './KonamiVRC1';
+import * as VRC2 from './KonamiVRC2';
 
 class MapperFactory {
     0 = Discrete.NesCart;

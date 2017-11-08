@@ -19,5 +19,7 @@
     "chichi.js",
     "lib/chichi/chichi"
   ],
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript": "^2.6.1"
+  }
 }

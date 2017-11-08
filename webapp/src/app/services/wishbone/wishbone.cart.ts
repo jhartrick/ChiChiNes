@@ -1,27 +1,10 @@
 ﻿import { IBaseCart, BaseCart, ChiChiCPPU } from 'chichi';
 
 export class WishboneCart {
-    
-    get supported() : boolean {
+
+    get supported(): boolean {
         return this.realCart ? this.realCart.supported : false;
     }
-
-    mapsBelow6000: boolean;
-    irqRaised: boolean;
-
-
-    realCart: BaseCart = null;
-
-    Whizzler: ChiChiCPPU;
-    CPU: ChiChiCPPU;
-    ChrRom: any;
-    ChrRamStart: number;
-    PPUBankStarts: any;
-    ROMHashFunction: string;
-    CheckSum: string;
-    SRAM: any;
-    Mirroring: ChiChiNES.NameTableMirroring;
-    CartName: string;
 
     get prgRomCount(): number {
         return this.realCart ? this.realCart.prgRomCount : -1;
@@ -44,16 +27,28 @@ export class WishboneCart {
     }
 
 
+    mapsBelow6000: boolean;
+    irqRaised: boolean;
+    realCart: BaseCart = null;
+
+    Whizzler: ChiChiCPPU;
+    CPU: ChiChiCPPU;
+    ChrRom: any;
+    ChrRamStart: number;
+    PPUBankStarts: any;
+    ROMHashFunction: string;
+    CheckSum: string;
+    SRAM: any;
+    Mirroring: ChiChiNES.NameTableMirroring;
+    CartName: string;
+
     BankSwitchesChanged: boolean;
     BankStartCache: any;
     CurrentBank: number;
 
     UsesSRAM: boolean;
-
     NMIHandler: () => void;
-
     IRQAsserted: boolean;
-
     NextEventAt: number;
 
     GetPPUByte(clock: number, address: number): number {

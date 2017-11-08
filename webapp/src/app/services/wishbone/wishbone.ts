@@ -11,6 +11,7 @@ import { WishBopper } from './wishbone.audio';
 import { KeyboardSettings } from '../keyboardsettings';
 import { WishboneCheats } from './wishbone.cheats';
 import { Http } from '@angular/http';
+import { CartLoader } from '../cartloader';
 
 
 export class KeyBindings {
@@ -424,28 +425,15 @@ export class WishboneMachine  {
     }
 
     loadCart(rom: number[], name: string) {
-        return new Observable<IBaseCart>((subj) => {
-            (require as any).ensure(['../../../assets/romloader.worker.js'], (require) => {
-                let romLoader = require('../../../assets/romloader.worker.js');
+        CartLoader.doLoadCart(rom, name, this).subscribe((cart) => {
+            this.Cart.realCart = cart;
+            this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
+            this.Cart.CartName = this.Cart.realCart.CartName = name;
+            this.ppu.ChrRomHandler = this.Cart.realCart;
+            this.tileDoodler = new TileDoodler(this.ppu);
+            this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
 
-                const cart = romLoader.loader.loadRom(rom, name);
-                cart.installCart(this.ppu, this.Cpu);
-                this.Cart.realCart = cart;
-                this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
-                this.Cart.CartName = this.Cart.realCart.CartName = name;
-                this.ppu.ChrRomHandler = this.Cart.realCart;
-                this.tileDoodler = new TileDoodler(this.ppu);
-                subj.next(<IBaseCart>cart);
-
-                this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
-                delete romLoader.loader;
-                
-                delete require.cache[require.resolve('../../../assets/romloader.worker.js')];
-            });
         });
-    }
-
-    LoadCart(rom: number[], romName: string) {
     }
 }
 

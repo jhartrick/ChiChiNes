@@ -70,7 +70,7 @@ export class Tiler {
 
    DoodleNameTable(nametable: number, outbuf:  Uint8ClampedArray ): void
    {
-       //var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
+       // var data = new Uint32Array(this.nes.Tiler.DoodlePatternTable(0));
        const doodle1 = this.nes.tileDoodler.DoodleNameTable(nametable);
        const pal = ChiChiPPU.pal;
 
@@ -82,7 +82,7 @@ export class Tiler {
            outbuf[(i * 4) + 3] =  0xFF;
        }
 
-       //this.patternTables[1] = new Uint8ClampedArray(this.nes.tileDoodler.DoodlePatternTable(0x1000));
+       // this.patternTables[1] = new Uint8ClampedArray(this.nes.tileDoodler.DoodlePatternTable(0x1000));
    }
 
    DoodlePatternTable(nametable: number, outbuf:  Uint8ClampedArray ): void
@@ -111,7 +111,7 @@ export class EmuState {
 export class RomFile  {
     name: string;
     data: number[];
-    nsf: boolean = false;
+    nsf = false;
 }
 
 @Injectable()
@@ -184,7 +184,6 @@ export class Emulator {
 
     public tiler: Tiler = new Tiler(this.wishbone);
     initNes: any;
-   // private ready: boolean = false;
 
     private callback: () => void;
 
@@ -205,59 +204,50 @@ export class Emulator {
     }
 
     get isDebugging(): boolean {
-        return false; 
+        return false;
     }
 
     IsRunning(): boolean {
         return true;
     }
-    
+
     public wavBuffer: any;
     private buffering = false;
-    private bufferPos: number = 0;
+    private bufferPos = 0;
     private maxBufferLength = 10000;
 
 
     // platform hooks
     SetCallbackFunction(callback: () => void) {
         this.callback = callback;
-        //this.machine.Drawscreen = callback;
+        // this.machine.Drawscreen = callback;
       //  this.ready = true;
     }
 
     vbuffer: Uint8Array;
 
     SetVideoBuffer(array: Uint8Array): void {
-        //this.vbuffer = array;
+        // this.vbuffer = array;
         this.wishbone.ppu.byteOutBuffer = array;
-        //this.machine.PPU.ByteOutBuffer = array;
+        // this.machine.PPU.ByteOutBuffer = array;
     }
 
     abuffer: Float32Array;
     SetAudioBuffer(array: Float32Array): void {
-        //this.abuffer = array;
         this.wishbone.WaveForms.SharedBuffer = array;
-        //this.machine.PPU.ByteOutBuffer = array;
     }
 
 
     SetDebugCallbackFunction(callback: () => void) {
-        //this.machine.addDebugCallback(callback);
     }
 
     // rom loading
-    LoadRom(rom: number[],  romName :string) {
-        this.wishbone.Cart.CartName = romName;
-        //this.wishbone.LoadCart(rom, romName);
-        this.wishbone.loadCart(rom, romName).subscribe((d) => { 
-            console.log(romName + " loaded " + d );
-        });
+    loadRom(rom: number[], romName: string) {
+        this.wishbone.loadCart(rom, romName);
     }
 
     LoadNsf(rom: number[], romName: string) {
-        this.wishbone.postNesMessage({ command: "loadnsf", rom: rom, name: romName });
-        //        this.machine.LoadCart(rom);
-        //this.emuStateSubject.next(new EmuState(romName, false, false, false));
+        this.wishbone.postNesMessage({ command: 'loadnsf', rom: rom, name: romName });
     }
 
     // control
@@ -266,13 +256,12 @@ export class Emulator {
     }
 
     Continue(): void {
-        this.wishbone.postNesMessage({ command: "continue" });
+        this.wishbone.postNesMessage({ command: 'continue' });
     }
 
 
     get canStart(): boolean {
-        return true;
-      //return (this.machine.Cart) ? true: false;
+        return this.wishbone.Cart && this.wishbone.Cart.supported;
     }
 
     StopEmulator(): void {
@@ -281,11 +270,10 @@ export class Emulator {
 
     ResetEmulator(): void {
         this.wishbone.Reset();
-        //this.machine.Reset();
     }
 
     DebugStepFrame(): void {
-        this.wishbone.postNesMessage({ command: "runframe", debug: true });
+        this.wishbone.postNesMessage({ command: 'runframe', debug: true });
     }
 
     DebugStep(): void {
@@ -306,6 +294,6 @@ export class Emulator {
         return this.nesStateSubject.asObservable();
     }
 
-    private oldOp: number = 0;
+    private oldOp = 0;
 
 }

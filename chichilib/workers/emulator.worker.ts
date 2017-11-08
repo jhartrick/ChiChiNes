@@ -1,5 +1,6 @@
 ﻿declare var Atomics: any;
-import { ChiChiMachine, RunningStatuses } from '../chichi/chichi'
+import {  RunningStatuses } from '../chichi/ChiChiTypes';
+import { ChiChiMachine } from '../chichi/ChiChiMachine';
 import { GeniePatch } from '../chichi/ChiChiCheats';
 
 class NesInfo {
@@ -295,23 +296,13 @@ export class tendoWrapper {
         this.require(
             { 
                 baseUrl: "./assets" 
-            },['romloader.worker'], (romloader: any) => {
-                const cart = romloader.loader.loadRom(rom, name);
-                cart.installCart(this.machine.ppu, this.machine.Cpu);
-
-                if (cart != null) {
-                this.machine.Cpu.Cart = cart;
-
-                this.machine.Cart.NMIHandler = () => { this.machine.Cpu.InterruptRequest() };
-                this.machine.ppu.ChrRomHandler = this.machine.Cart;
-    
-                this.machine.Cpu.cheating = false;
-                this.machine.Cpu.genieCodes = new Array<GeniePatch>();
-
+            },['romloader.worker'], 
+            (romloader: any) => {
+                const cart = romloader.loader.loadRom(rom, name, this.machine);
                 this.updateBuffers();
-                romloader = undefined;
-            }
-        });
+                delete romloader.loader;
+                this.require.undef('romloader.worker');
+            });
 
     }
 

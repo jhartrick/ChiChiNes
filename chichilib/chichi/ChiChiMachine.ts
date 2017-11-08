@@ -1,4 +1,4 @@
-﻿import { BaseCart, IBaseCart } from './Carts/BaseCart'
+﻿import { BaseCart, IBaseCart } from '../chichicarts/BaseCart'
 import { ChiChiBopper } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'

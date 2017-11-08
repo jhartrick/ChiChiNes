@@ -92,9 +92,7 @@ export class ControlPanelComponent {
             if (rom.nsf) {
                 this.nesService.LoadNsf(rom.data, rom.name);
             } else {
-                this.wishbone.loadCart(rom.data, rom.name).subscribe(() => {
-                    console.log("rom loaeded")
-                });
+                this.wishbone.loadCart(rom.data, rom.name);
                 // this.nesService.LoadRom(rom.data, rom.name);
             }
         });
