@@ -1,9 +1,12 @@
 
 // shared buffer to get sound out
 export class WavSharer  {
+    synced =true;
+    
     readonly NES_BYTES_WRITTEN = 0;
     readonly WAVSHARER_BLOCKTHREAD = 1;
     readonly WAVSHARER_BUFFERPOS = 2;
+
     controlBuffer = new Int32Array(<any>new SharedArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
     sharedAudioBufferPos: number = 0;
 
@@ -35,12 +38,14 @@ export class WavSharer  {
     }
 
     synchronize(): void {
-
-        while (this.audioBytesWritten >= this.chunkSize)
-        {
-            <any>Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
-            <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
-            //this.sharedAudioBufferPos = <any>Atomics.load(this.controlBuffer, this.WAVSHARER_BUFFERPOS);
+        if (this.synced) {
+            while (this.audioBytesWritten >= this.chunkSize)
+            {
+                <any>Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
+                <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
+            }
+        } else {
+            this.audioBytesWritten = this.chunkSize;
         }
     }
 

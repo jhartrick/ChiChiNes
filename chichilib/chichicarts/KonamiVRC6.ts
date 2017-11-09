@@ -1,6 +1,7 @@
 import { BaseCart } from "./BaseCart";
+import { VRCIrqBase } from "./KonamiVRC2";
 
-export class Konami026Cart extends BaseCart {
+export class Konami026Cart extends VRCIrqBase {
     runCounter: boolean = false;
     chrselect: number = 0;
     chrA10Mode: boolean = false;
@@ -11,142 +12,84 @@ export class Konami026Cart extends BaseCart {
     swapMode: boolean = false;
     microwireLatch: number = 0;
     
-
-    registers = [0,0,0,0,0,0,0,0];
-
-
-    irqCounter: number = 0;
-    irqMode: boolean = false;
-    irqEnableAfterAck = false;
-    irqEnable = false;
-    irqLatch: number = 0;
-    prescaler = 341;
-
-    tickIrq() {
-        
-        this.irqCounter++;
-        if (this.irqCounter == 0xFF) {
-            console.log('irq')
-            this.prescaler = 341;
-            this.irqCounter = this.irqLatch;
-
-            this.CPU._handleIRQ = true;
-        }
-    }
-
-    tick(ticks: number) {
-        if (this.irqMode) {
-            for(let i =0; i < ticks;++i) {
-                this.tickIrq();
-            }
-
-        } else {
-            this.prescaler -= ticks * 3;
-            if (this.prescaler <= 0) {
-                this.tickIrq();
-                this.prescaler+=341;
-            }
-        }
-    }
-
-    advanceClock(clock: number) {
-        if (this.irqEnable) {
-            this.tick(clock);
-        }
-    }
-
-    ackIrq() {
-        console.log('ack irq')
-        this.irqEnable = this.irqEnableAfterAck;
-    }
-
-    set irqControl(val: number) {
-        console.log('irqControl ' + val)
-        this.irqEnableAfterAck = (val & 0x1) == 0x1;
-        this.irqEnable = (val & 0x2) == 0x2;
-        this.irqMode = (val & 0x4) == 0x4;
-        if (this.irqEnable) {
-            this.prescaler = 341;
-            this.irqCounter =this.irqLatch ;
-        }
-    }
+    vrc6Registers = [0,0,0,0,0,0,0,0];
 
     updateChrBanks(clock: number) {
         // bank0  0 - 0x3ff
-        this.CopyBanks1k(clock, 0, this.registers[0], 1);
+        this.CopyBanks1k(clock, 0, this.vrc6Registers[0], 1);
 
         // bank1  0x400 - 0x7ff
-        let bank = this.registers[1];
+        let bank = this.vrc6Registers[1];
         switch(this.chrselect & 3) {
             case 1:
-                bank = this.registers[0];
+                bank = this.vrc6Registers[0];
                 break;
         }
         this.CopyBanks1k(clock, 1, bank, 1);
 
         // bank2  0x800 - 0xbff
-        bank = this.registers[2];
+        bank = this.vrc6Registers[2];
         switch(this.chrselect & 3) {
             case 1:
-                bank = this.registers[1];
+                bank = this.vrc6Registers[1];
                 break;
         }
         this.CopyBanks1k(clock, 2, bank, 1);
 
         // bank3  0xc00 - 0xfff
-        bank = this.registers[3];
+        bank = this.vrc6Registers[3];
         switch(this.chrselect & 3) {
             case 1:
-                bank = this.registers[1];
+                bank = this.vrc6Registers[1];
                 break;
         }
         this.CopyBanks1k(clock, 3, bank, 1);
 
         // bank4  0x1000 - 0x13ff
-        bank = this.registers[4];
+        bank = this.vrc6Registers[4];
         switch(this.chrselect & 3) {
             case 1:
-                bank = this.registers[2];
+                bank = this.vrc6Registers[2];
                 break;
         }
         this.CopyBanks1k(clock, 4, bank, 1);
 
         // bank5 0x1400 - 0x17ff
-        bank = this.registers[5];
+        bank = this.vrc6Registers[5];
         switch(this.chrselect & 3) {
             case 1:
-                bank = this.registers[2];
+                bank = this.vrc6Registers[2];
                 break;
             case 2:
             case 3:
-                bank = this.registers[4];
+                bank = this.vrc6Registers[4];
                 break;
         }
         this.CopyBanks1k(clock, 5, bank, 1);        
 
 
         // bank6 0x1800 - 0x1bff
-        bank = this.registers[6];
+        bank = this.vrc6Registers[6];
         switch(this.chrselect & 3) {
             case 1:
-                bank = this.registers[3];
+                bank = this.vrc6Registers[3];
                 break;
             case 2:
             case 3:
-                bank = this.registers[5];
+                bank = this.vrc6Registers[5];
                 break;
         }
         this.CopyBanks1k(clock, 6, bank, 1);  
 
         // bank7 0x1800 - 0x1bff
-        bank = this.registers[7];
+        bank = this.vrc6Registers[7];
         switch(this.chrselect & 3) {
             case 1:
-                bank = this.registers[3];
+                bank = this.vrc6Registers[3];
                 break;
             case 2:
             case 3:
-                bank = this.registers[5];
+                bank = this.vrc6Registers[5];
                 break;
         }
         this.CopyBanks1k(clock, 7, bank, 1);  
@@ -155,7 +98,7 @@ export class Konami026Cart extends BaseCart {
         switch(this.chrselect & 7) {
             case 1:
             case 5:
-                bank = this.registers[4];
+                bank = this.vrc6Registers[4];
                 break;
             case 2:
             case 3:
@@ -163,7 +106,7 @@ export class Konami026Cart extends BaseCart {
             case 0:
             case 6:
             case 7:
-                bank = this.registers[6];
+                bank = this.vrc6Registers[6];
                 break;
             }
         this.CopyBanks1k(clock, 8, bank, 1);  
@@ -172,17 +115,17 @@ export class Konami026Cart extends BaseCart {
         switch(this.chrselect & 7) {
             case 1:
             case 5:
-                bank = this.registers[5];
+                bank = this.vrc6Registers[5];
                 break;
             case 2:
             case 3:
             case 4:
-                bank = this.registers[7];
+                bank = this.vrc6Registers[7];
                 break;
             case 0:
             case 6:
             case 7:
-                bank = this.registers[6];
+                bank = this.vrc6Registers[6];
                 break;
             }
         this.CopyBanks1k(clock, 9, bank, 1);  
@@ -195,17 +138,17 @@ export class Konami026Cart extends BaseCart {
             case 2:
             case 3:
             case 4:
-                bank = this.registers[6];
+                bank = this.vrc6Registers[6];
                 break;
             case 0:
             case 6:
             case 7:
-                bank = this.registers[7];
+                bank = this.vrc6Registers[7];
                 break;
             }
         this.CopyBanks1k(clock, 10, bank, 1);          
 
-        this.CopyBanks1k(clock, 11, this.registers[7], 1); 
+        this.CopyBanks1k(clock, 11, this.vrc6Registers[7], 1); 
         
         if ((this.chrselect & 0x20) == 0x20) {
             switch(this.chrselect & 0xF) {
@@ -230,17 +173,14 @@ export class Konami026Cart extends BaseCart {
 
     }
 
-
     InitializeCart() {
-        this.mapperName = 'KonamiVRC2';
+        this.mapperName = 'KonamiVRC6';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.CopyBanks4k(0, 0, 0, 2);
-
     }
 
     SetByte(clock:number, address:number, data: number){
         switch(address & 0xF000) {
-
         case 0x8000:
             if (address <= 0x8003) { 
                 // 16kib prg rom at 8000
@@ -268,13 +208,13 @@ export class Konami026Cart extends BaseCart {
             break;
         case 0xD000:
             if (address <= 0xD003) {
-                this.registers[address & 3] = data;
+                this.vrc6Registers[address & 3] = data;
                 this.updateChrBanks(clock);
             }
             break;
         case 0xE000:
             if (address <= 0xE003) {
-                this.registers[4 + (address & 3)] = data;
+                this.vrc6Registers[4 + (address & 3)] = data;
                 this.updateChrBanks(clock);
             }
             break;

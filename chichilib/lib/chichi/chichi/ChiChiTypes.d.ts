@@ -74,7 +74,7 @@ export declare class ChiChiSprite {
     FlipY: boolean;
     Changed: boolean;
 }
-export declare class AudioSettings {
+export interface AudioSettings {
     sampleRate: number;
     master_volume: number;
     enableSquare0: boolean;
@@ -82,4 +82,5 @@ export declare class AudioSettings {
     enableTriangle: boolean;
     enableNoise: boolean;
     enablePCM: boolean;
+    synced: boolean;
 }

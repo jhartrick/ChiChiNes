@@ -202,8 +202,7 @@ export class WishboneMachine  {
     constructor() {
         // initialize sound
         this.WaveForms = new WavSharer();
-        this.SoundBopper = new WishBopper(this.WaveForms, this);
-        this.SoundBopper.RebuildSound();
+        this.SoundBopper = new WishBopper(this.WaveForms);
 
         this.ppu = new WishbonePPU();
         this.Cpu = new WishboneCPPU(this.SoundBopper, this.ppu);
@@ -256,7 +255,7 @@ export class WishboneMachine  {
             this.postNesMessage({ command: createCommand,
                 vbuffer: this.ppu.byteOutBuffer,
                 abuffer: this.WaveForms.SharedBuffer,
-                audioSettings: this.SoundBopper.audioSettings,
+                audioSettings: this.SoundBopper.cloneSettings(),
                 iops: this.nesInterop });
 
             while (this.pendingMessages.length > 0) {
@@ -284,9 +283,9 @@ export class WishboneMachine  {
 
     postNesMessage(message: any) {
         if (this.worker) {
+            this.worker.postMessage(message);
             <any>Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL , 0);
             <any>Atomics.wake(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 9999);
-            this.worker.postMessage(message);
         } else {
             this.pendingMessages.push(message);
         }
@@ -307,7 +306,8 @@ export class WishboneMachine  {
     RequestSync() {
         // case 'audiosettings':
         // this.machine.SoundBopper.audioSettings = event.data.settings;
-        this.postNesMessage({ command: 'audiosettings', settings: this.SoundBopper.audioSettings });
+        
+        this.postNesMessage({ command: 'audiosettings', settings:  this.SoundBopper.cloneSettings() });
     }
 
 
@@ -343,21 +343,21 @@ export class WishboneMachine  {
             }
             if (data.Cart && this.Cart.realCart) {
 
-                this.Cart.realCart.CurrentBank = data.Cart.CurrentBank;
-                this.Cart.realCart.current8 = data.Cart.current8;
-                this.Cart.realCart.currentA = data.Cart.currentA;
-                this.Cart.realCart.currentC = data.Cart.currentC;
-                this.Cart.realCart.currentE = data.Cart.currentE;
+                // this.Cart.realCart.CurrentBank = data.Cart.CurrentBank;
+                // this.Cart.realCart.current8 = data.Cart.current8;
+                // this.Cart.realCart.currentA = data.Cart.currentA;
+                // this.Cart.realCart.currentC = data.Cart.currentC;
+                // this.Cart.realCart.currentE = data.Cart.currentE;
 
-                this.Cart.realCart.bank8start = data.Cart.bank8start;
-                this.Cart.realCart.bankAstart = data.Cart.bankAstart;
-                this.Cart.realCart.bankCstart = data.Cart.bankCstart;
-                this.Cart.realCart.bankEstart = data.Cart.bankEstart;
+                // this.Cart.realCart.bank8start = data.Cart.bank8start;
+                // this.Cart.realCart.bankAstart = data.Cart.bankAstart;
+                // this.Cart.realCart.bankCstart = data.Cart.bankCstart;
+                // this.Cart.realCart.bankEstart = data.Cart.bankEstart;
 
             }
         }
         if (data.sound) {
-            this.SoundBopper.audioSettings = data.sound.settings;
+            this.SoundBopper.updateSettings(data.sound.settings);
         }
 
         if (data.debug && data.debug.InstructionHistory) {

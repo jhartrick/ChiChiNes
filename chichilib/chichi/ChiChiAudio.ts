@@ -640,6 +640,7 @@ export class ChiChiBopper {
         this.EnableSquare0 = value.enableSquare0;
         this.EnableSquare1 = value.enableSquare1;
         this.enableTriangle = value.enableTriangle;
+        this.writer.synced = value.synced;
         if (value.sampleRate != this._sampleRate) {
             this._sampleRate = value.sampleRate;
             this.RebuildSound();
@@ -647,12 +648,16 @@ export class ChiChiBopper {
     }
 
     get audioSettings(): AudioSettings {
-        const settings = new AudioSettings();
-        settings.sampleRate = this._sampleRate;
-        settings.enableNoise = this.EnableNoise;
-        settings.enableSquare0 = this.EnableSquare0;
-        settings.enableSquare1 = this.EnableSquare1;
-        settings.enableTriangle = this.enableTriangle;
+        const settings =  {
+            sampleRate: this._sampleRate,
+            master_volume: 1.0,
+            enableSquare0: this.EnableSquare0,
+            enableSquare1: this.EnableSquare1,
+            enableTriangle: this.enableTriangle,
+            enableNoise: this.EnableNoise,
+            enablePCM: false,
+            synced: true
+        };
         return settings;
     }
 
@@ -679,6 +684,7 @@ export class ChiChiBopper {
     private noiseGain = 567;
     private muted = false;
     private lastFrameHit = 0;
+
 
     constructor(public writer: WavSharer) {
         this.RebuildSound();

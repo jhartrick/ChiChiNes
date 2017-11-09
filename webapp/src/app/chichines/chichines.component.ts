@@ -5,7 +5,7 @@ import 'rxjs/add/operator/catch';
 import * as THREE from 'three';
 import { AudioSettings } from 'chichi';
 import { WishBoneControlPad } from '../services/wishbone/wishbone';
-import { WishBopper } from '../services/wishbone/wishbone.audio';
+import { WishBopper, ChiChiThreeJSAudio } from '../services/wishbone/wishbone.audio';
 
 @Component({
     selector: 'chichi',
@@ -41,8 +41,8 @@ export class ChiChiComponent implements AfterViewInit {
     private audioCtx: AudioContext;
     private audioSource: AudioBufferSourceNode;
 
-    public canvasLeft: string = '0px';
-    public canvasTop: string = '0px';
+    public canvasLeft = '0px';
+    public canvasTop = '0px';
 
     constructor(private nesService: Emulator, private cd: ChangeDetectorRef, private zone: NgZone) {
     }
@@ -51,12 +51,12 @@ export class ChiChiComponent implements AfterViewInit {
     onResize(event?: any) {
         if (this.canvasRef.nativeElement.offsetHeight < this.canvasRef.nativeElement.offsetWidth) {
             this.renderer.setSize(this.canvasRef.nativeElement.offsetHeight * 4/3, this.canvasRef.nativeElement.offsetHeight );
-            this.canvasLeft = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetHeight * 4/3)) / 2) + 'px';
+            this.canvasLeft = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetHeight * 4 /3)) / 2) + 'px';
             this.canvasTop = '0px';
         } else {
             this.renderer.setSize(this.canvasRef.nativeElement.offsetWidth , this.canvasRef.nativeElement.offsetWidth * 3 / 4);
             this.canvasLeft = '0px';
-            this.canvasTop = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetWidth * 3/4)) / 2) + "px";
+            this.canvasTop = ((this.chichiHolder.nativeElement.offsetWidth - (this.canvasRef.nativeElement.offsetWidth * 3 / 4)) / 2) + "px";
         }
         this.cd.detectChanges();
        // console.log("Width: " + event.target.innerWidth);
@@ -69,20 +69,22 @@ export class ChiChiComponent implements AfterViewInit {
 
 
         this.zone.runOutsideAngular(() => {
-            const listener = this.nesService.wishbone.SoundBopper.audioHandler.listener;
-            this.camera.add( listener);
+            this.nesService.wishbone.SoundBopper.audioHandler = new ChiChiThreeJSAudio(this.nesService.wishbone.WaveForms);
+            const result = this.nesService.wishbone.SoundBopper.setupAudio();
+            this.camera.add( <any>result.listener);
+            this.nesService.wishbone.RequestSync();
         });
 
         // console.log(scriptNode.bufferSize);
 
-        var w = 1;
-        var h = 1;
-        var geometry = new THREE.PlaneGeometry(5, 5);
+        const w = 1;
+        const h = 1;
+        const geometry = new THREE.PlaneGeometry(5, 5);
 
         this.text = new THREE.DataTexture(this.vbuffer, 256, 256, THREE.RGBAFormat);
 
-        for (var i = 0; i < 256; i++) {
-            var color = this.pal32[i];
+        for (let i = 0; i < 256; i++) {
+            const color = this.pal32[i];
             this.pal[i * 4] = color & 0xFF;
             this.pal[(i * 4) + 1] = (color >> 8) & 0xFF;
             this.pal[(i * 4) + 2] = (color >> 16) & 0xFF;
@@ -121,14 +123,13 @@ void main()	{
         this.paltext.needsUpdate = true;
         // var material = new THREE.MeshBasicMaterial({ map: this.text });
 
-        var cube = new THREE.Mesh(geometry, this.material);
+        const cube = new THREE.Mesh(geometry, this.material);
 
         this.scene.add(cube);
         // cube.rotateZ(2 & Math.PI);
         this.camera.position.z = 5.8;
         // this.camera.lookAt(new THREE.Vector3(0,0,0));
         this.renderer = new THREE.WebGLRenderer();
-
 
         this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
         this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
@@ -158,8 +159,7 @@ void main()	{
 
     soundOver = true;
 
-    renderScene(): void
-    {
+    renderScene(): void {
         this.text.needsUpdate = true;
     }
 

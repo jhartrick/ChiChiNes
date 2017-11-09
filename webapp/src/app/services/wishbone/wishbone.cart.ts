@@ -26,7 +26,6 @@ export class WishboneCart {
         return this.realCart.submapperId > 0 ? this.realCart.submapperId : 0;
     }
 
-
     mapsBelow6000: boolean;
     irqRaised: boolean;
     realCart: BaseCart = null;
@@ -37,7 +36,6 @@ export class WishboneCart {
     ChrRamStart: number;
     PPUBankStarts: any;
     ROMHashFunction: string;
-    CheckSum: string;
     SRAM: any;
     Mirroring: ChiChiNES.NameTableMirroring;
     CartName: string;

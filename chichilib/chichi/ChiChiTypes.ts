@@ -88,13 +88,16 @@ export class ChiChiSprite {
     Changed: boolean = false;
 }
 
-export class AudioSettings {
-    sampleRate: number = 44100;
-    master_volume: number = 0.0;
+export interface AudioSettings {
+    sampleRate: number;
+    master_volume: number;
 
-    enableSquare0: boolean = true;
-    enableSquare1: boolean = true;
-    enableTriangle: boolean = true;
-    enableNoise: boolean = true;
-    enablePCM: boolean = true;
+    enableSquare0: boolean;
+    enableSquare1: boolean;
+    enableTriangle: boolean;
+    enableNoise: boolean;
+    enablePCM: boolean;
+
+    synced: boolean;
 }
+

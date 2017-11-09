@@ -79,135 +79,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 "use strict";
 
-// utility classes
-Object.defineProperty(exports, "__esModule", { value: true });
-var BufferMaker = /** @class */ (function () {
-    function BufferMaker() {
-    }
-    BufferMaker.MakeUint32Array = function (count) {
-        return new Uint32Array(count);
-    };
-    BufferMaker.MakeUint8Array = function (count) {
-        return new Uint8Array(count);
-    };
-    return BufferMaker;
-}());
-exports.BufferMaker = BufferMaker;
-var RunningStatuses;
-(function (RunningStatuses) {
-    RunningStatuses[RunningStatuses["Unloaded"] = 0] = "Unloaded";
-    RunningStatuses[RunningStatuses["Off"] = 1] = "Off";
-    RunningStatuses[RunningStatuses["Running"] = 2] = "Running";
-    RunningStatuses[RunningStatuses["Frozen"] = 3] = "Frozen";
-    RunningStatuses[RunningStatuses["Paused"] = 4] = "Paused";
-})(RunningStatuses = exports.RunningStatuses || (exports.RunningStatuses = {}));
-var ChiChiCPPU_AddressingModes;
-(function (ChiChiCPPU_AddressingModes) {
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Bullshit"] = 0] = "Bullshit";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Implicit"] = 1] = "Implicit";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Accumulator"] = 2] = "Accumulator";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Immediate"] = 3] = "Immediate";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPage"] = 4] = "ZeroPage";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPageX"] = 5] = "ZeroPageX";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPageY"] = 6] = "ZeroPageY";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Relative"] = 7] = "Relative";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Absolute"] = 8] = "Absolute";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["AbsoluteX"] = 9] = "AbsoluteX";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["AbsoluteY"] = 10] = "AbsoluteY";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Indirect"] = 11] = "Indirect";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndexedIndirect"] = 12] = "IndexedIndirect";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectIndexed"] = 13] = "IndirectIndexed";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectZeroPage"] = 14] = "IndirectZeroPage";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectAbsoluteX"] = 15] = "IndirectAbsoluteX";
-})(ChiChiCPPU_AddressingModes = exports.ChiChiCPPU_AddressingModes || (exports.ChiChiCPPU_AddressingModes = {}));
-var CpuStatus = /** @class */ (function () {
-    function CpuStatus() {
-        this.PC = 0;
-        this.A = 0;
-        this.X = 0;
-        this.Y = 0;
-        this.SP = 0;
-        this.SR = 0;
-    }
-    return CpuStatus;
-}());
-exports.CpuStatus = CpuStatus;
-var PpuStatus = /** @class */ (function () {
-    function PpuStatus() {
-        this.status = 0;
-        this.controlByte0 = 0;
-        this.controlByte1 = 0;
-        this.nameTableStart = 0;
-        this.currentTile = 0;
-        this.lockedVScroll = 0;
-        this.lockedHScroll = 0;
-        this.X = 0;
-        this.Y = 0;
-    }
-    return PpuStatus;
-}());
-exports.PpuStatus = PpuStatus;
-var ChiChiInstruction = /** @class */ (function () {
-    function ChiChiInstruction() {
-        this.AddressingMode = 0;
-        this.frame = 0;
-        this.time = 0;
-        this.A = 0;
-        this.X = 0;
-        this.Y = 0;
-        this.SR = 0;
-        this.SP = 0;
-        this.Address = 0;
-        this.OpCode = 0;
-        this.Parameters0 = 0;
-        this.Parameters1 = 0;
-        this.ExtraTiming = 0;
-        this.Length = 0;
-    }
-    return ChiChiInstruction;
-}());
-exports.ChiChiInstruction = ChiChiInstruction;
-var ChiChiSprite = /** @class */ (function () {
-    function ChiChiSprite() {
-        this.YPosition = 0;
-        this.XPosition = 0;
-        this.SpriteNumber = 0;
-        this.Foreground = false;
-        this.IsVisible = false;
-        this.TileIndex = 0;
-        this.AttributeByte = 0;
-        this.FlipX = false;
-        this.FlipY = false;
-        this.Changed = false;
-    }
-    return ChiChiSprite;
-}());
-exports.ChiChiSprite = ChiChiSprite;
-var AudioSettings = /** @class */ (function () {
-    function AudioSettings() {
-        this.sampleRate = 44100;
-        this.master_volume = 0.0;
-        this.enableSquare0 = true;
-        this.enableSquare1 = true;
-        this.enableTriangle = true;
-        this.enableNoise = true;
-        this.enablePCM = true;
-    }
-    return AudioSettings;
-}());
-exports.AudioSettings = AudioSettings;
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
 Object.defineProperty(exports, "__esModule", { value: true });
 // shared buffer to get sound out
 var WavSharer = /** @class */ (function () {
     function WavSharer() {
+        this.synced = true;
         this.NES_BYTES_WRITTEN = 0;
         this.WAVSHARER_BLOCKTHREAD = 1;
         this.WAVSHARER_BUFFERPOS = 2;
@@ -238,10 +114,14 @@ var WavSharer = /** @class */ (function () {
         Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
     };
     WavSharer.prototype.synchronize = function () {
-        while (this.audioBytesWritten >= this.chunkSize) {
-            Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
-            Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
-            //this.sharedAudioBufferPos = <any>Atomics.load(this.controlBuffer, this.WAVSHARER_BUFFERPOS);
+        if (this.synced) {
+            while (this.audioBytesWritten >= this.chunkSize) {
+                Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
+                Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
+            }
+        }
+        else {
+            this.audioBytesWritten = this.chunkSize;
         }
     };
     WavSharer.sample_size = 1;
@@ -762,6 +642,118 @@ exports.QueuedPort = QueuedPort;
 
 
 /***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// utility classes
+Object.defineProperty(exports, "__esModule", { value: true });
+var BufferMaker = /** @class */ (function () {
+    function BufferMaker() {
+    }
+    BufferMaker.MakeUint32Array = function (count) {
+        return new Uint32Array(count);
+    };
+    BufferMaker.MakeUint8Array = function (count) {
+        return new Uint8Array(count);
+    };
+    return BufferMaker;
+}());
+exports.BufferMaker = BufferMaker;
+var RunningStatuses;
+(function (RunningStatuses) {
+    RunningStatuses[RunningStatuses["Unloaded"] = 0] = "Unloaded";
+    RunningStatuses[RunningStatuses["Off"] = 1] = "Off";
+    RunningStatuses[RunningStatuses["Running"] = 2] = "Running";
+    RunningStatuses[RunningStatuses["Frozen"] = 3] = "Frozen";
+    RunningStatuses[RunningStatuses["Paused"] = 4] = "Paused";
+})(RunningStatuses = exports.RunningStatuses || (exports.RunningStatuses = {}));
+var ChiChiCPPU_AddressingModes;
+(function (ChiChiCPPU_AddressingModes) {
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Bullshit"] = 0] = "Bullshit";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Implicit"] = 1] = "Implicit";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Accumulator"] = 2] = "Accumulator";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Immediate"] = 3] = "Immediate";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPage"] = 4] = "ZeroPage";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPageX"] = 5] = "ZeroPageX";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPageY"] = 6] = "ZeroPageY";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Relative"] = 7] = "Relative";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Absolute"] = 8] = "Absolute";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["AbsoluteX"] = 9] = "AbsoluteX";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["AbsoluteY"] = 10] = "AbsoluteY";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Indirect"] = 11] = "Indirect";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndexedIndirect"] = 12] = "IndexedIndirect";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectIndexed"] = 13] = "IndirectIndexed";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectZeroPage"] = 14] = "IndirectZeroPage";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectAbsoluteX"] = 15] = "IndirectAbsoluteX";
+})(ChiChiCPPU_AddressingModes = exports.ChiChiCPPU_AddressingModes || (exports.ChiChiCPPU_AddressingModes = {}));
+var CpuStatus = /** @class */ (function () {
+    function CpuStatus() {
+        this.PC = 0;
+        this.A = 0;
+        this.X = 0;
+        this.Y = 0;
+        this.SP = 0;
+        this.SR = 0;
+    }
+    return CpuStatus;
+}());
+exports.CpuStatus = CpuStatus;
+var PpuStatus = /** @class */ (function () {
+    function PpuStatus() {
+        this.status = 0;
+        this.controlByte0 = 0;
+        this.controlByte1 = 0;
+        this.nameTableStart = 0;
+        this.currentTile = 0;
+        this.lockedVScroll = 0;
+        this.lockedHScroll = 0;
+        this.X = 0;
+        this.Y = 0;
+    }
+    return PpuStatus;
+}());
+exports.PpuStatus = PpuStatus;
+var ChiChiInstruction = /** @class */ (function () {
+    function ChiChiInstruction() {
+        this.AddressingMode = 0;
+        this.frame = 0;
+        this.time = 0;
+        this.A = 0;
+        this.X = 0;
+        this.Y = 0;
+        this.SR = 0;
+        this.SP = 0;
+        this.Address = 0;
+        this.OpCode = 0;
+        this.Parameters0 = 0;
+        this.Parameters1 = 0;
+        this.ExtraTiming = 0;
+        this.Length = 0;
+    }
+    return ChiChiInstruction;
+}());
+exports.ChiChiInstruction = ChiChiInstruction;
+var ChiChiSprite = /** @class */ (function () {
+    function ChiChiSprite() {
+        this.YPosition = 0;
+        this.XPosition = 0;
+        this.SpriteNumber = 0;
+        this.Foreground = false;
+        this.IsVisible = false;
+        this.TileIndex = 0;
+        this.AttributeByte = 0;
+        this.FlipX = false;
+        this.FlipY = false;
+        this.Changed = false;
+    }
+    return ChiChiSprite;
+}());
+exports.ChiChiSprite = ChiChiSprite;
+
+
+/***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1105,10 +1097,10 @@ exports.tendoWrapper = tendoWrapper;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiAudio_1 = __webpack_require__(4);
-var ChiChiTypes_1 = __webpack_require__(0);
+var ChiChiTypes_1 = __webpack_require__(1);
 var ChiChiControl_1 = __webpack_require__(6);
 var ChiChiPPU_1 = __webpack_require__(7);
-var CommonAudio_1 = __webpack_require__(1);
+var CommonAudio_1 = __webpack_require__(0);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -2637,9 +2629,8 @@ exports.ChiChiCPPU = ChiChiCPPU;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiTypes_1 = __webpack_require__(0);
 var DMCChannel_1 = __webpack_require__(5);
-var CommonAudio_1 = __webpack_require__(1);
+var CommonAudio_1 = __webpack_require__(0);
 var NoiseChannel = /** @class */ (function () {
     function NoiseChannel(bleeper, chan) {
         this._bleeper = null;
@@ -3293,12 +3284,16 @@ var ChiChiBopper = /** @class */ (function () {
     }
     Object.defineProperty(ChiChiBopper.prototype, "audioSettings", {
         get: function () {
-            var settings = new ChiChiTypes_1.AudioSettings();
-            settings.sampleRate = this._sampleRate;
-            settings.enableNoise = this.EnableNoise;
-            settings.enableSquare0 = this.EnableSquare0;
-            settings.enableSquare1 = this.EnableSquare1;
-            settings.enableTriangle = this.enableTriangle;
+            var settings = {
+                sampleRate: this._sampleRate,
+                master_volume: 1.0,
+                enableSquare0: this.EnableSquare0,
+                enableSquare1: this.EnableSquare1,
+                enableTriangle: this.enableTriangle,
+                enableNoise: this.EnableNoise,
+                enablePCM: false,
+                synced: true
+            };
             return settings;
         },
         set: function (value) {
@@ -3306,6 +3301,7 @@ var ChiChiBopper = /** @class */ (function () {
             this.EnableSquare0 = value.enableSquare0;
             this.EnableSquare1 = value.enableSquare1;
             this.enableTriangle = value.enableTriangle;
+            this.writer.synced = value.synced;
             if (value.sampleRate != this._sampleRate) {
                 this._sampleRate = value.sampleRate;
                 this.RebuildSound();
@@ -3747,7 +3743,7 @@ exports.ChiChiControlPad = ChiChiControlPad;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiTypes_1 = __webpack_require__(0);
+var ChiChiTypes_1 = __webpack_require__(1);
 var ChiChiMemMap = /** @class */ (function () {
     function ChiChiMemMap() {
     }

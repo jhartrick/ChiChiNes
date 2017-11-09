@@ -7,17 +7,71 @@ interface PokeMap {
     func:  (clock: number, address: number, data: number) => void;
 }
 
-// this base class contains the common irq functionality for a whole bunch of konami vrc mappers use
-class VRCIrqCart extends BaseCart {
-    vrc2: boolean = false;
-    swapMode: boolean = false;
-    microwireLatch: number = 0;
+export class VRCIrqBase extends BaseCart {
     irqLatch: number = 0;
     prescaler = 341;
     irqCounter: number = 0;
     irqMode: boolean = false;
     irqEnableAfterAck = false;
     irqEnable = false;
+
+
+    tickIrq() {
+        
+        this.irqCounter++;
+        if (this.irqCounter == 0xFF) {
+            console.log('irq')
+            this.prescaler = 341;
+            this.irqCounter = this.irqLatch;
+
+            this.CPU._handleIRQ = true;
+        }
+    }
+
+    tick(ticks: number) {
+        if (this.irqMode) {
+            for(let i =0; i < ticks;++i) {
+                this.tickIrq();
+            }
+
+        } else {
+            this.prescaler -= ticks * 3;
+            if (this.prescaler <= 0) {
+                this.tickIrq();
+                this.prescaler+=341;
+            }
+        }
+    }
+
+    advanceClock(clock: number) {
+        if (this.irqEnable) {
+            this.tick(clock);
+        }
+    }
+
+    ackIrq() {
+        console.log('ack irq')
+        this.irqEnable = this.irqEnableAfterAck;
+    }
+
+    set irqControl(val: number) {
+        console.log('irqControl ' + val)
+        this.irqEnableAfterAck = (val & 0x1) == 0x1;
+        this.irqEnable = (val & 0x2) == 0x2;
+        this.irqMode = (val & 0x4) == 0x4;
+        if (this.irqEnable) {
+            this.prescaler = 341;
+            this.irqCounter =this.irqLatch ;
+        }
+    }
+
+}
+
+// this base class contains the common irq functionality for a whole bunch of konami vrc mappers use
+class VRC2or4Cart extends VRCIrqBase {
+    vrc2: boolean = false;
+    swapMode: boolean = false;
+    microwireLatch: number = 0;
 
     latches:number[] =[
         0,0,
@@ -37,7 +91,7 @@ class VRCIrqCart extends BaseCart {
         0x03,
     ];
 
-    vrc2mirroring = (clock, address, data) => {
+    vrc2mirroring = (clock: number, address: number, data: number) => {
         if (address <= 0x9003 )
         {
             switch (data & 7) {
@@ -173,56 +227,7 @@ class VRCIrqCart extends BaseCart {
         if (address >= 0x6000 && address <= 0x7FFF ) {
             return (address >> 8) | this.microwireLatch;
         }
-        return this.baseGetByte(clock, address);
-    }
-
-    tickIrq() {
-        
-        this.irqCounter++;
-        if (this.irqCounter == 0xFF) {
-            console.log('irq')
-            this.prescaler = 341;
-            this.irqCounter = this.irqLatch;
-
-            this.CPU._handleIRQ = true;
-        }
-    }
-
-    tick(ticks: number) {
-        if (this.irqMode) {
-            for(let i =0; i < ticks;++i) {
-                this.tickIrq();
-            }
-
-        } else {
-            this.prescaler -= ticks * 3;
-            if (this.prescaler <= 0) {
-                this.tickIrq();
-                this.prescaler+=341;
-            }
-        }
-    }
-
-    advanceClock(clock: number) {
-        if (this.irqEnable) {
-            this.tick(clock);
-        }
-    }
-
-    ackIrq() {
-        console.log('ack irq')
-        this.irqEnable = this.irqEnableAfterAck;
-    }
-
-    set irqControl(val: number) {
-        console.log('irqControl ' + val)
-        this.irqEnableAfterAck = (val & 0x1) == 0x1;
-        this.irqEnable = (val & 0x2) == 0x2;
-        this.irqMode = (val & 0x4) == 0x4;
-        if (this.irqEnable) {
-            this.prescaler = 341;
-            this.irqCounter =this.irqLatch ;
-        }
+        return this.GetByte(clock, address);
     }
 
     SetByte(clock:number, address:number, data: number) {
@@ -240,7 +245,7 @@ class VRCIrqCart extends BaseCart {
 
 }
 
-export class KonamiVRC2Cart extends VRCIrqCart {
+export class KonamiVRC2Cart extends VRC2or4Cart {
 
     altRegNums (){
         this.regNums = [
@@ -276,7 +281,7 @@ export class KonamiVRC2Cart extends VRCIrqCart {
 
 }
 
-export class KonamiVRC022Cart extends VRCIrqCart {
+export class KonamiVRC022Cart extends VRC2or4Cart {
     InitializeCart() {
         this.mapperName = 'KonamiVRC2a';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
@@ -302,7 +307,7 @@ export class KonamiVRC022Cart extends VRCIrqCart {
 
 }
 
-export class Konami021Cart extends VRCIrqCart {
+export class Konami021Cart extends VRC2or4Cart {
 
     InitializeCart() {
         this.mapperName = 'KonamiVRC2';
@@ -328,7 +333,7 @@ export class Konami021Cart extends VRCIrqCart {
     }
 }
 
-export class Konami025Cart extends VRCIrqCart {
+export class Konami025Cart extends VRC2or4Cart {
 
     InitializeCart() {
         this.mapperName = 'KonamiVRC4';
