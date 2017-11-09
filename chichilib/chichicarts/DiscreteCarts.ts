@@ -183,19 +183,46 @@ export class NesCart extends BaseCart {
          //}
          //SRAMEnabled = SRAMCanSave;
      InitializeCart() {
-         this.mapperName = 'CNROM';
-         if (this.chrRomCount > 0) {
-             this.CopyBanks(0, 0, 0, 1);
-         }
-         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.mapperName = 'CNROM';
+        if (this.chrRomCount > 0) {
+             this.CopyBanks(0, 0, 0, this.chrRomCount-1);
         }
- 
-     SetByte(clock: number, address: number, val: number): void {
-         if (address >= 0x8000) {
-             this.Whizzler.DrawTo(clock);
-             this.CopyBanks(clock, 0, val & 0xFF, 1);
-         }
-     }
+        if (this.prgRomCount == 1) 
+        {
+            this.SetupBankStarts(0, 1, 0, 1);
+        } else {
+            this.SetupBankStarts(0, 1, 2, 3);
+        }
+
+    }
+
+    GetByte(clock: number, address: number) : number {
+        var bank = 0;
+
+        switch (address & 0xE000) {
+            case 0x6000:
+                return (address >> 8) & 0xFF;
+            case 0x8000:
+                bank = this.bank8start;
+                break;
+            case 0xA000:
+                bank = this.bankAstart;
+                break;
+            case 0xC000:
+                bank = this.bankCstart;
+                break;
+            case 0xE000:
+                bank = this.bankEstart;
+                break;
+        }
+        return this.nesCart[bank + (address & 0x1FFF)];
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+        if (address >= 0x8000 && address <= 0xFFFF) {
+            this.CopyBanks(clock, 0, val & 0xFF, 1);
+        }
+    }
      
  }
  

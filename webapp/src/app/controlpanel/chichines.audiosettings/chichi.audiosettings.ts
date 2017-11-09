@@ -20,9 +20,7 @@ export class AudioSettingsComponent {
 
     constructor(public nesService: Emulator ) {
         this.wishbone = nesService.wishbone;
-        this.audioHandler = { volume: 1,
-            rebuild:  () => { return; }
-        };
+
         this.wishbone.asObservable().subscribe((machine) => {
             if (machine && machine.SoundBopper) {
                 this.audioSettings = this.wishbone.SoundBopper.audioSettings;
@@ -32,11 +30,12 @@ export class AudioSettingsComponent {
     }
 
     get volume(): number {
-        return this.audioHandler.volume;
+        return this.audioHandler ? this.audioHandler.gainNode.gain.value : 0;
     }
 
     volumeChange(e) {
-        this.audioHandler.volume = e.value;
+        if (this.audioHandler)
+        this.audioHandler.gainNode.gain.value  = e.value;
     }
 
     get enableSquare0(): boolean {

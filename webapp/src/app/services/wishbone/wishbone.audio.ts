@@ -6,9 +6,10 @@ export class WishBopper  extends ChiChiBopper {
 
 	_audioHandler: ChiChiThreeJSAudio;
 
+	soundHandler: IAudioHandler;
 
-	get audioHandler(): ChiChiThreeJSAudio {
-		return this._audioHandler;
+	get audioHandler(): IAudioHandler {
+		return this.soundHandler;
 	}
 
 	private _audioSettings: AudioSettings = new AudioSettings();
@@ -25,7 +26,7 @@ export class WishBopper  extends ChiChiBopper {
 
 	RebuildSound() {
 		if (this._audioHandler) {
-			this._audioHandler.setupAudio();
+			this.soundHandler = this._audioHandler.getSound();
 			this.audioSettings.sampleRate = this._audioHandler.sampleRate;
 			this.wishbone.RequestSync();
 		}
@@ -41,15 +42,12 @@ export class WishBopper  extends ChiChiBopper {
 }
 
 export interface IAudioHandler {
-	volume: number;
-	rebuild();
+	listener: THREE.AudioListener;
+	gainNode: GainNode;
 }
 
-class ChiChiThreeJSAudio implements IAudioHandler {
-	audioSource: AudioBufferSourceNode;
-	audioCtx: AudioContext;
-	listener: THREE.AudioListener;
-	sound: THREE.Audio;
+class ChiChiThreeJSAudio {
+
 	private wishbone: WishboneMachine;
 
 	bufferBlockSize = 4096;
@@ -60,18 +58,6 @@ class ChiChiThreeJSAudio implements IAudioHandler {
 	nesBufferWritePos = 0;
 	sampleRate: number = -1;
 
-	_volume = 1.0;
-	set volume(value: number) {
-		this._volume = value;
-		if (this.sound) {
-			this.sound.setVolume(value);
-		}
-	}
-
-	get volume(): number {
-		return this._volume;
-	}
-
 	private nesAudioBuffer: SharedArrayBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
 	private nesAudio: Float32Array = new Float32Array(<any>this.nesAudioBuffer);
 
@@ -79,35 +65,29 @@ class ChiChiThreeJSAudio implements IAudioHandler {
         this.wishbone = wishbopper;
 	}
 
-	setupAudio(): THREE.AudioListener {
-
-		this.bufferSize = this.bufferBlockSize << this.bufferBlockCountBits;
-		this.nesAudioBuffer = new SharedArrayBuffer((this.bufferBlockSize << this.bufferBlockCountBits) * Float32Array.BYTES_PER_ELEMENT);
-		this.nesAudio = new Float32Array(<any>this.nesAudioBuffer);
+	getSound(): IAudioHandler {
+		const nesAudioBuffer = new SharedArrayBuffer(this.bufferSize * Float32Array.BYTES_PER_ELEMENT);
+		this.nesAudio = new Float32Array(<any>nesAudioBuffer);
 		
-		this.listener = new THREE.AudioListener();
+		const listener = new THREE.AudioListener();
 		
-		this.rebuild();
-		return this.listener;
-	}
-
-
-	rebuild() {
-		this.sound = new THREE.Audio(this.listener);
-		this.audioCtx = this.sound.context;
-		this.audioSource = this.audioCtx.createBufferSource();
+		const sound = new THREE.Audio(listener);
+		const audioCtx = sound.context;
+		const audioSource = audioCtx.createBufferSource();
 		let lastReadPos = 0;
-		this.sound.setNodeSource(this.audioSource);
-		console.log (this.audioCtx.sampleRate);
+		sound.setNodeSource(audioSource);
+		console.log (audioCtx.sampleRate);
 		if (this.sampleRate < 0) {
-			this.sampleRate = this.audioCtx.sampleRate;
+			this.sampleRate = audioCtx.sampleRate;
 		}
 		
-		this.audioSource.buffer = this.audioCtx.createBuffer(1, this.bufferSize, this.sampleRate);
-		const scriptNode = this.audioCtx.createScriptProcessor(this.chunkSize, 1, 1);
-		const gainNode = this.audioCtx.createGain();
+		audioSource.buffer = audioCtx.createBuffer(1, this.bufferSize, this.sampleRate);
+		const scriptNode = audioCtx.createScriptProcessor(this.chunkSize, 1, 1);
+		const gainNode = audioCtx.createGain();
+		gainNode.gain.value = 1.0;
 
-		this.audioSource.connect(scriptNode);
+		audioSource.connect(gainNode);
+		audioSource.connect(scriptNode);
 
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {
 			
@@ -144,10 +124,18 @@ class ChiChiThreeJSAudio implements IAudioHandler {
 			wavForms.wakeSleepers(); // = nesBytesAvailable;
 		}
 
-		scriptNode.connect(this.audioCtx.destination);
-		this.audioSource.loop = true;
-		this.audioSource.start();
+		scriptNode.connect(gainNode);
+		gainNode.connect(audioCtx.destination);
+
+		audioSource.loop = true;
+		audioSource.start();
 
 		this.wishbone.WaveForms.SharedBuffer = this.nesAudio;
+		return { 
+			listener: listener, 
+			gainNode: gainNode 
+		};
 	}
+
+
 }

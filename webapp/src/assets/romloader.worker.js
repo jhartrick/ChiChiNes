@@ -3468,13 +3468,37 @@ var CNROMCart = /** @class */ (function (_super) {
     CNROMCart.prototype.InitializeCart = function () {
         this.mapperName = 'CNROM';
         if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 1);
+            this.CopyBanks(0, 0, 0, this.chrRomCount - 1);
         }
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        if (this.prgRomCount == 1) {
+            this.SetupBankStarts(0, 1, 0, 1);
+        }
+        else {
+            this.SetupBankStarts(0, 1, 2, 3);
+        }
+    };
+    CNROMCart.prototype.GetByte = function (clock, address) {
+        var bank = 0;
+        switch (address & 0xE000) {
+            case 0x6000:
+                return (address >> 8) & 0xFF;
+            case 0x8000:
+                bank = this.bank8start;
+                break;
+            case 0xA000:
+                bank = this.bankAstart;
+                break;
+            case 0xC000:
+                bank = this.bankCstart;
+                break;
+            case 0xE000:
+                bank = this.bankEstart;
+                break;
+        }
+        return this.nesCart[bank + (address & 0x1FFF)];
     };
     CNROMCart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000) {
-            this.Whizzler.DrawTo(clock);
+        if (address >= 0x8000 && address <= 0xFFFF) {
             this.CopyBanks(clock, 0, val & 0xFF, 1);
         }
     };
@@ -5720,31 +5744,20 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var BaseCart_1 = __webpack_require__(1);
-var KonamiVRC2Cart = /** @class */ (function (_super) {
-    __extends(KonamiVRC2Cart, _super);
-    function KonamiVRC2Cart() {
+// this base class contains the common irq functionality for a whole bunch of konami vrc mappers use
+var VRCIrqCart = /** @class */ (function (_super) {
+    __extends(VRCIrqCart, _super);
+    function VRCIrqCart() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.vrc2 = false;
+        _this.swapMode = false;
         _this.microwireLatch = 0;
+        _this.irqLatch = 0;
+        _this.prescaler = 341;
         _this.irqCounter = 0;
         _this.irqMode = false;
         _this.irqEnableAfterAck = false;
         _this.irqEnable = false;
-        _this.chrbank0 = 0;
-        _this.chrbank0_1 = 0;
-        _this.chrbank1 = 0;
-        _this.chrbank1_1 = 0;
-        _this.chrbankc1_1 = 0;
-        _this.chrbankc1 = 0;
-        _this.chrbankc0_1 = 0;
-        _this.chrbankc0 = 0;
-        _this.chrbankd1_1 = 0;
-        _this.chrbankd1 = 0;
-        _this.chrbankd0_1 = 0;
-        _this.chrbankd0 = 0;
-        _this.chrbanke1_1 = 0;
-        _this.chrbanke1 = 0;
-        _this.chrbanke0_1 = 0;
-        _this.chrbanke0 = 0;
         _this.latches = [
             0, 0,
             0, 0,
@@ -5761,456 +5774,287 @@ var KonamiVRC2Cart = /** @class */ (function (_super) {
             0x02,
             0x03,
         ];
-        _this.irqLatch = 0;
+        _this.vrc2mirroring = function (clock, address, data) {
+            if (address <= 0x9003) {
+                switch (data & 7) {
+                    case 0:// vertical
+                        _this.Mirror(clock, 1);
+                        break;
+                    case 1:// horizontal
+                        _this.Mirror(clock, 2);
+                        break;
+                    case 2:// onescreen - low
+                        _this.oneScreenOffset = 0;
+                        _this.Mirror(clock, 0);
+                        break;
+                    case 3:// onescreen - high
+                        _this.oneScreenOffset = 0x400;
+                        _this.Mirror(clock, 0);
+                        break;
+                }
+            }
+        };
+        _this.vrc4mirroring = function (clock, address, data) {
+            if (address <= 0x9001) {
+                switch (data & 7) {
+                    case 0:// vertical
+                        _this.Mirror(clock, 1);
+                        break;
+                    case 1:// horizontal
+                        _this.Mirror(clock, 2);
+                        break;
+                    case 2:// onescreen - low
+                        _this.oneScreenOffset = 0;
+                        _this.Mirror(clock, 0);
+                        break;
+                    case 3:// onescreen - high
+                        _this.oneScreenOffset = 0x400;
+                        _this.Mirror(clock, 0);
+                        break;
+                }
+            }
+            if (address == 0x9002 || address == 0x9003) {
+                _this.swapMode = (data & 2) == 2;
+            }
+        };
+        _this.vrcmirroring = _this.vrc4mirroring;
+        _this.writeMap = [
+            {
+                mask: 0xF000, address: [0x8000],
+                func: function (clock, address, data) {
+                    var bank8 = data & 0x1F;
+                    if (_this.swapMode) {
+                        _this.SetupBankStarts(_this.prgRomCount * 2 - 2, _this.currentA, bank8, _this.currentE);
+                    }
+                    else {
+                        _this.SetupBankStarts(bank8, _this.currentA, _this.prgRomCount * 2 - 2, _this.currentE);
+                    }
+                }
+            },
+            {
+                mask: 0xF000, address: [0xA000],
+                func: function (clock, address, data) {
+                    // 8kib prg rom at A000
+                    var bankA = data & 0x1F;
+                    _this.SetupBankStarts(_this.current8, bankA, _this.currentC, _this.currentE);
+                }
+            },
+            {
+                mask: 0xF000, address: [0x9000],
+                func: function (clock, address, data) {
+                    _this.vrcmirroring(clock, address, data);
+                }
+            },
+            {
+                // irq handlers
+                mask: 0xF000, address: [0xF000],
+                func: function (clock, address, data) {
+                    if ((address & 0xF) == 0x0) {
+                        _this.irqLatch |= (0xF & data);
+                    }
+                    else if ((address & 0xF) == 0x1) {
+                        _this.irqLatch |= ((0xF & data) << 4);
+                    }
+                    if ((address & 0xF) == 0x2) {
+                        _this.irqControl = data;
+                    }
+                    if ((address & 0xF) == 0x3) {
+                        _this.ackIrq();
+                    }
+                }
+            },
+            {
+                // memory handlers, registerlocations change
+                mask: 0xF000, address: [0xb000, 0xc000, 0xd000, 0xe000],
+                func: function (clock, address, data) {
+                    var bank = ((address >> 12) & 0xf) - 0xb;
+                    var index = bank * 4;
+                    if ((address & 0xFFF) == _this.regNums[0]) {
+                        _this.latches[index] = data & 0xF;
+                    }
+                    else if ((address & 0xFFF) == _this.regNums[1]) {
+                        _this.latches[index + 1] = (data & 0xf) << 4;
+                    }
+                    else if ((address & 0xFFF) == _this.regNums[2]) {
+                        _this.latches[index + 2] = data & 0xF;
+                    }
+                    else if ((address & 0xFFF) == _this.regNums[3]) {
+                        _this.latches[index + 3] = (data & 0xf) << 4;
+                    }
+                    _this.vrcCopyBanks1k(clock, (bank * 2) + 0, _this.latches[index] | _this.latches[index + 1], 1);
+                    _this.vrcCopyBanks1k(clock, (bank * 2) + 1, _this.latches[index + 2] | _this.latches[index + 3], 1);
+                }
+            }
+        ];
         return _this;
     }
-    KonamiVRC2Cart.prototype.advanceClock = function (clock) {
-        if (this.irqEnable) {
-            this.irqCounter -= clock;
-            if (this.irqCounter <= 0) {
-                this.CPU._handleIRQ = true;
-                this.irqEnable = false;
+    VRCIrqCart.prototype.vrcCopyBanks1k = function (clock, dest, src, numberOf1kBanks) {
+        this.CopyBanks1k(clock, dest, src, numberOf1kBanks);
+    };
+    VRCIrqCart.prototype.useMicrowire = function () {
+        var _this = this;
+        this.GetByte = this.getByteMicrowire;
+        this.writeMap.push({
+            mask: 0xF000,
+            address: [0x6000],
+            func: function (clock, address, data) {
+                _this.microwireLatch = data & 0x1;
             }
-        }
+        });
     };
-    KonamiVRC2Cart.prototype.ackIrq = function () {
-        this.irqEnable = false;
-        if (this.irqEnableAfterAck) {
-            this.irqEnable = true;
-            this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * 113.66666667) | 0;
-        }
-    };
-    Object.defineProperty(KonamiVRC2Cart.prototype, "irqControl", {
-        set: function (val) {
-            this.irqEnableAfterAck = (val & 0x1) == 0x1;
-            this.irqEnable = (val & 0x2) == 0x2;
-            this.irqMode = (val & 0x4) == 0x4;
-            if (this.irqEnable) {
-                this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * 113.66666667) | 0;
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    KonamiVRC2Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'KonamiVRC2';
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.CopyBanks4k(0, 0, 0, 2);
-        switch (this.ROMHashFunction) {
-            case 'C1FBF659': // boku dracula kun
-            case '91328C1D': // tiny toon adventures j
-            case 'D467C0CC': // parodius da!
-            case 'FCBF28B1':
-                this.regNums = [
-                    0x00,
-                    0x04,
-                    0x08,
-                    0x0c,
-                ];
-                break;
-        }
-    };
-    KonamiVRC2Cart.prototype.GetByte = function (clock, address) {
+    VRCIrqCart.prototype.getByteMicrowire = function (clock, address) {
         // LDA $6100 and LDA $6000 will return $60|latch
         if (address >= 0x6000 && address <= 0x7FFF) {
             return (address >> 8) | this.microwireLatch;
         }
         return this.baseGetByte(clock, address);
     };
-    KonamiVRC2Cart.prototype.SetByte = function (clock, address, data) {
-        switch (address & 0xF000) {
-            case 0x6000:
-                this.microwireLatch = data & 0x1;
-                break;
-            case 0x8000:
-                // 8kib prg rom at 8000
-                var bank8 = data & 0x1F;
-                this.SetupBankStarts(bank8, this.currentA, this.currentC, this.currentE);
-                break;
-            case 0xA000:
-                // 8kib prg rom at A000
-                var bankA = data & 0x1F;
-                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
-                break;
-            case 0x9000:
-                if (address <= 0x9003) {
-                    switch (data & 7) {
-                        case 0:// vertical
-                            this.Mirror(clock, 1);
-                            break;
-                        case 1:// horizontal
-                            this.Mirror(clock, 2);
-                            break;
-                        case 2:// onescreen - low
-                            this.oneScreenOffset = 0;
-                            this.Mirror(clock, 0);
-                            break;
-                        case 3:// onescreen - high
-                            this.oneScreenOffset = 0x400;
-                            this.Mirror(clock, 0);
-                            break;
-                    }
-                }
-                // this.CopyBanks4k(clock, 0, this.chrbank0 , 1);
-                // this.CopyBanks4k(clock, 1, this.chrbank1 , 1);
-                break;
-            case 0xB000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbank0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbank0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbank1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbank1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 0, this.chrbank0 | this.chrbank0_1, 1);
-                this.CopyBanks1k(clock, 1, this.chrbank1 | this.chrbank1_1, 1);
-                break;
-            case 0xc000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbankc0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbankc0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbankc1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbankc1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 2, this.chrbankc0 | this.chrbankc0_1, 1);
-                this.CopyBanks1k(clock, 3, this.chrbankc1 | this.chrbankc1_1, 1);
-                break;
-            case 0xd000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbankd0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbankd0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbankd1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbankd1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 4, this.chrbankd0 | this.chrbankd0_1, 1);
-                this.CopyBanks1k(clock, 5, this.chrbankd1 | this.chrbankd1_1, 1);
-                break;
-            case 0xe000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbanke0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbanke0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbanke1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbanke1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 6, this.chrbanke0 | this.chrbanke0_1, 1);
-                this.CopyBanks1k(clock, 7, this.chrbanke1 | this.chrbanke1_1, 1);
-                break;
-            case 0xF000:
-                if ((address & 0xF) == 0x0) {
-                    this.irqLatch |= (0xF & data);
-                }
-                else if ((address & 0xF) == 0x1) {
-                    this.irqLatch |= ((0xF & data) << 4);
-                }
-                if ((address & 0xF) == 0x2) {
-                    this.irqControl = data;
-                }
-                if ((address & 0xF) == 0x3) {
-                    this.ackIrq();
-                }
-                break;
+    VRCIrqCart.prototype.tickIrq = function () {
+        this.irqCounter++;
+        if (this.irqCounter == 0xFF) {
+            console.log('irq');
+            this.prescaler = 341;
+            this.irqCounter = this.irqLatch;
+            this.CPU._handleIRQ = true;
         }
     };
-    return KonamiVRC2Cart;
-}(BaseCart_1.BaseCart));
-exports.KonamiVRC2Cart = KonamiVRC2Cart;
-var KonamiVRC022Cart = /** @class */ (function (_super) {
-    __extends(KonamiVRC022Cart, _super);
-    function KonamiVRC022Cart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.microwireLatch = 0;
-        _this.irqCounter = 0;
-        _this.irqMode = false;
-        _this.irqEnableAfterAck = false;
-        _this.irqEnable = false;
-        _this.chrbank0 = 0;
-        _this.chrbank0_1 = 0;
-        _this.chrbank1 = 0;
-        _this.chrbank1_1 = 0;
-        _this.chrbankc1_1 = 0;
-        _this.chrbankc1 = 0;
-        _this.chrbankc0_1 = 0;
-        _this.chrbankc0 = 0;
-        _this.chrbankd1_1 = 0;
-        _this.chrbankd1 = 0;
-        _this.chrbankd0_1 = 0;
-        _this.chrbankd0 = 0;
-        _this.chrbanke1_1 = 0;
-        _this.chrbanke1 = 0;
-        _this.chrbanke0_1 = 0;
-        _this.chrbanke0 = 0;
-        _this.latches = [
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-        ];
-        _this.regNums = [
-            0x00,
-            0x02,
-            0x01,
-            0x03,
-        ];
-        _this.irqLatch = 0;
-        return _this;
-    }
-    KonamiVRC022Cart.prototype.advanceClock = function (clock) {
-        if (this.irqEnable) {
-            this.irqCounter -= clock;
-            if (this.irqCounter <= 0) {
-                this.CPU._handleIRQ = true;
-                this.irqEnable = false;
+    VRCIrqCart.prototype.tick = function (ticks) {
+        if (this.irqMode) {
+            for (var i = 0; i < ticks; ++i) {
+                this.tickIrq();
+            }
+        }
+        else {
+            this.prescaler -= ticks * 3;
+            if (this.prescaler <= 0) {
+                this.tickIrq();
+                this.prescaler += 341;
             }
         }
     };
-    KonamiVRC022Cart.prototype.ackIrq = function () {
-        this.irqEnable = false;
-        if (this.irqEnableAfterAck) {
-            this.irqEnable = true;
-            this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * 113.66666667) | 0;
+    VRCIrqCart.prototype.advanceClock = function (clock) {
+        if (this.irqEnable) {
+            this.tick(clock);
         }
     };
-    Object.defineProperty(KonamiVRC022Cart.prototype, "irqControl", {
+    VRCIrqCart.prototype.ackIrq = function () {
+        console.log('ack irq');
+        this.irqEnable = this.irqEnableAfterAck;
+    };
+    Object.defineProperty(VRCIrqCart.prototype, "irqControl", {
         set: function (val) {
+            console.log('irqControl ' + val);
             this.irqEnableAfterAck = (val & 0x1) == 0x1;
             this.irqEnable = (val & 0x2) == 0x2;
             this.irqMode = (val & 0x4) == 0x4;
             if (this.irqEnable) {
-                this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * 113.66666667) | 0;
+                this.prescaler = 341;
+                this.irqCounter = this.irqLatch;
             }
         },
         enumerable: true,
         configurable: true
     });
+    VRCIrqCart.prototype.SetByte = function (clock, address, data) {
+        var map = this.writeMap;
+        var _loop_1 = function (i) {
+            var x = map[i].mask & address;
+            if (map[i].address.find(function (v) {
+                return v == x;
+            })) {
+                map[i].func(clock, address, data);
+                return { value: void 0 };
+            }
+        };
+        for (var i = 0; i < map.length; ++i) {
+            var state_1 = _loop_1(i);
+            if (typeof state_1 === "object")
+                return state_1.value;
+        }
+    };
+    return VRCIrqCart;
+}(BaseCart_1.BaseCart));
+var KonamiVRC2Cart = /** @class */ (function (_super) {
+    __extends(KonamiVRC2Cart, _super);
+    function KonamiVRC2Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    KonamiVRC2Cart.prototype.altRegNums = function () {
+        this.regNums = [
+            0x00,
+            0x04,
+            0x08,
+            0x0c,
+        ];
+    };
+    KonamiVRC2Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'KonamiVRC2';
+        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.CopyBanks4k(0, 0, 0, 2);
+        switch (this.ROMHashFunction) {
+            case 'CC9FFEC': // ganbare goemon 2 
+            case 'B27B8CF4':// Gryzor (contra j)
+                this.useMicrowire();
+                break;
+            case 'D467C0CC':// parodius da!
+                this.useMicrowire();
+                this.altRegNums();
+                break;
+            case 'C1FBF659': // boku dracula kun
+            case '91328C1D': // tiny toon adventures j
+            case 'FCBF28B1':
+                this.altRegNums();
+                break;
+        }
+    };
+    return KonamiVRC2Cart;
+}(VRCIrqCart));
+exports.KonamiVRC2Cart = KonamiVRC2Cart;
+var KonamiVRC022Cart = /** @class */ (function (_super) {
+    __extends(KonamiVRC022Cart, _super);
+    function KonamiVRC022Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
     KonamiVRC022Cart.prototype.InitializeCart = function () {
+        var _this = this;
         this.mapperName = 'KonamiVRC2a';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.CopyBanks4k(0, 0, 0, 2);
-    };
-    KonamiVRC022Cart.prototype.SetByte = function (clock, address, data) {
-        switch (address & 0xF000) {
-            case 0x6000:
-                this.microwireLatch = data & 0x1;
-                break;
-            case 0x8000:
-                // 8kib prg rom at 8000
-                var bank8 = data & 0x1F;
-                this.SetupBankStarts(bank8, this.currentA, this.currentC, this.currentE);
-                break;
-            case 0xA000:
-                // 8kib prg rom at A000
-                var bankA = data & 0x1F;
-                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
-                break;
-            case 0x9000:
-                if (address <= 0x9003) {
-                    switch (data & 7) {
-                        case 0:// vertical
-                            this.Mirror(clock, 1);
-                            break;
-                        case 1:// horizontal
-                            this.Mirror(clock, 2);
-                            break;
-                        case 2:// onescreen - low
-                            this.oneScreenOffset = 0;
-                            this.Mirror(clock, 0);
-                            break;
-                        case 3:// onescreen - high
-                            this.oneScreenOffset = 0x400;
-                            this.Mirror(clock, 0);
-                            break;
-                    }
-                }
-                // this.CopyBanks4k(clock, 0, this.chrbank0 , 1);
-                // this.CopyBanks4k(clock, 1, this.chrbank1 , 1);
-                break;
-            case 0xB000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbank0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbank0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbank1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbank1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 0, (this.chrbank0 | this.chrbank0_1) >> 1, 1);
-                this.CopyBanks1k(clock, 1, (this.chrbank1 | this.chrbank1_1) >> 1, 1);
-                break;
-            case 0xc000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbankc0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbankc0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbankc1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbankc1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 2, (this.chrbankc0 | this.chrbankc0_1) >> 1, 1);
-                this.CopyBanks1k(clock, 3, (this.chrbankc1 | this.chrbankc1_1) >> 1, 1);
-                break;
-            case 0xd000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbankd0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbankd0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbankd1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbankd1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 4, (this.chrbankd0 | this.chrbankd0_1) >> 1, 1);
-                this.CopyBanks1k(clock, 5, (this.chrbankd1 | this.chrbankd1_1) >> 1, 1);
-                break;
-            case 0xe000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbanke0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbanke0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbanke1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbanke1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 6, (this.chrbanke0 | this.chrbanke0_1) >> 1, 1);
-                this.CopyBanks1k(clock, 7, (this.chrbanke1 | this.chrbanke1_1) >> 1, 1);
-                break;
-            case 0xF000:
-                if ((address & 0xF) == 0x0) {
-                    this.irqLatch |= (0xF & data);
-                }
-                else if ((address & 0xF) == 0x1) {
-                    this.irqLatch |= ((0xF & data) << 4);
-                }
-                if ((address & 0xF) == 0x2) {
-                    this.irqControl = data;
-                }
-                if ((address & 0xF) == 0x3) {
-                    this.ackIrq();
-                }
+        this.regNums = [
+            0x0,
+            0x2,
+            0x1,
+            0x3,
+        ];
+        this.vrcmirroring = this.vrc2mirroring;
+        this.vrcCopyBanks1k = function (clock, dest, src, numberOf1kBanks) {
+            _this.CopyBanks1k(clock, dest, src >> 1, numberOf1kBanks);
+        };
+        //this.useMicrowire();
+        switch (this.ROMHashFunction) {
+            case 'D4645E14':
+                this.Mirror(0, 2);
                 break;
         }
     };
     return KonamiVRC022Cart;
-}(BaseCart_1.BaseCart));
+}(VRCIrqCart));
 exports.KonamiVRC022Cart = KonamiVRC022Cart;
 var Konami021Cart = /** @class */ (function (_super) {
     __extends(Konami021Cart, _super);
     function Konami021Cart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.swapMode = false;
-        _this.microwireLatch = 0;
-        _this.irqCounter = 0;
-        _this.irqMode = false;
-        _this.irqEnableAfterAck = false;
-        _this.irqEnable = false;
-        _this.chrbank0 = 0;
-        _this.chrbank0_1 = 0;
-        _this.chrbank1 = 0;
-        _this.chrbank1_1 = 0;
-        _this.chrbankc1_1 = 0;
-        _this.chrbankc1 = 0;
-        _this.chrbankc0_1 = 0;
-        _this.chrbankc0 = 0;
-        _this.chrbankd1_1 = 0;
-        _this.chrbankd1 = 0;
-        _this.chrbankd0_1 = 0;
-        _this.chrbankd0 = 0;
-        _this.chrbanke1_1 = 0;
-        _this.chrbanke1 = 0;
-        _this.chrbanke0_1 = 0;
-        _this.chrbanke0 = 0;
-        _this.latches = [
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-        ];
-        _this.regNums = [
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Konami021Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'KonamiVRC2';
+        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.CopyBanks4k(0, 0, 0, 2);
+        this.regNums = [
             0x00,
             0x02,
             0x04,
             0x06,
         ];
-        _this.irqLatch = 0;
-        return _this;
-    }
-    Konami021Cart.prototype.advanceClock = function (clock) {
-        if (this.irqEnable) {
-            this.irqCounter -= clock;
-            if (this.irqCounter <= 0) {
-                this.CPU._handleIRQ = true;
-                this.irqEnable = false;
-            }
-        }
-    };
-    Konami021Cart.prototype.ackIrq = function () {
-        this.irqEnable = false;
-        if (this.irqEnableAfterAck) {
-            this.irqEnable = true;
-            this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * 113.66666667) | 0;
-        }
-    };
-    Object.defineProperty(Konami021Cart.prototype, "irqControl", {
-        set: function (val) {
-            this.irqEnableAfterAck = (val & 0x1) == 0x1;
-            this.irqEnable = (val & 0x2) == 0x2;
-            this.irqMode = (val & 0x4) == 0x4;
-            if (this.irqEnable) {
-                this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * 113.66666667) | 0;
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Konami021Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'KonamiVRC2';
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.CopyBanks4k(0, 0, 0, 2);
         switch (this.ROMHashFunction) {
             case '286FCD20':// ganbare goemon gaiden 2
                 this.regNums = [
@@ -6222,206 +6066,22 @@ var Konami021Cart = /** @class */ (function (_super) {
                 break;
         }
     };
-    Konami021Cart.prototype.SetByte = function (clock, address, data) {
-        switch (address & 0xF000) {
-            case 0x8000:
-                // 8kib prg rom at 8000
-                var bank8 = data & 0x1F;
-                if (this.swapMode) {
-                    this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
-                }
-                else {
-                    this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
-                }
-                break;
-            case 0xA000:
-                // 8kib prg rom at A000
-                var bankA = data & 0x1F;
-                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
-                break;
-            case 0x9000:
-                if (address <= 0x9001) {
-                    switch (data & 7) {
-                        case 0:// vertical
-                            this.Mirror(clock, 1);
-                            break;
-                        case 1:// horizontal
-                            this.Mirror(clock, 2);
-                            break;
-                        case 2:// onescreen - low
-                            this.oneScreenOffset = 0;
-                            this.Mirror(clock, 0);
-                            break;
-                        case 3:// onescreen - high
-                            this.oneScreenOffset = 0x400;
-                            this.Mirror(clock, 0);
-                            break;
-                    }
-                }
-                if (address == 0x9002 || address == 0x9003) {
-                    this.swapMode = (data & 2) == 2;
-                }
-                // this.CopyBanks4k(clock, 0, this.chrbank0 , 1);
-                // this.CopyBanks4k(clock, 1, this.chrbank1 , 1);
-                break;
-            case 0xB000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbank0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbank0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbank1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbank1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 0, this.chrbank0 | this.chrbank0_1, 1);
-                this.CopyBanks1k(clock, 1, this.chrbank1 | this.chrbank1_1, 1);
-                break;
-            case 0xc000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbankc0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbankc0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbankc1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbankc1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 2, this.chrbankc0 | this.chrbankc0_1, 1);
-                this.CopyBanks1k(clock, 3, this.chrbankc1 | this.chrbankc1_1, 1);
-                break;
-            case 0xd000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbankd0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbankd0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbankd1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbankd1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 4, this.chrbankd0 | this.chrbankd0_1, 1);
-                this.CopyBanks1k(clock, 5, this.chrbankd1 | this.chrbankd1_1, 1);
-                break;
-            case 0xe000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbanke0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbanke0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbanke1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbanke1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 6, this.chrbanke0 | this.chrbanke0_1, 1);
-                this.CopyBanks1k(clock, 7, this.chrbanke1 | this.chrbanke1_1, 1);
-                break;
-            case 0xF000:
-                if ((address & 0xF) == 0x0) {
-                    this.irqLatch |= (0xF & data);
-                }
-                else if ((address & 0xF) == 0x1) {
-                    this.irqLatch |= ((0xF & data) << 4);
-                }
-                if ((address & 0xF) == 0x2) {
-                    this.irqControl = data;
-                }
-                if ((address & 0xF) == 0x3) {
-                    this.ackIrq();
-                }
-                break;
-        }
-    };
     return Konami021Cart;
-}(BaseCart_1.BaseCart));
+}(VRCIrqCart));
 exports.Konami021Cart = Konami021Cart;
 var Konami025Cart = /** @class */ (function (_super) {
     __extends(Konami025Cart, _super);
     function Konami025Cart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.swapMode = false;
-        _this.microwireLatch = 0;
-        _this.irqCounter = 0;
-        _this.irqMode = false;
-        _this.irqEnableAfterAck = false;
-        _this.irqEnable = false;
-        _this.chrbank0 = 0;
-        _this.chrbank0_1 = 0;
-        _this.chrbank1 = 0;
-        _this.chrbank1_1 = 0;
-        _this.chrbankc1_1 = 0;
-        _this.chrbankc1 = 0;
-        _this.chrbankc0_1 = 0;
-        _this.chrbankc0 = 0;
-        _this.chrbankd1_1 = 0;
-        _this.chrbankd1 = 0;
-        _this.chrbankd0_1 = 0;
-        _this.chrbankd0 = 0;
-        _this.chrbanke1_1 = 0;
-        _this.chrbanke1 = 0;
-        _this.chrbanke0_1 = 0;
-        _this.chrbanke0 = 0;
-        _this.latches = [
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-        ];
-        _this.regNums = [
-            0x000, 0x002, 0x001, 0x003
-        ];
-        _this.irqLatch = 0;
-        return _this;
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    Konami025Cart.prototype.advanceClock = function (clock) {
-        if (this.irqEnable) {
-            this.irqCounter -= clock;
-            if (this.irqCounter <= 0) {
-                this.CPU._handleIRQ = true;
-                this.irqEnable = false;
-            }
-        }
-    };
-    Konami025Cart.prototype.ackIrq = function () {
-        this.irqEnable = false;
-        if (this.irqEnableAfterAck) {
-            this.irqEnable = true;
-            this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * 113.66666667) | 0;
-        }
-    };
-    Object.defineProperty(Konami025Cart.prototype, "irqControl", {
-        set: function (val) {
-            this.irqEnableAfterAck = (val & 0x1) == 0x1;
-            this.irqEnable = (val & 0x2) == 0x2;
-            this.irqMode = (val & 0x4) == 0x4;
-            if (this.irqEnable) {
-                this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * 113.66666667) | 0;
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
     Konami025Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'KonamiVRC2';
+        this.mapperName = 'KonamiVRC4';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.CopyBanks4k(0, 0, 0, 2);
+        this.regNums = [0x000, 0x002, 0x001, 0x003];
         switch (this.ROMHashFunction) {
+            case '490E8A4C':
+                this.useMicrowire();
             case '4A601A2C':// teenage mutant ninja turtles j
                 this.regNums = [
                     0x000, 0x008, 0x004, 0x00C
@@ -6429,130 +6089,8 @@ var Konami025Cart = /** @class */ (function (_super) {
                 break;
         }
     };
-    Konami025Cart.prototype.SetByte = function (clock, address, data) {
-        switch (address & 0xF000) {
-            case 0x8000:
-                // 8kib prg rom at 8000
-                var bank8 = data & 0x1F;
-                if (this.swapMode) {
-                    this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
-                }
-                else {
-                    this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
-                }
-                break;
-            case 0xA000:
-                // 8kib prg rom at A000
-                var bankA = data & 0x1F;
-                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
-                break;
-            case 0x9000:
-                if (address <= 0x9001) {
-                    switch (data & 7) {
-                        case 0:// vertical
-                            this.Mirror(clock, 1);
-                            break;
-                        case 1:// horizontal
-                            this.Mirror(clock, 2);
-                            break;
-                        case 2:// onescreen - low
-                            this.oneScreenOffset = 0;
-                            this.Mirror(clock, 0);
-                            break;
-                        case 3:// onescreen - high
-                            this.oneScreenOffset = 0x400;
-                            this.Mirror(clock, 0);
-                            break;
-                    }
-                }
-                if (address == 0x9002 || address == 0x9003) {
-                    this.swapMode = (data & 2) == 2;
-                }
-                // this.CopyBanks4k(clock, 0, this.chrbank0 , 1);
-                // this.CopyBanks4k(clock, 1, this.chrbank1 , 1);
-                break;
-            case 0xB000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbank0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbank0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbank1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbank1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 0, this.chrbank0 | this.chrbank0_1, 1);
-                this.CopyBanks1k(clock, 1, this.chrbank1 | this.chrbank1_1, 1);
-                break;
-            case 0xc000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbankc0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbankc0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbankc1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbankc1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 2, this.chrbankc0 | this.chrbankc0_1, 1);
-                this.CopyBanks1k(clock, 3, this.chrbankc1 | this.chrbankc1_1, 1);
-                break;
-            case 0xd000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbankd0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbankd0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbankd1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbankd1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 4, this.chrbankd0 | this.chrbankd0_1, 1);
-                this.CopyBanks1k(clock, 5, this.chrbankd1 | this.chrbankd1_1, 1);
-                break;
-            case 0xe000:
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.chrbanke0 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[1]) {
-                    this.chrbanke0_1 = (data & 0xf) << 4;
-                }
-                if ((address & 0xFFF) == this.regNums[2]) {
-                    this.chrbanke1 = data & 0xF;
-                }
-                if ((address & 0xFFF) == this.regNums[3]) {
-                    this.chrbanke1_1 = (data & 0xf) << 4;
-                }
-                this.CopyBanks1k(clock, 6, this.chrbanke0 | this.chrbanke0_1, 1);
-                this.CopyBanks1k(clock, 7, this.chrbanke1 | this.chrbanke1_1, 1);
-                break;
-            case 0xF000:
-                if ((address & 0xF) == 0x0) {
-                    this.irqLatch |= (0xF & data);
-                }
-                else if ((address & 0xF) == 0x1) {
-                    this.irqLatch |= ((0xF & data) << 4);
-                }
-                if ((address & 0xF) == 0x2) {
-                    this.irqControl = data;
-                }
-                if ((address & 0xF) == 0x3) {
-                    this.ackIrq();
-                }
-                break;
-        }
-    };
     return Konami025Cart;
-}(BaseCart_1.BaseCart));
+}(VRCIrqCart));
 exports.Konami025Cart = Konami025Cart;
 
 
@@ -6587,18 +6125,20 @@ var Konami026Cart = /** @class */ (function (_super) {
         _this.prgRamEnable = false;
         _this.swapMode = false;
         _this.microwireLatch = 0;
+        _this.registers = [0, 0, 0, 0, 0, 0, 0, 0];
         _this.irqCounter = 0;
         _this.irqMode = false;
         _this.irqEnableAfterAck = false;
         _this.irqEnable = false;
         _this.irqLatch = 0;
         _this.prescaler = 341;
-        _this.registers = [0, 0, 0, 0, 0, 0, 0, 0];
         return _this;
     }
     Konami026Cart.prototype.tickIrq = function () {
         this.irqCounter++;
         if (this.irqCounter == 0xFF) {
+            console.log('irq');
+            this.prescaler = 341;
             this.irqCounter = this.irqLatch;
             this.CPU._handleIRQ = true;
         }
@@ -6610,7 +6150,7 @@ var Konami026Cart = /** @class */ (function (_super) {
             }
         }
         else {
-            this.prescaler -= ticks;
+            this.prescaler -= ticks * 3;
             if (this.prescaler <= 0) {
                 this.tickIrq();
                 this.prescaler += 341;
@@ -6628,12 +6168,13 @@ var Konami026Cart = /** @class */ (function (_super) {
     };
     Object.defineProperty(Konami026Cart.prototype, "irqControl", {
         set: function (val) {
+            console.log('irqControl ' + val);
             this.irqEnableAfterAck = (val & 0x1) == 0x1;
             this.irqEnable = (val & 0x2) == 0x2;
             this.irqMode = (val & 0x4) == 0x4;
             if (this.irqEnable) {
                 this.prescaler = 341;
-                this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * (113 + (2 / 3))) | 0;
+                this.irqCounter = this.irqLatch;
             }
         },
         enumerable: true,

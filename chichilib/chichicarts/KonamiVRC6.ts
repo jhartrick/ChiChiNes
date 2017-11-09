@@ -10,20 +10,26 @@ export class Konami026Cart extends BaseCart {
     prgRamEnable: boolean = false;
     swapMode: boolean = false;
     microwireLatch: number = 0;
+    
+
+    registers = [0,0,0,0,0,0,0,0];
+
+
     irqCounter: number = 0;
     irqMode: boolean = false;
     irqEnableAfterAck = false;
     irqEnable = false;
     irqLatch: number = 0;
-
     prescaler = 341;
 
-    registers = [0,0,0,0,0,0,0,0];
-
     tickIrq() {
+        
         this.irqCounter++;
         if (this.irqCounter == 0xFF) {
+            console.log('irq')
+            this.prescaler = 341;
             this.irqCounter = this.irqLatch;
+
             this.CPU._handleIRQ = true;
         }
     }
@@ -35,7 +41,7 @@ export class Konami026Cart extends BaseCart {
             }
 
         } else {
-            this.prescaler -= ticks;
+            this.prescaler -= ticks * 3;
             if (this.prescaler <= 0) {
                 this.tickIrq();
                 this.prescaler+=341;
@@ -55,12 +61,13 @@ export class Konami026Cart extends BaseCart {
     }
 
     set irqControl(val: number) {
+        console.log('irqControl ' + val)
         this.irqEnableAfterAck = (val & 0x1) == 0x1;
         this.irqEnable = (val & 0x2) == 0x2;
         this.irqMode = (val & 0x4) == 0x4;
         if (this.irqEnable) {
             this.prescaler = 341;
-            this.irqCounter = this.irqMode ? this.irqLatch : (this.irqLatch * (113 + (2/3))) | 0;
+            this.irqCounter =this.irqLatch ;
         }
     }
 
