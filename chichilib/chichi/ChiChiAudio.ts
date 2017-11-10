@@ -656,7 +656,7 @@ export class ChiChiBopper {
             enableTriangle: this.enableTriangle,
             enableNoise: this.EnableNoise,
             enablePCM: false,
-            synced: true
+            synced: this.writer.synced
         };
         return settings;
     }

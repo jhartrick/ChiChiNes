@@ -2112,17 +2112,20 @@ var BaseCart = /** @class */ (function () {
         if ((this.romControlBytes[0] & 8) === 8) {
             this.Mirror(0, 3);
         }
-        //initialize
+        // initialize
         this.InitializeCart();
     };
     BaseCart.prototype.GetByte = function (clock, address) {
         var bank = (address >> 12) - 0x6;
         if ((address & 0xE000) === 0x6000) {
-            return this.prgRomBank6[address & 0x1FFF];
+            return this.prgRomBank6[address & 0xFFF];
         }
         else {
-            return this.nesCart[this.prgBankStarts[bank] + (address & 0xFFF)];
+            return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
         }
+    };
+    BaseCart.prototype.peekByte = function (address) {
+        return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
     };
     BaseCart.prototype.SetByte = function (clock, address, data) {
         // throw new Error('Method not implemented.');
@@ -2130,10 +2133,10 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.GetPPUByte = function (clock, address) {
         var bank = address >> 10;
         var newAddress = this.ppuBankStarts[bank] + (address & 0x3FF);
-        //while (newAddress > chrRamStart)
-        //{
-        //    newAddress -= chrRamStart;
-        //}
+        // while (newAddress > chrRamStart)
+        // {
+        //     newAddress -= chrRamStart;
+        // }
         return this.chrRom[newAddress];
     };
     BaseCart.prototype.SetPPUByte = function (clock, address, data) {
@@ -2144,7 +2147,7 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.Setup6BankStarts = function (reg6, reg8, regA, regC, regE) {
         reg6 = this.MaskBankAddress(reg6);
         this.prgBankStarts[0] = reg6 * 8192;
-        this.prgBankStarts[1] = (this.prgBankStarts[2] + 4096);
+        this.prgBankStarts[1] = (this.prgBankStarts[0] + 4096);
         this.SetupBankStarts(reg8, regA, regC, regE);
     };
     BaseCart.prototype.SetupBankStarts = function (reg8, regA, regC, regE) {
@@ -3404,7 +3407,7 @@ var VRC2or4Cart = /** @class */ (function (_super) {
         if (address >= 0x6000 && address <= 0x7FFF) {
             return (address >> 8) | this.microwireLatch;
         }
-        return this.GetByte(clock, address);
+        return this.peekByte(address);
     };
     VRC2or4Cart.prototype.SetByte = function (clock, address, data) {
         var map = this.writeMap;
@@ -5826,8 +5829,6 @@ var Smb2jCart = /** @class */ (function (_super) {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.irqEnabled = false;
         _this.irqCounter = 0;
-        _this.bank6start = 0;
-        _this.current6 = 0;
         return _this;
     }
     Smb2jCart.prototype.InitializeCart = function () {
@@ -5857,8 +5858,7 @@ var Smb2jCart = /** @class */ (function (_super) {
         }
     };
     Smb2jCart.prototype.GetByte = function (clock, address) {
-        var bank = (address >> 12) - 0x6;
-        return this.nesCart[bank + (address & 0x1FFF)];
+        return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
     };
     Smb2jCart.prototype.SetByte = function (clock, address, data) {
         switch (address & 0xE000) {

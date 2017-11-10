@@ -46,40 +46,40 @@ export class tendoWrapper {
     }
 
     createMachine() {
-          this.machine = new ChiChiMachine();
-          this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer;
-          this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer;
-          this.machine.SoundBopper.audioSettings = this.buffers.audioSettings;
+        this.machine = new ChiChiMachine();
+        this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer;
+        this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer;
+        this.machine.SoundBopper.audioSettings = this.buffers.audioSettings;
 
-          this.machine.Drawscreen = () => {
-              // flush audio
-              // globals.postMessage({ frame: true, fps: framesPerSecond });
-          };
-          this.ready = true;
-          this.machine.Cpu.addDebugEvent(() => {
-              var info = new NesInfo(); 
-              info.debug = {
-                  currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
-                      PC: 0,
-                      A: 0,
-                      X: 0,
-                      Y: 0,
-                      SP: 0,
-                      SR: 0
-                  },
-                  currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
-                  InstructionHistory: {
-                      Buffer: this.machine.Cpu.InstructionHistory.slice(0),
-                      Index: this.machine.Cpu.InstructionHistoryPointer,
-                      Finish: false
-                  }
+        this.machine.Drawscreen = () => {
+            // flush audio
+            // globals.postMessage({ frame: true, fps: framesPerSecond });
+        };
+        this.ready = true;
+        this.machine.Cpu.addDebugEvent(() => {
+            var info = new NesInfo(); 
+            info.debug = {
+                currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
+                    PC: 0,
+                    A: 0,
+                    X: 0,
+                    Y: 0,
+                    SP: 0,
+                    SR: 0
+                },
+                currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
+                InstructionHistory: {
+                    Buffer: this.machine.Cpu.InstructionHistory.slice(0),
+                    Index: this.machine.Cpu.InstructionHistoryPointer,
+                    Finish: false
+                }
 
-              };
-              postMessage(info);
-              //this.updateState();
-          });
-          this.machine.Cpu.Debugging = false;
-      }
+            };
+            postMessage(info);
+            //this.updateState();
+        });
+        this.machine.Cpu.Debugging = false;
+    }
 
     updateBuffers() {
         const machine = this.machine;

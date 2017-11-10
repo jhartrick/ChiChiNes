@@ -1,7 +1,7 @@
 
 // shared buffer to get sound out
 export class WavSharer  {
-    synced =true;
+    synced = true;
     
     readonly NES_BYTES_WRITTEN = 0;
     readonly WAVSHARER_BLOCKTHREAD = 1;

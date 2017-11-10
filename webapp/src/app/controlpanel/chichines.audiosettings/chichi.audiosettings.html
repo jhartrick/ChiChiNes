@@ -1,15 +1,9 @@
 ﻿<p> Freq: {{ audioSettings.sampleRate }} </p>
+
 <div>
-  <mat-button-toggle [checked]="localSettings.muted" (change)="localSettings.muted = $event.source.checked;">
-    {{ localSettings.muted ? 'muted' : '((())))' }}
-  </mat-button-toggle>
   <mat-button-toggle class="audio_button" [checked]="audioSettings.synced" (change)="audioSettings.synced = $event.source.checked; wishbone.RequestSync();" >
-      Sync
+    Sync
   </mat-button-toggle>
-  
-</div>
-<div><mat-slider [value]="localSettings.volume" (change)="localSettings.volume = $event.source.value;" min="0" max="1" step="0.05" value="0.75"></mat-slider></div>
-<div>
   <mat-button-toggle class="audio_button" [checked]="audioSettings.enableSquare0" (change)="audioSettings.enableSquare0 = $event.source.checked; wishbone.RequestSync();" >
     Square 0
   </mat-button-toggle>

@@ -19,8 +19,6 @@ export class Smb2jCart extends BaseCart {
         // }
     };
 
-    bank6start = 0;
-    current6 = 0;
     advanceClock(value: number) {
         if (this.irqEnabled) {
             this.irqCounter -=value;
@@ -36,10 +34,7 @@ export class Smb2jCart extends BaseCart {
 
 
     GetByte(clock: number, address: number): number {
-        let bank = (address >> 12) - 0x6;
-        
-        return this.nesCart[bank + (address & 0x1FFF)];
-
+        return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
     }
     
     SetByte(clock:number, address: number, data: number) {

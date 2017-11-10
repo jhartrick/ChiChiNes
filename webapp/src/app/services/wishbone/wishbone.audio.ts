@@ -34,11 +34,13 @@ export class WishBopper  extends ChiChiBopper {
 		enablePCM: true,
 		synced: true
 	};
+	
 	_localSettings: LocalAudioSettings = {
 		sampleRate: 41000,
 		volume: 0, 
 		muted: false
 	}
+
 	get localSettings(): LocalAudioSettings {
 		return this._localSettings;
 	}

@@ -227,7 +227,7 @@ class VRC2or4Cart extends VRCIrqBase {
         if (address >= 0x6000 && address <= 0x7FFF ) {
             return (address >> 8) | this.microwireLatch;
         }
-        return this.GetByte(clock, address);
+        return this.peekByte(address);
     }
 
     SetByte(clock:number, address:number, data: number) {

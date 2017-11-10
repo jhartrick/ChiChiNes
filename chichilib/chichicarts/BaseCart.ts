@@ -102,6 +102,7 @@ export class BaseCart implements IBaseCart {
     get current6() : number {
         return this.prgBankStarts[0] / 8192;
     };
+
     get current8() : number {
         return this.prgBankStarts[2] / 8192;
     };
@@ -265,7 +266,7 @@ export class BaseCart implements IBaseCart {
         if ((this.romControlBytes[0] & 8) === 8) {
             this.Mirror(0, 3);
         }
-        //initialize
+        // initialize
         this.InitializeCart();
     }
     
@@ -273,10 +274,14 @@ export class BaseCart implements IBaseCart {
         let bank = (address >> 12) - 0x6;
 
         if((address & 0xE000) === 0x6000) {
-            return this.prgRomBank6[address & 0x1FFF];
+            return this.prgRomBank6[address & 0xFFF];
         } else {
-            return this.nesCart[this.prgBankStarts[bank] + (address & 0xFFF)];
+            return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
         }
+    }
+
+    peekByte(address: number) {
+        return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
     }
 
     SetByte(clock: number, address: number, data: number): void {
@@ -287,10 +292,10 @@ export class BaseCart implements IBaseCart {
         var bank = address >> 10 ;
         var newAddress = this.ppuBankStarts[bank] + (address & 0x3FF);
 
-        //while (newAddress > chrRamStart)
-        //{
-        //    newAddress -= chrRamStart;
-        //}
+        // while (newAddress > chrRamStart)
+        // {
+        //     newAddress -= chrRamStart;
+        // }
         return this.chrRom[newAddress];
     }
 
@@ -303,7 +308,7 @@ export class BaseCart implements IBaseCart {
     Setup6BankStarts(reg6: number, reg8: number, regA: number, regC: number, regE: number): void {
         reg6 = this.MaskBankAddress(reg6);
         this.prgBankStarts[0] = reg6 * 8192;
-        this.prgBankStarts[1] = (this.prgBankStarts[2] + 4096);
+        this.prgBankStarts[1] = (this.prgBankStarts[0] + 4096);
         this.SetupBankStarts(reg8, regA, regC, regE);
 
     }

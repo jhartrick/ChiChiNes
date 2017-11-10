@@ -325,7 +325,7 @@ export class WishboneMachine  {
 
                 this.Cart.realCart.prgRomBank6 = data.Cart.prgRomBank6;
                 this.Cart.realCart.ppuBankStarts = data.Cart.ppuBankStarts;
-                this.Cart.realCart.bankStartCache = data.Cart.bankStartCache;
+                // this.Cart.realCart.bankStartCache = data.Cart.bankStartCache;
                 this.Cart.realCart.chrRom = data.Cart.chrRom;
             }
             if (data.sound) {

@@ -3292,7 +3292,7 @@ var ChiChiBopper = /** @class */ (function () {
                 enableTriangle: this.enableTriangle,
                 enableNoise: this.EnableNoise,
                 enablePCM: false,
-                synced: true
+                synced: this.writer.synced
             };
             return settings;
         },
