@@ -47,7 +47,6 @@ export class GameGenieComponent {
             this.wishbone.applyCheats(this.ggCodes);
             console.log(this.ggCodes[0].active);
           });
-  
-      })
+      });
     }
 }

@@ -24,7 +24,6 @@ export class PowerStatusComponent {
   templateUrl: './controlpanel.component.html',
   styleUrls: ['./controlpanel.component.css']
 })
-
 export class ControlPanelComponent {
     localSettings: LocalAudioSettings;
     show = true;
