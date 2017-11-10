@@ -3825,6 +3825,7 @@ var ChiChiPPU = /** @class */ (function () {
         this.outBuffer = new Uint8Array(65536);
         // 'internal
         this.byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
+        this.oddFrame = true;
     }
     Object.defineProperty(ChiChiPPU.prototype, "ChrRomHandler", {
         get: function () {
@@ -3844,11 +3845,6 @@ var ChiChiPPU = /** @class */ (function () {
             else {
                 return (((89345 - this.frameClock) / 341) / 3);
             }
-            //}
-            //else
-            //{
-            //    return (6823 - frameClock) / 3;
-            //}
         },
         enumerable: true,
         configurable: true
@@ -4133,10 +4129,6 @@ var ChiChiPPU = /** @class */ (function () {
         }
     };
     ChiChiPPU.prototype.GetByte = function (Clock, address) {
-        //if (_isDebugging)
-        //{
-        //    Events.Enqueue(new PPUWriteEvent { IsWrite = false, DataWritten = 0, FrameClock = frameClock, RegisterAffected = address, ScanlineNum = frameClock / 341, ScanlinePos = frameClock % 341 });
-        //}
         switch (address & 7) {
             case 3:
             case 0:
@@ -4159,13 +4151,13 @@ var ChiChiPPU = /** @class */ (function () {
                 //this._openBus = ret;
                 return ret;
             case 4:
-                var tmp = this.spriteRAM[this._spriteAddress];
-                //ppuLatch = spriteRAM[SpriteAddress];
-                // should not increment on read ?
-                //SpriteAddress = (SpriteAddress + 1) & 0xFF;
-                //this._openBus = tmp;
-                return tmp;
+                return this.spriteRAM[this._spriteAddress];
+            //ppuLatch = spriteRAM[SpriteAddress];
+            // should not increment on read ?
+            //SpriteAddress = (SpriteAddress + 1) & 0xFF;
+            //this._openBus = tmp;
             case 7:
+                var tmp = 0;
                 // palette reads shouldn't be buffered like regular vram reads, they re internal
                 if ((this._PPUAddress & 0xFF00) === 0x3F00) {
                     // these palettes are all mirrored every 0x10 bytes
@@ -4409,11 +4401,14 @@ var ChiChiPPU = /** @class */ (function () {
                 case 0:
                     break;
                 case 6820:
+                    this.oddFrame = !this.oddFrame;
                     this._PPUStatus = 0;
                     this.hitSprite = false;
                     this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
                     if ((this._PPUControlByte1 & 0x18) !== 0) {
                         this.isRendering = true;
+                        if (this.oddFrame)
+                            this.frameClock++;
                     }
                     this.frameOn = true;
                     this.chrRomHandler.ResetBankStartCache();
@@ -4424,7 +4419,7 @@ var ChiChiPPU = /** @class */ (function () {
                     }
                     break;
                 case 7161:
-                    //lockedVScroll = _vScroll;
+                    // lockedVScroll = _vScroll;
                     this.vbufLocation = 0;
                     //curBufPos = bufStart;
                     this.xNTXor = 0;
@@ -4432,7 +4427,7 @@ var ChiChiPPU = /** @class */ (function () {
                     this.currentXPosition = 0;
                     this.currentYPosition = 0;
                     break;
-                case 89342://ChiChiNES.CPU2A03.frameClockEnd:
+                case 89342:// ChiChiNES.CPU2A03.frameClockEnd:
                     this.shouldRender = true;
                     //__frameFinished = true;
                     this.frameFinished();
@@ -4455,9 +4450,9 @@ var ChiChiPPU = /** @class */ (function () {
                         var xTilePosition = this.xPosition >> 3;
                         var tileRow = (this.yPosition >> 3) % 30 << 5;
                         var tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
-                        var TileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
+                        var tileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
                         var patternTableYOffset = this.yPosition & 7;
-                        var patternID = this.backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+                        var patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
                         this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
                         this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
                         this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);

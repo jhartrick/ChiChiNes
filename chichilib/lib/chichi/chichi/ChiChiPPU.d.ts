@@ -110,6 +110,7 @@ export declare class ChiChiPPU {
     GetNameTablePixel(): number;
     FetchNextTile(): void;
     GetAttributeTableEntry(ppuNameTableMemoryStart: number, i: number, j: number): number;
+    oddFrame: boolean;
     DrawTo(cpuClockNum: number): void;
     Tick(): void;
     UpdatePixelInfo(): void;

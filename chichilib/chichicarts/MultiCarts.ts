@@ -25,9 +25,7 @@ import { BaseCart } from "./BaseCart";
                  let newbank81 = 0;
                  newbank81 = (val ) << 2;
                  this.SetupBankStarts(newbank81, newbank81 + 1 ,  newbank81 + 2,  newbank81 + 3);
-         
              }
- 
              this.Whizzler.DrawTo(clock);
              this.Mirror(clock, (( val >> 7) & 0x1) + 1 );
              this.CopyBanks(clock, 0,(val >> 3) & 7, 1);
