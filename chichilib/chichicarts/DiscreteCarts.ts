@@ -242,6 +242,7 @@ export class Mapper190Cart extends BaseCart {
         this.usesSRAM = true;
         this.copyBanks(0, 0, 0, 2);
         this.SetupBankStarts(0, 1, 0, 1);
+        this.mirror(0,1);
     }
 
     SetByte(clock: number, address: number, val: number): void {

@@ -30,8 +30,7 @@ export interface IBaseCart {
 
     InitializeCart(): void;
 
-    ResetBankStartCache(): void;
-    UpdateScanlineCounter(): void;
+    updateScanlineCounter(): void;
 
     GetByte(clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;
@@ -81,9 +80,11 @@ export class BaseCart implements IBaseCart {
 
     prgRomCount = 0;
     chrRomOffset = 0;
+    chrRomCount = 0;
+
     chrRamStart = 0;
     chrRamLength = 0;
-    chrRomCount = 0;
+
     mapperId = 0;
 
     prgRomBank6 = new Uint8Array(<any>new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
@@ -121,9 +122,7 @@ export class BaseCart implements IBaseCart {
     SRAMEnabled = false;
     private SRAMCanSave = false;
 
-
     ROMHashFunction: string = null;
-    checkSum: any = null;
     private mirroring = -1;
     updateIRQ: () => void = () => {
         this.NMIHandler();
@@ -157,14 +156,7 @@ export class BaseCart implements IBaseCart {
     SRAM: any;
     CartName: string;
     NMIHandler: () => void;
-    //IRQAsserted: boolean;
-    //NextEventAt: number;
-    //PpuBankStarts: any;
-    //BankStartCache: any;
-    CurrentBank: number = 0;
 
-    //BankSwitchesChanged: boolean;
-    //OneScreenOffset: number;
     usesSRAM: boolean = false;
     //ChrRamStart: number;
 
@@ -300,10 +292,6 @@ export class BaseCart implements IBaseCart {
         var bank = address >> 10 ;
         var newAddress = this.ppuBankStarts[bank] + (address & 0x3FF);
 
-        // while (newAddress > chrRamStart)
-        // {
-        //     newAddress -= chrRamStart;
-        // }
         return this.chrRom[newAddress];
     }
 
@@ -386,60 +374,10 @@ export class BaseCart implements IBaseCart {
         // throw new Error('Method not implemented.');
     }
 
-    ResetBankStartCache(): void {
-        // if (currentBank > 0)
-        this.CurrentBank = 0;
-        // Array.Clear(bankStartCache, 0, 16 * 256 * 256);
-        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, 0, 16);
-        // this.bankStartCache.fill(0);
-        // for (let i = 0; i < 16; ++i) {
-        //     this.bankStartCache[i] = this.ppuBankStarts[i];
-        // }
-        //Mirror(-1, this.mirroring);
-        //chrRamStart = ppuBankStarts[8];
-        //Array.Copy(ppuBankStarts, 0, bankStartCache[0], 0, 16 * 4);
-        //bankSwitchesChanged = false;
-    }
 
-    UpdateBankStartCache(): number {
-        this.CurrentBank = 0;// (this.CurrentBank + 1) | 0;
-
-        // for (let i = 0; i < 16; ++i) {
-        //     this.bankStartCache[(this.CurrentBank * 16) + i] = this.ppuBankStarts[i];
-        // }
-        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, this.CurrentBank * 16, 16);
-
-        this.Whizzler.UpdatePixelInfo();
-        return this.CurrentBank;
-    }
-
+    // 0 - onescreen, 1 - horz, 2- vert, 3 - fourscreen
     mirror(clockNum: number, mirroring: number): void {
-
-
-        //    //            A11 A10 Effect
-        //    //----------------------------------------------------------
-        //    // 0   0  All four screen buffers are mapped to the same
-        //    //        area of memory which repeats at $2000, $2400,
-        //    //        $2800, and $2C00.
-        //    // 0   x  "Upper" and "lower" screen buffers are mapped to
-        //    //        separate areas of memory at $2000, $2400 and
-        //    //        $2800, $2C00. ( horizontal mirroring)
-        //    // x   0  "Left" and "right" screen buffers are mapped to
-        //    //        separate areas of memory at $2000, $2800 and
-        //    //        $2400,$2C00.  (vertical mirroring)
-        //    // x   x  All four screen buffers are mapped to separate
-        //    //        areas of memory. In this case, the cartridge
-        //    //        must contain 2kB of additional VRAM 
-
-
-
         this.mirroring = mirroring;
-
-        // if (clockNum > -1) {
-        //     this.Whizzler.DrawTo(clockNum);
-        // }
-
-        //Console.WriteLine("Mirroring set to {0}", mirroring);
 
         switch (mirroring) {
             case 0:
@@ -467,10 +405,6 @@ export class BaseCart implements IBaseCart {
                 this.ppuBankStarts[11] = (this.chrRamStart + 3072);
                 break;
         }
-
-        this.Whizzler.UpdatePixelInfo();
-
-
     }
 
     // utility functions used by mappers
@@ -489,7 +423,6 @@ export class BaseCart implements IBaseCart {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
 
         }
-        this.UpdateBankStartCache();
     }
 
     copyBanks4k(clock: number, dest: number, src: number, numberOf4kBanks: number): void {
@@ -507,14 +440,9 @@ export class BaseCart implements IBaseCart {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
 
         }
-        this.UpdateBankStartCache();
     }
 
     copyBanks2k(clock: number, dest: number, src: number, numberOf2kBanks: number): void {
-        
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
-        }
 
         var oneKsrc = src << 1;
         var oneKdest = dest << 1;
@@ -524,7 +452,6 @@ export class BaseCart implements IBaseCart {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
 
         }
-        this.UpdateBankStartCache();
     }
     
     copyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
@@ -541,14 +468,13 @@ export class BaseCart implements IBaseCart {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
 
         }
-        this.UpdateBankStartCache();
     }        
 
     InitializeCart(reset?: boolean): void {
         //throw new Error('Method not implemented.');
     }
 
-    UpdateScanlineCounter(): void {
+    updateScanlineCounter(): void {
         //throw new Error('Method not implemented.');
     }
 

@@ -3608,11 +3608,11 @@ var ChiChiPPU = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    ChiChiPPU.prototype.SetupVINT = function () {
+    ChiChiPPU.prototype.setupVINT = function () {
         this._PPUStatus = this._PPUStatus | 128;
         this._frames = this._frames + 1;
-        if (this.NMIIsThrown) {
-            this.NMIHandler();
+        if (this._PPUControlByte0 & 128) {
+            this.cpu._handleNMI = true;
         }
     };
     ChiChiPPU.prototype.VidRAM_GetNTByte = function (address) {
@@ -3634,40 +3634,15 @@ var ChiChiPPU = /** @class */ (function () {
         }
     };
     ChiChiPPU.prototype.SetByte = function (Clock, address, data) {
-        // DrawTo(Clock);
-        //if (_isDebugging)
-        //{
-        //    Events.Enqueue(new PPUWriteEvent { IsWrite = true, DataWritten = data, FrameClock = frameClock, RegisterAffected = address, ScanlineNum = frameClock / 341, ScanlinePos = frameClock % 341 });
-        //}
-        //Writable 2C02 registers
-        //-----------------------
-        //4 	-	returns object attribute memory 
-        //      location indexed by port 3, then increments port 3.
-        //6	    -	PPU address port to access with port 7.
-        //7	    -	PPU memory write port.
         switch (address & 7) {
             case 0:
                 this._PPUControlByte0 = data;
                 this._openBus = data;
                 this.nameTableBits = this._PPUControlByte0 & 3;
                 this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
-                // if we toggle /vbl we can throw multiple NMIs in a vblank period
-                //if ((data & 0x80) == 0x80 && NMIHasBeenThrownThisFrame)
-                //{
-                //     NMIHasBeenThrownThisFrame = false;
-                //}
-                //UpdatePixelInfo();
                 this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 1:
-                //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
-                //      1	left side screen column (8 pixels wide) playfield clipping (when 0).
-                //      2	left side screen column (8 pixels wide) object clipping (when 0).
-                //      3	enable playfield display (on 1).
-                //      4	enable objects display (on 1).
-                //      5	R (to be documented)
-                //      6	G (to be documented)
-                //      7	B (to be documented)
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
                 this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
@@ -3675,7 +3650,6 @@ var ChiChiPPU = /** @class */ (function () {
                 this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
                 this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
                 this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
-                //UpdatePixelInfo();
                 this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 2:
@@ -3683,15 +3657,11 @@ var ChiChiPPU = /** @class */ (function () {
                 this._openBus = data;
                 break;
             case 3:
-                //3	    -	internal object attribute memory index pointer 
-                //          (64 attributes, 32 bits each, byte granular access). 
-                //          stored value post-increments on access to port 4.
                 this._spriteAddress = data & 0xFF;
                 this._openBus = this._spriteAddress;
                 break;
             case 4:
                 this.spriteRAM[this._spriteAddress] = data;
-                // UnpackSprite(_spriteAddress / 4);
                 this._spriteAddress = (this._spriteAddress + 1) & 255;
                 this.unpackedSprites[this._spriteAddress >> 2].Changed = true;
                 this.spriteChanges = true;
@@ -3707,7 +3677,7 @@ var ChiChiPPU = /** @class */ (function () {
                     if (data > 240) {
                         this._vScroll = data - 256;
                     }
-                    if (!this.frameOn || (this.frameOn && this.frameClock > 81840)) {
+                    if (!this.frameOn || (this.frameOn && !this.isRendering)) {
                         this.lockedVScroll = this._vScroll;
                     }
                     this.PPUAddressLatchIsHigh = true;
@@ -3777,27 +3747,16 @@ var ChiChiPPU = /** @class */ (function () {
             case 2:
                 var ret = 0;
                 this.PPUAddressLatchIsHigh = true;
-                // bit 7 is set to 0 after a read occurs
-                // return lower 5 latched bits, and the status
                 ret = (this.ppuReadBuffer & 0x1F) | this._PPUStatus;
                 if ((ret & 0x80) === 0x80) {
                     this._PPUStatus = this._PPUStatus & ~0x80;
                 }
-                this.UpdatePixelInfo();
-                //}
-                //this._openBus = ret;
                 return ret;
             case 4:
                 return this.spriteRAM[this._spriteAddress];
-            //ppuLatch = spriteRAM[SpriteAddress];
-            // should not increment on read ?
-            //SpriteAddress = (SpriteAddress + 1) & 0xFF;
-            //this._openBus = tmp;
             case 7:
                 var tmp = 0;
-                // palette reads shouldn't be buffered like regular vram reads, they re internal
                 if ((this._PPUAddress & 0xFF00) === 0x3F00) {
-                    // these palettes are all mirrored every 0x10 bytes
                     tmp = this._palette[this._PPUAddress & 0x1F];
                     this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress - 4096);
                 }
@@ -3822,9 +3781,6 @@ var ChiChiPPU = /** @class */ (function () {
         return 0;
     };
     ChiChiPPU.prototype.copySprites = function (copyFrom) {
-        // should copy 0x100 items from source to spriteRAM, 
-        // starting at SpriteAddress, and wrapping around
-        // should set spriteDMA flag
         for (var i = 0; i < 256; ++i) {
             var spriteLocation = (this._spriteAddress + i) & 255;
             if (this.spriteRAM[spriteLocation] !== this.cpu.Rams[copyFrom + i]) {
@@ -3836,7 +3792,7 @@ var ChiChiPPU = /** @class */ (function () {
         this.spriteChanges = true;
     };
     ChiChiPPU.prototype.initSprites = function () {
-        this.currentSprites = new Array(this._maxSpritesPerScanline); //ChiChiSprite;
+        this.currentSprites = new Array(this._maxSpritesPerScanline);
         for (var i = 0; i < this._maxSpritesPerScanline; ++i) {
             this.currentSprites[i] = new ChiChiTypes_1.ChiChiSprite();
         }
@@ -3872,10 +3828,8 @@ var ChiChiPPU = /** @class */ (function () {
                         spritePatternTable = 0;
                     }
                 }
-                //result = WhissaSpritePixel(spritePatternTable, xPos, yLine, ref currSprite, tileIndex);
-                // 8x8 tile
-                var patternEntry;
-                var patternEntryBit2;
+                var patternEntry = 0;
+                var patternEntryBit2 = 0;
                 if (currSprite.FlipY) {
                     yLine = this.spriteSize - yLine - 1;
                 }
@@ -3915,10 +3869,6 @@ var ChiChiPPU = /** @class */ (function () {
         this.spritesOnThisScanline = 0;
         this.sprite0scanline = -1;
         var yLine = this.currentYPosition - 1;
-        // this.outBuffer[(64768) + yLine] = 0;
-        // this.outBuffer[(65024) + yLine] = 0;
-        //spritesOnLine[2 * yLine] = 0;
-        //spritesOnLine[2 * yLine + 1] = 0;
         for (var spriteNum = 0; spriteNum < 256; spriteNum += 4) {
             var spriteID = ((spriteNum + this._spriteAddress) & 0xff) >> 2;
             var y = this.unpackedSprites[spriteID].YPosition + 1;
@@ -3945,21 +3895,14 @@ var ChiChiPPU = /** @class */ (function () {
             this._PPUStatus = this._PPUStatus | 32;
         }
     };
-    ChiChiPPU.prototype.UnpackSprites = function () {
-        //Buffer.BlockCopy
-        //var outBufferloc = 65280;
-        //for (var i = 0; i < 256; i += 4) {
-        //    this.outBuffer[outBufferloc] = (this.spriteRAM[i] << 24) | (this.spriteRAM[i + 1] << 16) | (this.spriteRAM[i + 2] << 8) | (this.spriteRAM[i + 3] << 0);
-        //    outBufferloc++;
-        //}
-        // Array.Copy(spriteRAM, 0, outBuffer, 255 * 256 * 4, 256);
+    ChiChiPPU.prototype.unpackSprites = function () {
         for (var currSprite = 0; currSprite < this.unpackedSprites.length; ++currSprite) {
             if (this.unpackedSprites[currSprite].Changed) {
-                this.UnpackSprite(currSprite);
+                this.unpackSprite(currSprite);
             }
         }
     };
-    ChiChiPPU.prototype.UnpackSprite = function (currSprite) {
+    ChiChiPPU.prototype.unpackSprite = function (currSprite) {
         var attrByte = this.spriteRAM[(currSprite << 2) + 2 | 0];
         this.unpackedSprites[currSprite].IsVisible = true;
         this.unpackedSprites[currSprite].AttributeByte = ((attrByte & 3) << 2) | 16;
@@ -3972,7 +3915,7 @@ var ChiChiPPU = /** @class */ (function () {
         this.unpackedSprites[currSprite].TileIndex = this.spriteRAM[currSprite * 4 + 1];
         this.unpackedSprites[currSprite].Changed = false;
     };
-    ChiChiPPU.prototype.GetNameTablePixel = function () {
+    ChiChiPPU.prototype.getNameTablePixel = function () {
         var result = ((this.patternEntry & 128) >> 7) | ((this.patternEntryByte2 & 128) >> 6);
         this.patternEntry <<= 1;
         this.patternEntryByte2 <<= 1;
@@ -3981,19 +3924,7 @@ var ChiChiPPU = /** @class */ (function () {
         }
         return result & 255;
     };
-    ChiChiPPU.prototype.FetchNextTile = function () {
-        var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
-        var xTilePosition = this.xPosition >> 3;
-        var tileRow = (this.yPosition >> 3) % 30 << 5;
-        var tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
-        var tileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
-        var patternTableYOffset = this.yPosition & 7;
-        var patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
-        this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
-        this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
-        this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
-    };
-    ChiChiPPU.prototype.GetAttributeTableEntry = function (ppuNameTableMemoryStart, i, j) {
+    ChiChiPPU.prototype.getAttrEntry = function (ppuNameTableMemoryStart, i, j) {
         var LookUp = this.chrRomHandler.GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
         switch ((i & 2) | (j & 2) * 2) {
             case 0:
@@ -4013,7 +3944,6 @@ var ChiChiPPU = /** @class */ (function () {
         while (ppuTicks--) {
             switch (this.frameClock) {
                 case 0:
-                    this.frameOn = true;
                     this.shouldRender = true;
                     this.vbufLocation = 0;
                     this.currentXPosition = 0;
@@ -4026,31 +3956,24 @@ var ChiChiPPU = /** @class */ (function () {
                         if (this.oddFrame)
                             this.frameClock++;
                     }
-                    else {
-                        this.oddFrame = false;
-                    }
-                    // this.chrRomHandler.ResetBankStartCache();
-                    // setFrameOn();
-                    if (this.spriteChanges) {
-                        this.UnpackSprites();
-                        this.spriteChanges = false;
-                    }
                     break;
                 case 81840:// ChiChiNES.CPU2A03.frameClockEnd:
                     this.shouldRender = false;
-                    //__frameFinished = true;
                     this.frameFinished();
-                    //if (_isDebugging)
-                    //    events.Clear();
                     break;
                 case 82523:// first tick on scanline after post-render line
-                    this.SetupVINT();
+                    this.setupVINT();
                     this.frameOn = false;
                     break;
                 case 89002:
                     this._PPUStatus = 0;
                     this.hitSprite = false;
                     this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
+                    if (this.spriteChanges) {
+                        this.unpackSprites();
+                        this.spriteChanges = false;
+                    }
+                    this.frameOn = true;
                     break;
             }
             if (this.shouldRender) {
@@ -4070,18 +3993,17 @@ var ChiChiPPU = /** @class */ (function () {
                         var patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
                         this.patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID);
                         this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID + 8);
-                        this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
+                        this.currentAttributeByte = this.getAttrEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
                         /* end fetch next tile */
                     }
                     var tilesVis = this._tilesAreVisible;
                     var spriteVis = this._spritesAreVisible;
                     if (this.currentXPosition < 8) {
-                        tilesVis = !this._clipTiles;
-                        spriteVis = !this._clipSprites;
+                        tilesVis = tilesVis && !this._clipTiles;
+                        spriteVis = tilesVis && !this._clipSprites;
                     }
-                    /* draw pixel */
-                    var tilePixel = tilesVis ? this.GetNameTablePixel() : 0;
-                    // bool foregroundPixel = isForegroundPixel;
+                    this.spriteZeroHit = false;
+                    var tilePixel = tilesVis ? this.getNameTablePixel() : 0;
                     var spritePixel = spriteVis ? this.getSpritePixel() : 0;
                     if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
                         this.hitSprite = true;
@@ -4096,7 +4018,7 @@ var ChiChiPPU = /** @class */ (function () {
                     this.vbufLocation++;
                 }
                 if (this.currentXPosition === 324) {
-                    this.chrRomHandler.UpdateScanlineCounter();
+                    this.chrRomHandler.updateScanlineCounter();
                 }
                 this.currentXPosition++;
                 if (this.currentXPosition > 340) {

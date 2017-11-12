@@ -151,23 +151,23 @@ export class Konami026Cart extends VRCIrqBase {
         this.copyBanks1k(clock, 11, this.vrc6Registers[7], 1); 
         
         if ((this.chrselect & 0x20) == 0x20) {
-            switch(this.chrselect & 0xF) {
-                case 0:
-                case 7:
-                    this.mirror(clock,1);
-                    break;
-                case 4: case 3:
-                    this.mirror(clock,2);
-                    break;
-                case 8: case 0xF:
-                    this.oneScreenOffset = 0;
-                    this.mirror(clock,0);
-                    break;
-                case 8: case 0xF:
-                    this.oneScreenOffset = 0x400;
-                    this.mirror(clock,0);
-                    break;
-            }
+            // switch(this.chrselect & 0xF) {
+            //     case 0:
+            //     case 7:
+            //         this.mirror(clock,1);
+            //         break;
+            //     case 4: case 3:
+            //         this.mirror(clock,2);
+            //         break;
+            //     case 8: case 0xF:
+            //         this.oneScreenOffset = 0;
+            //         this.mirror(clock,0);
+            //         break;
+            //     case 8: case 0xF:
+            //         this.oneScreenOffset = 0x400;
+            //         this.mirror(clock,0);
+            //         break;
+            // }
         }
 
 

@@ -305,7 +305,7 @@ export class WishboneMachine  {
                 for (let i = 0; i < this.ppu.unpackedSprites.length; ++i) {
                     this.ppu.unpackedSprites[i].Changed = true;
                 }
-                this.ppu.UnpackSprites();
+                this.ppu.unpackSprites();
             }
             if (data.Cart && this.Cart.realCart) {
 
@@ -426,7 +426,7 @@ export class WishboneMachine  {
                 this.Cart.realCart = cart;
                 this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
                 this.Cart.CartName = this.Cart.realCart.CartName = name;
-                this.ppu.ChrRomHandler = this.Cart.realCart;
+                this.ppu.chrRomHandler = this.Cart.realCart;
                 this.tileDoodler = new TileDoodler(this.ppu);
                 this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
     

@@ -213,7 +213,7 @@ export class MMC3Cart extends BaseCart {
 
     }
 
-    UpdateScanlineCounter() {
+    updateScanlineCounter() {
         //if (scanlineCounter == -1) return;
 
         if (this.scanlineCounter === 0) {

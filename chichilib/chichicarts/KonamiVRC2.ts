@@ -96,10 +96,12 @@ class VRC2or4Cart extends VRCIrqBase {
     ];
     regMask = 0xf;
 
+    ramMask = 0xfff;
+
     vrc2mirroring = (clock: number, address: number, data: number) => {
         if (address <= 0x9003 )
         {
-            switch (data & 7) {
+            switch (data & 1) {
             case 0: // vertical
                 this.mirror(clock, 1);
                 break;
@@ -159,7 +161,7 @@ class VRC2or4Cart extends VRCIrqBase {
                 if (this.microwire) {
                     this.microwireLatch = data & 0x1;
                 } else {
-                    this.prgRomBank6[data & 0xfff] = data;
+                    this.prgRomBank6[data & this.ramMask] = data;
                 }
                 break;
             case 0x8000:
@@ -236,7 +238,7 @@ export class KonamiVRC2Cart extends VRC2or4Cart {
             0x08,
             0x0c,
         ];
-        this.regMask = 0xf0;
+        this.regMask = 0xf;
     }
 
     InitializeCart() {
@@ -251,7 +253,6 @@ export class KonamiVRC2Cart extends VRC2or4Cart {
                 this.useMicrowire();
                 break;
             case 'D467C0CC': // parodius da!
-                this.useMicrowire();
                 this.altRegNums();
                 break;
             case 'C1FBF659': // boku dracula kun
@@ -276,14 +277,87 @@ export class KonamiVRC022Cart extends VRC2or4Cart {
             0x3,
         ];
         this.vrcmirroring = this.vrc2mirroring;
-
-        //this.useMicrowire();
+        this.useMicrowire();
+        
         switch (this.ROMHashFunction) {
             case 'D4645E14':
-                this.mirror(0,2);
-                break;
+            break;
         }
     }
+
+    SetByte(clock:number, address:number, data: number) {
+        switch(address & 0xf000) {
+            case 0x6000:
+            case 0x7000:
+                if (this.microwire) {
+                    this.microwireLatch = data & 0x1;
+                } else {
+                    this.prgRomBank6[data & this.ramMask] = data;
+                }
+                break;
+            case 0x8000:
+                let bank8 = data & 0x1F;
+                if (this.swapMode) {
+                    this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
+                } else {
+                    this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
+                }           
+                break;      
+            case 0x9000:
+                this.vrcmirroring(clock, address, data);
+                break;
+            case 0xa000:
+                // 8kib prg rom at A000
+                let bankA = data & 0x1F;
+                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+                break;
+            case 0xb000:
+            case 0xc000:
+            case 0xd000:
+            case 0xe000:
+                const addmask = address & this.regMask;
+                const bank = ((address >> 12) & 0xf) - 0xb;
+                const index = bank << 1;
+                if (addmask == this.regNums[0]) {
+                    this.latches[index]  =  (this.latches[index] & 0xf0) | (data & 0xf);
+                    this.copyBanks1k(clock, index, this.latches[index]  >> 1, 1);
+                } else if (addmask == this.regNums[1]) {
+                    this.latches[index]  =  (this.latches[index] & 0xf) | ((data << 4) & 0xf0);
+                    this.copyBanks1k(clock, index, this.latches[index] >> 1, 1);
+                } else if (addmask == this.regNums[2]) {
+                    this.latches[index + 1]  =  (this.latches[index + 1] & 0xf0) | (data & 0xf);
+                    this.copyBanks1k(clock, index + 1, this.latches[index + 1] >> 1, 1);
+                } else if (addmask == this.regNums[3]) {
+                    this.latches[index + 1]  =  (this.latches[index + 1] & 0xf) | ((data << 4) & 0xf0);
+                    this.copyBanks1k(clock, index + 1, this.latches[index + 1] >> 1, 1);
+                }
+                break;
+            case 0xf000:
+                if ((address & 0x3) == 0x0) {
+                    this.irqLatch = (this.irqLatch & 0xf0) | (data & 0xf); 
+                } else if ((address & 0x3) == 0x1) {
+                    this.irqLatch = (this.irqLatch & 0x0f) | ((data << 4) & 0xf0);  
+                } else if ((address & 0x3) == 0x2) {
+                    this.irqControl = data;
+                } else if ((address & 0x3) == 0x3) {
+                    this.ackIrq();
+                }
+                break;
+
+        }
+
+        // const map = this.writeMap;
+        // for (let i =0;i < map.length; ++i) {
+        //     const x = map[i].mask & address;
+        //     if (map[i].address.find( (v) => {
+        //         return v ==  x; 
+        //     })) {
+        //         map[i].func(clock, address,data);
+        //         return;
+        //     }
+        // }
+    }
+
 
 }
 
@@ -309,6 +383,7 @@ export class Konami021Cart extends VRC2or4Cart {
                     0x0c0,
                 ];
                 this.regMask = 0xf0;
+                this.ramMask = 0x1fff;
             break;
         }
     }
@@ -322,16 +397,13 @@ export class Konami025Cart extends VRC2or4Cart {
         this.copyBanks4k(0, 0, 1, 1);
         this.copyBanks4k(0, 1, 0, 1);
         this.regNums = [0x000, 0x002, 0x001, 0x003];
+        this.regMask = 0xf;
         switch (this.ROMHashFunction)
         {
-            case '490E8A4C':
-                this.useMicrowire();
             case '4A601A2C': // teenage mutant ninja turtles j
-                
                 this.regNums = [
                     0x000, 0x008, 0x004, 0x00C
                 ];
-                this.regMask = 0xf;
             break;
         }
     }

@@ -58,16 +58,6 @@ export class MMC1Cart extends BaseCart  {
 
                     switch (regnum) {
                         case 0:
-                        // 4bit0
-                        // -----
-                        // CPPMM
-                        // |||||
-                        // |||++- Mirroring (0: one-screen, lower bank; 1: one-screen, upper bank;
-                        // |||               2: vertical; 3: horizontal)
-                        // |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
-                        // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
-                        // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
-                        // +----- CHR ROM bank mode (0: switch 8 KB at a time; 1: switch two separate 4 KB banks)
                             this.setMMC1Mirroring(clock);
                             this.prgRomBankMode = (this._registers[0] >> 2 ) & 0x3;
                             this.chrRomBankMode = (this._registers[0] >> 4 ) & 0x1;
@@ -89,21 +79,17 @@ export class MMC1Cart extends BaseCart  {
     }
 
     setMMC1ChrBanking(clock: number) {
-        //	bit 4 - sets 8KB or 4KB CHRROM switching mode
-        // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
-        
-        //if ((this._registers[0] & 16) === 16) {
-        if (this.chrRomBankMode === 1) {
-            this.copyBanks4k(0, 0, this._registers[1], 1);
-            this.copyBanks4k(0, 1, this._registers[2], 1);
-        } else {
-            //CopyBanks(0, _registers[1], 2);
-            this.copyBanks(0, 0, this._registers[1], 1);
-            //this.copyBanks4k(0, 1, ((this._registers[1] + 1) | 0), 1);
+        if (this.chrRomCount > 0) {
+            if (this.chrRomBankMode === 1) {
+                
+                this.copyBanks4k(clock, 0, this._registers[1], 1);
+                this.copyBanks4k(clock, 1, this._registers[2], 1);
+            } else {
+                this.copyBanks4k(clock, 0, this._registers[1], 1);
+                this.copyBanks4k(clock, 1, this._registers[1] + 1, 1);
+            }
         }
         this.bankSwitchesChanged = true;
-
-        this.Whizzler.UpdatePixelInfo();
     }
 
     setMMC1PrgBanking() {
@@ -117,22 +103,18 @@ export class MMC1Cart extends BaseCart  {
             this.bank_select = 0;
         }
 
-        // |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
-        // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
-        // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
-
         switch (this.prgRomBankMode){
             case 0:
             case 1:
-                reg = 4 * ((this._registers[3] >> 1) & 0xF) + this.bank_select;
+                reg = (((this._registers[3] >> 1) & 0xf) << 2) + this.bank_select;
                 this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
                 break;
             case 2:
-                reg = 2 * (this._registers[3]) + this.bank_select;
+                reg = (this._registers[3] << 1) + this.bank_select;
                 this.SetupBankStarts(0, 1, reg, reg + 1);
                 break;
             case 3:
-                reg = 2 * (this._registers[3]) + this.bank_select;
+                reg = (this._registers[3] << 1) + this.bank_select;
                 this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
             break;
         }
@@ -140,8 +122,6 @@ export class MMC1Cart extends BaseCart  {
     }
 
     setMMC1Mirroring(clock: number) {
-        //bit 1 - toggles between H/V and "one-screen" mirroring
-        //0 = one-screen mirroring, 1 = H/V mirroring
         switch (this._registers[0] & 3) {
             case 0:
                 this.oneScreenOffset = 0;
@@ -152,14 +132,13 @@ export class MMC1Cart extends BaseCart  {
                 this.mirror(clock, 0);
                 break;
             case 2:
-                this.mirror(clock, 1); // vertical
+                this.mirror(clock, 1);
                 break;
             case 3:
-                this.mirror(clock, 2); // horizontal
-                break;
+                this.mirror(clock, 2);
+                                break;
         }
         this.bankSwitchesChanged = true;
-        this.Whizzler.UpdatePixelInfo();
     }
 
 

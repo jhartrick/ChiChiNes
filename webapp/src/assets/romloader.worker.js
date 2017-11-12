@@ -1908,9 +1908,9 @@ var BaseCart = /** @class */ (function () {
         this.nextEventAt = 0;
         this.prgRomCount = 0;
         this.chrRomOffset = 0;
+        this.chrRomCount = 0;
         this.chrRamStart = 0;
         this.chrRamLength = 0;
-        this.chrRomCount = 0;
         this.mapperId = 0;
         this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
         // starting locations of PPU 0x0000-0x3FFF in 1k blocks
@@ -1925,7 +1925,6 @@ var BaseCart = /** @class */ (function () {
         this.SRAMEnabled = false;
         this.SRAMCanSave = false;
         this.ROMHashFunction = null;
-        this.checkSum = null;
         this.mirroring = -1;
         this.updateIRQ = function () {
             _this.NMIHandler();
@@ -1934,13 +1933,6 @@ var BaseCart = /** @class */ (function () {
         this.oneScreenOffset = 0;
         this.irqRaised = false;
         this.DebugEvents = null;
-        //IRQAsserted: boolean;
-        //NextEventAt: number;
-        //PpuBankStarts: any;
-        //BankStartCache: any;
-        this.CurrentBank = 0;
-        //BankSwitchesChanged: boolean;
-        //OneScreenOffset: number;
         this.usesSRAM = false;
         this.prgRomBank6.fill(0);
         for (var i = 0; i < 16; i++) {
@@ -2142,10 +2134,6 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.GetPPUByte = function (clock, address) {
         var bank = address >> 10;
         var newAddress = this.ppuBankStarts[bank] + (address & 0x3FF);
-        // while (newAddress > chrRamStart)
-        // {
-        //     newAddress -= chrRamStart;
-        // }
         return this.chrRom[newAddress];
     };
     BaseCart.prototype.SetPPUByte = function (clock, address, data) {
@@ -2218,49 +2206,9 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.ResetClock = function (Clock) {
         // throw new Error('Method not implemented.');
     };
-    BaseCart.prototype.ResetBankStartCache = function () {
-        // if (currentBank > 0)
-        this.CurrentBank = 0;
-        // Array.Clear(bankStartCache, 0, 16 * 256 * 256);
-        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, 0, 16);
-        // this.bankStartCache.fill(0);
-        // for (let i = 0; i < 16; ++i) {
-        //     this.bankStartCache[i] = this.ppuBankStarts[i];
-        // }
-        //Mirror(-1, this.mirroring);
-        //chrRamStart = ppuBankStarts[8];
-        //Array.Copy(ppuBankStarts, 0, bankStartCache[0], 0, 16 * 4);
-        //bankSwitchesChanged = false;
-    };
-    BaseCart.prototype.UpdateBankStartCache = function () {
-        this.CurrentBank = 0; // (this.CurrentBank + 1) | 0;
-        // for (let i = 0; i < 16; ++i) {
-        //     this.bankStartCache[(this.CurrentBank * 16) + i] = this.ppuBankStarts[i];
-        // }
-        //System.Array.copy(this.ppuBankStarts, 0, this.bankStartCache, this.CurrentBank * 16, 16);
-        this.Whizzler.UpdatePixelInfo();
-        return this.CurrentBank;
-    };
+    // 0 - onescreen, 1 - horz, 2- vert, 3 - fourscreen
     BaseCart.prototype.mirror = function (clockNum, mirroring) {
-        //    //            A11 A10 Effect
-        //    //----------------------------------------------------------
-        //    // 0   0  All four screen buffers are mapped to the same
-        //    //        area of memory which repeats at $2000, $2400,
-        //    //        $2800, and $2C00.
-        //    // 0   x  "Upper" and "lower" screen buffers are mapped to
-        //    //        separate areas of memory at $2000, $2400 and
-        //    //        $2800, $2C00. ( horizontal mirroring)
-        //    // x   0  "Left" and "right" screen buffers are mapped to
-        //    //        separate areas of memory at $2000, $2800 and
-        //    //        $2400,$2C00.  (vertical mirroring)
-        //    // x   x  All four screen buffers are mapped to separate
-        //    //        areas of memory. In this case, the cartridge
-        //    //        must contain 2kB of additional VRAM 
         this.mirroring = mirroring;
-        // if (clockNum > -1) {
-        //     this.Whizzler.DrawTo(clockNum);
-        // }
-        //Console.WriteLine("Mirroring set to {0}", mirroring);
         switch (mirroring) {
             case 0:
                 this.ppuBankStarts[8] = (this.chrRamStart + this.oneScreenOffset);
@@ -2287,7 +2235,6 @@ var BaseCart = /** @class */ (function () {
                 this.ppuBankStarts[11] = (this.chrRamStart + 3072);
                 break;
         }
-        this.Whizzler.UpdatePixelInfo();
     };
     // utility functions used by mappers
     // CopyBanksXX sets up chrRom bankswitching
@@ -2302,7 +2249,6 @@ var BaseCart = /** @class */ (function () {
         for (var i = 0; i < (numberOf8kBanks << 3); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
         }
-        this.UpdateBankStartCache();
     };
     BaseCart.prototype.copyBanks4k = function (clock, dest, src, numberOf4kBanks) {
         if (dest >= this.chrRomCount) {
@@ -2315,12 +2261,8 @@ var BaseCart = /** @class */ (function () {
         for (var i = 0; i < (numberOf4kBanks << 2); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
         }
-        this.UpdateBankStartCache();
     };
     BaseCart.prototype.copyBanks2k = function (clock, dest, src, numberOf2kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
-        }
         var oneKsrc = src << 1;
         var oneKdest = dest << 1;
         //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
@@ -2328,7 +2270,6 @@ var BaseCart = /** @class */ (function () {
         for (var i = 0; i < (numberOf2kBanks << 1); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
         }
-        this.UpdateBankStartCache();
     };
     BaseCart.prototype.copyBanks1k = function (clock, dest, src, numberOf1kBanks) {
         if (dest >= this.chrRomCount) {
@@ -2341,12 +2282,11 @@ var BaseCart = /** @class */ (function () {
         for (var i = 0; i < numberOf1kBanks; i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
         }
-        this.UpdateBankStartCache();
     };
     BaseCart.prototype.InitializeCart = function (reset) {
         //throw new Error('Method not implemented.');
     };
-    BaseCart.prototype.UpdateScanlineCounter = function () {
+    BaseCart.prototype.updateScanlineCounter = function () {
         //throw new Error('Method not implemented.');
     };
     return BaseCart;
@@ -2522,9 +2462,10 @@ var VRC2or4Cart = /** @class */ (function (_super) {
             0x03,
         ];
         _this.regMask = 0xf;
+        _this.ramMask = 0xfff;
         _this.vrc2mirroring = function (clock, address, data) {
             if (address <= 0x9003) {
-                switch (data & 7) {
+                switch (data & 1) {
                     case 0:// vertical
                         _this.mirror(clock, 1);
                         break;
@@ -2579,7 +2520,7 @@ var VRC2or4Cart = /** @class */ (function (_super) {
                     this.microwireLatch = data & 0x1;
                 }
                 else {
-                    this.prgRomBank6[data & 0xfff] = data;
+                    this.prgRomBank6[data & this.ramMask] = data;
                 }
                 break;
             case 0x8000:
@@ -2663,7 +2604,7 @@ var KonamiVRC2Cart = /** @class */ (function (_super) {
             0x08,
             0x0c,
         ];
-        this.regMask = 0xf0;
+        this.regMask = 0xf;
     };
     KonamiVRC2Cart.prototype.InitializeCart = function () {
         this.mapperName = 'KonamiVRC2';
@@ -2675,7 +2616,6 @@ var KonamiVRC2Cart = /** @class */ (function (_super) {
                 this.useMicrowire();
                 break;
             case 'D467C0CC':// parodius da!
-                this.useMicrowire();
                 this.altRegNums();
                 break;
             case 'C1FBF659': // boku dracula kun
@@ -2704,12 +2644,89 @@ var KonamiVRC022Cart = /** @class */ (function (_super) {
             0x3,
         ];
         this.vrcmirroring = this.vrc2mirroring;
-        //this.useMicrowire();
+        this.useMicrowire();
         switch (this.ROMHashFunction) {
             case 'D4645E14':
-                this.mirror(0, 2);
                 break;
         }
+    };
+    KonamiVRC022Cart.prototype.SetByte = function (clock, address, data) {
+        switch (address & 0xf000) {
+            case 0x6000:
+            case 0x7000:
+                if (this.microwire) {
+                    this.microwireLatch = data & 0x1;
+                }
+                else {
+                    this.prgRomBank6[data & this.ramMask] = data;
+                }
+                break;
+            case 0x8000:
+                var bank8 = data & 0x1F;
+                if (this.swapMode) {
+                    this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
+                }
+                else {
+                    this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
+                }
+                break;
+            case 0x9000:
+                this.vrcmirroring(clock, address, data);
+                break;
+            case 0xa000:
+                // 8kib prg rom at A000
+                var bankA = data & 0x1F;
+                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+                break;
+            case 0xb000:
+            case 0xc000:
+            case 0xd000:
+            case 0xe000:
+                var addmask = address & this.regMask;
+                var bank = ((address >> 12) & 0xf) - 0xb;
+                var index = bank << 1;
+                if (addmask == this.regNums[0]) {
+                    this.latches[index] = (this.latches[index] & 0xf0) | (data & 0xf);
+                    this.copyBanks1k(clock, index, this.latches[index] >> 1, 1);
+                }
+                else if (addmask == this.regNums[1]) {
+                    this.latches[index] = (this.latches[index] & 0xf) | ((data << 4) & 0xf0);
+                    this.copyBanks1k(clock, index, this.latches[index] >> 1, 1);
+                }
+                else if (addmask == this.regNums[2]) {
+                    this.latches[index + 1] = (this.latches[index + 1] & 0xf0) | (data & 0xf);
+                    this.copyBanks1k(clock, index + 1, this.latches[index + 1] >> 1, 1);
+                }
+                else if (addmask == this.regNums[3]) {
+                    this.latches[index + 1] = (this.latches[index + 1] & 0xf) | ((data << 4) & 0xf0);
+                    this.copyBanks1k(clock, index + 1, this.latches[index + 1] >> 1, 1);
+                }
+                break;
+            case 0xf000:
+                if ((address & 0x3) == 0x0) {
+                    this.irqLatch = (this.irqLatch & 0xf0) | (data & 0xf);
+                }
+                else if ((address & 0x3) == 0x1) {
+                    this.irqLatch = (this.irqLatch & 0x0f) | ((data << 4) & 0xf0);
+                }
+                else if ((address & 0x3) == 0x2) {
+                    this.irqControl = data;
+                }
+                else if ((address & 0x3) == 0x3) {
+                    this.ackIrq();
+                }
+                break;
+        }
+        // const map = this.writeMap;
+        // for (let i =0;i < map.length; ++i) {
+        //     const x = map[i].mask & address;
+        //     if (map[i].address.find( (v) => {
+        //         return v ==  x; 
+        //     })) {
+        //         map[i].func(clock, address,data);
+        //         return;
+        //     }
+        // }
     };
     return KonamiVRC022Cart;
 }(VRC2or4Cart));
@@ -2738,6 +2755,7 @@ var Konami021Cart = /** @class */ (function (_super) {
                     0x0c0,
                 ];
                 this.regMask = 0xf0;
+                this.ramMask = 0x1fff;
                 break;
         }
     };
@@ -2755,14 +2773,12 @@ var Konami025Cart = /** @class */ (function (_super) {
         this.copyBanks4k(0, 0, 1, 1);
         this.copyBanks4k(0, 1, 0, 1);
         this.regNums = [0x000, 0x002, 0x001, 0x003];
+        this.regMask = 0xf;
         switch (this.ROMHashFunction) {
-            case '490E8A4C':
-                this.useMicrowire();
             case '4A601A2C':// teenage mutant ninja turtles j
                 this.regNums = [
                     0x000, 0x008, 0x004, 0x00C
                 ];
-                this.regMask = 0xf;
                 break;
         }
     };
@@ -3543,6 +3559,7 @@ var Mapper190Cart = /** @class */ (function (_super) {
         this.usesSRAM = true;
         this.copyBanks(0, 0, 0, 2);
         this.SetupBankStarts(0, 1, 0, 1);
+        this.mirror(0, 1);
     };
     Mapper190Cart.prototype.SetByte = function (clock, address, val) {
         this.setPrgRam(address, val);
@@ -4206,16 +4223,6 @@ var MMC1Cart = /** @class */ (function (_super) {
                     this.accumulator = 0;
                     switch (regnum) {
                         case 0:
-                            // 4bit0
-                            // -----
-                            // CPPMM
-                            // |||||
-                            // |||++- Mirroring (0: one-screen, lower bank; 1: one-screen, upper bank;
-                            // |||               2: vertical; 3: horizontal)
-                            // |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
-                            // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
-                            // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
-                            // +----- CHR ROM bank mode (0: switch 8 KB at a time; 1: switch two separate 4 KB banks)
                             this.setMMC1Mirroring(clock);
                             this.prgRomBankMode = (this._registers[0] >> 2) & 0x3;
                             this.chrRomBankMode = (this._registers[0] >> 4) & 0x1;
@@ -4233,20 +4240,17 @@ var MMC1Cart = /** @class */ (function (_super) {
         }
     };
     MMC1Cart.prototype.setMMC1ChrBanking = function (clock) {
-        //	bit 4 - sets 8KB or 4KB CHRROM switching mode
-        // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
-        //if ((this._registers[0] & 16) === 16) {
-        if (this.chrRomBankMode === 1) {
-            this.copyBanks4k(0, 0, this._registers[1], 1);
-            this.copyBanks4k(0, 1, this._registers[2], 1);
-        }
-        else {
-            //CopyBanks(0, _registers[1], 2);
-            this.copyBanks(0, 0, this._registers[1], 1);
-            //this.copyBanks4k(0, 1, ((this._registers[1] + 1) | 0), 1);
+        if (this.chrRomCount > 0) {
+            if (this.chrRomBankMode === 1) {
+                this.copyBanks4k(clock, 0, this._registers[1], 1);
+                this.copyBanks4k(clock, 1, this._registers[2], 1);
+            }
+            else {
+                this.copyBanks4k(clock, 0, this._registers[1], 1);
+                this.copyBanks4k(clock, 1, this._registers[1] + 1, 1);
+            }
         }
         this.bankSwitchesChanged = true;
-        this.Whizzler.UpdatePixelInfo();
     };
     MMC1Cart.prototype.setMMC1PrgBanking = function () {
         var reg = 0;
@@ -4256,28 +4260,23 @@ var MMC1Cart = /** @class */ (function (_super) {
         else {
             this.bank_select = 0;
         }
-        // |++--- PRG ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
-        // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
-        // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
         switch (this.prgRomBankMode) {
             case 0:
             case 1:
-                reg = 4 * ((this._registers[3] >> 1) & 0xF) + this.bank_select;
+                reg = (((this._registers[3] >> 1) & 0xf) << 2) + this.bank_select;
                 this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
                 break;
             case 2:
-                reg = 2 * (this._registers[3]) + this.bank_select;
+                reg = (this._registers[3] << 1) + this.bank_select;
                 this.SetupBankStarts(0, 1, reg, reg + 1);
                 break;
             case 3:
-                reg = 2 * (this._registers[3]) + this.bank_select;
+                reg = (this._registers[3] << 1) + this.bank_select;
                 this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
                 break;
         }
     };
     MMC1Cart.prototype.setMMC1Mirroring = function (clock) {
-        //bit 1 - toggles between H/V and "one-screen" mirroring
-        //0 = one-screen mirroring, 1 = H/V mirroring
         switch (this._registers[0] & 3) {
             case 0:
                 this.oneScreenOffset = 0;
@@ -4288,14 +4287,13 @@ var MMC1Cart = /** @class */ (function (_super) {
                 this.mirror(clock, 0);
                 break;
             case 2:
-                this.mirror(clock, 1); // vertical
+                this.mirror(clock, 1);
                 break;
             case 3:
-                this.mirror(clock, 2); // horizontal
+                this.mirror(clock, 2);
                 break;
         }
         this.bankSwitchesChanged = true;
-        this.Whizzler.UpdatePixelInfo();
     };
     return MMC1Cart;
 }(BaseCart_1.BaseCart));
@@ -4338,46 +4336,34 @@ var MMC2Cart = /** @class */ (function (_super) {
         this.banks[2] = 0;
         this.banks[3] = 0;
         this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.copyBanks(0, 0, this.banks[this.latches[0]], 1);
-        this.copyBanks(0, 1, this.banks[this.latches[1]], 1);
-    };
-    MMC2Cart.prototype.copyBanks = function (clock, dest, src, numberOf4kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = (this.chrRomCount - 1) | 0;
-        }
-        var oneKsrc = src << 2;
-        var oneKdest = dest << 2;
-        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
-            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
-        }
-        this.UpdateBankStartCache();
+        this.copyBanks4k(0, 0, this.banks[this.latches[0]], 1);
+        this.copyBanks4k(0, 1, this.banks[this.latches[1]], 1);
     };
     MMC2Cart.prototype.GetPPUByte = function (clock, address) {
         var bank = 0;
         if (address == 0xFD8) {
             bank = (address >> 11) & 0x2;
             this.latches[0] = bank;
-            this.copyBanks(clock, 0, this.banks[this.latches[0]], 1);
+            this.copyBanks4k(clock, 0, this.banks[this.latches[0]], 1);
         }
         else if (address == 0xFE8) {
             bank = ((address >> 11) & 0x2) | 0x1;
             this.latches[0] = bank;
-            this.copyBanks(clock, 0, this.banks[this.latches[0]], 1);
+            this.copyBanks4k(clock, 0, this.banks[this.latches[0]], 1);
         }
         else if (address >= 0x1FD8 && address <= 0x1FDF) {
             bank = (address >> 11) & 0x2;
             this.latches[1] = bank;
-            this.copyBanks(clock, 1, this.banks[this.latches[1]], 1);
+            this.copyBanks4k(clock, 1, this.banks[this.latches[1]], 1);
         }
         else if (address >= 0x1FE8 && address <= 0x1FEF) {
             bank = ((address >> 11) & 0x2) | 0x1;
             this.latches[1] = bank;
-            this.copyBanks(clock, 1, this.banks[this.latches[1]], 1);
+            this.copyBanks4k(clock, 1, this.banks[this.latches[1]], 1);
         }
         bank = address >> 10;
         var newAddress = this.ppuBankStarts[bank] + (address & 1023);
-        var data = this.chrRom[newAddress];
-        return data;
+        return this.chrRom[newAddress];
     };
     MMC2Cart.prototype.SetByte = function (clock, address, val) {
         switch (address >> 12) {
@@ -4393,15 +4379,15 @@ var MMC2Cart = /** @class */ (function (_super) {
             case 0xB:
             case 0xC:
                 this.banks[(address - 0xB000) >> 12] = val & 0x1f;
-                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.copyBanks(clock, 0, this.banks[this.latches[0]], 1);
-                this.Whizzler.UnpackSprites();
+                //this.copyBanks4k(clock,0,this.banks[this.selector[0]], 1);
+                this.copyBanks4k(clock, 0, this.banks[this.latches[0]], 1);
+                this.Whizzler.unpackSprites();
                 break;
             case 0xD:
             case 0xE:
                 this.banks[(address - 0xB000) >> 12] = val & 0x1f;
-                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.copyBanks(clock, 1, this.banks[this.latches[1]], 1);
+                //this.copyBanks4k(clock,0,this.banks[this.selector[0]], 1);
+                this.copyBanks4k(clock, 1, this.banks[this.latches[1]], 1);
                 break;
             case 0xF:
                 this.mirror(clock, (val & 0x1) + 1);
@@ -4428,41 +4414,30 @@ var MMC4Cart = /** @class */ (function (_super) {
         this.banks[2] = 0;
         this.banks[3] = 0;
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.copyBanks(0, 0, this.banks[this.selector[0]], 1);
-        this.copyBanks(0, 1, this.banks[this.selector[1]], 1);
-    };
-    MMC4Cart.prototype.copyBanks = function (clock, dest, src, numberOf4kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = (this.chrRomCount - 1) | 0;
-        }
-        var oneKsrc = src << 2;
-        var oneKdest = dest << 2;
-        for (var i = 0; i < (numberOf4kBanks << 2); i++) {
-            this.ppuBankStarts[((oneKdest + i) | 0)] = (oneKsrc + i) * 1024;
-        }
-        this.UpdateBankStartCache();
+        this.copyBanks4k(0, 0, this.banks[this.selector[0]], 1);
+        this.copyBanks4k(0, 1, this.banks[this.selector[1]], 1);
     };
     MMC4Cart.prototype.GetPPUByte = function (clock, address) {
         var bank = 0;
         if (address >= 0xFD8 && address <= 0xFDF) {
             bank = (address >> 11) & 0x2;
             this.selector[0] = bank;
-            this.copyBanks(clock, 0, this.banks[this.selector[0]], 1);
+            this.copyBanks4k(clock, 0, this.banks[this.selector[0]], 1);
         }
         else if (address >= 0xFE8 && address <= 0xFEF) {
             bank = ((address >> 11) & 0x2) | 0x1;
             this.selector[0] = bank;
-            this.copyBanks(clock, 0, this.banks[this.selector[0]], 1);
+            this.copyBanks4k(clock, 0, this.banks[this.selector[0]], 1);
         }
         else if (address >= 0x1FD8 && address <= 0x1FDF) {
             bank = (address >> 11) & 0x2;
             this.selector[1] = bank;
-            this.copyBanks(clock, 1, this.banks[this.selector[1]], 1);
+            this.copyBanks4k(clock, 1, this.banks[this.selector[1]], 1);
         }
         else if (address >= 0x1FE8 && address <= 0x1FEF) {
             bank = ((address >> 11) & 0x2) | 0x1;
             this.selector[1] = bank;
-            this.copyBanks(clock, 1, this.banks[this.selector[1]], 1);
+            this.copyBanks4k(clock, 1, this.banks[this.selector[1]], 1);
         }
         bank = address >> 10;
         var newAddress = this.ppuBankStarts[bank] + (address & 1023);
@@ -4484,15 +4459,15 @@ var MMC4Cart = /** @class */ (function (_super) {
             case 0xB:
             case 0xC:
                 this.banks[(address - 0xB000) >> 12] = val & 0x1f;
-                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.copyBanks(clock, 0, this.banks[this.selector[0]], 1);
-                this.Whizzler.UnpackSprites();
+                //this.copyBanks4k(clock,0,this.banks[this.selector[0]], 1);
+                this.copyBanks4k(clock, 0, this.banks[this.selector[0]], 1);
+                this.Whizzler.unpackSprites();
                 break;
             case 0xD:
             case 0xE:
                 this.banks[(address - 0xB000) >> 12] = val & 0x1f;
-                //this.CopyBanks(clock,0,this.banks[this.selector[0]], 1);
-                this.copyBanks(clock, 1, this.banks[this.selector[1]], 1);
+                //this.copyBanks4k(clock,0,this.banks[this.selector[0]], 1);
+                this.copyBanks4k(clock, 1, this.banks[this.selector[1]], 1);
                 break;
             case 0xF:
                 this.mirror(clock, (val & 0x1) + 1);
@@ -4728,7 +4703,7 @@ var MMC3Cart = /** @class */ (function (_super) {
             this.SetupBankStarts(this.prgSwitch1, this.prgSwitch2, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         }
     };
-    MMC3Cart.prototype.UpdateScanlineCounter = function () {
+    MMC3Cart.prototype.updateScanlineCounter = function () {
         //if (scanlineCounter == -1) return;
         if (this.scanlineCounter === 0) {
             this.scanlineCounter = this._mmc3IrqVal;
@@ -5673,26 +5648,23 @@ var Konami026Cart = /** @class */ (function (_super) {
         this.copyBanks1k(clock, 10, bank, 1);
         this.copyBanks1k(clock, 11, this.vrc6Registers[7], 1);
         if ((this.chrselect & 0x20) == 0x20) {
-            switch (this.chrselect & 0xF) {
-                case 0:
-                case 7:
-                    this.mirror(clock, 1);
-                    break;
-                case 4:
-                case 3:
-                    this.mirror(clock, 2);
-                    break;
-                case 8:
-                case 0xF:
-                    this.oneScreenOffset = 0;
-                    this.mirror(clock, 0);
-                    break;
-                case 8:
-                case 0xF:
-                    this.oneScreenOffset = 0x400;
-                    this.mirror(clock, 0);
-                    break;
-            }
+            // switch(this.chrselect & 0xF) {
+            //     case 0:
+            //     case 7:
+            //         this.mirror(clock,1);
+            //         break;
+            //     case 4: case 3:
+            //         this.mirror(clock,2);
+            //         break;
+            //     case 8: case 0xF:
+            //         this.oneScreenOffset = 0;
+            //         this.mirror(clock,0);
+            //         break;
+            //     case 8: case 0xF:
+            //         this.oneScreenOffset = 0x400;
+            //         this.mirror(clock,0);
+            //         break;
+            // }
         }
     };
     Konami026Cart.prototype.InitializeCart = function () {

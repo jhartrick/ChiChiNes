@@ -91,7 +91,7 @@ export declare class ChiChiPPU {
     WriteState(writer: any): void;
     ReadState(state: any): void;
     readonly NMIIsThrown: boolean;
-    SetupVINT(): void;
+    setupVINT(): void;
     VidRAM_GetNTByte(address: number): number;
     UpdatePPUControlByte0(): void;
     SetByte(Clock: number, address: number, data: number): void;
@@ -103,11 +103,10 @@ export declare class ChiChiPPU {
         v: ChiChiSprite;
     }, tileIndex: number): number;
     preloadSprites(scanline: number): void;
-    UnpackSprites(): void;
-    UnpackSprite(currSprite: number): void;
-    GetNameTablePixel(): number;
-    FetchNextTile(): void;
-    GetAttributeTableEntry(ppuNameTableMemoryStart: number, i: number, j: number): number;
+    unpackSprites(): void;
+    unpackSprite(currSprite: number): void;
+    getNameTablePixel(): number;
+    getAttrEntry(ppuNameTableMemoryStart: number, i: number, j: number): number;
     oddFrame: boolean;
     advanceClock(ticks: number): void;
     UpdatePixelInfo(): void;
