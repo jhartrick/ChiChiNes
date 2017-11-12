@@ -65,6 +65,56 @@ export class ChiChiPPU {
     backgroundPatternTableIndex: number = 0;
 
 
+        //PPU implementation
+        private _PPUAddress: number = 0;
+        private _PPUStatus: number = 0;
+        _PPUControlByte0: number = 0; _PPUControlByte1: number = 0;
+        private _spriteAddress: number = 0;
+    
+    
+        private currentXPosition = 0;
+        private currentYPosition = 0;
+        private _hScroll = 0;
+        private _vScroll = 0;
+        private lockedHScroll = 0;
+        private lockedVScroll = 0;
+        //private scanlineNum = 0;
+        //private scanlinePos = 0;
+    
+        private shouldRender = false;
+    
+        //private NMIHasBeenThrownThisFrame = false;
+        private _frames = 0;
+        private hitSprite = false;
+        private PPUAddressLatchIsHigh = true;
+        private p32 = new Uint32Array(256);// System.Array.init(256, 0, System.Int32);
+        private isRendering = true;
+        public frameClock = 0;
+        public FrameEnded = false;
+        private frameOn = false;
+        //private framePalette = System.Array.init(256, 0, System.Int32);
+        private nameTableBits = 0;
+        private vidRamIsRam = true;
+        _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
+        private _openBus = 0;
+        private sprite0scanline = 0;
+        private sprite0x = 0;
+        private _maxSpritesPerScanline = 64;
+    
+        private xNTXor = 0; private yNTXor = 0;
+    
+        private spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
+        spriteRAM = new Uint8Array(<any>this.spriteRAMBuffer);// System.Array.init(256, 0, System.Int32);
+        private spritesOnLine = new Array<number>(512);// System.Array.init(512, 0, System.Int32);
+        private currentTileIndex = 0;
+        private fetchTile = true;
+    
+        // tile bytes currently latched in ppu
+        private patternEntry = 0; private patternEntryByte2 = 0;
+
+        public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
+    
+
     set ChrRomHandler(value: IBaseCart) {
         this.chrRomHandler = value;
     }
@@ -132,59 +182,6 @@ export class ChiChiPPU {
         return spritePatternTable;
     }
 
-    //PPU implementation
-    private _PPUAddress: number = 0;
-    private _PPUStatus: number = 0;
-    _PPUControlByte0: number = 0; _PPUControlByte1: number = 0;
-    private _spriteAddress: number = 0;
-
-
-    private currentXPosition = 0;
-    private currentYPosition = 0;
-    private _hScroll = 0;
-    private _vScroll = 0;
-    private lockedHScroll = 0;
-    private lockedVScroll = 0;
-    //private scanlineNum = 0;
-    //private scanlinePos = 0;
-
-    private shouldRender = false;
-
-    //private NMIHasBeenThrownThisFrame = false;
-    private _frames = 0;
-    private hitSprite = false;
-    private PPUAddressLatchIsHigh = true;
-    private p32 = new Uint32Array(256);// System.Array.init(256, 0, System.Int32);
-    private isRendering = true;
-    public frameClock = 0;
-    public FrameEnded = false;
-    private frameOn = false;
-    //private framePalette = System.Array.init(256, 0, System.Int32);
-    private nameTableBits = 0;
-    private vidRamIsRam = true;
-    _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
-    private _openBus = 0;
-    private sprite0scanline = 0;
-    private sprite0x = 0;
-    private _maxSpritesPerScanline = 64;
-
-    private xNTXor = 0; private yNTXor = 0;
-
-    private spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
-    spriteRAM = new Uint8Array(<any>this.spriteRAMBuffer);// System.Array.init(256, 0, System.Int32);
-    private spritesOnLine = new Array<number>(512);// System.Array.init(512, 0, System.Int32);
-    private currentTileIndex = 0;
-    private fetchTile = true;
-
-    // tile bytes currently latched in ppu
-    private patternEntry = 0; private patternEntryByte2 = 0;
-
-    //
-    private outBuffer = new Uint8Array(65536);
-
-    // 'internal
-
-    public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
 
     Initialize(): void {
         this._PPUAddress = 0;
@@ -197,9 +194,11 @@ export class ChiChiPPU {
         //this.scanlinePos = 0;
         this._spriteAddress = 0;
     }
+
     WriteState(writer: any): void {
         throw new Error('Method not implemented.');
     }
+
     ReadState(state: any): void {
         throw new Error('Method not implemented.');
     }
@@ -216,6 +215,7 @@ export class ChiChiPPU {
             this.NMIHandler();
         }
     }
+
     VidRAM_GetNTByte(address: number): number {
         let result = 0;
         if (address >= 8192 && address < 12288) {
@@ -227,6 +227,7 @@ export class ChiChiPPU {
         }
         return result;
     }
+
     UpdatePPUControlByte0(): void {
         if ((this._PPUControlByte0 & 16)) {
             this.backgroundPatternTableIndex = 4096;
@@ -234,23 +235,8 @@ export class ChiChiPPU {
             this.backgroundPatternTableIndex = 0;
         }
     }
+
     SetByte(Clock: number, address: number, data: number): void {
-        // DrawTo(Clock);
-        //if (_isDebugging)
-        //{
-        //    Events.Enqueue(new PPUWriteEvent { IsWrite = true, DataWritten = data, FrameClock = frameClock, RegisterAffected = address, ScanlineNum = frameClock / 341, ScanlinePos = frameClock % 341 });
-        //}
-        //Writable 2C02 registers
-        //-----------------------
-
-        //4 	-	returns object attribute memory 
-        //      location indexed by port 3, then increments port 3.
-
-        //6	    -	PPU address port to access with port 7.
-
-        //7	    -	PPU memory write port.
-
-
         switch (address & 7) {
             case 0:
 
@@ -258,32 +244,19 @@ export class ChiChiPPU {
                 this._openBus = data;
                 this.nameTableBits = this._PPUControlByte0 & 3;
                 this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
-                // if we toggle /vbl we can throw multiple NMIs in a vblank period
-                //if ((data & 0x80) == 0x80 && NMIHasBeenThrownThisFrame)
-                //{
-                //     NMIHasBeenThrownThisFrame = false;
-                //}
-                //UpdatePixelInfo();
+
                 this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 1:
-                //1	    0	disable composite colorburst (when 1). Effectively causes gfx to go black & white.
-                //      1	left side screen column (8 pixels wide) playfield clipping (when 0).
-                //      2	left side screen column (8 pixels wide) object clipping (when 0).
-                //      3	enable playfield display (on 1).
-                //      4	enable objects display (on 1).
-                //      5	R (to be documented)
-                //      6	G (to be documented)
-                //      7	B (to be documented)
-
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
                 this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
+
                 this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
                 this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
                 this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
                 this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
-                //UpdatePixelInfo();
+
                 this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 2:
@@ -291,46 +264,27 @@ export class ChiChiPPU {
                 this._openBus = data;
                 break;
             case 3:
-                //3	    -	internal object attribute memory index pointer 
-                //          (64 attributes, 32 bits each, byte granular access). 
-                //          stored value post-increments on access to port 4.
                 this._spriteAddress = data & 0xFF;
                 this._openBus = this._spriteAddress;
                 break;
             case 4:
                 this.spriteRAM[this._spriteAddress] = data;
-                // UnpackSprite(_spriteAddress / 4);
                 this._spriteAddress = (this._spriteAddress + 1) & 255;
                 this.unpackedSprites[this._spriteAddress >> 2].Changed = true;
                 this.spriteChanges = true;
                 break;
             case 5:
-                //5	    -	scroll offset port.
-                // on 1st read (high), bits 0,1,2 go to fine horizonal scroll, rest to select tile
-                // on 2nd read, bits 0,1,2 go to fine vertical scroll, rest to select tile
-                // during render, writes to FH are applied immediately
                 if (this.PPUAddressLatchIsHigh) {
-                    //if (isRendering)
-                    //{
-                    //    fineHorizontalScroll = data & 0x7;
-                    //    horizontalTileIndex = data >> 3;
-                    //}  
-
                     this._hScroll = data;
-
                     this.lockedHScroll = this._hScroll & 7;
-                    this.UpdatePixelInfo();
-
                     this.PPUAddressLatchIsHigh = false;
                 } else {
-                    // during rendering, a write here will not post to the rendering counter
-
                     this._vScroll = data;
                     if (data > 240) {
                         this._vScroll = data - 256;
                     }
-
-                    if (!this.frameOn || (this.frameOn && !this.isRendering)) {
+                        
+                    if (!this.frameOn || (this.frameOn && this.frameClock > 81840)) {
                         this.lockedVScroll = this._vScroll;
                     }
 
@@ -340,62 +294,41 @@ export class ChiChiPPU {
                 }
                 break;
             case 6:
-                //Since the PPU's external address bus is only 14 bits in width, 
-                //the top two bits of the value written are ignored. 
+
                 if (this.PPUAddressLatchIsHigh) {
-                    //            //a) Write upper address byte into $2006
+
                     this._PPUAddress = (this._PPUAddress & 0xFF) | ((data & 0x3F) << 8);
                     this.PPUAddressLatchIsHigh = false;
                 } else {
-                    //            //b) Write lower address byte into $2006
+
                     this._PPUAddress = (this._PPUAddress & 0x7F00) | data & 0xFF;
                     this.PPUAddressLatchIsHigh = true;
 
-                    // writes here during rendering directly affect the scroll counter
-                    // from Marat Fazulamans doc
-
-                    //Address Written into $2006
-                    //xxYYSSYYYYYXXXXX
-                    //   | |  |     |
-                    //   | |  |     +---- Horizontal scroll in tiles (i.e. 1 = 8 pixels)
-                    //   | |  +--------- Vertical scroll in tiles (i.e. 1 = 8 pixels)
-                    //   | +------------ Number of Name Table ($2000,$2400,$2800,$2C00)
-                    //   +-------------- Additional vertical scroll in pixels (0..3)
-
-                    // on second write during frame, loopy t (_hscroll, _vscroll) is copied to loopy_v (lockedHscroll, lockedVScroll)
-
-                    this._hScroll = ((this._PPUAddress & 0x1F) << 3); // +(currentXPosition & 7);
-                    this._vScroll = (((this._PPUAddress >> 5) & 0x1F) << 3);
+                    this._hScroll = ((this._PPUAddress & 0x1f) << 3);
+                    this._vScroll = (((this._PPUAddress >> 5) & 0x1f) << 3);
                     this._vScroll |= ((this._PPUAddress >> 12) & 3);
 
-                    this.nameTableBits = ((this._PPUAddress >> 10) & 3);
                     if (this.frameOn) {
 
                         this.lockedHScroll = this._hScroll;
                         this.lockedVScroll = this._vScroll;
                         this.lockedVScroll = this.lockedVScroll - this.currentYPosition;
                     }
-                    this.UpdatePixelInfo();
-                    // relock vscroll during render when this happens
+
+                    this.nameTableBits = ((this._PPUAddress >> 10) & 3);
+                    this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 }
                 break;
             case 7:
-                //            //Writing to PPU memory:
-                //            //c) Write data into $2007. After each write, the
-                //            //   address will increment either by 1 (bit 2 of
-                //            //   $2000 is 0) or by 32 (bit 2 of $2000 is 1).
-                // ppuLatch = data;
+
                 if ((this._PPUAddress & 0xFF00) === 0x3F00) {
 
-                    //WriteToNESPalette(_PPUAddress, (byte)data);
-                    var palAddress = (this._PPUAddress) & 0x1F;
+                    const palAddress = (this._PPUAddress) & 0x1F;
                     this._palette[palAddress] = data;
-                    // rgb32OutBuffer[255 * 256 + palAddress] = data;
+
                     if ((this._PPUAddress & 0xFFEF) === 0x3F00) {
                         this._palette[(palAddress ^ 16) & 0x1F] = data;
                     }
-                    // these palettes are all mirrored every 0x10 bytes
-                    this.UpdatePixelInfo();
                 } else {
                     // if its a nametable byte, mask it according to current mirroring
                     if ((this._PPUAddress & 0xF000) === 0x2000) {
@@ -418,6 +351,7 @@ export class ChiChiPPU {
                 break;
         }
     }
+
     GetByte(Clock: number, address: number): number {
 
         switch (address & 7) {
@@ -430,38 +364,19 @@ export class ChiChiPPU {
             case 2:
                 let ret = 0;
                 this.PPUAddressLatchIsHigh = true;
-                // bit 7 is set to 0 after a read occurs
-                // return lower 5 latched bits, and the status
                 ret = (this.ppuReadBuffer & 0x1F) | this._PPUStatus;
 
                 if ((ret & 0x80) === 0x80) {
                     this._PPUStatus = this._PPUStatus & ~0x80;
                 }
-                this.UpdatePixelInfo();
-                //}
-                //this._openBus = ret;
                 return ret;
             case 4:
                 return this.spriteRAM[this._spriteAddress];
-                //ppuLatch = spriteRAM[SpriteAddress];
-                // should not increment on read ?
-                //SpriteAddress = (SpriteAddress + 1) & 0xFF;
-                //this._openBus = tmp;
             case 7:
                 let tmp = 0;
-                // palette reads shouldn't be buffered like regular vram reads, they re internal
                 if ((this._PPUAddress & 0xFF00) === 0x3F00) {
-                    // these palettes are all mirrored every 0x10 bytes
                     tmp = this._palette[this._PPUAddress & 0x1F];
-                    // palette read should also read vram into read buffer
 
-                    // info i found on the nesdev forums
-
-                    // When you read PPU $3F00-$3FFF, you get immediate data from Palette RAM 
-                    // (without the 1-read delay usually present when reading from VRAM) and the PPU 
-                    // will also fetch nametable data from the corresponding address (which is mirrored from PPU $2F00-$2FFF). 
-
-                    // note: writes do not work this way 
                     this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress - 4096);
                 } else {
                     tmp = this.ppuReadBuffer;
@@ -483,11 +398,7 @@ export class ChiChiPPU {
     }
 
 
-    CopySprites(copyFrom: number): void {
-
-        // should copy 0x100 items from source to spriteRAM, 
-        // starting at SpriteAddress, and wrapping around
-        // should set spriteDMA flag
+    copySprites(copyFrom: number): void {
         for (var i = 0; i < 256; ++i) {
             var spriteLocation = (this._spriteAddress + i) & 255;
             if (this.spriteRAM[spriteLocation] !== this.cpu.Rams[copyFrom + i]) {
@@ -499,7 +410,7 @@ export class ChiChiPPU {
         this.spriteChanges = true;
     }
 
-    InitSprites(): void {
+    initSprites(): void {
         this.currentSprites = new Array<ChiChiSprite>(this._maxSpritesPerScanline); //ChiChiSprite;
         for (let i = 0; i < this._maxSpritesPerScanline; ++i) {
             this.currentSprites[i] = new ChiChiSprite();
@@ -513,19 +424,19 @@ export class ChiChiPPU {
 
     }
 
-    GetSpritePixel(): number {
+    getSpritePixel(): number {
         this.isForegroundPixel = false;
         this.spriteZeroHit = false;
-        var result = 0;
-        var yLine = 0;
-        var xPos = 0;
-        var tileIndex = 0;
+        let result = 0;
+        let yLine = 0;
+        let xPos = 0;
+        let tileIndex = 0;
 
-        for (var i = 0; i < this.spritesOnThisScanline; ++i) {
-            var currSprite = this.currentSprites[i];
+        for (let i = 0; i < this.spritesOnThisScanline; ++i) {
+            let currSprite = this.currentSprites[i];
             if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < currSprite.XPosition + 8) {
 
-                var spritePatternTable = 0;
+                let spritePatternTable = 0;
                 if ((this._PPUControlByte0 & 8) === 8) {
                     spritePatternTable = 4096;
                 }
@@ -545,10 +456,8 @@ export class ChiChiPPU {
                     }
                 }
 
-                //result = WhissaSpritePixel(spritePatternTable, xPos, yLine, ref currSprite, tileIndex);
-                // 8x8 tile
-                var patternEntry;
-                var patternEntryBit2;
+                let patternEntry = 0;
+                let patternEntryBit2 = 0;
 
                 if (currSprite.FlipY) {
                     yLine = this.spriteSize - yLine - 1;
@@ -574,7 +483,7 @@ export class ChiChiPPU {
         }
         return 0;
     }
-    WhissaSpritePixel(patternTableIndex: number, x: number, y: number, sprite: { v: ChiChiSprite; }, tileIndex: number): number {
+    decodeSpritePixel(patternTableIndex: number, x: number, y: number, sprite: { v: ChiChiSprite; }, tileIndex: number): number {
         // 8x8 tile
         let patternEntry = 0;
         let patternEntryBit2 = 0;
@@ -586,25 +495,23 @@ export class ChiChiPPU {
         if (y >= 8) {
             y += 8;
         }
-
-        patternEntry = this.chrRomHandler.GetPPUByte(0, patternTableIndex + tileIndex * 16 + y);
-        patternEntryBit2 = this.chrRomHandler.GetPPUByte(0, patternTableIndex + tileIndex * 16 + y + 8);
+        const dataAddress = patternTableIndex + (tileIndex << 4) + y;
+        patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock, dataAddress);
+        patternEntryBit2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock, dataAddress + 8);
 
         return (sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> 7 - x) & 1) | (((patternEntryBit2 >> 7 - x) << 1) & 2));
     }
-    PreloadSprites(scanline: number): void {
+    
+    preloadSprites(scanline: number): void {
         this.spritesOnThisScanline = 0;
         this.sprite0scanline = -1;
 
         let yLine = this.currentYPosition - 1;
-        this.outBuffer[(64768) + yLine] = 0;
-        this.outBuffer[(65024) + yLine] = 0;
-        //spritesOnLine[2 * yLine] = 0;
-        //spritesOnLine[2 * yLine + 1] = 0;
-        for (var spriteNum = 0; spriteNum < 256; spriteNum += 4) {
-            var spriteID = ((spriteNum + this._spriteAddress) & 255) >> 2;
 
-            var y = this.unpackedSprites[spriteID].YPosition + 1;
+        for (let spriteNum = 0; spriteNum < 256; spriteNum += 4) {
+            const spriteID = ((spriteNum + this._spriteAddress) & 0xff) >> 2;
+
+            const y = this.unpackedSprites[spriteID].YPosition + 1;
 
             if (scanline >= y && scanline < y + this.spriteSize) {
                 if (spriteID === 0) {
@@ -612,12 +519,12 @@ export class ChiChiPPU {
                     this.sprite0x = this.unpackedSprites[spriteID].XPosition;
                 }
 
-                var spId = spriteNum >> 2;
-                if (spId < 32) {
-                    this.outBuffer[(64768) + yLine] |= 1 << spId;
-                } else {
-                    this.outBuffer[(65024) + yLine] |= 1 << (spId - 32);
-                }
+                // var spId = spriteNum >> 2;
+                // if (spId < 32) {
+                //     this.outBuffer[(64768) + yLine] |= 1 << spId;
+                // } else {
+                //     this.outBuffer[(65024) + yLine] |= 1 << (spId - 32);
+                // }
 
                 this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID];
                 this.currentSprites[this.spritesOnThisScanline].IsVisible = true;
@@ -633,14 +540,8 @@ export class ChiChiPPU {
         }
 
     }
+
     UnpackSprites(): void {
-        //Buffer.BlockCopy
-        //var outBufferloc = 65280;
-        //for (var i = 0; i < 256; i += 4) {
-        //    this.outBuffer[outBufferloc] = (this.spriteRAM[i] << 24) | (this.spriteRAM[i + 1] << 16) | (this.spriteRAM[i + 2] << 8) | (this.spriteRAM[i + 3] << 0);
-        //    outBufferloc++;
-        //}
-        // Array.Copy(spriteRAM, 0, outBuffer, 255 * 256 * 4, 256);
         for (var currSprite = 0; currSprite < this.unpackedSprites.length; ++currSprite) {
             if (this.unpackedSprites[currSprite].Changed) {
                 this.UnpackSprite(currSprite);
@@ -709,13 +610,20 @@ export class ChiChiPPU {
 
     advanceClock(ticks: number) {
         let ppuTicks = ticks * 3;
+        const frameLine = this.frameClock / 341;
         while (ppuTicks--) {
             switch (this.frameClock) {
                 case 0:
+                    this.frameOn = true;
                 
-                    this._PPUStatus = 0;
-                    this.hitSprite = false;
-                    this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
+                    this.shouldRender = true;
+                    this.vbufLocation = 0;
+                    this.currentXPosition = 0;
+                    this.currentYPosition = 0;
+
+                    this.xNTXor = 0;
+                    this.yNTXor = 0;
+
                     if ((this._PPUControlByte1 & 0x18) !== 0) {
                         this.oddFrame = !this.oddFrame;
                         this.isRendering = true;
@@ -724,38 +632,31 @@ export class ChiChiPPU {
                         this.oddFrame = false;
                         
                     }
-                    this.frameOn = true;
-                    this.chrRomHandler.ResetBankStartCache();
-                    // setFrameOn();
+
                     if (this.spriteChanges) {
                         this.UnpackSprites();
                         this.spriteChanges = false;
                     }
                     break;
-                case 341:
-                    this.shouldRender = true;
-                // lockedVScroll = _vScroll;
-                    this.vbufLocation = 0;
-                    //curBufPos = bufStart;
-                    this.xNTXor = 0;
-                    this.yNTXor = 0;
-                    this.currentXPosition = 0;
-                    this.currentYPosition = 0;
-                    break;
-                case 82501: // ChiChiNES.CPU2A03.frameClockEnd:
+                case 81840: // ChiChiNES.CPU2A03.frameClockEnd:
                     this.shouldRender = false;
-                    //__frameFinished = true;
                     this.frameFinished();
+
+                    break;
+                case 82523: // first tick on scanline after post-render line
                     this.SetupVINT();
                     this.frameOn = false;
-                    //if (_isDebugging)
-                    //    events.Clear();
                     break;
-                    
-                
+                case 89002: 
+                    this._PPUStatus = 0;
+                    this.hitSprite = false;
+                    this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
+
+                    break;
             }
 
             if (this.shouldRender) {
+
                 if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
                     /* update x position */
                     this.xPosition = (this.currentXPosition + this.lockedHScroll);
@@ -773,19 +674,20 @@ export class ChiChiPPU {
 
                         const tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
 
-                        let tileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
+                        let tileIndex = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, tileNametablePosition);
 
                         let patternTableYOffset = this.yPosition & 7;
 
                         let patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
 
-                        this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
-                        this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
+                        this.patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID);
+                        this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID + 8);
 
                         this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
                         /* end fetch next tile */
 
                     }
+
                     let tilesVis = this._tilesAreVisible;
                     let spriteVis = this._spritesAreVisible;
                     if (this.currentXPosition < 8 ) {
@@ -795,7 +697,7 @@ export class ChiChiPPU {
                     /* draw pixel */
                     const tilePixel = tilesVis ? this.GetNameTablePixel() : 0;
                     // bool foregroundPixel = isForegroundPixel;
-                    const spritePixel = spriteVis ? this.GetSpritePixel() : 0;
+                    const spritePixel = spriteVis ? this.getSpritePixel() : 0;
 
                     if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
                         this.hitSprite = true;
@@ -804,12 +706,10 @@ export class ChiChiPPU {
 
                     //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
                     //var x = 
-
                     this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
                     //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
                     //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
                     //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
-
                     this.vbufLocation++;
                 }
                 if (this.currentXPosition === 324) {
@@ -822,7 +722,7 @@ export class ChiChiPPU {
                     this.currentXPosition = 0;
                     this.currentYPosition++;
 
-                    this.PreloadSprites(this.currentYPosition);
+                    this.preloadSprites(this.currentYPosition);
                     if (this.spritesOnThisScanline >= 7) {
                         this._PPUStatus = this._PPUStatus | 32;
                     }
@@ -854,12 +754,6 @@ export class ChiChiPPU {
             }
         }
     }
-
-    // DrawTo(cpuClockNum: number): void {
-    //     let frClock = (cpuClockNum - this.LastcpuClock) * 3;
-    //     this.advanceClock(frClock);
-    //     this.LastcpuClock = cpuClockNum;
-    // }
 
     UpdatePixelInfo(): void {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;

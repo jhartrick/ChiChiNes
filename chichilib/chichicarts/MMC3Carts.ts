@@ -142,9 +142,9 @@ export class MMC3Cart extends BaseCart {
                 break;
             case 40960:
                 if ((val & 1) === 1) {
-                    this.Mirror(clock, 2);
+                    this.mirror(clock, 2);
                 } else {
-                    this.Mirror(clock, 1);
+                    this.mirror(clock, 1);
                 }
                 break;
             case 40961:

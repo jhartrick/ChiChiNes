@@ -57,10 +57,11 @@ export class VRCIrqBase extends BaseCart {
     }
 
     set irqControl(val: number) {
+        let oldEnable = this.irqEnable;
         this.irqEnableAfterAck = (val & 0x1) == 0x1;
         this.irqEnable = (val & 0x2) == 0x2;
         this.irqMode = (val & 0x4) == 0x4;
-        if (this.irqEnable) {
+        if (this.irqEnable && !oldEnable) {
             this.prescaler = 341;
             this.irqCounter = this.irqLatch & 0xff;
         }
@@ -70,20 +71,21 @@ export class VRCIrqBase extends BaseCart {
 
 // this base class contains the common irq functionality for a whole bunch of konami vrc mappers use
 class VRC2or4Cart extends VRCIrqBase {
+    microwire: boolean = false;
     vrc2: boolean = false;
     swapMode: boolean = false;
     microwireLatch: number = 0;
     irqlatches = [0,0];
 
     latches:number[] =[
-        0,0,
-        0,0,
-        0,0,
-        0,0,
-        0,0,
-        0,0,
-        0,0,
-        0,0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
         ] ;
     
     regNums = [
@@ -92,24 +94,17 @@ class VRC2or4Cart extends VRCIrqBase {
         0x02,
         0x03,
     ];
+    regMask = 0xf;
 
     vrc2mirroring = (clock: number, address: number, data: number) => {
         if (address <= 0x9003 )
         {
             switch (data & 7) {
             case 0: // vertical
-                this.Mirror(clock, 1);
+                this.mirror(clock, 1);
                 break;
             case 1: // horizontal
-                this.Mirror(clock, 2);
-                break;
-            case 2: // onescreen - low
-                this.oneScreenOffset= 0;
-                this.Mirror(clock, 0);
-                break;
-            case 3: // onescreen - high
-                this.oneScreenOffset= 0x400;
-                this.Mirror(clock, 0);
+                this.mirror(clock, 2);
                 break;
             }
         }
@@ -120,18 +115,18 @@ class VRC2or4Cart extends VRCIrqBase {
         {
             switch (data & 7) {
             case 0: // vertical
-                this.Mirror(clock, 1);
+                this.mirror(clock, 1);
                 break;
             case 1: // horizontal
-                this.Mirror(clock, 2);
+                this.mirror(clock, 2);
                 break;
             case 2: // onescreen - low
-                this.oneScreenOffset= 0;
-                this.Mirror(clock, 0);
+                this.oneScreenOffset= 0x0400;
+                this.mirror(clock, 0);
                 break;
             case 3: // onescreen - high
-                this.oneScreenOffset= 0x400;
-                this.Mirror(clock, 0);
+                this.oneScreenOffset = 0x0;
+                this.mirror(clock, 0);
                 break;
             }
         }
@@ -142,88 +137,11 @@ class VRC2or4Cart extends VRCIrqBase {
     }
 
     vrcmirroring = this.vrc4mirroring;
-    writeMap:PokeMap[] = [
-        {
-            mask: 0xF000, address: [0x8000], 
-            func: (clock, address, data) => {
-                let bank8 = data & 0x1F;
-                if (this.swapMode) {
-                    this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
-                } else {
-                    this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
-                }                
-            }
-        },
-        {
-            mask: 0xF000, address: [0xA000], 
-            func: (clock, address, data) => {
-                // 8kib prg rom at A000
-                let bankA = data & 0x1F;
-                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
-            }
-        },
-        {
-            mask: 0xF000, address: [0x9000], 
-            func: (clock, address, data) => {
-                this.vrcmirroring(clock, address, data);
-            }
-        },
-        {
-            // irq handlers
-            mask: 0xF000, address: [0xF000],
-            func: (clock, address, data) => {
-                if ((address & 0x3) == 0x0) {
-                    this.irqlatches[0] = (0xF & data);
-                    this.irqLatch = this.irqlatches[0] | this.irqlatches[1];
-                } else
-                if ((address & 0x3) == 0x1) {
-                    this.irqlatches[1] = ((0xF & data) << 4);
-                    this.irqLatch = this.irqlatches[0] | this.irqlatches[1];
-                } 
-                if ((address & 0x3) == 0x2) {
-                    this.irqControl = data;
-                } 
-                if ((address & 0x3) == 0x3) {
-                    this.ackIrq();
-                } 
-            }
-        },
-        {
-            // memory handlers, registerlocations change
-            mask: 0xf000, address: [0xb000, 0xc000, 0xd000, 0xe000],
-            func: (clock, address, data) => {
-                const addmask = address & 0xfff;
-                const bank = ((address >> 12) & 0xf) - 0xb;
-                const index = bank * 4;
-                if (addmask == this.regNums[0]) {
-                    this.latches[index]  = data & 0xf;
-                } else if (addmask == this.regNums[1]) {
-                    this.latches[index + 1] = (data & 0x1f) << 4;
-                } else if (addmask == this.regNums[2]) {
-                    this.latches[index + 2]  = data & 0xf;
-                } else if (addmask == this.regNums[3]) {
-                    this.latches[index + 3] = (data & 0x1f) << 4;
-                }
-                this.vrcCopyBanks1k(clock, (bank * 2) + 0, this.latches[index] | this.latches[index + 1], 1);
-                this.vrcCopyBanks1k(clock, (bank * 2) + 1, this.latches[index + 2] | this.latches[index + 3], 1);
-        }
-    }];
 
-    vrcCopyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
-        this.copyBanks1k(clock, dest, src, numberOf1kBanks);
-    }
-    
     useMicrowire () {
         this.GetByte = this.getByteMicrowire;
+        this.microwire = true;
         
-        this.writeMap.push(
-            {
-                mask: 0xF000,
-                address: [0x6000], 
-                func: (clock, address, data) => {
-                this.microwireLatch = data & 0x1;
-            }
-        });
     }  
     
     getByteMicrowire(clock: number, address: number) : number {
@@ -235,16 +153,76 @@ class VRC2or4Cart extends VRCIrqBase {
     }
 
     SetByte(clock:number, address:number, data: number) {
-        const map = this.writeMap;
-        for (let i =0;i < map.length; ++i) {
-            const x = map[i].mask & address;
-            if (map[i].address.find( (v) => {
-                return v ==  x; 
-            })) {
-                map[i].func(clock, address,data);
-                return;
-            }
+        switch(address & 0xf000) {
+            case 0x6000:
+            case 0x7000:
+                if (this.microwire) {
+                    this.microwireLatch = data & 0x1;
+                } else {
+                    this.prgRomBank6[data & 0xfff] = data;
+                }
+                break;
+            case 0x8000:
+                let bank8 = data & 0x1F;
+                if (this.swapMode) {
+                    this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
+                } else {
+                    this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
+                }           
+                break;      
+            case 0x9000:
+                this.vrcmirroring(clock, address, data);
+                break;
+            case 0xa000:
+                // 8kib prg rom at A000
+                let bankA = data & 0x1F;
+                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+                break;
+            case 0xb000:
+            case 0xc000:
+            case 0xd000:
+            case 0xe000:
+                const addmask = address & this.regMask;
+                const bank = ((address >> 12) & 0xf) - 0xb;
+                const index = bank << 1;
+                if (addmask == this.regNums[0]) {
+                    this.latches[index]  =  (this.latches[index] & 0xf0) | (data & 0xf);
+                    this.copyBanks1k(clock, index, this.latches[index], 1);
+                } else if (addmask == this.regNums[1]) {
+                    this.latches[index]  =  (this.latches[index] & 0xf) | ((data << 4) & 0xf0);
+                    this.copyBanks1k(clock, index, this.latches[index], 1);
+                } else if (addmask == this.regNums[2]) {
+                    this.latches[index + 1]  =  (this.latches[index + 1] & 0xf0) | (data & 0xf);
+                    this.copyBanks1k(clock, index + 1, this.latches[index + 1], 1);
+                } else if (addmask == this.regNums[3]) {
+                    this.latches[index + 1]  =  (this.latches[index + 1] & 0xf) | ((data << 4) & 0xf0);
+                    this.copyBanks1k(clock, index + 1, this.latches[index + 1], 1);
+                }
+                break;
+            case 0xf000:
+                if ((address & 0x3) == 0x0) {
+                    this.irqLatch = (this.irqLatch & 0xf0) | (data & 0xf); 
+                } else if ((address & 0x3) == 0x1) {
+                    this.irqLatch = (this.irqLatch & 0x0f) | ((data << 4) & 0xf0);  
+                } else if ((address & 0x3) == 0x2) {
+                    this.irqControl = data;
+                } else if ((address & 0x3) == 0x3) {
+                    this.ackIrq();
+                }
+                break;
+
         }
+
+        // const map = this.writeMap;
+        // for (let i =0;i < map.length; ++i) {
+        //     const x = map[i].mask & address;
+        //     if (map[i].address.find( (v) => {
+        //         return v ==  x; 
+        //     })) {
+        //         map[i].func(clock, address,data);
+        //         return;
+        //     }
+        // }
     }
 
 }
@@ -258,6 +236,7 @@ export class KonamiVRC2Cart extends VRC2or4Cart {
             0x08,
             0x0c,
         ];
+        this.regMask = 0xf0;
     }
 
     InitializeCart() {
@@ -297,14 +276,11 @@ export class KonamiVRC022Cart extends VRC2or4Cart {
             0x3,
         ];
         this.vrcmirroring = this.vrc2mirroring;
-        this.vrcCopyBanks1k = (clock, dest,src, numberOf1kBanks) => {
-            this.copyBanks1k(clock, dest, src >> 1, numberOf1kBanks);
-        }
 
         //this.useMicrowire();
         switch (this.ROMHashFunction) {
             case 'D4645E14':
-                this.Mirror(0,2);
+                this.mirror(0,2);
                 break;
         }
     }
@@ -332,6 +308,7 @@ export class Konami021Cart extends VRC2or4Cart {
                     0x080,
                     0x0c0,
                 ];
+                this.regMask = 0xf0;
             break;
         }
     }
@@ -350,9 +327,11 @@ export class Konami025Cart extends VRC2or4Cart {
             case '490E8A4C':
                 this.useMicrowire();
             case '4A601A2C': // teenage mutant ninja turtles j
+                
                 this.regNums = [
                     0x000, 0x008, 0x004, 0x00C
                 ];
+                this.regMask = 0xf;
             break;
         }
     }

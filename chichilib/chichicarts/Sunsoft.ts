@@ -43,7 +43,7 @@ export class Mapper089Cart extends BaseCart {
 
             let mirror = (val >> 3) & 1;
             this.oneScreenOffset = mirror * 1024;
-            this.Mirror(clock,0);
+            this.mirror(clock,0);
             this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
             this.copyBanks(clock, 0, lobank, 1);
 

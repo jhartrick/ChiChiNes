@@ -5,7 +5,7 @@ export class Mapper068Cart extends BaseCart {
     InitializeCart(): void {
         this.mapperName = 'Sunsoft-4';
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        //this.Mirror(0, 0);
+        //this.mirror(0, 0);
      }
 
      SetByte(clock: number, address: number, val: number): void {
@@ -48,7 +48,7 @@ export class Mapper068Cart extends BaseCart {
                 break;
 
             case 0xE000:
-                this.Mirror(clock, val & 0x3);
+                this.mirror(clock, val & 0x3);
                 let useCRAM = (val & 0x10) == 0x10;
             break;
         }

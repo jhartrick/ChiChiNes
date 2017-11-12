@@ -139,7 +139,7 @@ export class NesCart extends BaseCart {
              this.SetupBankStarts(newbank81, ((newbank81 + 1) | 0), this.currentC, this.currentE);
  
              const chrBank = (val >>5) & 3;
-             this.Mirror(0, (val >>7 ) & 0x1 )
+             this.mirror(0, (val >>7 ) & 0x1 )
              this.copyBanks(clock,0,chrBank,1);
          }
  
@@ -179,7 +179,7 @@ export class NesCart extends BaseCart {
          
          // one 32k prg rom
          this.SetupBankStarts(0, 1, 2, 3);
-         this.Mirror(0,2)
+         this.mirror(0,2)
      }
  
      SetByte(clock: number, address: number, val: number): void {
@@ -327,7 +327,7 @@ export class Mapper145Cart extends BaseCart {
          //         %01 = Horz
          //         %10 = Vert
          //         %11 = 1ScB
-         //this.Mirror(clock,(val >> 6));
+         //this.mirror(clock,(val >> 6));
      }
  
  }
@@ -367,7 +367,7 @@ export class Mapper145Cart extends BaseCart {
              this.copyBanks(0, 0, 0, 1);
          }
          this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-         this.Mirror(0,1);
+         this.mirror(0,1);
      }
  
      SetByte(clock: number, address: number, val: number): void {
@@ -383,7 +383,7 @@ export class Mapper145Cart extends BaseCart {
              this.copyBanks(clock, 0, chrbank, 1);
 
              this.oneScreenOffset = (val >> 7) == 1 ? 1024 : 0;
-             this.Mirror(clock, 0);
+             this.mirror(clock, 0);
          }
  
      }
@@ -426,9 +426,9 @@ export class Mapper145Cart extends BaseCart {
         }
         if (this.ROMHashFunction == 'BA51AC6F') {
             this.isHolyDiver = true;
-            this.Mirror(0, 1);
+            this.mirror(0, 1);
         }else {
-            this.Mirror(0, 0);
+            this.mirror(0, 0);
         }
         
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
@@ -449,14 +449,14 @@ export class Mapper145Cart extends BaseCart {
             if (this.isHolyDiver) {
                 if (mirroring == 0)
                 {
-                    this.Mirror(clock, 2);
+                    this.mirror(clock, 2);
                 } else {
-                    this.Mirror(clock, 1);
+                    this.mirror(clock, 1);
                 }
 
             } else {
                 this.oneScreenOffset = mirroring * 1024;
-                this.Mirror(clock, 0);
+                this.mirror(clock, 0);
             }
         }
 
@@ -473,7 +473,7 @@ export class Mapper152Cart extends BaseCart {
          }
          this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
          this.oneScreenOffset =0;
-         this.Mirror(0,0);
+         this.mirror(0,0);
      }
  
      SetByte(clock: number, address: number, val: number): void {
@@ -488,7 +488,7 @@ export class Mapper152Cart extends BaseCart {
              
              this.copyBanks(clock, 0, chrbank, 1);
              this.oneScreenOffset = (val >> 7) == 1 ? 1024 : 0;
-             this.Mirror(clock, 0);
+             this.mirror(clock, 0);
          }
  
      }
@@ -552,17 +552,17 @@ export class Mapper152Cart extends BaseCart {
             switch ((val >> 6) & 3) {
                 case 0:
                     this.oneScreenOffset = 0;
-                    this.Mirror(clock,0);
+                    this.mirror(clock,0);
                     break;
                 case 1:
-                    this.Mirror(clock,2);
+                    this.mirror(clock,2);
                     break;
                 case 2:
-                    this.Mirror(clock,1);
+                    this.mirror(clock,1);
                     break;
                 case 2:
                     this.oneScreenOffset = 0x400;
-                    this.Mirror(clock,0);
+                    this.mirror(clock,0);
                     break;
             }
         }
@@ -608,7 +608,7 @@ export class Mapper152Cart extends BaseCart {
         this.mapperName = 'AxROM';
         
         this.SetupBankStarts(0, 1, 2, 3);
-        this.Mirror(0, 0);
+        this.mirror(0, 0);
      }
 
      SetByte(clock: number, address: number, val: number): void {
@@ -631,7 +631,7 @@ export class Mapper152Cart extends BaseCart {
         } else {
             this.oneScreenOffset = 0;
         }
-        this.Mirror(clock, 0);
+        this.mirror(clock, 0);
 
      }
  
@@ -652,7 +652,7 @@ export class BNROMCart extends AxROMCart {
             this.SetupBankStarts(0, 1, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         }
 
-        //this.Mirror(0, 0);
+        //this.mirror(0, 0);
      }
 
      SetByte(clock: number, address: number, val: number): void {

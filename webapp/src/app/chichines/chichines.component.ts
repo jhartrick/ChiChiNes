@@ -67,6 +67,59 @@ export class ChiChiComponent implements AfterViewInit {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
 
+        let fragShader: string = `
+        bool InColorPhase (float color, float phase) { 
+            return modI( (color + phase) , 12.0) < 6.0; 
+            
+        }
+        
+        float NTSCsignal(int color, int level, int emphasis, int phase)
+        {
+            // Voltage levels, relative to synch voltage
+            float black=.518, white=1.962, attenuation=.746;
+            float p = float(phase);
+            // const float levels[8] = float[8](.350, .518, .962, 1.550, 1.094, 1.506, 1.962, 1.962); 
+        
+            // Decode the NES color.
+            if(color > 13) { level = 1;  } // For colors 14..15, level 1 is forced.
+        
+            // The square wave for this color alternates between these two voltages:
+            float low  = levels[0 + level];
+            float high = levels[4 + level];
+            if(color == 0) { low = high; } // For color 0, only high level is emitted
+            if(color > 12) { high = low; } // For colors 13..15, only low level is emitted
+        
+            // Generate the square wave
+            float signal = InColorPhase(float(color), float(phase)) ? high : low;
+        
+            // When de-emphasis bits are set, some parts of the signal are attenuated:
+            if (emphasis == 1 || emphasis == 3 || emphasis == 7)
+            {
+                if (InColorPhase(0.0, p)) {
+                    signal = signal * attenuation;
+                }   
+            }
+        
+            // When de-emphasis bits are set, some parts of the signal are attenuated:
+            if (emphasis == 2 || emphasis == 6 || emphasis == 7)
+            {
+                if (InColorPhase(4.0, p)) {
+                    signal = signal * attenuation;
+                }   
+            }
+            
+            // When de-emphasis bits are set, some parts of the signal are attenuated:
+            if (emphasis == 4 || emphasis == 6 || emphasis == 7)
+            {
+                if (InColorPhase(8.0, p)) {
+                    signal = signal * attenuation;
+                }   
+            }
+        
+            return signal;
+        }
+        `
+
 
         this.zone.runOutsideAngular(() => {
             this.nesService.wishbone.SoundBopper.audioHandler = new ChiChiThreeJSAudio(this.nesService.wishbone.WaveForms);

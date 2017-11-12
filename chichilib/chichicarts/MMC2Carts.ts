@@ -94,7 +94,7 @@ export class MMC2Cart extends BaseCart {
                 this.copyBanks(clock,1,this.banks[this.latches[1]], 1);
                 break;
             case 0xF:
-                this.Mirror(clock, (val & 0x1) + 1);
+                this.mirror(clock, (val & 0x1) + 1);
                  break;
         }
     }
@@ -192,7 +192,7 @@ export class MMC4Cart extends BaseCart {
                 this.copyBanks(clock,1,this.banks[this.selector[1]], 1);
                 break;
             case 0xF:
-                this.Mirror(clock, (val & 0x1) + 1);
+                this.mirror(clock, (val & 0x1) + 1);
                  break;
 
         }

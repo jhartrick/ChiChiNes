@@ -154,18 +154,18 @@ export class Konami026Cart extends VRCIrqBase {
             switch(this.chrselect & 0xF) {
                 case 0:
                 case 7:
-                    this.Mirror(clock,1);
+                    this.mirror(clock,1);
                     break;
                 case 4: case 3:
-                    this.Mirror(clock,2);
+                    this.mirror(clock,2);
                     break;
                 case 8: case 0xF:
                     this.oneScreenOffset = 0;
-                    this.Mirror(clock,0);
+                    this.mirror(clock,0);
                     break;
                 case 8: case 0xF:
                     this.oneScreenOffset = 0x400;
-                    this.Mirror(clock,0);
+                    this.mirror(clock,0);
                     break;
             }
         }

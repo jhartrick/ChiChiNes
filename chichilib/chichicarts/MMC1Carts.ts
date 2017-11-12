@@ -145,17 +145,17 @@ export class MMC1Cart extends BaseCart  {
         switch (this._registers[0] & 3) {
             case 0:
                 this.oneScreenOffset = 0;
-                this.Mirror(clock, 0);
+                this.mirror(clock, 0);
                 break;
             case 1:
                 this.oneScreenOffset = 1024;
-                this.Mirror(clock, 0);
+                this.mirror(clock, 0);
                 break;
             case 2:
-                this.Mirror(clock, 1); // vertical
+                this.mirror(clock, 1); // vertical
                 break;
             case 3:
-                this.Mirror(clock, 2); // horizontal
+                this.mirror(clock, 2); // horizontal
                 break;
         }
         this.bankSwitchesChanged = true;

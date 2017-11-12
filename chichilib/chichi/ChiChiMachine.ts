@@ -328,7 +328,7 @@ import { WavSharer } from './Audio/CommonAudio';
 
             // init PPU
             this.ppu = ppu;
-            this.ppu.InitSprites();
+            this.ppu.initSprites();
             this._padOne = new ChiChiInputHandler();
             this._padTwo = new ChiChiInputHandler();
             for (let i = 0; i < this._instructionHistory.length; ++i) {
@@ -1428,7 +1428,7 @@ import { WavSharer } from './Audio/CommonAudio';
                             this.SoundBopper.SetByte(this.clock, address, data);
                             break;
                         case 16404:
-                            this.ppu.CopySprites(data * 256);
+                            this.ppu.copySprites(data * 256);
                             this._currentInstruction_ExtraTiming = this._currentInstruction_ExtraTiming + 512;
                             break;
                         case 16406:

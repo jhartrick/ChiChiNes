@@ -26,7 +26,7 @@ import { BaseCart } from "./BaseCart";
                  newbank81 = (val ) << 2;
                  this.SetupBankStarts(newbank81, newbank81 + 1 ,  newbank81 + 2,  newbank81 + 3);
              }
-             this.Mirror(clock, (( val >> 7) & 0x1) + 1 );
+             this.mirror(clock, (( val >> 7) & 0x1) + 1 );
              this.copyBanks(clock, 0,(val >> 3) & 7, 1);
          }
      }
@@ -59,7 +59,7 @@ import { BaseCart } from "./BaseCart";
          
              }
  
-             this.Mirror(clock, (( address >> 7) & 0x1) + 1 );
+             this.mirror(clock, (( address >> 7) & 0x1) + 1 );
              this.copyBanks(clock, 0,(address >> 3) & 7, 1);
          }
      }
@@ -90,7 +90,7 @@ import { BaseCart } from "./BaseCart";
                  this.SetupBankStarts(newbank81, newbank81 + 1 ,  newbank81,  newbank81 + 1);
                  
              }
-             this.Mirror(clock, (( address) & 0x1) + 1 );
+             this.mirror(clock, (( address) & 0x1) + 1 );
              this.copyBanks(clock, 0, bank, 1);
          }
      }
@@ -125,7 +125,7 @@ import { BaseCart } from "./BaseCart";
                 this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
             }
 
-            this.Mirror(clock, (( address >> 3) & 0x1) + 1 );
+            this.mirror(clock, (( address >> 3) & 0x1) + 1 );
             this.copyBanks(clock, 0, bank, 1);
         }
     }

@@ -32,7 +32,7 @@ export class KonamiVRC1Cart extends BaseCart {
         case 0x9000:
             
             if (!this.fourScreen) {
-                this.Mirror(clock, (data & 1)+1);
+                this.mirror(clock, (data & 1)+1);
             }
             this.chrLatches[0] = ((data >> 1) & 1) << 4;
             this.chrLatches[2] = ((data >> 2) & 1) << 4;

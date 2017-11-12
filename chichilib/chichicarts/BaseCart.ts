@@ -82,6 +82,7 @@ export class BaseCart implements IBaseCart {
     prgRomCount = 0;
     chrRomOffset = 0;
     chrRamStart = 0;
+    chrRamLength = 0;
     chrRomCount = 0;
     mapperId = 0;
 
@@ -230,6 +231,7 @@ export class BaseCart implements IBaseCart {
         this.chrRom = new Uint8Array(<any>chrRomBuffer);//     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
 
         this.chrRamStart = chrRomData.length;
+        this.chrRamLength  = 4096;
 
         BaseCart.arrayCopy(chrRomData, 0, this.chrRom, 0, chrRomData.length);
 
@@ -249,17 +251,17 @@ export class BaseCart implements IBaseCart {
         this.CPU = cpu;
 
         //setup mirroring 
-        this.Mirror(0, 0);
+        this.mirror(0, 0);
         if ((this.romControlBytes[0] & 1) === 1) {
-            this.Mirror(0, 1);
+            this.mirror(0, 1);
         } else {
-            this.Mirror(0, 2);
+            this.mirror(0, 2);
         }
 
         this.fourScreen = (this.romControlBytes[0] & 8) === 8; 
 
         if ((this.romControlBytes[0] & 8) === 8) {
-            this.Mirror(0, 3);
+            this.mirror(0, 3);
         }
         // initialize
         this.InitializeCart();
@@ -411,7 +413,7 @@ export class BaseCart implements IBaseCart {
         return this.CurrentBank;
     }
 
-    Mirror(clockNum: number, mirroring: number): void {
+    mirror(clockNum: number, mirroring: number): void {
 
 
         //    //            A11 A10 Effect
@@ -558,6 +560,6 @@ export class UnsupportedCart extends BaseCart {
         this.mapperName = 'unsupported';
         // maybe this will work - give it a go!
         this.SetupBankStarts(0, 1,(this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
-        this.Mirror(0, 0);
+        this.mirror(0, 0);
      }
 }

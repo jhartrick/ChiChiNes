@@ -38,18 +38,6 @@ export declare class ChiChiPPU {
     private _spritesAreVisible;
     private nameTableMemoryStart;
     backgroundPatternTableIndex: number;
-    ChrRomHandler: IBaseCart;
-    PPU_IRQAsserted: boolean;
-    readonly NextEventAt: number;
-    PPU_SpriteCopyHasHappened: boolean;
-    PPU_MaxSpritesPerScanline: number;
-    PPU_SpriteRam: number[];
-    SpritesOnLine: number[];
-    GetPPUStatus(): PpuStatus;
-    PPU_FrameFinishHandler: () => void;
-    PPU_NameTableMemoryStart: number;
-    readonly PatternTableIndex: number;
-    readonly SpritePatternTableIndex: number;
     private _PPUAddress;
     private _PPUStatus;
     _PPUControlByte0: number;
@@ -86,8 +74,19 @@ export declare class ChiChiPPU {
     private fetchTile;
     private patternEntry;
     private patternEntryByte2;
-    private outBuffer;
     byteOutBuffer: Uint8Array;
+    ChrRomHandler: IBaseCart;
+    PPU_IRQAsserted: boolean;
+    readonly NextEventAt: number;
+    PPU_SpriteCopyHasHappened: boolean;
+    PPU_MaxSpritesPerScanline: number;
+    PPU_SpriteRam: number[];
+    SpritesOnLine: number[];
+    GetPPUStatus(): PpuStatus;
+    PPU_FrameFinishHandler: () => void;
+    PPU_NameTableMemoryStart: number;
+    readonly PatternTableIndex: number;
+    readonly SpritePatternTableIndex: number;
     Initialize(): void;
     WriteState(writer: any): void;
     ReadState(state: any): void;
@@ -97,13 +96,13 @@ export declare class ChiChiPPU {
     UpdatePPUControlByte0(): void;
     SetByte(Clock: number, address: number, data: number): void;
     GetByte(Clock: number, address: number): number;
-    CopySprites(copyFrom: number): void;
-    InitSprites(): void;
-    GetSpritePixel(): number;
-    WhissaSpritePixel(patternTableIndex: number, x: number, y: number, sprite: {
+    copySprites(copyFrom: number): void;
+    initSprites(): void;
+    getSpritePixel(): number;
+    decodeSpritePixel(patternTableIndex: number, x: number, y: number, sprite: {
         v: ChiChiSprite;
     }, tileIndex: number): number;
-    PreloadSprites(scanline: number): void;
+    preloadSprites(scanline: number): void;
     UnpackSprites(): void;
     UnpackSprite(currSprite: number): void;
     GetNameTablePixel(): number;
