@@ -17,7 +17,7 @@ export class MMC1Cart extends BaseCart  {
         this.mapperName = 'MMC1';
         this.usesSRAM = true;
         if (this.chrRomCount > 0) {
-            this.CopyBanks(0,0, 0, 2);
+            this.copyBanks(0,0, 0, 2);
         }
         this._registers[0] = 12;
         this._registers[1] = 0;
@@ -91,16 +91,15 @@ export class MMC1Cart extends BaseCart  {
     setMMC1ChrBanking(clock: number) {
         //	bit 4 - sets 8KB or 4KB CHRROM switching mode
         // 0 = 8KB CHRROM banks, 1 = 4KB CHRROM banks
-        this.Whizzler.DrawTo(clock);
         
         //if ((this._registers[0] & 16) === 16) {
         if (this.chrRomBankMode === 1) {
-            this.CopyBanks4k(0, 0, this._registers[1], 1);
-            this.CopyBanks4k(0, 1, this._registers[2], 1);
+            this.copyBanks4k(0, 0, this._registers[1], 1);
+            this.copyBanks4k(0, 1, this._registers[2], 1);
         } else {
             //CopyBanks(0, _registers[1], 2);
-            this.CopyBanks4k(0, 0, this._registers[1], 1);
-            this.CopyBanks4k(0, 1, ((this._registers[1] + 1) | 0), 1);
+            this.copyBanks(0, 0, this._registers[1], 1);
+            //this.copyBanks4k(0, 1, ((this._registers[1] + 1) | 0), 1);
         }
         this.bankSwitchesChanged = true;
 
@@ -125,15 +124,15 @@ export class MMC1Cart extends BaseCart  {
         switch (this.prgRomBankMode){
             case 0:
             case 1:
-                reg = (4 * ((this._registers[3] >> 1) & 0xF) + this.bank_select) | 0;
+                reg = 4 * ((this._registers[3] >> 1) & 0xF) + this.bank_select;
                 this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
                 break;
             case 2:
-                reg = (2 * (this._registers[3]) + this.bank_select) | 0;
+                reg = 2 * (this._registers[3]) + this.bank_select;
                 this.SetupBankStarts(0, 1, reg, reg + 1);
                 break;
             case 3:
-                reg = (2 * (this._registers[3]) + this.bank_select) | 0;
+                reg = 2 * (this._registers[3]) + this.bank_select;
                 this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
             break;
         }
@@ -143,7 +142,6 @@ export class MMC1Cart extends BaseCart  {
     setMMC1Mirroring(clock: number) {
         //bit 1 - toggles between H/V and "one-screen" mirroring
         //0 = one-screen mirroring, 1 = H/V mirroring
-        this.Whizzler.DrawTo(clock);
         switch (this._registers[0] & 3) {
             case 0:
                 this.oneScreenOffset = 0;

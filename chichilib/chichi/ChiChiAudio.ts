@@ -41,6 +41,7 @@ export class ChiChiBopper {
     // channels 
     private square0: SquareChannel;
     private square1: SquareChannel;
+
     private triangle: TriangleChannel;
     private noise: NoiseChannel;
     private dmc: DMCChannel;
@@ -196,7 +197,8 @@ export class ChiChiBopper {
                 break;
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
-                this.lastFrameHit = 0;
+                //this.endFrame(clock);
+                //this.lastFrameHit = 0;
                 break;
         }
     }
@@ -211,10 +213,6 @@ export class ChiChiBopper {
     }
 
     updateFrame(time: number): void {
-        if (this.muted) {
-            return;
-        }
-
         this.runFrameEvents(time, this.lastFrameHit);
         if (this.lastFrameHit === 3) {
             this.lastFrameHit = 0;

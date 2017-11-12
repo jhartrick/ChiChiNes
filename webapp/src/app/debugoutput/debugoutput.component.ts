@@ -40,6 +40,8 @@ export class DebugOutputComponent implements OnInit  {
     public instructions: string[];
     public dbgDataSource:  DebugInstructionDataSource ;
 
+    decodedStatusRegister: string  = '';
+
     constructor(public nes: Emulator, private cd: ChangeDetectorRef) {
         // this.cd.detach();
     }

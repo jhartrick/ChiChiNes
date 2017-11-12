@@ -13,7 +13,7 @@ export class VSCart extends BaseCart {
             this.mapperName = 'VS Unisystem';
             this.mapsBelow6000 = true;
             if (this.chrRomCount > 0) {
-                this.CopyBanks(0, 0, 0, 1);
+                this.copyBanks(0, 0, 0, 1);
             }
             this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
         }
@@ -27,7 +27,7 @@ export class VSCart extends BaseCart {
                 if (this.prgRomCount > 2) { 
                     this.SetupBankStarts(chrbank, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
                 }
-                this.CopyBanks(clock, 0, chrbank, 1);
+                this.copyBanks(clock, 0, chrbank, 1);
             }
         }
              

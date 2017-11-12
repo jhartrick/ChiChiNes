@@ -6,7 +6,7 @@ import { BaseCart } from "./BaseCart";
      InitializeCart() {
          this.mapperName = 'Charlie Multi-Cart';
          if (this.chrRomCount > 0) {
-             this.CopyBanks(0, 0, 0, 1);
+             this.copyBanks(0, 0, 0, 1);
          }
          this.SetupBankStarts(0, 1,  2, 3);
         }
@@ -26,9 +26,8 @@ import { BaseCart } from "./BaseCart";
                  newbank81 = (val ) << 2;
                  this.SetupBankStarts(newbank81, newbank81 + 1 ,  newbank81 + 2,  newbank81 + 3);
              }
-             this.Whizzler.DrawTo(clock);
              this.Mirror(clock, (( val >> 7) & 0x1) + 1 );
-             this.CopyBanks(clock, 0,(val >> 3) & 7, 1);
+             this.copyBanks(clock, 0,(val >> 3) & 7, 1);
          }
      }
      
@@ -38,7 +37,7 @@ import { BaseCart } from "./BaseCart";
      InitializeCart() {
          this.mapperName = 'Charlie Multi-Cart';
          if (this.chrRomCount > 0) {
-             this.CopyBanks(0, 0, 0, 1);
+             this.copyBanks(0, 0, 0, 1);
          }
          this.SetupBankStarts(0, 1,  2, 3);
         }
@@ -60,9 +59,8 @@ import { BaseCart } from "./BaseCart";
          
              }
  
-             this.Whizzler.DrawTo(clock);
              this.Mirror(clock, (( address >> 7) & 0x1) + 1 );
-             this.CopyBanks(clock, 0,(address >> 3) & 7, 1);
+             this.copyBanks(clock, 0,(address >> 3) & 7, 1);
          }
      }
      
@@ -73,7 +71,7 @@ import { BaseCart } from "./BaseCart";
      InitializeCart() {
          this.mapperName = 'Multi-Cart';
          if (this.chrRomCount > 0) {
-             this.CopyBanks(0, 0, 0, 1);
+             this.copyBanks(0, 0, 0, 1);
          }
          this.SetupBankStarts(0, 1, 0, 1);
         }
@@ -92,11 +90,8 @@ import { BaseCart } from "./BaseCart";
                  this.SetupBankStarts(newbank81, newbank81 + 1 ,  newbank81,  newbank81 + 1);
                  
              }
-                 
- 
-             this.Whizzler.DrawTo(clock);
              this.Mirror(clock, (( address) & 0x1) + 1 );
-             this.CopyBanks(clock, 0, bank, 1);
+             this.copyBanks(clock, 0, bank, 1);
          }
      }
  }
@@ -106,7 +101,7 @@ import { BaseCart } from "./BaseCart";
     InitializeCart() {
         this.mapperName = 'Multi-Cart212';
         if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 0, 2);
+            this.copyBanks(0, 0, 0, 2);
         }
         this.SetupBankStarts(0, 1, 3, 4);
     }
@@ -130,9 +125,8 @@ import { BaseCart } from "./BaseCart";
                 this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
             }
 
-            this.Whizzler.DrawTo(clock);
             this.Mirror(clock, (( address >> 3) & 0x1) + 1 );
-            this.CopyBanks(clock, 0, bank, 1);
+            this.copyBanks(clock, 0, bank, 1);
         }
     }
 }

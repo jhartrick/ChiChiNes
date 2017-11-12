@@ -1,7 +1,7 @@
 ﻿import { IBaseCart, BaseCart, ChiChiCPPU } from 'chichi';
 
 export class WishboneCart {
-
+    name: string;
     get supported(): boolean {
         return this.realCart ? this.realCart.supported : false;
     }

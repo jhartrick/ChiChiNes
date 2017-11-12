@@ -210,16 +210,10 @@ export class ChiChiPPU {
 
     SetupVINT(): void {
         this._PPUStatus = this._PPUStatus | 128;
-        //this.NMIHasBeenThrownThisFrame = false;
-        // HandleVBlankIRQ = true;
         this._frames = this._frames + 1;
-        //isRendering = false;
 
         if (this.NMIIsThrown) {
             this.NMIHandler();
-            //this._handleNMI = true;
-            //this.HandleVBlankIRQ = true;
-            //this.NMIHasBeenThrownThisFrame = true;
         }
     }
     VidRAM_GetNTByte(address: number): number {
@@ -259,7 +253,7 @@ export class ChiChiPPU {
 
         switch (address & 7) {
             case 0:
-                this.DrawTo(Clock);
+
                 this._PPUControlByte0 = data;
                 this._openBus = data;
                 this.nameTableBits = this._PPUControlByte0 & 3;
@@ -281,7 +275,7 @@ export class ChiChiPPU {
                 //      5	R (to be documented)
                 //      6	G (to be documented)
                 //      7	B (to be documented)
-                this.DrawTo(Clock);
+
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
                 this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
@@ -321,7 +315,7 @@ export class ChiChiPPU {
                     //    fineHorizontalScroll = data & 0x7;
                     //    horizontalTileIndex = data >> 3;
                     //}  
-                    this.DrawTo(Clock);
+
                     this._hScroll = data;
 
                     this.lockedHScroll = this._hScroll & 7;
@@ -330,7 +324,7 @@ export class ChiChiPPU {
                     this.PPUAddressLatchIsHigh = false;
                 } else {
                     // during rendering, a write here will not post to the rendering counter
-                    this.DrawTo(Clock);
+
                     this._vScroll = data;
                     if (data > 240) {
                         this._vScroll = data - 256;
@@ -370,7 +364,6 @@ export class ChiChiPPU {
 
                     // on second write during frame, loopy t (_hscroll, _vscroll) is copied to loopy_v (lockedHscroll, lockedVScroll)
 
-                    this.DrawTo(Clock);
                     this._hScroll = ((this._PPUAddress & 0x1F) << 3); // +(currentXPosition & 7);
                     this._vScroll = (((this._PPUAddress >> 5) & 0x1F) << 3);
                     this._vScroll |= ((this._PPUAddress >> 12) & 3);
@@ -393,7 +386,7 @@ export class ChiChiPPU {
                 //            //   $2000 is 0) or by 32 (bit 2 of $2000 is 1).
                 // ppuLatch = data;
                 if ((this._PPUAddress & 0xFF00) === 0x3F00) {
-                    this.DrawTo(Clock);
+
                     //WriteToNESPalette(_PPUAddress, (byte)data);
                     var palAddress = (this._PPUAddress) & 0x1F;
                     this._palette[palAddress] = data;
@@ -441,7 +434,6 @@ export class ChiChiPPU {
                 // return lower 5 latched bits, and the status
                 ret = (this.ppuReadBuffer & 0x1F) | this._PPUStatus;
 
-                this.DrawTo(Clock);
                 if ((ret & 0x80) === 0x80) {
                     this._PPUStatus = this._PPUStatus & ~0x80;
                 }
@@ -489,12 +481,8 @@ export class ChiChiPPU {
         }
         return 0;
     }
-    HandleEvent(Clock: number): void {
-        this.DrawTo(Clock);
-    }
-    ResetClock(Clock: number): void {
-        this.LastcpuClock = Clock;
-    }
+
+
     CopySprites(copyFrom: number): void {
 
         // should copy 0x100 items from source to spriteRAM, 
@@ -719,11 +707,9 @@ export class ChiChiPPU {
     }
     oddFrame: boolean = true;
 
-    DrawTo(cpuClockNum: number): void {
-        let frClock = (cpuClockNum - this.LastcpuClock) * 3;
-        this.LastcpuClock = cpuClockNum;
-        
-        for (var i = 0; i < frClock; ++i) {
+    advanceClock(ticks: number) {
+        let ppuTicks = ticks * 3;
+        while (ppuTicks--) {
             switch (this.frameClock) {
                 case 0:
                 
@@ -772,7 +758,7 @@ export class ChiChiPPU {
             if (this.shouldRender) {
                 if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
                     /* update x position */
-                    this.xPosition = this.currentXPosition + this.lockedHScroll;
+                    this.xPosition = (this.currentXPosition + this.lockedHScroll);
 
 
                     if ((this.xPosition & 7) === 0) {
@@ -802,7 +788,7 @@ export class ChiChiPPU {
                     }
                     let tilesVis = this._tilesAreVisible;
                     let spriteVis = this._spritesAreVisible;
-                    if (this.currentXPosition < 8 ){
+                    if (this.currentXPosition < 8 ) {
                         tilesVis = !this._clipTiles;
                         spriteVis = !this._clipSprites;
                     }
@@ -868,6 +854,12 @@ export class ChiChiPPU {
             }
         }
     }
+
+    // DrawTo(cpuClockNum: number): void {
+    //     let frClock = (cpuClockNum - this.LastcpuClock) * 3;
+    //     this.advanceClock(frClock);
+    //     this.LastcpuClock = cpuClockNum;
+    // }
 
     UpdatePixelInfo(): void {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;

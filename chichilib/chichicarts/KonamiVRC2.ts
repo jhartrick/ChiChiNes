@@ -9,6 +9,7 @@ interface PokeMap {
 
 export class VRCIrqBase extends BaseCart {
     irqLatch: number = 0;
+
     prescaler = 341;
     irqCounter: number = 0;
     irqMode: boolean = false;
@@ -18,13 +19,13 @@ export class VRCIrqBase extends BaseCart {
 
     tickIrq() {
         
-        this.irqCounter++;
-        if (this.irqCounter == 0xFF) {
-            console.log('irq')
+        if (this.irqCounter == 0xff) {
             this.prescaler = 341;
-            this.irqCounter = this.irqLatch;
-
-            this.CPU._handleIRQ = true;
+            this.irqCounter = this.irqLatch & 0xff;
+            this.irqRaised = true;
+            //this.CPU._handleIRQ = true;
+        } else {
+            this.irqCounter++;
         }
     }
 
@@ -50,18 +51,18 @@ export class VRCIrqBase extends BaseCart {
     }
 
     ackIrq() {
-        console.log('ack irq')
+        this.irqRaised = false;
+       
         this.irqEnable = this.irqEnableAfterAck;
     }
 
     set irqControl(val: number) {
-        console.log('irqControl ' + val)
         this.irqEnableAfterAck = (val & 0x1) == 0x1;
         this.irqEnable = (val & 0x2) == 0x2;
         this.irqMode = (val & 0x4) == 0x4;
         if (this.irqEnable) {
             this.prescaler = 341;
-            this.irqCounter =this.irqLatch ;
+            this.irqCounter = this.irqLatch & 0xff;
         }
     }
 
@@ -72,6 +73,7 @@ class VRC2or4Cart extends VRCIrqBase {
     vrc2: boolean = false;
     swapMode: boolean = false;
     microwireLatch: number = 0;
+    irqlatches = [0,0];
 
     latches:number[] =[
         0,0,
@@ -170,35 +172,37 @@ class VRC2or4Cart extends VRCIrqBase {
             // irq handlers
             mask: 0xF000, address: [0xF000],
             func: (clock, address, data) => {
-                if ((address & 0xF) == 0x0) {
-                    this.irqLatch |= (0xF & data);
+                if ((address & 0x3) == 0x0) {
+                    this.irqlatches[0] = (0xF & data);
+                    this.irqLatch = this.irqlatches[0] | this.irqlatches[1];
                 } else
-                if ((address & 0xF) == 0x1) {
-                    this.irqLatch |= ((0xF & data) << 4);
+                if ((address & 0x3) == 0x1) {
+                    this.irqlatches[1] = ((0xF & data) << 4);
+                    this.irqLatch = this.irqlatches[0] | this.irqlatches[1];
                 } 
-                if ((address & 0xF) == 0x2) {
+                if ((address & 0x3) == 0x2) {
                     this.irqControl = data;
                 } 
-                if ((address & 0xF) == 0x3) {
+                if ((address & 0x3) == 0x3) {
                     this.ackIrq();
                 } 
             }
         },
         {
             // memory handlers, registerlocations change
-            mask: 0xF000, address: [0xb000, 0xc000, 0xd000, 0xe000],
+            mask: 0xf000, address: [0xb000, 0xc000, 0xd000, 0xe000],
             func: (clock, address, data) => {
-                
+                const addmask = address & 0xfff;
                 const bank = ((address >> 12) & 0xf) - 0xb;
                 const index = bank * 4;
-                if ((address & 0xFFF) == this.regNums[0]) {
-                    this.latches[index]  = data & 0xF;
-                } else if ((address & 0xFFF) == this.regNums[1]) {
-                    this.latches[index + 1] = (data & 0xf) << 4;
-                } else if ((address & 0xFFF) == this.regNums[2]) {
-                    this.latches[index + 2]  = data & 0xF;
-                } else if ((address & 0xFFF) == this.regNums[3]) {
-                    this.latches[index + 3] = (data & 0xf) <<4;
+                if (addmask == this.regNums[0]) {
+                    this.latches[index]  = data & 0xf;
+                } else if (addmask == this.regNums[1]) {
+                    this.latches[index + 1] = (data & 0x1f) << 4;
+                } else if (addmask == this.regNums[2]) {
+                    this.latches[index + 2]  = data & 0xf;
+                } else if (addmask == this.regNums[3]) {
+                    this.latches[index + 3] = (data & 0x1f) << 4;
                 }
                 this.vrcCopyBanks1k(clock, (bank * 2) + 0, this.latches[index] | this.latches[index + 1], 1);
                 this.vrcCopyBanks1k(clock, (bank * 2) + 1, this.latches[index + 2] | this.latches[index + 3], 1);
@@ -206,7 +210,7 @@ class VRC2or4Cart extends VRCIrqBase {
     }];
 
     vrcCopyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
-        this.CopyBanks1k(clock, dest, src, numberOf1kBanks);
+        this.copyBanks1k(clock, dest, src, numberOf1kBanks);
     }
     
     useMicrowire () {
@@ -259,7 +263,7 @@ export class KonamiVRC2Cart extends VRC2or4Cart {
     InitializeCart() {
         this.mapperName = 'KonamiVRC2';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.CopyBanks4k(0, 0, 0, 2);
+        this.copyBanks4k(0, 0, 0, 2);
 
         switch (this.ROMHashFunction)
         {
@@ -285,7 +289,7 @@ export class KonamiVRC022Cart extends VRC2or4Cart {
     InitializeCart() {
         this.mapperName = 'KonamiVRC2a';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.CopyBanks4k(0, 0, 0, 2);
+        this.copyBanks4k(0, 0, 0, 2);
         this.regNums = [
             0x0,
             0x2,
@@ -294,7 +298,7 @@ export class KonamiVRC022Cart extends VRC2or4Cart {
         ];
         this.vrcmirroring = this.vrc2mirroring;
         this.vrcCopyBanks1k = (clock, dest,src, numberOf1kBanks) => {
-            this.CopyBanks1k(clock, dest, src >> 1, numberOf1kBanks);
+            this.copyBanks1k(clock, dest, src >> 1, numberOf1kBanks);
         }
 
         //this.useMicrowire();
@@ -312,7 +316,7 @@ export class Konami021Cart extends VRC2or4Cart {
     InitializeCart() {
         this.mapperName = 'KonamiVRC2';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.CopyBanks4k(0, 0, 0, 2);
+        this.copyBanks4k(0, 0, 0, 2);
         this.regNums = [
             0x00,
             0x02,
@@ -338,7 +342,8 @@ export class Konami025Cart extends VRC2or4Cart {
     InitializeCart() {
         this.mapperName = 'KonamiVRC4';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.CopyBanks4k(0, 0, 0, 2);
+        this.copyBanks4k(0, 0, 1, 1);
+        this.copyBanks4k(0, 1, 0, 1);
         this.regNums = [0x000, 0x002, 0x001, 0x003];
         switch (this.ROMHashFunction)
         {

@@ -21,7 +21,7 @@ import { WavSharer } from './Audio/CommonAudio';
             this.Cpu = cpu ? cpu : new ChiChiCPPU(this.SoundBopper, this.ppu);
             this.ppu.cpu = this.Cpu;
             this.ppu.NMIHandler = () => {
-                this.Cpu.NMIHandler();
+                this.Cpu.nmiHandler();
             }
             this.SoundBopper.NMIHandler = () => {
                 this.Cpu._handleIRQ = true;
@@ -100,7 +100,6 @@ import { WavSharer } from './Audio/CommonAudio';
 
         Step(): void {
             if (this.frameJustEnded) {
-                this.Cpu.FindNextEvent();
                 this.frameOn = true;
                 this.frameJustEnded = false;
             }
@@ -121,7 +120,6 @@ import { WavSharer } from './Audio/CommonAudio';
             this.frameJustEnded = false;
 
             //_cpu.RunFrame();
-            this.Cpu.FindNextEvent();
             do {
                 this.Cpu.Step();
             } while (this.frameOn);
@@ -220,11 +218,12 @@ import { WavSharer } from './Audio/CommonAudio';
             this._clock = value;
         }  
         private advanceClock(value: number) {
-            this.ppu.DrawTo(this._clock);
-            this.SoundBopper.advanceClock(value);
-            this.Cart.advanceClock(value);
-            this._clock += value;
-            
+            if (value) {
+                this.ppu.advanceClock(value);
+                this.SoundBopper.advanceClock(value);
+                this.Cart.advanceClock(value);
+                this._clock += value;
+            }
         }
         private _ticks = 0;
 
@@ -315,74 +314,17 @@ import { WavSharer } from './Audio/CommonAudio';
             return this.instructionHistoryPointer;
         }
 
-        // ppu events
-        // ppu variables 
-        backgroundPatternTableIndex: number=0;
-
-        //private PPU_HandleVBlankIRQ: boolean;
-
-        private _PPUAddress: number = 0;
-        private _PPUStatus: number = 0;
-         _PPUControlByte0: number = 0;  _PPUControlByte1: number = 0;
-        private _spriteAddress: number = 0;
-
-        private currentXPosition = 0;
-        private currentYPosition = 0;
-        private _hScroll = 0;
-        private _vScroll = 0;
-        private lockedHScroll = 0;
-        private lockedVScroll = 0;
-        //private scanlineNum = 0;
-        //private scanlinePos = 0;
-
-        private shouldRender = false;
-
-        //private NMIHasBeenThrownThisFrame = false;
-        private _frames = 0;
-        private hitSprite = false;
-        private PPUAddressLatchIsHigh = true;
-        private p32 = new Uint32Array(256);// System.Array.init(256, 0, System.Int32);
-        private isRendering = true;
-        public frameClock = 0;
-        public FrameEnded = false;
-        private frameOn = false;
-        //private framePalette = System.Array.init(256, 0, System.Int32);
-        private nameTableBits = 0;
-        private vidRamIsRam = true;
-        _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
-        private _openBus = 0;
-        private sprite0scanline = 0;
-        private sprite0x = 0;
-        private _maxSpritesPerScanline = 64;
-
-        private xNTXor = 0; private yNTXor = 0;
-
-        private spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
-        spriteRAM = new Uint8Array(<any>this.spriteRAMBuffer);// System.Array.init(256, 0, System.Int32);
-        private spritesOnLine = new Array<number>(512);// System.Array.init(512, 0, System.Int32);
-        private currentTileIndex = 0;
-        private fetchTile = true;
-
-        // tile bytes currently latched in ppu
-        private patternEntry = 0; private patternEntryByte2 = 0;
-
-        //
-        private outBuffer = new Uint8Array(65536);
 
         private _padOne: ChiChiInputHandler;
         private _padTwo: ChiChiInputHandler;
 
         ppu: ChiChiPPU;
 
-        // 'internal
-
-        public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
-
         constructor(bopper: ChiChiBopper, ppu: ChiChiPPU) {
 
             this.SoundBopper = bopper;
 
-            bopper.NMIHandler = this.IRQUpdater;
+            bopper.NMIHandler = this.irqUpdater;
 
             // init PPU
             this.ppu = ppu;
@@ -440,7 +382,7 @@ import { WavSharer } from './Audio/CommonAudio';
             }
         }
 
-        SetFlag(Flag: number, value: boolean): void {
+        setFlag(Flag: number, value: boolean): void {
             this._statusRegister = (value ? (this._statusRegister | Flag) : (this._statusRegister & ~Flag));
 
             this._statusRegister |= 32; // (int)CPUStatusMasks.ExpansionMask;
@@ -450,22 +392,25 @@ import { WavSharer } from './Audio/CommonAudio';
             return ((this._statusRegister & flag) === flag);
         }
 
-        InterruptRequest(): void {
-
+        interruptRequest(): void {
+            this._handleIRQ = false;
             //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
             //  set is pushed on the stack, then the I flag is set. 
             if (!this.GetFlag(this.SRMasks_InterruptDisableMask)) {
-                this.SetFlag(this.SRMasks_InterruptDisableMask, true);
+                this.advanceClock(7);
+                
+                
+                this.setFlag(this.SRMasks_InterruptDisableMask, true);
 
                 var newStatusReg1 = this._statusRegister & ~0x10 | 0x20;
 
                 // if enabled
 
                 // push pc onto stack (high byte first)
-                this.PushStack(this._programCounter >> 8);
-                this.PushStack(this._programCounter);
+                this.pushStack(this._programCounter >> 8);
+                this.pushStack(this._programCounter);
                 // push sr onto stack
-                this.PushStack(this._statusRegister);
+                this.pushStack(this._statusRegister);
 
                 // point pc to interrupt service routine
 
@@ -476,18 +421,18 @@ import { WavSharer } from './Audio/CommonAudio';
 
         }
 
-        NonMaskableInterrupt(): void {
+        nonMaskableInterrupt(): void {
             //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
             //  set is pushed on the stack, then the I flag is set. 
             const newStatusReg = this._statusRegister & ~0x10 | 0x20;
 
-            this.SetFlag(this.SRMasks_InterruptDisableMask, true);
+            this.setFlag(this.SRMasks_InterruptDisableMask, true);
             // push pc onto stack (high byte first)
-            this.PushStack(this._programCounter >> 8);
-            this.PushStack(this._programCounter & 0xFF);
+            this.pushStack(this._programCounter >> 8);
+            this.pushStack(this._programCounter & 0xFF);
             //c7ab
             // push sr onto stack
-            this.PushStack(newStatusReg);
+            this.pushStack(newStatusReg);
             // point pc to interrupt service routine
             const lowByte = this.GetByte(0xFFFA);
             const highByte = this.GetByte(0xFFFB);
@@ -496,11 +441,6 @@ import { WavSharer } from './Audio/CommonAudio';
                 //nonOpCodeticks = 7;
         }
 
-        CheckEvent(): void {
-            if (this.nextEvent === -1) {
-                this.FindNextEvent();
-            }
-        }
 
         RunFast(): void {
             while (this.clock < 29780) {
@@ -517,29 +457,27 @@ import { WavSharer } from './Audio/CommonAudio';
             if (this._handleNMI) {
                 this.advanceClock(7);
                 this._handleNMI = false;
-                this.NonMaskableInterrupt();
-            } else if (this._handleIRQ ) {
-                this.advanceClock(7);
-                this._handleIRQ = false;
-                this.InterruptRequest();
+                this.nonMaskableInterrupt();
+            } else if (this._handleIRQ || this.Cart.irqRaised ) {
+                this.interruptRequest();
             }
 
             //FetchNextInstruction();
             this._currentInstruction_Address = this._programCounter;
             this._currentInstruction_OpCode = this.GetByte((this._programCounter++) & 0xFFFF);
             this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
-
             this.fetchInstructionParameters();
 
             this.execute();
+
+            this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
+            this.advanceClock(this._currentInstruction_ExtraTiming);
 
             //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
             if (this._debugging) {
                 this.WriteInstructionHistoryAndUsage();
                 this._operationCounter++;
             }
-            this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
-            this.advanceClock(this._currentInstruction_ExtraTiming);
             //this.clock += ;
         }
 
@@ -578,7 +516,7 @@ import { WavSharer } from './Audio/CommonAudio';
             this._operationCounter = 0;
             this._stackPointer = 253;
             this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
-            this._ticks = 4;
+            this.advanceClock(4);
             this.genieCodes = [];
         }
 
@@ -587,8 +525,7 @@ import { WavSharer } from './Audio/CommonAudio';
             this._statusRegister = 52;
             this._stackPointer = 253;
             this._operationCounter = 0;
-            this._ticks = 4;
-
+            this.advanceClock(4);
             // wram initialized to 0xFF, with some exceptions
             // probably doesn't affect games, but why not?
             for (var i = 0; i < 2048; ++i) {
@@ -610,16 +547,7 @@ import { WavSharer } from './Audio/CommonAudio';
             // throw new Error('Method not implemented.');
         }
 
-        RunFrame(): void {
-
-            this.FindNextEvent();
-
-            do {
-                this.Step();
-            } while (!this.__frameFinished);
-        }
-
-        DecodeAddress(): number {
+        decodeAddress(): number {
             this._currentInstruction_ExtraTiming = 0;
             let result = 0;
             let lowByte = 0;
@@ -696,7 +624,7 @@ import { WavSharer } from './Audio/CommonAudio';
             //throw new Error('Method not implemented.');
         }
 
-        DecodeOperand(): number {
+        decodeOperand(): number {
             switch (this._currentInstruction_AddressingMode) {
                 case ChiChiCPPU_AddressingModes.Immediate:
                     this._dataBus = this._currentInstruction_Parameters0;
@@ -704,7 +632,7 @@ import { WavSharer } from './Audio/CommonAudio';
                 case ChiChiCPPU_AddressingModes.Accumulator:
                     return this._accumulator;
                 default:
-                    this._dataBus = this.GetByte(this.DecodeAddress());
+                    this._dataBus = this.GetByte(this.decodeAddress());
                     return this._dataBus;
             }
         }
@@ -721,62 +649,62 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 128: case 130: case 194: case 226: case 4: case 20: case 52: case 68: case 84: case 100: case 116:
                 case 212: case 244: case 12: case 28: case 60: case 92: case 124: case 220: case 252:
                     //SKB, SKW, DOP, - undocumented noops
-                    this.DecodeAddress();
+                    this.decodeAddress();
                     break;
                 case 105: case 101: case 117: case 109: case 125: case 121: case 97: case 113:
                     //ADC
-                    data = this.DecodeOperand();
+                    data = this.decodeOperand();
                     carryFlag = (this._statusRegister & 1);
                     result = (this._accumulator + data + carryFlag) | 0;
                     // carry flag
-                    this.SetFlag(this.SRMasks_CarryMask, result > 255);
+                    this.setFlag(this.SRMasks_CarryMask, result > 255);
                     // overflow flag
-                    this.SetFlag(this.SRMasks_OverflowMask, ((this._accumulator ^ data) & 128) !== 128 && ((this._accumulator ^ result) & 128) === 128);
+                    this.setFlag(this.SRMasks_OverflowMask, ((this._accumulator ^ data) & 128) !== 128 && ((this._accumulator ^ result) & 128) === 128);
                     // occurs when bit 7 is set
                     this._accumulator = result & 0xFF;
-                    this.SetZNFlags(this._accumulator);
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 41: case 37: case 53: case 45: case 61: case 57: case 33: case 49:
                     //AND
-                    this._accumulator = (this._accumulator & this.DecodeOperand());
-                    this.SetZNFlags(this._accumulator);
+                    this._accumulator = (this._accumulator & this.decodeOperand());
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 10: case 6: case 22: case 14: case 30:
                     //ASL
-                    data = this.DecodeOperand();
+                    data = this.decodeOperand();
                     // set carry flag
-                    this.SetFlag(this.SRMasks_CarryMask, ((data & 128) === 128));
+                    this.setFlag(this.SRMasks_CarryMask, ((data & 128) === 128));
                     data = (data << 1) & 254;
                     if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Accumulator) {
                         this._accumulator = data;
                     } else {
-                        this.SetByte(this.DecodeAddress(), data);
+                        this.SetByte(this.decodeAddress(), data);
                     }
-                    this.SetZNFlags(data);
+                    this.setZNFlags(data);
                     break;
                 case 144:
                     //BCC
                     if ((this._statusRegister & 1) !== 1) {
-                        this.Branch();
+                        this.branch();
                     }
                     break;
                 case 176:
                     //BCS();
                     if ((this._statusRegister & 1) === 1) {
-                        this.Branch();
+                        this.branch();
                     }
                     break;
                 case 240:
                     //BEQ();
                     if ((this._statusRegister & 2) === 2) {
-                        this.Branch();
+                        this.branch();
                     }
                     break;
                 case 36: case 44:
                     //BIT();
-                    data = this.DecodeOperand();
+                    data = this.decodeOperand();
                     // overflow is bit 6
-                    this.SetFlag(this.SRMasks_OverflowMask, (data & 64) === 64);
+                    this.setFlag(this.SRMasks_OverflowMask, (data & 64) === 64);
                     // negative is bit 7
                     if ((data & 128) === 128) {
                         this._statusRegister = this._statusRegister | 128;
@@ -792,19 +720,19 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 48:
                     //BMI();
                     if ((this._statusRegister & 128) === 128) {
-                        this.Branch();
+                        this.branch();
                     }
                     break;
                 case 208:
                     //BNE();
                     if ((this._statusRegister & 2) !== 2) {
-                        this.Branch();
+                        this.branch();
                     }
                     break;
                 case 16:
                     //BPL();
                     if ((this._statusRegister & 128) !== 128) {
-                        this.Branch();
+                        this.branch();
                     }
                     break;
                 case 0:
@@ -814,12 +742,12 @@ import { WavSharer } from './Audio/CommonAudio';
                     // for debugging and the subsequent RTI will be correct. 
                     // push pc onto stack (high byte first)
                     this._programCounter = this._programCounter + 1;
-                    this.PushStack(this._programCounter >> 8 & 0xFF);
-                    this.PushStack(this._programCounter & 0xFF);
+                    this.pushStack(this._programCounter >> 8 & 0xFF);
+                    this.pushStack(this._programCounter & 0xFF);
                     // push sr onto stack
                     //PHP and BRK push the current status with bits 4 and 5 set on the stack; 
                     data = this._statusRegister | 16 | 32;
-                    this.PushStack(data);
+                    this.pushStack(data);
                     // set interrupt disable, and break flags
                     // BRK then sets the I flag.
                     this._statusRegister = this._statusRegister | 20;
@@ -833,64 +761,64 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 80:
                     //BVC();
                     if ((this._statusRegister & 64) !== 64) {
-                        this.Branch();
+                        this.branch();
                     }
                     break;
                 case 112:
                     //BVS();
                     if ((this._statusRegister & 64) === 64) {
-                        this.Branch();
+                        this.branch();
                     }
                     break;
                 case 24:
                     //CLC();
-                    this.SetFlag(this.SRMasks_CarryMask, false);
+                    this.setFlag(this.SRMasks_CarryMask, false);
                     break;
                 case 216:
                     //CLD();
-                    this.SetFlag(this.SRMasks_DecimalModeMask, false);
+                    this.setFlag(this.SRMasks_DecimalModeMask, false);
                     break;
                 case 88:
                     //CLI();
-                    this.SetFlag(this.SRMasks_InterruptDisableMask, false);
+                    this.setFlag(this.SRMasks_InterruptDisableMask, false);
                     break;
                 case 184:
                     //CLV();
-                    this.SetFlag(this.SRMasks_OverflowMask, false);
+                    this.setFlag(this.SRMasks_OverflowMask, false);
                     break;
                 case 201: case 197: case 213: case 205: case 221: case 217: case 193: case 209:
                     //CMP();
-                    data = (this._accumulator + 256 - this.DecodeOperand());
-                    this.Compare(data);
+                    data = (this._accumulator + 256 - this.decodeOperand());
+                    this.compare(data);
                     break;
                 case 224: case 228: case 236:
                     //CPX();
-                    data = (this._indexRegisterX + 256 - this.DecodeOperand());
-                    this.Compare(data);
+                    data = (this._indexRegisterX + 256 - this.decodeOperand());
+                    this.compare(data);
                     break;
                 case 192: case 196: case 204:
                     //CPY();
-                    data = (this._indexRegisterY + 256 - this.DecodeOperand());
-                    this.Compare(data);
+                    data = (this._indexRegisterY + 256 - this.decodeOperand());
+                    this.compare(data);
                     break;
                 case 198: case 214: case 206: case 222:
                     //DEC();
-                    data = this.DecodeOperand();
+                    data = this.decodeOperand();
                     data = (data - 1) & 0xFF;
-                    this.SetByte(this.DecodeAddress(), data);
-                    this.SetZNFlags(data);
+                    this.SetByte(this.decodeAddress(), data);
+                    this.setZNFlags(data);
                     break;
                 case 202:
                     //DEX();
                     this._indexRegisterX = this._indexRegisterX - 1;
                     this._indexRegisterX = this._indexRegisterX & 0xFF;
-                    this.SetZNFlags(this._indexRegisterX);
+                    this.setZNFlags(this._indexRegisterX);
                     break;
                 case 136:
                     //DEY();
                     this._indexRegisterY = this._indexRegisterY - 1;
                     this._indexRegisterY = this._indexRegisterY & 0xFF;
-                    this.SetZNFlags(this._indexRegisterY);
+                    this.setZNFlags(this._indexRegisterY);
                     break;
                 case 73:
                 case 69:
@@ -901,29 +829,29 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 65:
                 case 81:
                     //EOR();
-                    this._accumulator = (this._accumulator ^ this.DecodeOperand());
-                    this.SetZNFlags(this._accumulator);
+                    this._accumulator = (this._accumulator ^ this.decodeOperand());
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 230:
                 case 246:
                 case 238:
                 case 254:
                     //INC();
-                    data = this.DecodeOperand();
+                    data = this.decodeOperand();
                     data = (data + 1) & 0xFF;
-                    this.SetByte(this.DecodeAddress(), data);
-                    this.SetZNFlags(data);
+                    this.SetByte(this.decodeAddress(), data);
+                    this.setZNFlags(data);
                     break;
                 case 232:
                     //INX();
                     this._indexRegisterX = this._indexRegisterX + 1;
                     this._indexRegisterX = this._indexRegisterX & 0xFF;
-                    this.SetZNFlags(this._indexRegisterX);
+                    this.setZNFlags(this._indexRegisterX);
                     break;
                 case 200:
                     this._indexRegisterY = this._indexRegisterY + 1;
                     this._indexRegisterY = this._indexRegisterY & 0xFF;
-                    this.SetZNFlags(this._indexRegisterY);
+                    this.setZNFlags(this._indexRegisterY);
                     break;
                 case 76:
                 case 108:
@@ -932,14 +860,14 @@ import { WavSharer } from './Audio/CommonAudio';
                     if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Indirect && this._currentInstruction_Parameters0 === 255) {
                         this._programCounter = 255 | this._currentInstruction_Parameters1 << 8;
                     } else {
-                        this._programCounter = this.DecodeAddress();
+                        this._programCounter = this.decodeAddress();
                     }
                     break;
                 case 32:
                     //JSR();
-                    this.PushStack((this._programCounter >> 8) & 0xFF);
-                    this.PushStack((this._programCounter - 1) & 0xFF);
-                    this._programCounter = this.DecodeAddress();
+                    this.pushStack((this._programCounter >> 8) & 0xFF);
+                    this.pushStack((this._programCounter - 1) & 0xFF);
+                    this._programCounter = this.decodeAddress();
                     break;
                 case 169:
                 case 165:
@@ -950,8 +878,8 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 161:
                 case 177:
                     //LDA();
-                    this._accumulator = this.DecodeOperand();
-                    this.SetZNFlags(this._accumulator);
+                    this._accumulator = this.decodeOperand();
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 162:
                 case 166:
@@ -959,8 +887,8 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 174:
                 case 190:
                     //LDX();
-                    this._indexRegisterX = this.DecodeOperand();
-                    this.SetZNFlags(this._indexRegisterX);
+                    this._indexRegisterX = this.decodeOperand();
+                    this.setZNFlags(this._indexRegisterX);
                     break;
                 case 160:
                 case 164:
@@ -968,21 +896,21 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 172:
                 case 188:
                     //LDY();
-                    this._indexRegisterY = this.DecodeOperand();
-                    this.SetZNFlags(this._indexRegisterY);
+                    this._indexRegisterY = this.decodeOperand();
+                    this.setZNFlags(this._indexRegisterY);
                     break;
                 case 74: case 70: case 86: case 78: case 94:
                     //LSR();
-                    data = this.DecodeOperand();
+                    data = this.decodeOperand();
                     //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
-                    this.SetFlag(this.SRMasks_CarryMask, (data & 1) === 1);
+                    this.setFlag(this.SRMasks_CarryMask, (data & 1) === 1);
                     //target.SetFlag(CPUStatusBits.Carry, (rst & 1) == 1);
                     data = data >> 1 & 0xFF;
-                    this.SetZNFlags(data);
+                    this.setZNFlags(data);
                     if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Accumulator) {
                         this._accumulator = data;
                     } else {
-                        this.SetByte(this.DecodeAddress(), data);
+                        this.SetByte(this.decodeAddress(), data);
                     }
                     break;
                 case 234: case 26: case 58: case 90: case 122: case 218: case 250: case 137:
@@ -1006,7 +934,7 @@ import { WavSharer } from './Audio/CommonAudio';
                     //case 0xfc:
                     //NOP();
                     if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.AbsoluteX) {
-                        this.DecodeAddress();
+                        this.decodeAddress();
                     }
                     break;
                 case 9:
@@ -1018,26 +946,26 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 1:
                 case 17:
                     //ORA();
-                    this._accumulator = (this._accumulator | this.DecodeOperand());
-                    this.SetZNFlags(this._accumulator);
+                    this._accumulator = (this._accumulator | this.decodeOperand());
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 72:
                     //PHA();
-                    this.PushStack(this._accumulator);
+                    this.pushStack(this._accumulator);
                     break;
                 case 8:
                     //PHP();
                     data = this._statusRegister | 16 | 32;
-                    this.PushStack(data);
+                    this.pushStack(data);
                     break;
                 case 104:
                     //PLA();
-                    this._accumulator = this.PopStack();
-                    this.SetZNFlags(this._accumulator);
+                    this._accumulator = this.popStack();
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 40:
                     //PLP();
-                    this._statusRegister = this.PopStack(); // | 0x20;
+                    this._statusRegister = this.popStack(); // | 0x20;
                     break;
                 case 42:
                 case 38:
@@ -1045,18 +973,18 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 46:
                 case 62:
                     //ROL();
-                    data = this.DecodeOperand();
+                    data = this.decodeOperand();
                     // old carry bit shifted into bit 1
                     oldbit = (this._statusRegister & 1) === 1 ? 1 : 0;
-                    this.SetFlag(this.SRMasks_CarryMask, (data & 128) === 128);
+                    this.setFlag(this.SRMasks_CarryMask, (data & 128) === 128);
                     data = ((data << 1) | oldbit) & 0xFF;
                     //data = data & 0xFF;
                     //data = data | oldbit;
-                    this.SetZNFlags(data);
+                    this.setZNFlags(data);
                     if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Accumulator) {
                         this._accumulator = data;
                     } else {
-                        this.SetByte(this.DecodeAddress(), data);
+                        this.SetByte(this.decodeAddress(), data);
                     }
                     break;
                 case 106:
@@ -1065,30 +993,30 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 110:
                 case 126:
                     //ROR();
-                    data = this.DecodeOperand();
+                    data = this.decodeOperand();
                     // old carry bit shifted into bit 7
                     oldbit = (this._statusRegister & 1) === 1 ? 128 : 0;
                     // original bit 0 shifted to carry
-                    this.SetFlag(this.SRMasks_CarryMask, (data & 1) === 1);
+                    this.setFlag(this.SRMasks_CarryMask, (data & 1) === 1);
                     data = (data >> 1) | oldbit;
-                    this.SetZNFlags(data);
+                    this.setZNFlags(data);
                     if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Accumulator) {
                         this._accumulator = data;
                     } else {
-                        this.SetByte(this.DecodeAddress(), data);
+                        this.SetByte(this.decodeAddress(), data);
                     }
                     break;
                 case 64:
                     //RTI();
-                    this._statusRegister = this.PopStack(); // | 0x20;
-                    lowByte = this.PopStack();
-                    highByte = this.PopStack();
+                    this._statusRegister = this.popStack(); // | 0x20;
+                    lowByte = this.popStack();
+                    highByte = this.popStack();
                     this._programCounter = ((highByte << 8) | lowByte);
                     break;
                 case 96:
                     //RTS();
-                    lowByte = (this.PopStack() + 1) & 0xFF;
-                    highByte = this.PopStack();
+                    lowByte = (this.popStack() + 1) & 0xFF;
+                    highByte = this.popStack();
                     this._programCounter = ((highByte << 8) | lowByte);
                     break;
                 case 235:
@@ -1102,26 +1030,26 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 241:  // undocumented sbc immediate
                     //SBC();
                     // start the read process
-                    data = this.DecodeOperand() & 4095;
+                    data = this.decodeOperand() & 4095;
                     carryFlag = ((this._statusRegister ^ 1) & 1);
                     result = (((this._accumulator - data) & 4095) - carryFlag) & 4095;
                     // set overflow flag if sign bit of accumulator changed
-                    this.SetFlag(this.SRMasks_OverflowMask, ((this._accumulator ^ result) & 128) === 128 && ((this._accumulator ^ data) & 128) === 128);
-                    this.SetFlag(this.SRMasks_CarryMask, (result < 256));
+                    this.setFlag(this.SRMasks_OverflowMask, ((this._accumulator ^ result) & 128) === 128 && ((this._accumulator ^ data) & 128) === 128);
+                    this.setFlag(this.SRMasks_CarryMask, (result < 256));
                     this._accumulator = (result) & 0xFF;
-                    this.SetZNFlags(this._accumulator);
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 56:
                     //SEC();
-                    this.SetFlag(this.SRMasks_CarryMask, true);
+                    this.setFlag(this.SRMasks_CarryMask, true);
                     break;
                 case 248:
                     //SED();
-                    this.SetFlag(this.SRMasks_DecimalModeMask, true);
+                    this.setFlag(this.SRMasks_DecimalModeMask, true);
                     break;
                 case 120:
                     //SEI();
-                    this.SetFlag(this.SRMasks_InterruptDisableMask, true);
+                    this.setFlag(this.SRMasks_InterruptDisableMask, true);
                     break;
                 case 133:
                 case 149:
@@ -1131,39 +1059,39 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 129:
                 case 145:
                     //STA();
-                    this.SetByte(this.DecodeAddress(), this._accumulator);
+                    this.SetByte(this.decodeAddress(), this._accumulator);
                     break;
                 case 134:
                 case 150:
                 case 142:
                     //STX();
-                    this.SetByte(this.DecodeAddress(), this._indexRegisterX);
+                    this.SetByte(this.decodeAddress(), this._indexRegisterX);
                     break;
                 case 132:
                 case 148:
                 case 140:
                     //STY();
-                    this.SetByte(this.DecodeAddress(), this._indexRegisterY);
+                    this.SetByte(this.decodeAddress(), this._indexRegisterY);
                     break;
                 case 170:
                     //TAX();
                     this._indexRegisterX = this._accumulator;
-                    this.SetZNFlags(this._indexRegisterX);
+                    this.setZNFlags(this._indexRegisterX);
                     break;
                 case 168:
                     //TAY();
                     this._indexRegisterY = this._accumulator;
-                    this.SetZNFlags(this._indexRegisterY);
+                    this.setZNFlags(this._indexRegisterY);
                     break;
                 case 186:
                     //TSX();
                     this._indexRegisterX = this._stackPointer;
-                    this.SetZNFlags(this._indexRegisterX);
+                    this.setZNFlags(this._indexRegisterX);
                     break;
                 case 138:
                     //TXA();
                     this._accumulator = this._indexRegisterX;
-                    this.SetZNFlags(this._accumulator);
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 154:
                     //TXS();
@@ -1172,24 +1100,24 @@ import { WavSharer } from './Audio/CommonAudio';
                 case 152:
                     //TYA();
                     this._accumulator = this._indexRegisterY;
-                    this.SetZNFlags(this._accumulator);
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 11:
                 case 43:
                     //AAC();
                     //AND byte with accumulator. If result is negative then carry is set.
                     //Status flags: N,Z,C
-                    this._accumulator = this.DecodeOperand() & this._accumulator & 0xFF;
-                    this.SetFlag(this.SRMasks_CarryMask, (this._accumulator & 128) === 128);
-                    this.SetZNFlags(this._accumulator);
+                    this._accumulator = this.decodeOperand() & this._accumulator & 0xFF;
+                    this.setFlag(this.SRMasks_CarryMask, (this._accumulator & 128) === 128);
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 75:
                     //AND byte with accumulator, then shift right one bit in accumu-lator.
                     //Status flags: N,Z,C
-                    this._accumulator = this.DecodeOperand() & this._accumulator;
-                    this.SetFlag(this.SRMasks_CarryMask, (this._accumulator & 1) === 1);
+                    this._accumulator = this.decodeOperand() & this._accumulator;
+                    this.setFlag(this.SRMasks_CarryMask, (this._accumulator & 1) === 1);
                     this._accumulator = this._accumulator >> 1;
-                    this.SetZNFlags(this._accumulator);
+                    this.setZNFlags(this._accumulator);
                     break;
                 case 107:
                     //ARR();
@@ -1200,7 +1128,7 @@ import { WavSharer } from './Audio/CommonAudio';
                     //If only bit 5 is 1: set V, clear C.
                     //If only bit 6 is 1: set C and V.
                     //Status flags: N,V,Z,C
-                    this._accumulator = this.DecodeOperand() & this._accumulator;
+                    this._accumulator = this.decodeOperand() & this._accumulator;
                     if ((this._statusRegister & 1) === 1) {
                         this._accumulator = (this._accumulator >> 1) | 128;
                     } else {
@@ -1208,23 +1136,23 @@ import { WavSharer } from './Audio/CommonAudio';
                     }
                     // original bit 0 shifted to carry
                     //            target.SetFlag(CPUStatusBits.Carry, (); 
-                    this.SetFlag(this.SRMasks_CarryMask, (this._accumulator & 1) === 1);
+                    this.setFlag(this.SRMasks_CarryMask, (this._accumulator & 1) === 1);
                     switch (this._accumulator & 48) {
                         case 48:
-                            this.SetFlag(this.SRMasks_CarryMask, true);
-                            this.SetFlag(this.SRMasks_InterruptDisableMask, false);
+                            this.setFlag(this.SRMasks_CarryMask, true);
+                            this.setFlag(this.SRMasks_InterruptDisableMask, false);
                             break;
                         case 0:
-                            this.SetFlag(this.SRMasks_CarryMask, false);
-                            this.SetFlag(this.SRMasks_InterruptDisableMask, false);
+                            this.setFlag(this.SRMasks_CarryMask, false);
+                            this.setFlag(this.SRMasks_InterruptDisableMask, false);
                             break;
                         case 16:
-                            this.SetFlag(this.SRMasks_CarryMask, false);
-                            this.SetFlag(this.SRMasks_InterruptDisableMask, true);
+                            this.setFlag(this.SRMasks_CarryMask, false);
+                            this.setFlag(this.SRMasks_InterruptDisableMask, true);
                             break;
                         case 32:
-                            this.SetFlag(this.SRMasks_CarryMask, true);
-                            this.SetFlag(this.SRMasks_InterruptDisableMask, true);
+                            this.setFlag(this.SRMasks_CarryMask, true);
+                            this.setFlag(this.SRMasks_InterruptDisableMask, true);
                             break;
                     }
                     break;
@@ -1232,13 +1160,13 @@ import { WavSharer } from './Audio/CommonAudio';
                     //ATX();
                     //AND byte with accumulator, then transfer accumulator to X register.
                     //Status flags: N,Z
-                    this._indexRegisterX = (this._accumulator = this.DecodeOperand() & this._accumulator);
-                    this.SetZNFlags(this._indexRegisterX);
+                    this._indexRegisterX = (this._accumulator = this.decodeOperand() & this._accumulator);
+                    this.setZNFlags(this._indexRegisterX);
                     break;
             }
         }
 
-        SetZNFlags(data: number): void {
+        setZNFlags(data: number): void {
             //zeroResult = (data & 0xFF) == 0;
             //negativeResult = (data & 0x80) == 0x80;
 
@@ -1255,12 +1183,12 @@ import { WavSharer } from './Audio/CommonAudio';
             } // ((int)CPUStatusMasks.NegativeResultMask);
         }
 
-        Compare(data: number): void {
-            this.SetFlag(this.SRMasks_CarryMask, data > 255);
-            this.SetZNFlags(data & 255);
+        compare(data: number): void {
+            this.setFlag(this.SRMasks_CarryMask, data > 255);
+            this.setZNFlags(data & 255);
         }
 
-        Branch(): void {
+        branch(): void {
             this._currentInstruction_ExtraTiming = 1;
             var addr = this._currentInstruction_Parameters0 & 255;
             if ((addr & 128) === 128) {
@@ -1277,23 +1205,15 @@ import { WavSharer } from './Audio/CommonAudio';
             }
         }
 
-        NMIHandler(): void {
+        nmiHandler(): void {
             this._handleNMI = true;
         }
 
-        IRQUpdater(): void {
+        irqUpdater(): void {
             this._handleIRQ = this.SoundBopper.IRQAsserted || this.Cart.irqRaised;
         }
 
-        LoadBytes(offset: number, bytes: number[]): void {
-            throw new Error('Method not implemented.');
-        }
-
-        LoadBytes$1(offset: number, bytes: number[], length: number): void {
-            throw new Error('Method not implemented.');
-        }
-
-        private PushStack(data: number): void {
+        private pushStack(data: number): void {
             this.Rams[this._stackPointer + 256] = data;
             this._stackPointer--;
             if (this._stackPointer < 0) {
@@ -1301,7 +1221,7 @@ import { WavSharer } from './Audio/CommonAudio';
             }
         }
 
-        private PopStack(): number {
+        private popStack(): number {
             this._stackPointer++;
             if (this._stackPointer > 255) {
                 this._stackPointer = 0;
@@ -1327,15 +1247,16 @@ import { WavSharer } from './Audio/CommonAudio';
                     break;
                 case 0x4000:
                     switch (address) {
-                        case 16406:
-                            result = this._padOne.GetByte(this.clock, address);
-                            break;
-                        case 16407:
-                            result = this._padTwo.GetByte(this.clock, address);
-                            break;
-                        case 16405:
+                        case 0x4015:
                             result = this.SoundBopper.GetByte(this.clock, address);
                             break;
+                        case 0x4016:
+                            result = this._padOne.GetByte(this.clock, address);
+                            break;
+                        case 0x4017:
+                            result = this._padTwo.GetByte(this.clock, address);
+                            break;
+
                         default:
                             if (this.Cart.mapsBelow6000)
                                 result = this.Cart.GetByte(this.clock, address);
@@ -1522,10 +1443,7 @@ import { WavSharer } from './Audio/CommonAudio';
             }
         }
 
-        FindNextEvent(): void {
-            // it'll either be the ppu's NMI, or an irq from either the apu or the cart
-            this.nextEvent = this.clock + this.ppu.NextEventAt;//| this.Cart.nextEventAt;
-        }
+
         HandleNextEvent(): void {
            // this.ppu.HandleEvent(this.clock);
            // this.FindNextEvent();

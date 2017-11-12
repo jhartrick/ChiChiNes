@@ -33,7 +33,7 @@ export class MMC3Cart extends BaseCart {
         //SetupBanks(0, 1, 0xFE, 0xFF);
         this.prgSwitch1 = 0;
         this.prgSwitch2 = 1;
-        this.SwapPrgRomBanks();
+        this.swapPrgBanks();
         this._mmc3IrqVal = 0;
         this._mmc3IrcOn = false;
         this._mmc3TmpVal = 0;
@@ -47,29 +47,7 @@ export class MMC3Cart extends BaseCart {
         this.chr1kBank3 = 0;
 
         if (this.chrRomCount > 0) {
-            this.CopyBanks(0, 0, 8);
-        }
-    }
-
-    MaskBankAddress(bank: number) {
-
-        if (bank >= this.prgRomCount * 2) {
-            var i = 255;
-            while ((bank & i) >= this.prgRomCount * 2) {
-                i = i >> 1;
-            }
-            return (bank & i);
-        } else {
-            return bank;
-        }
-    }
-
-    CopyBanks(dest: number, src: number, numberOf1kBanks: number) {
-        if (this.chrRomCount > 0) {
-            for (var i = 0; i < numberOf1kBanks; i++) {
-                this.ppuBankStarts[dest + i] = (src + i) * 1024;
-            }
-            this.bankSwitchesChanged = true;
+            this.copyBanks1k(0, 0, 0, 8);
         }
     }
 
@@ -116,49 +94,49 @@ export class MMC3Cart extends BaseCart {
                 } else {
                     this.prgSwap = 0;
                 }
-                this.SwapPrgRomBanks();
+                this.swapPrgBanks();
                 break;
             case 32769:
                 switch (this._mmc3Command) {
                     case 0:
                         this.chr2kBank0 = val;
-                        this.SwapChrBanks();
+                        this.swapChrBanks();
                         // CopyBanks(0, val, 1);
                         // CopyBanks(1, val + 1, 1);
                         break;
                     case 1:
                         this.chr2kBank1 = val;
-                        this.SwapChrBanks();
+                        this.swapChrBanks();
                         // CopyBanks(2, val, 1);
                         // CopyBanks(3, val + 1, 1);
                         break;
                     case 2:
                         this.chr1kBank0 = val;
-                        this.SwapChrBanks();
+                        this.swapChrBanks();
                         //CopyBanks(4, val, 1);
                         break;
                     case 3:
                         this.chr1kBank1 = val;
-                        this.SwapChrBanks();
+                        this.swapChrBanks();
                         //CopyBanks(5, val, 1);
                         break;
                     case 4:
                         this.chr1kBank2 = val;
-                        this.SwapChrBanks();
+                        this.swapChrBanks();
                         //CopyBanks(6, val, 1);
                         break;
                     case 5:
                         this.chr1kBank3 = val;
-                        this.SwapChrBanks();
+                        this.swapChrBanks();
                         //CopyBanks(7, val, 1);
                         break;
                     case 6:
                         this.prgSwitch1 = val;
-                        this.SwapPrgRomBanks();
+                        this.swapPrgBanks();
                         break;
                     case 7:
                         this.prgSwitch2 = val;
-                        this.SwapPrgRomBanks();
+                        this.swapPrgBanks();
                         break;
                 }
                 break;
@@ -185,6 +163,8 @@ export class MMC3Cart extends BaseCart {
                 if (val === 0) {
                     // special treatment for one-time irq handling
                     this.scanlineCounter = 0;
+                    this.irqRaised = true;
+                    
                 }
                 break;
             case 49153:
@@ -192,43 +172,43 @@ export class MMC3Cart extends BaseCart {
                 break;
             case 57344:
                 this._mmc3IrcOn = false;
-                this._mmc3IrqVal = this._mmc3TmpVal;
                 this.irqRaised = false;
-                this.CPU._handleIRQ = true;
+                
                 break;
             case 57345:
                 this._mmc3IrcOn = true;
+                //this._mmc3IrqVal = this._mmc3TmpVal;
                 break;
         }
     }
 
-    SwapChrBanks() {
+    swapChrBanks() {
         if (this.ppuBankSwap) {
-            this.CopyBanks(0, this.chr1kBank0, 1);
-            this.CopyBanks(1, this.chr1kBank1, 1);
-            this.CopyBanks(2, this.chr1kBank2, 1);
-            this.CopyBanks(3, this.chr1kBank3, 1);
-            this.CopyBanks(4, this.chr2kBank0, 2);
-            this.CopyBanks(6, this.chr2kBank1, 2);
+            this.copyBanks1k(0, 0, this.chr1kBank0, 1);
+            this.copyBanks1k(0, 1, this.chr1kBank1, 1);
+            this.copyBanks1k(0, 2, this.chr1kBank2, 1);
+            this.copyBanks1k(0, 3, this.chr1kBank3, 1);
+            this.copyBanks1k(0, 4, this.chr2kBank0, 2);
+            this.copyBanks1k(0, 6, this.chr2kBank1, 2);
         } else {
-            this.CopyBanks(4, this.chr1kBank0, 1);
-            this.CopyBanks(5, this.chr1kBank1, 1);
-            this.CopyBanks(6, this.chr1kBank2, 1);
-            this.CopyBanks(7, this.chr1kBank3, 1);
-            this.CopyBanks(0, this.chr2kBank0, 2);
-            this.CopyBanks(2, this.chr2kBank1, 2);
+            this.copyBanks1k(0, 4, this.chr1kBank0, 1);
+            this.copyBanks1k(0, 5, this.chr1kBank1, 1);
+            this.copyBanks1k(0, 6, this.chr1kBank2, 1);
+            this.copyBanks1k(0, 7, this.chr1kBank3, 1);
+            this.copyBanks1k(0, 0, this.chr2kBank0, 2);
+            this.copyBanks1k(0, 2, this.chr2kBank1, 2);
         }
     }
 
-    SwapPrgRomBanks() {
+    swapPrgBanks() {
         //|+-------- PRG ROM bank configuration (0: $8000-$9FFF swappable, $C000-$DFFF fixed to second-last bank;
         //|                                      1: $C000-$DFFF swappable, $8000-$9FFF fixed to second-last bank)
 
         if (this.prgSwap === 1) {
 
-            this.SetupBankStarts(((this.prgRomCount * 2 - 2) | 0), this.prgSwitch2, this.prgSwitch1, ((this.prgRomCount * 2 - 1) | 0));
+            this.SetupBankStarts(this.prgRomCount * 2 - 2, this.prgSwitch2, this.prgSwitch1, this.prgRomCount * 2 - 1);
         } else {
-            this.SetupBankStarts(this.prgSwitch1, this.prgSwitch2, ((this.prgRomCount * 2 - 2) | 0), ((this.prgRomCount * 2 - 1) | 0));
+            this.SetupBankStarts(this.prgSwitch1, this.prgSwitch2, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         }
 
     }
@@ -243,12 +223,15 @@ export class MMC3Cart extends BaseCart {
             // counter will start counting from the new value, generating an IRQ once it reaches zero. 
             if (this._mmc3IrqVal === 0) {
                 if (this._mmc3IrcOn) {
-                    this.CPU._handleIRQ = true;
+                    
                     this.irqRaised = true;
                     //this.updateIRQ();
                 }
                 this.scanlineCounter = -1;
                 return;
+            } else {
+                this.scanlineCounter = this._mmc3IrqVal;
+                
             }
         }
 
@@ -256,17 +239,7 @@ export class MMC3Cart extends BaseCart {
             this.scanlineCounter = this._mmc3TmpVal;
             this._mmc3TmpVal = 0;
         } else {
-            this.scanlineCounter = (((this.scanlineCounter - 1) | 0)) & 255;
-        }
-
-        if (this.scanlineCounter === 0) {
-            if (this._mmc3IrcOn) {
-                this.irqRaised = true;
-                this.CPU._handleIRQ = true;
-            }
-            if (this._mmc3IrqVal > 0) {
-                this.scanlineCounter = this._mmc3IrqVal;
-            }
+            this.scanlineCounter = (this.scanlineCounter - 1)  & 255;
         }
 
     }

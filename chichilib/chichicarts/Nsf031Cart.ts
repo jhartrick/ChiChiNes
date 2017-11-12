@@ -8,7 +8,7 @@ import { BaseCart } from "./BaseCart";
          this.mapsBelow6000 = true;
          this.mapperName = 'NSF Compilation';
          if (this.chrRomCount > 0) {
-             this.CopyBanks(0, 0, 0, 1);
+             this.copyBanks(0, 0, 0, 1);
          }
          this.setupBanks4k(2, this.registers)
          

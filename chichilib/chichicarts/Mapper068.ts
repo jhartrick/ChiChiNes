@@ -24,31 +24,30 @@ export class Mapper068Cart extends BaseCart {
                 break;
             case 0x8000:
                 //Map a 2 KiB CHR ROM bank into PPU $0000.    
-                this.CopyBanks2k(clock,0, val , 1);
+                this.copyBanks2k(clock,0, val , 1);
                 break;
             case 0x9000:
                 // Map a 2 KiB CHR ROM bank into PPU $0800.  
-                this.CopyBanks2k(clock, 1, val , 1);
+                this.copyBanks2k(clock, 1, val , 1);
                 break;
             case 0xA000:
                 // Map a 2 KiB CHR ROM bank into PPU $1000.  
-                this.CopyBanks2k(clock, 2, val , 1);
+                this.copyBanks2k(clock, 2, val , 1);
                 break;
             case 0xB000:
                 // Map a 2 KiB CHR ROM bank into PPU $1800.   
-                this.CopyBanks2k(clock, 3, val , 1);
+                this.copyBanks2k(clock, 3, val , 1);
                 break;
             case 0xC000:
                 // Map a 1 KiB CHR ROM bank in place of the lower nametable (CIRAM $000-$3FF). Only D6-D0 are used; D7 is ignored and treated as 1, so nametables must be in the last 128 KiB of CHR ROM.   
-                this.CopyBanks1k(clock, 8, val | 0x80, 1);
+                this.copyBanks1k(clock, 8, val | 0x80, 1);
                 break;
             case 0xD000:
                 // Map a 1 KiB CHR ROM bank in place of the upper nametable (CIRAM $400-$7FF). Only D6-D0 are used; D7 is ignored and treated as 1.  
-                this.CopyBanks1k(clock, 9, val | 0x80, 1);
+                this.copyBanks1k(clock, 9, val | 0x80, 1);
                 break;
 
             case 0xE000:
-                this.Whizzler.DrawTo(clock);
                 this.Mirror(clock, val & 0x3);
                 let useCRAM = (val & 0x10) == 0x10;
             break;

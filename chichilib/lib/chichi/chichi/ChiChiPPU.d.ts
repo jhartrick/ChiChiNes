@@ -97,8 +97,6 @@ export declare class ChiChiPPU {
     UpdatePPUControlByte0(): void;
     SetByte(Clock: number, address: number, data: number): void;
     GetByte(Clock: number, address: number): number;
-    HandleEvent(Clock: number): void;
-    ResetClock(Clock: number): void;
     CopySprites(copyFrom: number): void;
     InitSprites(): void;
     GetSpritePixel(): number;
@@ -112,6 +110,6 @@ export declare class ChiChiPPU {
     FetchNextTile(): void;
     GetAttributeTableEntry(ppuNameTableMemoryStart: number, i: number, j: number): number;
     oddFrame: boolean;
-    DrawTo(cpuClockNum: number): void;
+    advanceClock(ticks: number): void;
     UpdatePixelInfo(): void;
 }

@@ -5,7 +5,7 @@ export class Smb2jCart extends BaseCart {
         this.mapperName = 'Smb2j pirate';
         this.usesSRAM = false;
         this.Setup6BankStarts(6, 4, 5, 1, 7);
-        this.CopyBanks(0,0,0,1);
+        this.copyBanks(0,0,0,1);
     }
     irqEnabled = false;
     irqCounter: number= 0;
@@ -15,13 +15,12 @@ export class Smb2jCart extends BaseCart {
             this.irqCounter -=value;
             if (this.irqCounter <= 0) {
                 this.irqCounter = 0;
-                this.Whizzler.DrawTo(this.CPU.clock);
-                this.CPU._handleIRQ = true;
+                this.irqRaised = true;
                 this.irqEnabled = false;
             }
         }
     }
-    
+
     GetByte(clock: number, address: number) {
         return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
     }

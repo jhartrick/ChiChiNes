@@ -16,7 +16,7 @@ export class Konami026Cart extends VRCIrqBase {
 
     updateChrBanks(clock: number) {
         // bank0  0 - 0x3ff
-        this.CopyBanks1k(clock, 0, this.vrc6Registers[0], 1);
+        this.copyBanks1k(clock, 0, this.vrc6Registers[0], 1);
 
         // bank1  0x400 - 0x7ff
         let bank = this.vrc6Registers[1];
@@ -25,7 +25,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[0];
                 break;
         }
-        this.CopyBanks1k(clock, 1, bank, 1);
+        this.copyBanks1k(clock, 1, bank, 1);
 
         // bank2  0x800 - 0xbff
         bank = this.vrc6Registers[2];
@@ -34,7 +34,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[1];
                 break;
         }
-        this.CopyBanks1k(clock, 2, bank, 1);
+        this.copyBanks1k(clock, 2, bank, 1);
 
         // bank3  0xc00 - 0xfff
         bank = this.vrc6Registers[3];
@@ -43,7 +43,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[1];
                 break;
         }
-        this.CopyBanks1k(clock, 3, bank, 1);
+        this.copyBanks1k(clock, 3, bank, 1);
 
         // bank4  0x1000 - 0x13ff
         bank = this.vrc6Registers[4];
@@ -52,7 +52,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[2];
                 break;
         }
-        this.CopyBanks1k(clock, 4, bank, 1);
+        this.copyBanks1k(clock, 4, bank, 1);
 
         // bank5 0x1400 - 0x17ff
         bank = this.vrc6Registers[5];
@@ -65,7 +65,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[4];
                 break;
         }
-        this.CopyBanks1k(clock, 5, bank, 1);        
+        this.copyBanks1k(clock, 5, bank, 1);        
 
 
         // bank6 0x1800 - 0x1bff
@@ -79,7 +79,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[5];
                 break;
         }
-        this.CopyBanks1k(clock, 6, bank, 1);  
+        this.copyBanks1k(clock, 6, bank, 1);  
 
         // bank7 0x1800 - 0x1bff
         bank = this.vrc6Registers[7];
@@ -92,7 +92,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[5];
                 break;
         }
-        this.CopyBanks1k(clock, 7, bank, 1);  
+        this.copyBanks1k(clock, 7, bank, 1);  
 
         // bank8 0x2000 - 0x23ff
         switch(this.chrselect & 7) {
@@ -109,7 +109,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[6];
                 break;
             }
-        this.CopyBanks1k(clock, 8, bank, 1);  
+        this.copyBanks1k(clock, 8, bank, 1);  
 
         // bank9 0x2400 - 0x27ff
         switch(this.chrselect & 7) {
@@ -128,7 +128,7 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[6];
                 break;
             }
-        this.CopyBanks1k(clock, 9, bank, 1);  
+        this.copyBanks1k(clock, 9, bank, 1);  
         
 
         // bank10 0x2800 - 0x2bff
@@ -146,9 +146,9 @@ export class Konami026Cart extends VRCIrqBase {
                 bank = this.vrc6Registers[7];
                 break;
             }
-        this.CopyBanks1k(clock, 10, bank, 1);          
+        this.copyBanks1k(clock, 10, bank, 1);          
 
-        this.CopyBanks1k(clock, 11, this.vrc6Registers[7], 1); 
+        this.copyBanks1k(clock, 11, this.vrc6Registers[7], 1); 
         
         if ((this.chrselect & 0x20) == 0x20) {
             switch(this.chrselect & 0xF) {
@@ -176,7 +176,7 @@ export class Konami026Cart extends VRCIrqBase {
     InitializeCart() {
         this.mapperName = 'KonamiVRC6';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.CopyBanks4k(0, 0, 0, 2);
+        this.copyBanks4k(0, 0, 0, 2);
     }
 
     SetByte(clock:number, address:number, data: number){

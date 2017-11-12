@@ -433,36 +433,36 @@ export class BaseCart implements IBaseCart {
 
         this.mirroring = mirroring;
 
-        if (clockNum > -1) {
-            this.Whizzler.DrawTo(clockNum);
-        }
+        // if (clockNum > -1) {
+        //     this.Whizzler.DrawTo(clockNum);
+        // }
 
         //Console.WriteLine("Mirroring set to {0}", mirroring);
 
         switch (mirroring) {
             case 0:
-                this.ppuBankStarts[8] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
-                this.ppuBankStarts[9] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
-                this.ppuBankStarts[10] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
-                this.ppuBankStarts[11] = (((this.chrRamStart + 0) | 0) + this.oneScreenOffset) | 0;
+                this.ppuBankStarts[8] = (this.chrRamStart  + this.oneScreenOffset);
+                this.ppuBankStarts[9] = (this.chrRamStart  + this.oneScreenOffset);
+                this.ppuBankStarts[10] = (this.chrRamStart + this.oneScreenOffset);
+                this.ppuBankStarts[11] = (this.chrRamStart  + this.oneScreenOffset);
                 break;
             case 1:
-                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[9] = (this.chrRamStart + 1024) | 0;
-                this.ppuBankStarts[10] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[11] = (this.chrRamStart + 1024) | 0;
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) ;
+                this.ppuBankStarts[9] = (this.chrRamStart + 1024);
+                this.ppuBankStarts[10] = (this.chrRamStart + 0) ;
+                this.ppuBankStarts[11] = (this.chrRamStart + 1024) ;
                 break;
             case 2:
-                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[9] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[10] = (this.chrRamStart + 1024) | 0;
-                this.ppuBankStarts[11] = (this.chrRamStart + 1024) | 0;
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) ;
+                this.ppuBankStarts[9] = (this.chrRamStart + 0) ;
+                this.ppuBankStarts[10] = (this.chrRamStart + 1024);
+                this.ppuBankStarts[11] = (this.chrRamStart + 1024) ;
                 break;
             case 3:
-                this.ppuBankStarts[8] = (this.chrRamStart + 0) | 0;
-                this.ppuBankStarts[9] = (this.chrRamStart + 1024) | 0;
-                this.ppuBankStarts[10] = (this.chrRamStart + 2048) | 0;
-                this.ppuBankStarts[11] = (this.chrRamStart + 3072) | 0;
+                this.ppuBankStarts[8] = (this.chrRamStart + 0) ;
+                this.ppuBankStarts[9] = (this.chrRamStart + 1024) ;
+                this.ppuBankStarts[10] = (this.chrRamStart + 2048);
+                this.ppuBankStarts[11] = (this.chrRamStart + 3072);
                 break;
         }
 
@@ -473,7 +473,7 @@ export class BaseCart implements IBaseCart {
 
     // utility functions used by mappers
     // CopyBanksXX sets up chrRom bankswitching
-    CopyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void {
+    copyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void {
 
         if (dest >= this.chrRomCount) {
             dest = this.chrRomCount - 1;
@@ -490,7 +490,7 @@ export class BaseCart implements IBaseCart {
         this.UpdateBankStartCache();
     }
 
-    CopyBanks4k(clock: number, dest: number, src: number, numberOf4kBanks: number): void {
+    copyBanks4k(clock: number, dest: number, src: number, numberOf4kBanks: number): void {
         
 
         if (dest >= this.chrRomCount) {
@@ -508,7 +508,7 @@ export class BaseCart implements IBaseCart {
         this.UpdateBankStartCache();
     }
 
-    CopyBanks2k(clock: number, dest: number, src: number, numberOf2kBanks: number): void {
+    copyBanks2k(clock: number, dest: number, src: number, numberOf2kBanks: number): void {
         
         if (dest >= this.chrRomCount) {
             dest = this.chrRomCount - 1;
@@ -525,7 +525,7 @@ export class BaseCart implements IBaseCart {
         this.UpdateBankStartCache();
     }
     
-    CopyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
+    copyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
         
         if (dest >= this.chrRomCount) {
             dest = this.chrRomCount - 1;

@@ -7,7 +7,7 @@ export class KonamiVRC1Cart extends BaseCart {
             this.mapperName = 'KonamiVRC1 (VS)';
         }
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.CopyBanks4k(0, 0, 0, 2);
+        this.copyBanks4k(0, 0, 0, 2);
     }
     chrLatches = [0,0,0,0,0,0,0,0];
 
@@ -30,7 +30,6 @@ export class KonamiVRC1Cart extends BaseCart {
             this.SetupBankStarts(this.current8, this.currentA, bankC, this.currentE);
             break;
         case 0x9000:
-            this.Whizzler.DrawTo(clock);
             
             if (!this.fourScreen) {
                 this.Mirror(clock, (data & 1)+1);
@@ -54,7 +53,7 @@ export class KonamiVRC1Cart extends BaseCart {
     }
 
     syncChrBanks(clock: number){
-        this.CopyBanks4k(clock, 0, this.chrLatches[0] | this.chrLatches[1], 1);
-        this.CopyBanks4k(clock, 1, this.chrLatches[2] | this.chrLatches[3], 1);
+        this.copyBanks4k(clock, 0, this.chrLatches[0] | this.chrLatches[1], 1);
+        this.copyBanks4k(clock, 1, this.chrLatches[2] | this.chrLatches[3], 1);
     }
 }
