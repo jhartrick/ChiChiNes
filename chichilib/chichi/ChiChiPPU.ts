@@ -25,6 +25,8 @@ export class ChiChiPPU {
     NMIHandler: () => void;
     public frameFinished: () => void;
     cpu: ChiChiCPPU;
+    greyScale: boolean = false;
+    
     constructor() {
     }
 
@@ -282,6 +284,7 @@ export class ChiChiPPU {
                 this.DrawTo(Clock);
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
+                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
                 this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
                 this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
                 this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
@@ -679,19 +682,19 @@ export class ChiChiPPU {
         return result & 255;
     }
     FetchNextTile(): void {
-        let ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
+        const ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
 
-        let xTilePosition = this.xPosition >> 3;
+        const xTilePosition = this.xPosition >> 3;
 
-        let tileRow = (this.yPosition >> 3) % 30 << 5;
+        const tileRow = (this.yPosition >> 3) % 30 << 5;
 
-        let tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+        const tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
 
-        let TileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
+        const tileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
 
-        let patternTableYOffset = this.yPosition & 7;
+        const patternTableYOffset = this.yPosition & 7;
 
-        let patternID = this.backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+        const patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
 
         this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
         this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
@@ -700,7 +703,7 @@ export class ChiChiPPU {
     }
 
     GetAttributeTableEntry(ppuNameTableMemoryStart: number, i: number, j: number): number {
-        let LookUp = this.chrRomHandler.GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
+        const LookUp = this.chrRomHandler.GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
 
         switch ((i & 2) | (j & 2) * 2) {
             case 0:
@@ -718,31 +721,22 @@ export class ChiChiPPU {
 
     DrawTo(cpuClockNum: number): void {
         let frClock = (cpuClockNum - this.LastcpuClock) * 3;
-
-        if (this.frameClock < 6820) {
-            // if the frameclock +frClock is in vblank (< 6820) dont do nothing, just update it
-            if (this.frameClock + frClock < 6820) {
-                this.frameClock += frClock;
-                frClock = 0;
-            } else {
-                //find number of pixels to draw since frame start
-                frClock += this.frameClock - 6820;
-                this.frameClock = 6820;
-            }
-        }
+        this.LastcpuClock = cpuClockNum;
+        
         for (var i = 0; i < frClock; ++i) {
-            switch (this.frameClock++) {
+            switch (this.frameClock) {
                 case 0:
-                    break;
-                case 6820:
-                    this.oddFrame = !this.oddFrame;
                 
                     this._PPUStatus = 0;
                     this.hitSprite = false;
                     this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
                     if ((this._PPUControlByte1 & 0x18) !== 0) {
+                        this.oddFrame = !this.oddFrame;
                         this.isRendering = true;
                         if (this.oddFrame) this.frameClock++;
+                    } else {
+                        this.oddFrame = false;
+                        
                     }
                     this.frameOn = true;
                     this.chrRomHandler.ResetBankStartCache();
@@ -752,8 +746,9 @@ export class ChiChiPPU {
                         this.spriteChanges = false;
                     }
                     break;
-                case 7161:
-                    // lockedVScroll = _vScroll;
+                case 341:
+                    this.shouldRender = true;
+                // lockedVScroll = _vScroll;
                     this.vbufLocation = 0;
                     //curBufPos = bufStart;
                     this.xNTXor = 0;
@@ -761,21 +756,20 @@ export class ChiChiPPU {
                     this.currentXPosition = 0;
                     this.currentYPosition = 0;
                     break;
-                case 89342: // ChiChiNES.CPU2A03.frameClockEnd:
-                    this.shouldRender = true;
+                case 82501: // ChiChiNES.CPU2A03.frameClockEnd:
+                    this.shouldRender = false;
                     //__frameFinished = true;
                     this.frameFinished();
                     this.SetupVINT();
                     this.frameOn = false;
-                    this.frameClock = 0;
                     //if (_isDebugging)
                     //    events.Clear();
                     break;
+                    
+                
             }
 
-            if (this.frameClock >= 7161 && this.frameClock <= 89342) {
-
-
+            if (this.shouldRender) {
                 if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
                     /* update x position */
                     this.xPosition = this.currentXPosition + this.lockedHScroll;
@@ -806,11 +800,16 @@ export class ChiChiPPU {
                         /* end fetch next tile */
 
                     }
-
+                    let tilesVis = this._tilesAreVisible;
+                    let spriteVis = this._spritesAreVisible;
+                    if (this.currentXPosition < 8 ){
+                        tilesVis = !this._clipTiles;
+                        spriteVis = !this._clipSprites;
+                    }
                     /* draw pixel */
-                    const tilePixel = this._tilesAreVisible ? this.GetNameTablePixel() : 0;
+                    const tilePixel = tilesVis ? this.GetNameTablePixel() : 0;
                     // bool foregroundPixel = isForegroundPixel;
-                    const spritePixel = this._spritesAreVisible ? this.GetSpritePixel() : 0;
+                    const spritePixel = spriteVis ? this.GetSpritePixel() : 0;
 
                     if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
                         this.hitSprite = true;
@@ -860,15 +859,14 @@ export class ChiChiPPU {
 
 
                 }
-
             }
 
+            this.frameClock++;
+            
+            if (this.frameClock >= 89342) {
+                this.frameClock = 0;
+            }
         }
-        this.LastcpuClock = cpuClockNum;
-    }
-
-    Tick() {
-        this.DrawTo(this.LastcpuClock + 1);
     }
 
     UpdatePixelInfo(): void {

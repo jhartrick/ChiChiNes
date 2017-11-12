@@ -16,6 +16,7 @@ export declare class ChiChiPPU {
     NMIHandler: () => void;
     frameFinished: () => void;
     cpu: ChiChiCPPU;
+    greyScale: boolean;
     constructor();
     chrRomHandler: IBaseCart;
     private yPosition;
@@ -112,6 +113,5 @@ export declare class ChiChiPPU {
     GetAttributeTableEntry(ppuNameTableMemoryStart: number, i: number, j: number): number;
     oddFrame: boolean;
     DrawTo(cpuClockNum: number): void;
-    Tick(): void;
     UpdatePixelInfo(): void;
 }

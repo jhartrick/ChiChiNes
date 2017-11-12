@@ -2,22 +2,13 @@ import { BaseCart } from "./BaseCart";
 
 export class Smb2jCart extends BaseCart {
     InitializeCart() {
-        this.mapperName = 'Smb2j';
+        this.mapperName = 'Smb2j pirate';
+        this.usesSRAM = false;
         this.Setup6BankStarts(6, 4, 5, 1, 7);
         this.CopyBanks(0,0,0,1);
     }
     irqEnabled = false;
     irqCounter: number= 0;
-    nextEventAt: number;
-    handleNextEvent(clock: number) {
-        // if (this.nextEventAt <= clock) {
-        //     if (this.irqEnabled) {
-        //         this.CPU._handleIRQ = true;
-        //         this.irqEnabled = false;
-        //         this.nextEventAt = 0;
-        //     }
-        // }
-    };
 
     advanceClock(value: number) {
         if (this.irqEnabled) {
@@ -31,12 +22,10 @@ export class Smb2jCart extends BaseCart {
         }
     }
     
-
-
-    GetByte(clock: number, address: number): number {
+    GetByte(clock: number, address: number) {
         return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
     }
-    
+
     SetByte(clock:number, address: number, data: number) {
         switch (address & 0xE000) {
         case 0x8000:

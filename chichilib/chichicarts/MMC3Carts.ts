@@ -22,7 +22,7 @@ export class MMC3Cart extends BaseCart {
     private PPUBanks = new Uint32Array(8);
 
     InitializeCart() {
-
+        this.usesSRAM =true;
         this.mapperName = 'MMC3';
         this._registers.fill(0);
         this.PPUBanks.fill(0);
@@ -65,13 +65,11 @@ export class MMC3Cart extends BaseCart {
     }
 
     CopyBanks(dest: number, src: number, numberOf1kBanks: number) {
-        var $t;
         if (this.chrRomCount > 0) {
-            for (var i = 0; i < numberOf1kBanks; i = (i + 1) | 0) {
-                this.ppuBankStarts[((dest + i) | 0)] = (src + i) * 1024;
+            for (var i = 0; i < numberOf1kBanks; i++) {
+                this.ppuBankStarts[dest + i] = (src + i) * 1024;
             }
             this.bankSwitchesChanged = true;
-            //Array.Copy(chrRom, src * 0x400, whizzler.cartCopyVidRAM, dest * 0x400, numberOf1kBanks * 0x400);
         }
     }
 

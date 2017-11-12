@@ -1098,8 +1098,8 @@ exports.tendoWrapper = tendoWrapper;
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiAudio_1 = __webpack_require__(4);
 var ChiChiTypes_1 = __webpack_require__(1);
-var ChiChiControl_1 = __webpack_require__(6);
-var ChiChiPPU_1 = __webpack_require__(7);
+var ChiChiControl_1 = __webpack_require__(9);
+var ChiChiPPU_1 = __webpack_require__(10);
 var CommonAudio_1 = __webpack_require__(0);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
@@ -1118,6 +1118,9 @@ var ChiChiMachine = /** @class */ (function () {
         this.ppu.cpu = this.Cpu;
         this.ppu.NMIHandler = function () {
             _this.Cpu.NMIHandler();
+        };
+        this.SoundBopper.NMIHandler = function () {
+            _this.Cpu._handleIRQ = true;
         };
         this.ppu.frameFinished = function () { _this.FrameFinished(); };
     }
@@ -1159,9 +1162,7 @@ var ChiChiMachine = /** @class */ (function () {
     });
     ChiChiMachine.prototype.Reset = function () {
         if (this.Cpu && this.Cart && this.Cart.supported) {
-            // ForceStop();
-            //this.ppu.Initialize();
-            //this.Cart.InitializeCart();
+            this.Cart.InitializeCart(true);
             this.Cpu.ResetCPU();
             this.SoundBopper.RebuildSound();
             //ClearGenieCodes();
@@ -1171,15 +1172,10 @@ var ChiChiMachine = /** @class */ (function () {
     };
     ChiChiMachine.prototype.PowerOn = function () {
         if (this.Cpu && this.Cart && this.Cart.supported) {
-            this.Cpu.ppu.Initialize();
             this.Cart.InitializeCart();
-            // if (this.SRAMReader !=  null && this.Cart.UsesSRAM) {
-            //     this.Cart.SRAM = this.SRAMReader(this.Cart.ChiChiNES$INESCart$CheckSum);
-            // }
-            //this.Cpu.ResetCPU();
-            //ClearGenieCodes();
-            this.Cpu.PowerOn();
+            this.Cpu.ppu.Initialize();
             this.SoundBopper.RebuildSound();
+            this.Cpu.PowerOn();
             this.RunState = ChiChiTypes_1.RunningStatuses.Running;
         }
     };
@@ -1209,8 +1205,8 @@ var ChiChiMachine = /** @class */ (function () {
             this.Cpu.Step();
         } while (this.frameOn);
         this.totalCPUClocks = this.Cpu.Clock;
-        this.SoundBopper.FlushFrame(this.totalCPUClocks);
-        this.SoundBopper.EndFrame(this.totalCPUClocks);
+        // this.SoundBopper.flushFrame(this.totalCPUClocks);
+        // this.SoundBopper.endFrame(this.totalCPUClocks);
         //this.SoundBopper.writer.ReadWaves();
         this.totalCPUClocks = 0;
         this.Cpu.Clock = 0;
@@ -1382,6 +1378,7 @@ var ChiChiCPPU = /** @class */ (function () {
     });
     ChiChiCPPU.prototype.advanceClock = function (value) {
         this.ppu.DrawTo(this._clock);
+        this.SoundBopper.advanceClock(value);
         this.Cart.advanceClock(value);
         this._clock += value;
     };
@@ -2630,656 +2627,27 @@ exports.ChiChiCPPU = ChiChiCPPU;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var DMCChannel_1 = __webpack_require__(5);
+var SquareChannel_1 = __webpack_require__(6);
+var TriangleChannel_1 = __webpack_require__(7);
+var NoiseChannel_1 = __webpack_require__(8);
 var CommonAudio_1 = __webpack_require__(0);
-var NoiseChannel = /** @class */ (function () {
-    function NoiseChannel(bleeper, chan) {
-        this._bleeper = null;
-        this._chan = 0;
-        this.NoisePeriods = [4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068];
-        this.LengthCounts = [10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30];
-        this._length = 0;
-        this._period = 0;
-        this._volume = 0;
-        this._time = 0;
-        this._envConstantVolume = false;
-        this._envVolume = 0;
-        this._looping = false;
-        this._enabled = false;
-        this.amplitude = 0;
-        this._phase = 0;
-        this.gain = 0;
-        this._envTimer = 0;
-        this._envStart = false;
-        this._bleeper = bleeper;
-        this._chan = chan;
-        this._enabled = true;
-        this._phase = 1;
-        this._envTimer = 15;
-    }
-    Object.defineProperty(NoiseChannel.prototype, "Period", {
-        get: function () {
-            return this._period;
-        },
-        set: function (value) {
-            this._period = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NoiseChannel.prototype, "Volume", {
-        get: function () {
-            return this._volume;
-        },
-        set: function (value) {
-            this._volume = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NoiseChannel.prototype, "Time", {
-        get: function () {
-            return this._time;
-        },
-        set: function (value) {
-            this._time = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NoiseChannel.prototype, "Looping", {
-        get: function () {
-            return this._looping;
-        },
-        set: function (value) {
-            this._looping = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NoiseChannel.prototype, "Enabled", {
-        get: function () {
-            return this._enabled;
-        },
-        set: function (value) {
-            this._enabled = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(NoiseChannel.prototype, "Gain", {
-        get: function () {
-            return this.gain;
-        },
-        set: function (value) {
-            this.gain = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    NoiseChannel.prototype.WriteRegister = function (register, data, time) {
-        // Run(time);
-        switch (register) {
-            case 0:
-                this._envConstantVolume = (data & 16) === 16;
-                this._volume = data & 15;
-                this._looping = (data & 128) === 128;
-                break;
-            case 1:
-                break;
-            case 2:
-                this._period = this.NoisePeriods[data & 15];
-                // _period |= data;
-                break;
-            case 3:
-                // setup length
-                if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 31];
-                }
-                this._envStart = true;
-                break;
-            case 4:
-                this._enabled = (data !== 0);
-                if (!this._enabled) {
-                    this._length = 0;
-                }
-                break;
-        }
-    };
-    NoiseChannel.prototype.Run = function (end_time) {
-        var volume = this._envConstantVolume ? this._volume : this._envVolume;
-        if (this._length === 0) {
-            volume = 0;
-        }
-        if (this._period === 0) {
-            this._time = end_time;
-            this.UpdateAmplitude(0);
-            return;
-        }
-        if (this._phase === 0) {
-            this._phase = 1;
-        }
-        for (; this._time < end_time; this._time += this._period) {
-            var new15;
-            if (this._looping) {
-                new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
-            }
-            else {
-                new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
-            }
-            this.UpdateAmplitude(this._phase & 1 * volume);
-            this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
-        }
-    };
-    NoiseChannel.prototype.UpdateAmplitude = function (amp) {
-        var delta = amp * this.gain - this.amplitude;
-        this.amplitude += delta;
-        this._bleeper.blip_add_delta(this._time, delta);
-    };
-    NoiseChannel.prototype.EndFrame = function (time) {
-        this.Run(time);
-        this._time = 0;
-    };
-    NoiseChannel.prototype.FrameClock = function (time, step) {
-        this.Run(time);
-        if (!this._envStart) {
-            this._envTimer--;
-            if (this._envTimer === 0) {
-                this._envTimer = this._volume + 1;
-                if (this._envVolume > 0) {
-                    this._envVolume--;
-                }
-                else {
-                    this._envVolume = this._looping ? 15 : 0;
-                }
-            }
-        }
-        else {
-            this._envStart = false;
-            this._envTimer = this._volume + 1;
-            this._envVolume = 15;
-        }
-        switch (step) {
-            case 1:
-            case 2:
-                if (!this._looping && this._length > 0) {
-                    this._length--;
-                }
-                break;
-        }
-    };
-    return NoiseChannel;
-}());
-var TriangleChannel = /** @class */ (function () {
-    function TriangleChannel(bleeper, chan) {
-        this._chan = 0;
-        this.LengthCounts = new Uint8Array([
-            0x0A, 0xFE,
-            0x14, 0x02,
-            0x28, 0x04,
-            0x50, 0x06,
-            0xA0, 0x08,
-            0x3C, 0x0A,
-            0x0E, 0x0C,
-            0x1A, 0x0E,
-            0x0C, 0x10,
-            0x18, 0x12,
-            0x30, 0x14,
-            0x60, 0x16,
-            0xC0, 0x18,
-            0x48, 0x1A,
-            0x10, 0x1C,
-            0x20, 0x1E
-        ]);
-        this._length = 0;
-        this._period = 0;
-        this._time = 0;
-        this._envelope = 0;
-        this._looping = false;
-        this._enabled = false;
-        this._amplitude = 0;
-        this._gain = 0;
-        this._linCtr = 0;
-        this._phase = 0;
-        this._linVal = 0;
-        this._linStart = false;
-        this._bleeper = bleeper;
-        this._chan = chan;
-        this._enabled = true;
-    }
-    Object.defineProperty(TriangleChannel.prototype, "Period", {
-        get: function () {
-            return this._period;
-        },
-        set: function (value) {
-            this._period = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TriangleChannel.prototype, "Time", {
-        get: function () {
-            return this._time;
-        },
-        set: function (value) {
-            this._time = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TriangleChannel.prototype, "Envelope", {
-        get: function () {
-            return this._envelope;
-        },
-        set: function (value) {
-            this._envelope = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TriangleChannel.prototype, "Looping", {
-        get: function () {
-            return this._looping;
-        },
-        set: function (value) {
-            this._looping = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TriangleChannel.prototype, "Enabled", {
-        get: function () {
-            return this._enabled;
-        },
-        set: function (value) {
-            this._enabled = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TriangleChannel.prototype, "Gain", {
-        get: function () {
-            return this._gain;
-        },
-        set: function (value) {
-            this._gain = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TriangleChannel.prototype, "Amplitude", {
-        get: function () {
-            return this._amplitude;
-        },
-        set: function (value) {
-            this._amplitude = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TriangleChannel.prototype, "Length", {
-        get: function () {
-            return this._length;
-        },
-        set: function (value) {
-            this._length = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    TriangleChannel.prototype.WriteRegister = function (register, data, time) {
-        //Run(time);
-        switch (register) {
-            case 0:
-                this._looping = (data & 0x80) === 0x80;
-                this._linVal = data & 0x7F;
-                break;
-            case 1:
-                break;
-            case 2:
-                this._period &= 0x700;
-                this._period |= data;
-                break;
-            case 3:
-                this._period &= 0xFF;
-                this._period |= (data & 7) << 8;
-                // setup lengthhave
-                if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 0x1f];
-                }
-                this._linStart = true;
-                break;
-            case 4:
-                this._enabled = (data !== 0);
-                if (!this._enabled) {
-                    this._length = 0;
-                }
-                break;
-        }
-    };
-    TriangleChannel.prototype.Run = function (end_time) {
-        var period = this._period + 1;
-        if (this._linCtr === 0 || this._length === 0 || this._period < 4) {
-            // leave it at it's current phase
-            this._time = end_time;
-            return;
-        }
-        for (; this._time < end_time; this._time += period, this._phase = (this._phase + 1) % 32) {
-            this.UpdateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
-        }
-    };
-    TriangleChannel.prototype.UpdateAmplitude = function (new_amp) {
-        var delta = new_amp * this._gain - this._amplitude;
-        this._amplitude += delta;
-        this._bleeper.blip_add_delta(this._time, delta);
-    };
-    TriangleChannel.prototype.EndFrame = function (time) {
-        this.Run(time);
-        this._time = 0;
-    };
-    TriangleChannel.prototype.FrameClock = function (time, step) {
-        this.Run(time);
-        if (this._linStart) {
-            this._linCtr = this._linVal;
-        }
-        else {
-            if (this._linCtr > 0) {
-                this._linCtr--;
-            }
-        }
-        if (!this._looping) {
-            this._linStart = false;
-        }
-        switch (step) {
-            case 1:
-            case 3:
-                if (this._length > 0 && !this._looping) {
-                    this._length--;
-                }
-                break;
-        }
-    };
-    return TriangleChannel;
-}());
-var SquareChannel = /** @class */ (function () {
-    function SquareChannel(bleeper, chan) {
-        this._chan = 0;
-        this._bleeper = null;
-        this.LengthCounts = new Uint8Array([
-            0x0A, 0xFE,
-            0x14, 0x02,
-            0x28, 0x04,
-            0x50, 0x06,
-            0xA0, 0x08,
-            0x3C, 0x0A,
-            0x0E, 0x0C,
-            0x1A, 0x0E,
-            0x0C, 0x10,
-            0x18, 0x12,
-            0x30, 0x14,
-            0x60, 0x16,
-            0xC0, 0x18,
-            0x48, 0x1A,
-            0x10, 0x1C,
-            0x20, 0x1E
-        ]);
-        this._dutyCycle = 0;
-        this._length = 0;
-        this._timer = 0;
-        this._rawTimer = 0;
-        this._volume = 0;
-        this._time = 0;
-        this._envelope = 0;
-        this._looping = false;
-        this._enabled = false;
-        this._amplitude = 0;
-        this.doodies = [2, 6, 30, 249];
-        this._sweepShift = 0;
-        this._sweepCounter = 0;
-        this._sweepDivider = 0;
-        this._sweepNegateFlag = false;
-        this._sweepEnabled = false;
-        this._startSweep = false;
-        this._sweepInvalid = false;
-        this._phase = 0;
-        this._gain = 0;
-        this._envTimer = 0;
-        this._envStart = false;
-        this._envConstantVolume = false;
-        this._envVolume = 0;
-        this._sweepComplement = false;
-        this._bleeper = bleeper;
-        this._chan = chan;
-        this._enabled = true;
-        this._sweepDivider = 1;
-        this._envTimer = 15;
-    }
-    Object.defineProperty(SquareChannel.prototype, "DutyCycle", {
-        // properties
-        get: function () {
-            return this._dutyCycle;
-        },
-        set: function (value) {
-            this._dutyCycle = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SquareChannel.prototype, "Period", {
-        get: function () {
-            return this._timer;
-        },
-        set: function (value) {
-            this._timer = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SquareChannel.prototype, "Volume", {
-        get: function () {
-            return this._volume;
-        },
-        set: function (value) {
-            this._volume = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SquareChannel.prototype, "Time", {
-        get: function () {
-            return this._time;
-        },
-        set: function (value) {
-            this._time = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SquareChannel.prototype, "Envelope", {
-        get: function () {
-            return this._envelope;
-        },
-        set: function (value) {
-            this._envelope = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SquareChannel.prototype, "Looping", {
-        get: function () {
-            return this._looping;
-        },
-        set: function (value) {
-            this._looping = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SquareChannel.prototype, "Enabled", {
-        get: function () {
-            return this._enabled;
-        },
-        set: function (value) {
-            this._enabled = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SquareChannel.prototype, "Gain", {
-        get: function () {
-            return this._gain;
-        },
-        set: function (value) {
-            this._gain = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SquareChannel.prototype, "SweepComplement", {
-        get: function () {
-            return this._sweepComplement;
-        },
-        set: function (value) {
-            this._sweepComplement = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    // functions
-    SquareChannel.prototype.WriteRegister = function (register, data, time) {
-        switch (register) {
-            case 0:
-                this._envConstantVolume = (data & 0x10) === 0x10;
-                this._volume = data & 15;
-                this._dutyCycle = this.doodies[(data >> 6) & 0x3];
-                this._looping = (data & 0x20) === 0x20;
-                this._sweepInvalid = false;
-                break;
-            case 1:
-                this._sweepShift = data & 7;
-                this._sweepNegateFlag = (data & 8) === 8;
-                this._sweepDivider = (data >> 4) & 7;
-                this._sweepEnabled = (data & 0x80) === 0x80;
-                this._startSweep = true;
-                this._sweepInvalid = false;
-                break;
-            case 2:
-                this._timer &= 0x700;
-                this._timer |= data;
-                this._rawTimer = this._timer;
-                break;
-            case 3:
-                this._timer &= 0xFF;
-                this._timer |= (data & 7) << 8;
-                this._rawTimer = this._timer;
-                this._phase = 0;
-                // setup length
-                if (this._enabled) {
-                    this._length = this.LengthCounts[(data >> 3) & 0x1f];
-                }
-                this._envStart = true;
-                break;
-            case 4:
-                this._enabled = (data !== 0);
-                if (!this._enabled) {
-                    this._length = 0;
-                }
-                break;
-        }
-    };
-    SquareChannel.prototype.Run = function (end_time) {
-        var period = this._sweepEnabled ? ((this._timer + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
-        if (period === 0) {
-            this._time = end_time;
-            this.UpdateAmplitude(0);
-            return;
-        }
-        var volume = this._envConstantVolume ? this._volume : this._envVolume;
-        if (this._length === 0 || volume === 0 || this._sweepInvalid) {
-            this._phase += ((end_time - this._time) / period) & 7;
-            this._time = end_time;
-            this.UpdateAmplitude(0);
-            return;
-        }
-        for (; this._time < end_time; this._time += period, this._phase++) {
-            this.UpdateAmplitude((this._dutyCycle >> (this._phase & 7) & 1) * volume);
-        }
-        this._phase &= 7;
-    };
-    SquareChannel.prototype.UpdateAmplitude = function (new_amp) {
-        var delta = new_amp * this._gain - this._amplitude;
-        this._amplitude += delta;
-        this._bleeper.blip_add_delta(this._time, delta);
-    };
-    SquareChannel.prototype.EndFrame = function (time) {
-        this.Run(time);
-        this._time = 0;
-    };
-    SquareChannel.prototype.FrameClock = function (time, step) {
-        this.Run(time);
-        if (!this._envStart) {
-            this._envTimer--;
-            if (this._envTimer === 0) {
-                this._envTimer = this._volume + 1;
-                if (this._envVolume > 0) {
-                    this._envVolume--;
-                }
-                else {
-                    this._envVolume = this._looping ? 15 : 0;
-                }
-            }
-        }
-        else {
-            this._envStart = false;
-            this._envTimer = this._volume + 1;
-            this._envVolume = 15;
-        }
-        switch (step) {
-            case 1:
-            case 3:
-                --this._sweepCounter;
-                if (this._sweepCounter === 0) {
-                    this._sweepCounter = this._sweepDivider + 1;
-                    if (this._sweepEnabled && this._sweepShift > 0) {
-                        var sweep = this._timer >> this._sweepShift;
-                        if (this._sweepComplement) {
-                            this._timer += this._sweepNegateFlag ? ~sweep : sweep;
-                        }
-                        else {
-                            this._timer += this._sweepNegateFlag ? ~sweep + 1 : sweep;
-                        }
-                        this._sweepInvalid = (this._rawTimer < 8 || (this._timer & 2048) === 2048);
-                        //if (_sweepInvalid)
-                        //{
-                        //    _sweepInvalid = true;
-                        //}
-                    }
-                }
-                if (this._startSweep) {
-                    this._startSweep = false;
-                    this._sweepCounter = this._sweepDivider + 1;
-                }
-                if (!this._looping && this._length > 0) {
-                    this._length--;
-                }
-                break;
-        }
-    };
-    return SquareChannel;
-}());
 var ChiChiBopper = /** @class */ (function () {
     function ChiChiBopper(writer) {
         this.writer = writer;
-        this.throwingIRQs = false;
+        this.throwingIRQs = true;
         this.reg15 = 0;
-        this.master_vol = 4369;
-        this.registers = new CommonAudio_1.QueuedPort();
         this._sampleRate = 44100;
+        this.master_vol = 4369;
         this.square0Gain = 873;
         this.square1Gain = 873;
         this.triangleGain = 1004;
         this.noiseGain = 567;
         this.muted = false;
         this.lastFrameHit = 0;
+        this.currentClock = 0;
+        this.frameClocker = 0;
+        //Muted: boolean;
+        this.InterruptRaised = true;
         this.RebuildSound();
     }
     Object.defineProperty(ChiChiBopper.prototype, "audioSettings", {
@@ -3304,7 +2672,6 @@ var ChiChiBopper = /** @class */ (function () {
             this.writer.synced = value.synced;
             if (value.sampleRate != this._sampleRate) {
                 this._sampleRate = value.sampleRate;
-                this.RebuildSound();
             }
         },
         enumerable: true,
@@ -3327,40 +2694,40 @@ var ChiChiBopper = /** @class */ (function () {
     });
     Object.defineProperty(ChiChiBopper.prototype, "EnableSquare0", {
         get: function () {
-            return this.square0.Gain > 0;
+            return this.square0.gain > 0;
         },
         set: function (value) {
-            this.square0.Gain = value ? this.square0Gain : 0;
+            this.square0.gain = value ? this.square0Gain : 0;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(ChiChiBopper.prototype, "EnableSquare1", {
         get: function () {
-            return this.square1.Gain > 0;
+            return this.square1.gain > 0;
         },
         set: function (value) {
-            this.square1.Gain = value ? this.square1Gain : 0;
+            this.square1.gain = value ? this.square1Gain : 0;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(ChiChiBopper.prototype, "enableTriangle", {
         get: function () {
-            return this.triangle.Gain > 0;
+            return this.triangle.gain > 0;
         },
         set: function (value) {
-            this.triangle.Gain = value ? this.triangleGain : 0;
+            this.triangle.gain = value ? this.triangleGain : 0;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(ChiChiBopper.prototype, "EnableNoise", {
         get: function () {
-            return this.noise.Gain > 0;
+            return this.noise.gain > 0;
         },
         set: function (value) {
-            this.noise.Gain = value ? this.noiseGain : 0;
+            this.noise.gain = value ? this.noiseGain : 0;
         },
         enumerable: true,
         configurable: true
@@ -3370,167 +2737,125 @@ var ChiChiBopper = /** @class */ (function () {
         this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
         this.writer.audioBytesWritten = 0;
-        this.registers.clear();
-        this.InterruptRaised = false;
         this.square0Gain = 873;
         this.square1Gain = 873;
         this.triangleGain = 1004;
         this.noiseGain = 567;
-        this.square0 = new SquareChannel(this.myBlipper, 0);
-        this.square0.Gain = this.square0Gain;
-        this.square0.Period = 10;
-        this.square0.SweepComplement = true;
-        this.square1 = new SquareChannel(this.myBlipper, 0);
-        this.square1.Gain = this.square1Gain;
-        this.square1.Period = 10;
-        this.square1.SweepComplement = false;
-        this.triangle = new TriangleChannel(this.myBlipper, 2);
-        this.triangle.Gain = this.triangleGain;
-        this.triangle.Period = 0;
-        this.noise = new NoiseChannel(this.myBlipper, 3);
-        this.noise.Gain = this.noiseGain;
-        this.noise.Period = 0;
+        this.square0 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
+        this.square0.gain = this.square0Gain;
+        this.square0.period = 10;
+        this.square0.sweepComplement = true;
+        this.square1 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
+        this.square1.gain = this.square1Gain;
+        this.square1.period = 10;
+        this.square1.sweepComplement = false;
+        this.triangle = new TriangleChannel_1.TriangleChannel(this.myBlipper, 2);
+        this.triangle.gain = this.triangleGain;
+        this.triangle.period = 0;
+        this.noise = new NoiseChannel_1.NoiseChannel(this.myBlipper, 3);
+        this.noise.gain = this.noiseGain;
+        this.noise.period = 0;
         this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, null);
         //  this.dmc.Gain = 873; this.dmc.Period = 10;
     };
     ChiChiBopper.prototype.GetByte = function (Clock, address) {
-        if (address === 16384) {
+        if (address === 0x4000) {
             this.InterruptRaised = false;
         }
-        if (address === 16405) {
-            return this.ReadStatus();
+        if (address === 0x4015) {
+            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.InterruptRaised ? 64 : 0);
         }
         else {
             return 66;
         }
     };
-    ChiChiBopper.prototype.ReadStatus = function () {
-        return ((this.square0.Length > 0) ? 1 : 0) | ((this.square1.Length > 0) ? 2 : 0) | ((this.triangle.Length > 0) ? 4 : 0) | ((this.square0.Length > 0) ? 8 : 0) | (this.InterruptRaised ? 64 : 0);
-    };
-    ChiChiBopper.prototype.SetByte = function (Clock, address, data) {
+    ChiChiBopper.prototype.SetByte = function (clock, address, data) {
         if (address === 16384) {
             this.InterruptRaised = false;
         }
-        this.DoSetByte(Clock, address, data);
-        this.registers.enqueue(new CommonAudio_1.PortWriteEntry(Clock, address, data));
-    };
-    ChiChiBopper.prototype.DoSetByte = function (Clock, address, data) {
         switch (address) {
-            case 16384:
-            case 16385:
-            case 16386:
-            case 16387:
-                this.square0.WriteRegister(address - 16384, data, Clock);
+            case 0x4000:
+            case 0x4001:
+            case 0x4002:
+            case 0x4003:
+                this.square0.writeRegister(address - 0x4000, data, clock);
                 break;
-            case 16388:
-            case 16389:
-            case 16390:
-            case 16391:
-                this.square1.WriteRegister(address - 16388, data, Clock);
+            case 0x4004:
+            case 0x4005:
+            case 0x4006:
+            case 0x4007:
+                this.square1.writeRegister(address - 0x4004, data, clock);
                 break;
-            case 16392:
-            case 16393:
-            case 16394:
-            case 16395:
-                this.triangle.WriteRegister(address - 16392, data, Clock);
+            case 0x4008:
+            case 0x4009:
+            case 0x400a:
+            case 0x400b:
+                this.triangle.writeRegister(address - 0x4008, data, clock);
                 break;
-            case 16396:
-            case 16397:
-            case 16398:
-            case 16399:
-                this.noise.WriteRegister(address - 16396, data, Clock);
+            case 0x400c:
+            case 0x400d:
+            case 0x400e:
+            case 0x400f:
+                this.noise.writeRegister(address - 0x400c, data, clock);
                 break;
-            case 16400:
-            case 16401:
-            case 16402:
-            case 16403:
+            case 0x4010:
+            case 0x4011:
+            case 0x4012:
+            case 0x4013:
                 // dmc.WriteRegister(address - 0x40010, data, Clock);
                 break;
-            case 16405:
+            case 0x4015:
                 this.reg15 = data;
-                this.square0.WriteRegister(4, data & 1, Clock);
-                this.square1.WriteRegister(4, data & 2, Clock);
-                this.triangle.WriteRegister(4, data & 4, Clock);
-                this.noise.WriteRegister(4, data & 8, Clock);
+                this.square0.writeRegister(4, data & 1, clock);
+                this.square1.writeRegister(4, data & 2, clock);
+                this.triangle.writeRegister(4, data & 4, clock);
+                this.noise.writeRegister(4, data & 8, clock);
                 break;
-            case 16407:
+            case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
                 this.lastFrameHit = 0;
                 break;
         }
     };
-    ChiChiBopper.prototype.UpdateFrame = function (time) {
+    ChiChiBopper.prototype.advanceClock = function (ticks) {
+        this.currentClock += ticks;
+        this.frameClocker += ticks;
+        if (this.frameClocker > 7445) {
+            this.updateFrame(this.currentClock);
+            this.frameClocker -= 7445;
+        }
+    };
+    ChiChiBopper.prototype.updateFrame = function (time) {
         if (this.muted) {
             return;
         }
-        this.RunFrameEvents(time, this.lastFrameHit);
+        this.runFrameEvents(time, this.lastFrameHit);
         if (this.lastFrameHit === 3) {
+            this.lastFrameHit = 0;
+            this.endFrame(time);
             if (this.throwingIRQs) {
                 this.InterruptRaised = true;
+                this.NMIHandler();
             }
-            this.lastFrameHit = 0;
-            //EndFrame(time);
         }
         else {
             this.lastFrameHit++;
         }
     };
-    ChiChiBopper.prototype.RunFrameEvents = function (time, step) {
-        this.triangle.FrameClock(time, step);
+    ChiChiBopper.prototype.runFrameEvents = function (time, step) {
+        this.triangle.frameClock(time, step);
         this.noise.FrameClock(time, step);
-        this.square0.FrameClock(time, step);
-        this.square1.FrameClock(time, step);
+        this.square0.frameClock(time, step);
+        this.square1.frameClock(time, step);
     };
-    ChiChiBopper.prototype.EndFrame = function (time) {
-        this.square0.EndFrame(time);
-        this.square1.EndFrame(time);
-        this.triangle.EndFrame(time);
+    ChiChiBopper.prototype.endFrame = function (time) {
+        this.square0.endFrame(time);
+        this.square1.endFrame(time);
+        this.triangle.endFrame(time);
         this.noise.EndFrame(time);
-        if (!this.muted) {
-            this.myBlipper.blip_end_frame(time);
-        }
-        //var count = this.myBlipper.ReadBytes(this.writer.SharedBuffer, this.writer.SharedBuffer.length / 2, 0);
-        // const startPos = this.writer.sharedAudioBufferPos;
+        this.myBlipper.blip_end_frame(time);
         this.myBlipper.ReadElementsLoop(this.writer);
-        //this.writer.audioBytesWritten += count;
-        //this.writer.sharedAudioBufferPos += count;
-        //this.writer.WavesWritten(count);
-    };
-    ChiChiBopper.prototype.FlushFrame = function (time) {
-        var currentClock = 0;
-        var frameClocker = 0;
-        var currentEntry;
-        while (this.registers.Count > 0) {
-            currentEntry = this.registers.dequeue();
-            if (frameClocker > 7445) {
-                frameClocker -= 7445;
-                this.UpdateFrame(7445);
-            }
-            this.DoSetByte(currentEntry.time, currentEntry.address, currentEntry.data);
-            currentClock = currentEntry.time;
-            frameClocker = currentEntry.time;
-        }
-        // hit the latest frame boundary, maybe too much math for too little reward
-        var clockDelta = currentClock % 7445;
-        if (this.lastFrameHit === 0) {
-            this.UpdateFrame(7445);
-        }
-        while (this.lastFrameHit > 0) {
-            this.UpdateFrame(7445 * (this.lastFrameHit + 1));
-        }
-    };
-    ChiChiBopper.prototype.HandleEvent = function (Clock) {
-        this.UpdateFrame(Clock);
-        this.lastClock = Clock;
-        if (Clock > 29780) {
-            this.writer;
-            {
-                this.EndFrame(Clock);
-            }
-        }
-    };
-    ChiChiBopper.prototype.ResetClock = function (Clock) {
-        this.lastClock = Clock;
+        this.currentClock = 0;
     };
     ChiChiBopper.clock_rate = 1789772.727;
     return ChiChiBopper;
@@ -3682,6 +3007,439 @@ exports.DMCChannel = DMCChannel;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var SquareChannel = /** @class */ (function () {
+    function SquareChannel(bleeper, chan) {
+        this._chan = 0;
+        this._bleeper = null;
+        this.lengthCounts = new Uint8Array([
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ]);
+        this._length = 0;
+        this.period = 0;
+        this._rawTimer = 0;
+        this.volume = 0;
+        this.time = 0;
+        this.envelope = 0;
+        this.looping = false;
+        this.enabled = false;
+        this._amplitude = 0;
+        this.doodies = [2, 6, 30, 249];
+        this._sweepShift = 0;
+        this._sweepCounter = 0;
+        this._sweepDivider = 0;
+        this._sweepNegateFlag = false;
+        this._sweepEnabled = false;
+        this._startSweep = false;
+        this._sweepInvalid = false;
+        this._phase = 0;
+        this._envTimer = 0;
+        this._envStart = false;
+        this._envConstantVolume = false;
+        this._envVolume = 0;
+        this.gain = 0;
+        this.sweepComplement = false;
+        this.dutyCycle = 0;
+        this._bleeper = bleeper;
+        this._chan = chan;
+        this.enabled = true;
+        this._sweepDivider = 1;
+        this._envTimer = 15;
+    }
+    // functions
+    SquareChannel.prototype.writeRegister = function (register, data, time) {
+        switch (register) {
+            case 0:
+                this._envConstantVolume = (data & 0x10) === 0x10;
+                this.volume = data & 15;
+                this.dutyCycle = this.doodies[(data >> 6) & 0x3];
+                this.looping = (data & 0x20) === 0x20;
+                this._sweepInvalid = false;
+                break;
+            case 1:
+                this._sweepShift = data & 7;
+                this._sweepNegateFlag = (data & 8) === 8;
+                this._sweepDivider = (data >> 4) & 7;
+                this._sweepEnabled = (data & 0x80) === 0x80;
+                this._startSweep = true;
+                this._sweepInvalid = false;
+                break;
+            case 2:
+                this.period &= 0x700;
+                this.period |= data;
+                this._rawTimer = this.period;
+                break;
+            case 3:
+                this.period &= 0xFF;
+                this.period |= (data & 7) << 8;
+                this._rawTimer = this.period;
+                this._phase = 0;
+                // setup length
+                if (this.enabled) {
+                    this._length = this.lengthCounts[(data >> 3) & 0x1f];
+                }
+                this._envStart = true;
+                break;
+            case 4:
+                this.enabled = (data !== 0);
+                if (!this.enabled) {
+                    this._length = 0;
+                }
+                break;
+        }
+    };
+    SquareChannel.prototype.run = function (end_time) {
+        var period = this._sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
+        if (period === 0) {
+            this.time = end_time;
+            this.updateAmplitude(0);
+            return;
+        }
+        var volume = this._envConstantVolume ? this.volume : this._envVolume;
+        if (this._length === 0 || volume === 0 || this._sweepInvalid) {
+            this._phase += ((end_time - this.time) / period) & 7;
+            this.time = end_time;
+            this.updateAmplitude(0);
+            return;
+        }
+        for (; this.time < end_time; this.time += period, this._phase++) {
+            this.updateAmplitude((this.dutyCycle >> (this._phase & 7) & 1) * volume);
+        }
+        this._phase &= 7;
+    };
+    SquareChannel.prototype.updateAmplitude = function (new_amp) {
+        var delta = new_amp * this.gain - this._amplitude;
+        this._amplitude += delta;
+        this._bleeper.blip_add_delta(this.time, delta);
+    };
+    SquareChannel.prototype.endFrame = function (time) {
+        this.run(time);
+        this.time = 0;
+    };
+    SquareChannel.prototype.frameClock = function (time, step) {
+        this.run(time);
+        if (!this._envStart) {
+            this._envTimer--;
+            if (this._envTimer === 0) {
+                this._envTimer = this.volume + 1;
+                if (this._envVolume > 0) {
+                    this._envVolume--;
+                }
+                else {
+                    this._envVolume = this.looping ? 15 : 0;
+                }
+            }
+        }
+        else {
+            this._envStart = false;
+            this._envTimer = this.volume + 1;
+            this._envVolume = 15;
+        }
+        switch (step) {
+            case 1:
+            case 3:
+                --this._sweepCounter;
+                if (this._sweepCounter === 0) {
+                    this._sweepCounter = this._sweepDivider + 1;
+                    if (this._sweepEnabled && this._sweepShift > 0) {
+                        var sweep = this.period >> this._sweepShift;
+                        if (this.sweepComplement) {
+                            this.period += this._sweepNegateFlag ? ~sweep : sweep;
+                        }
+                        else {
+                            this.period += this._sweepNegateFlag ? ~sweep + 1 : sweep;
+                        }
+                        this._sweepInvalid = (this._rawTimer < 8 || (this.period & 2048) === 2048);
+                        //if (_sweepInvalid)
+                        //{
+                        //    _sweepInvalid = true;
+                        //}
+                    }
+                }
+                if (this._startSweep) {
+                    this._startSweep = false;
+                    this._sweepCounter = this._sweepDivider + 1;
+                }
+                if (!this.looping && this._length > 0) {
+                    this._length--;
+                }
+                break;
+        }
+    };
+    return SquareChannel;
+}());
+exports.SquareChannel = SquareChannel;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var TriangleChannel = /** @class */ (function () {
+    function TriangleChannel(bleeper, chan) {
+        this._chan = 0;
+        this.lengthCounts = new Uint8Array([
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ]);
+        this.length = 0;
+        this.period = 0;
+        this.time = 0;
+        this.envelope = 0;
+        this.looping = false;
+        this.enabled = false;
+        this.amplitude = 0;
+        this.gain = 0;
+        this._linCtr = 0;
+        this._phase = 0;
+        this._linVal = 0;
+        this._linStart = false;
+        this._bleeper = bleeper;
+        this._chan = chan;
+        this.enabled = true;
+    }
+    TriangleChannel.prototype.writeRegister = function (register, data, time) {
+        //Run(time);
+        switch (register) {
+            case 0:
+                this.looping = (data & 0x80) === 0x80;
+                this._linVal = data & 0x7F;
+                break;
+            case 1:
+                break;
+            case 2:
+                this.period &= 0x700;
+                this.period |= data;
+                break;
+            case 3:
+                this.period &= 0xFF;
+                this.period |= (data & 7) << 8;
+                // setup lengthhave
+                if (this.enabled) {
+                    this.length = this.lengthCounts[(data >> 3) & 0x1f];
+                }
+                this._linStart = true;
+                break;
+            case 4:
+                this.enabled = (data !== 0);
+                if (!this.enabled) {
+                    this.length = 0;
+                }
+                break;
+        }
+    };
+    TriangleChannel.prototype.run = function (end_time) {
+        var period = this.period + 1;
+        if (this._linCtr === 0 || this.length === 0 || this.period < 4) {
+            // leave it at it's current phase
+            this.time = end_time;
+            return;
+        }
+        for (; this.time < end_time; this.time += period, this._phase = (this._phase + 1) % 32) {
+            this.updateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
+        }
+    };
+    TriangleChannel.prototype.updateAmplitude = function (new_amp) {
+        var delta = new_amp * this.gain - this.amplitude;
+        this.amplitude += delta;
+        this._bleeper.blip_add_delta(this.time, delta);
+    };
+    TriangleChannel.prototype.endFrame = function (time) {
+        this.run(time);
+        this.time = 0;
+    };
+    TriangleChannel.prototype.frameClock = function (time, step) {
+        this.run(time);
+        if (this._linStart) {
+            this._linCtr = this._linVal;
+        }
+        else {
+            if (this._linCtr > 0) {
+                this._linCtr--;
+            }
+        }
+        if (!this.looping) {
+            this._linStart = false;
+        }
+        switch (step) {
+            case 1:
+            case 3:
+                if (this.length > 0 && !this.looping) {
+                    this.length--;
+                }
+                break;
+        }
+    };
+    return TriangleChannel;
+}());
+exports.TriangleChannel = TriangleChannel;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var NoiseChannel = /** @class */ (function () {
+    function NoiseChannel(bleeper, chan) {
+        this._bleeper = null;
+        this._chan = 0;
+        this.noisePeriods = [4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068];
+        this.lengthCounts = [10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30];
+        this._time = 0;
+        this._envConstantVolume = false;
+        this._envVolume = 0;
+        this.amplitude = 0;
+        this._phase = 0;
+        this._envTimer = 0;
+        this._envStart = false;
+        this.length = 0;
+        this.period = 0;
+        this.volume = 0;
+        this.looping = false;
+        this.gain = 0;
+        this.enabled = true;
+        this._bleeper = bleeper;
+        this._chan = chan;
+        this._phase = 1;
+        this._envTimer = 15;
+    }
+    NoiseChannel.prototype.writeRegister = function (register, data, time) {
+        // Run(time);
+        switch (register) {
+            case 0:
+                this._envConstantVolume = (data & 16) === 16;
+                this.volume = data & 15;
+                this.looping = (data & 128) === 128;
+                break;
+            case 1:
+                break;
+            case 2:
+                this.period = this.noisePeriods[data & 15];
+                // _period |= data;
+                break;
+            case 3:
+                // setup length
+                if (this.enabled) {
+                    this.length = this.lengthCounts[(data >> 3) & 31];
+                }
+                this._envStart = true;
+                break;
+            case 4:
+                this.enabled = (data !== 0);
+                if (!this.enabled) {
+                    this.length = 0;
+                }
+                break;
+        }
+    };
+    NoiseChannel.prototype.Run = function (end_time) {
+        var volume = this._envConstantVolume ? this.volume : this._envVolume;
+        if (this.length === 0) {
+            volume = 0;
+        }
+        if (this.period === 0) {
+            this._time = end_time;
+            this.UpdateAmplitude(0);
+            return;
+        }
+        if (this._phase === 0) {
+            this._phase = 1;
+        }
+        for (; this._time < end_time; this._time += this.period) {
+            var new15;
+            if (this.looping) {
+                new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
+            }
+            else {
+                new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
+            }
+            this.UpdateAmplitude(this._phase & 1 * volume);
+            this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
+        }
+    };
+    NoiseChannel.prototype.UpdateAmplitude = function (amp) {
+        var delta = amp * this.gain - this.amplitude;
+        this.amplitude += delta;
+        this._bleeper.blip_add_delta(this._time, delta);
+    };
+    NoiseChannel.prototype.EndFrame = function (time) {
+        this.Run(time);
+        this._time = 0;
+    };
+    NoiseChannel.prototype.FrameClock = function (time, step) {
+        this.Run(time);
+        if (!this._envStart) {
+            this._envTimer--;
+            if (this._envTimer === 0) {
+                this._envTimer = this.volume + 1;
+                if (this._envVolume > 0) {
+                    this._envVolume--;
+                }
+                else {
+                    this._envVolume = this.looping ? 15 : 0;
+                }
+            }
+        }
+        else {
+            this._envStart = false;
+            this._envTimer = this.volume + 1;
+            this._envVolume = 15;
+        }
+        switch (step) {
+            case 1:
+            case 2:
+                if (!this.looping && this.length > 0) {
+                    this.length--;
+                }
+                break;
+        }
+    };
+    return NoiseChannel;
+}());
+exports.NoiseChannel = NoiseChannel;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 //input classes
 var ChiChiInputHandler = /** @class */ (function () {
     function ChiChiInputHandler() {
@@ -3737,7 +3495,7 @@ exports.ChiChiControlPad = ChiChiControlPad;
 
 
 /***/ }),
-/* 7 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3758,6 +3516,7 @@ exports.ChiChiMemMap = ChiChiMemMap;
 var ChiChiPPU = /** @class */ (function () {
     function ChiChiPPU() {
         this.LastcpuClock = 0;
+        this.greyScale = false;
         // private members
         // scanline position
         this.yPosition = 0;
@@ -3994,6 +3753,7 @@ var ChiChiPPU = /** @class */ (function () {
                 this.DrawTo(Clock);
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
+                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
                 this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
                 this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
                 this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
@@ -4361,9 +4121,9 @@ var ChiChiPPU = /** @class */ (function () {
         var xTilePosition = this.xPosition >> 3;
         var tileRow = (this.yPosition >> 3) % 30 << 5;
         var tileNametablePosition = 8192 + ppuNameTableMemoryStart + xTilePosition + tileRow;
-        var TileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
+        var tileIndex = this.chrRomHandler.GetPPUByte(0, tileNametablePosition);
         var patternTableYOffset = this.yPosition & 7;
-        var patternID = this.backgroundPatternTableIndex + (TileIndex * 16) + patternTableYOffset;
+        var patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
         this.patternEntry = this.chrRomHandler.GetPPUByte(0, patternID);
         this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(0, patternID + 8);
         this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
@@ -4384,31 +4144,21 @@ var ChiChiPPU = /** @class */ (function () {
     };
     ChiChiPPU.prototype.DrawTo = function (cpuClockNum) {
         var frClock = (cpuClockNum - this.LastcpuClock) * 3;
-        if (this.frameClock < 6820) {
-            // if the frameclock +frClock is in vblank (< 6820) dont do nothing, just update it
-            if (this.frameClock + frClock < 6820) {
-                this.frameClock += frClock;
-                frClock = 0;
-            }
-            else {
-                //find number of pixels to draw since frame start
-                frClock += this.frameClock - 6820;
-                this.frameClock = 6820;
-            }
-        }
+        this.LastcpuClock = cpuClockNum;
         for (var i = 0; i < frClock; ++i) {
-            switch (this.frameClock++) {
+            switch (this.frameClock) {
                 case 0:
-                    break;
-                case 6820:
-                    this.oddFrame = !this.oddFrame;
                     this._PPUStatus = 0;
                     this.hitSprite = false;
                     this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
                     if ((this._PPUControlByte1 & 0x18) !== 0) {
+                        this.oddFrame = !this.oddFrame;
                         this.isRendering = true;
                         if (this.oddFrame)
                             this.frameClock++;
+                    }
+                    else {
+                        this.oddFrame = false;
                     }
                     this.frameOn = true;
                     this.chrRomHandler.ResetBankStartCache();
@@ -4418,7 +4168,8 @@ var ChiChiPPU = /** @class */ (function () {
                         this.spriteChanges = false;
                     }
                     break;
-                case 7161:
+                case 341:
+                    this.shouldRender = true;
                     // lockedVScroll = _vScroll;
                     this.vbufLocation = 0;
                     //curBufPos = bufStart;
@@ -4427,18 +4178,17 @@ var ChiChiPPU = /** @class */ (function () {
                     this.currentXPosition = 0;
                     this.currentYPosition = 0;
                     break;
-                case 89342:// ChiChiNES.CPU2A03.frameClockEnd:
-                    this.shouldRender = true;
+                case 82501:// ChiChiNES.CPU2A03.frameClockEnd:
+                    this.shouldRender = false;
                     //__frameFinished = true;
                     this.frameFinished();
                     this.SetupVINT();
                     this.frameOn = false;
-                    this.frameClock = 0;
                     //if (_isDebugging)
                     //    events.Clear();
                     break;
             }
-            if (this.frameClock >= 7161 && this.frameClock <= 89342) {
+            if (this.shouldRender) {
                 if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
                     /* update x position */
                     this.xPosition = this.currentXPosition + this.lockedHScroll;
@@ -4458,10 +4208,16 @@ var ChiChiPPU = /** @class */ (function () {
                         this.currentAttributeByte = this.GetAttributeTableEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
                         /* end fetch next tile */
                     }
+                    var tilesVis = this._tilesAreVisible;
+                    var spriteVis = this._spritesAreVisible;
+                    if (this.currentXPosition < 8) {
+                        tilesVis = !this._clipTiles;
+                        spriteVis = !this._clipSprites;
+                    }
                     /* draw pixel */
-                    var tilePixel = this._tilesAreVisible ? this.GetNameTablePixel() : 0;
+                    var tilePixel = tilesVis ? this.GetNameTablePixel() : 0;
                     // bool foregroundPixel = isForegroundPixel;
-                    var spritePixel = this._spritesAreVisible ? this.GetSpritePixel() : 0;
+                    var spritePixel = spriteVis ? this.GetSpritePixel() : 0;
                     if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
                         this.hitSprite = true;
                         this._PPUStatus = this._PPUStatus | 64;
@@ -4501,11 +4257,11 @@ var ChiChiPPU = /** @class */ (function () {
                     }
                 }
             }
+            this.frameClock++;
+            if (this.frameClock >= 89342) {
+                this.frameClock = 0;
+            }
         }
-        this.LastcpuClock = cpuClockNum;
-    };
-    ChiChiPPU.prototype.Tick = function () {
-        this.DrawTo(this.LastcpuClock + 1);
     };
     ChiChiPPU.prototype.UpdatePixelInfo = function () {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;

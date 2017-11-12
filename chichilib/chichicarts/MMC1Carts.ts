@@ -15,7 +15,7 @@ export class MMC1Cart extends BaseCart  {
 
     InitializeCart() {
         this.mapperName = 'MMC1';
-        
+        this.usesSRAM = true;
         if (this.chrRomCount > 0) {
             this.CopyBanks(0,0, 0, 2);
         }

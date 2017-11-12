@@ -164,7 +164,7 @@ export class BaseCart implements IBaseCart {
 
     //BankSwitchesChanged: boolean;
     //OneScreenOffset: number;
-    UsesSRAM: boolean = false;
+    usesSRAM: boolean = false;
     //ChrRamStart: number;
 
     constructor() {
@@ -240,12 +240,7 @@ export class BaseCart implements IBaseCart {
         this.romControlBytes[0] = this.iNesHeader[6];
         this.romControlBytes[1] = this.iNesHeader[7];
 
-        this.SRAMCanSave = (this.romControlBytes[0] & 2) === 2;
-        this.SRAMEnabled = true;
-
-        this.UsesSRAM = (this.romControlBytes[0] & 2) === 2;
-
-        this.checkSum = ""; //ROMHashFunction(nesCart, chrRom);
+        this.usesSRAM = (this.romControlBytes[0] & 2) === 2;
 
     }
 
@@ -272,20 +267,31 @@ export class BaseCart implements IBaseCart {
     
     GetByte(clock: number, address: number): number {
         let bank = (address >> 12) - 0x6;
-
-        if((address & 0xE000) === 0x6000) {
-            return this.prgRomBank6[address & 0xFFF];
-        } else {
-            return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
+        if ( bank < 2) {
+            if (this.usesSRAM) {
+                return this.prgRomBank6[address & 0x1fff];
+            }else {
+                return address >> 8;
+            }
         }
+
+        return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
     }
 
     peekByte(address: number) {
         return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
     }
 
+    setPrgRam(address: number, data: number) {
+        if (address >= 0x6000 && address <= 0x7fff) {
+            this.prgRomBank6[address & 0x1fff] = data;
+        }
+    }
+
     SetByte(clock: number, address: number, data: number): void {
-        // throw new Error('Method not implemented.');
+        if (this.usesSRAM) {
+            this.setPrgRam(address, data);
+        }
     }
 
     GetPPUByte(clock: number, address: number): number {
@@ -348,6 +354,7 @@ export class BaseCart implements IBaseCart {
             this.prgBankStarts[start + i] = banks[i] * 4096;
         }
     }
+
 
     MaskBankAddress(bank: number): number {
         if (bank >= this.prgRomCount * 2) {
@@ -458,7 +465,7 @@ export class BaseCart implements IBaseCart {
                 this.ppuBankStarts[11] = (this.chrRamStart + 3072) | 0;
                 break;
         }
-        this.UpdateBankStartCache();
+
         this.Whizzler.UpdatePixelInfo();
 
 
@@ -535,7 +542,7 @@ export class BaseCart implements IBaseCart {
         this.UpdateBankStartCache();
     }        
 
-    InitializeCart(): void {
+    InitializeCart(reset?: boolean): void {
         //throw new Error('Method not implemented.');
     }
 

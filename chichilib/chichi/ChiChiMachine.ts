@@ -23,6 +23,9 @@ import { WavSharer } from './Audio/CommonAudio';
             this.ppu.NMIHandler = () => {
                 this.Cpu.NMIHandler();
             }
+            this.SoundBopper.NMIHandler = () => {
+                this.Cpu._handleIRQ = true;
+            }
             this.ppu.frameFinished = () => { this.FrameFinished(); };
         }
 
@@ -71,9 +74,8 @@ import { WavSharer } from './Audio/CommonAudio';
 
         Reset(): void {
             if (this.Cpu  && this.Cart && this.Cart.supported) {
-                // ForceStop();
-                //this.ppu.Initialize();
-                //this.Cart.InitializeCart();
+
+                this.Cart.InitializeCart(true);
                 this.Cpu.ResetCPU();
                 this.SoundBopper.RebuildSound();
                 //ClearGenieCodes();
@@ -84,15 +86,10 @@ import { WavSharer } from './Audio/CommonAudio';
 
         PowerOn(): void {
             if (this.Cpu && this.Cart && this.Cart.supported) {
-                this.Cpu.ppu.Initialize();
                 this.Cart.InitializeCart();
-                // if (this.SRAMReader !=  null && this.Cart.UsesSRAM) {
-                //     this.Cart.SRAM = this.SRAMReader(this.Cart.ChiChiNES$INESCart$CheckSum);
-                // }
-                //this.Cpu.ResetCPU();
-                //ClearGenieCodes();
-                this.Cpu.PowerOn();
+                this.Cpu.ppu.Initialize();
                 this.SoundBopper.RebuildSound();
+                this.Cpu.PowerOn();
                 this.RunState = RunningStatuses.Running;
             }
         }
@@ -131,8 +128,8 @@ import { WavSharer } from './Audio/CommonAudio';
 
             this.totalCPUClocks = this.Cpu.Clock;
 
-            this.SoundBopper.FlushFrame(this.totalCPUClocks);
-            this.SoundBopper.EndFrame(this.totalCPUClocks);
+            // this.SoundBopper.flushFrame(this.totalCPUClocks);
+            // this.SoundBopper.endFrame(this.totalCPUClocks);
             //this.SoundBopper.writer.ReadWaves();
 
             this.totalCPUClocks = 0;
@@ -224,6 +221,7 @@ import { WavSharer } from './Audio/CommonAudio';
         }  
         private advanceClock(value: number) {
             this.ppu.DrawTo(this._clock);
+            this.SoundBopper.advanceClock(value);
             this.Cart.advanceClock(value);
             this._clock += value;
             
@@ -520,7 +518,7 @@ import { WavSharer } from './Audio/CommonAudio';
                 this.advanceClock(7);
                 this._handleNMI = false;
                 this.NonMaskableInterrupt();
-            } else if (this._handleIRQ) {
+            } else if (this._handleIRQ ) {
                 this.advanceClock(7);
                 this._handleIRQ = false;
                 this.InterruptRequest();

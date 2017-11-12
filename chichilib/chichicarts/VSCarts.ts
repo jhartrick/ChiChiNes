@@ -6,8 +6,10 @@ export class VSCart extends BaseCart {
         //    this.prevBSSrc[i] = -1;
         //}
         //SRAMEnabled = SRAMCanSave;
+        reg16 = 0;
         bankSelect = 0;
         InitializeCart() {
+            this.usesSRAM = true;
             this.mapperName = 'VS Unisystem';
             this.mapsBelow6000 = true;
             if (this.chrRomCount > 0) {
@@ -17,13 +19,14 @@ export class VSCart extends BaseCart {
         }
 
         SetByte(clock: number, address: number, val: number): void {
+            this.setPrgRam(address, val);
+
             if (address == 0x4016) {
                 this.bankSelect = val;
-                const chrbank =(val >> 2) & 0x1;
+                const chrbank = (val >> 2) & 0x1;
                 if (this.prgRomCount > 2) { 
                     this.SetupBankStarts(chrbank, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
                 }
-                this.Whizzler.DrawTo(clock);
                 this.CopyBanks(clock, 0, chrbank, 1);
             }
         }
