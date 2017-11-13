@@ -198,7 +198,7 @@ export class NesCart extends BaseCart {
          //SRAMEnabled = SRAMCanSave;
      InitializeCart() {
         this.mapperName = 'CNROM';
-        this.copyBanks(0, 0, 0, 1);
+        this.copyBanks(0, 0, this.chrRomCount -1, 1);
         
         if (this.prgRomCount == 1) 
         {
@@ -211,7 +211,11 @@ export class NesCart extends BaseCart {
 
     SetByte(clock: number, address: number, val: number): void {
         if (address >= 0x8000 && address <= 0xFFFF) {
-            this.copyBanks(clock, 0, val & 0xff, 1);
+            let x = val;// > this.chrRomCount - 1? this.chrRomCount -1 : val;
+            while (x >= this.chrRomCount) {
+                x = x >> 1;
+            }
+            this.copyBanks(clock, 0, x, 1);
         }
     }
      
@@ -416,6 +420,31 @@ export class Mapper145Cart extends BaseCart {
  
  }
  
+ export class Mapper079Cart extends BaseCart {
+    InitializeCart(): void {
+        this.mapsBelow6000 = true;
+        this.usesSRAM = false;
+        this.mapperName = 'NINA-003-006';
+        if (this.chrRomCount > 0) {
+            this.copyBanks(0, 0, 0, 2);
+        }
+        this.SetupBankStarts((this.prgRomCount * 2) - 4, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    }
+
+    SetByte(clock: number, address: number, val: number): void {
+        if ((address >> 13) == 2 && (address & 0x100))
+        {
+            const chrbank = (val & 0x7);
+            const prgbank = ((val >> 3) & 0x1) << 2;
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            this.copyBanks(clock, 0, chrbank, 1);
+        }
+
+    }
+
+}
+
+
  export class Mapper078Cart extends BaseCart {
     // default to cosmo carrier
     isHolyDiver = false;

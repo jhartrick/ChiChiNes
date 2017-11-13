@@ -33,16 +33,18 @@ export class MMC1Cart extends BaseCart  {
     SetByte(clock: number, address: number, val: number) {
         // if write is to a different register, reset
         this.lastClock = clock;
-        switch (address & 0xF000) {
+        switch (address & 0xe000) {
             case 0x6000:
-            case 0x7000:
                 this.prgRomBank6[address & 8191] = val & 255;
                 break;
-            default:
+            case 0x8000:
+            case 0xa000:
+            case 0xc000:
+            case 0xe000:
                 this.lastwriteAddress = address;
                 if ((val & 128) === 128) {
                     this._registers[0] = this._registers[0] | 12;
-                    this.accumulator = 0; // _registers[(address / 0x2000) & 3];
+                    this.accumulator = 0;
                     this.sequence = 0;
                 } else {
                     if ((val & 1) === 1) {

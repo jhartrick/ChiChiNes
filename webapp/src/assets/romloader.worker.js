@@ -1934,6 +1934,7 @@ var BaseCart = /** @class */ (function () {
         this.irqRaised = false;
         this.DebugEvents = null;
         this.usesSRAM = false;
+        this.ramMask = 0x1fff;
         this.prgRomBank6.fill(0);
         for (var i = 0; i < 16; i++) {
             this.ppuBankStarts[i] = i * 0x400;
@@ -2110,7 +2111,7 @@ var BaseCart = /** @class */ (function () {
         var bank = (address >> 12) - 0x6;
         if (bank < 2) {
             if (this.usesSRAM) {
-                return this.prgRomBank6[address & 0x1fff];
+                return this.prgRomBank6[address & this.ramMask];
             }
             else {
                 return address >> 8;
@@ -2206,7 +2207,7 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.ResetClock = function (Clock) {
         // throw new Error('Method not implemented.');
     };
-    // 0 - onescreen, 1 - horz, 2- vert, 3 - fourscreen
+    // 0 - onescreen, 1 -v, 2- h, 3 - fourscreen
     BaseCart.prototype.mirror = function (clockNum, mirroring) {
         this.mirroring = mirroring;
         switch (mirroring) {
@@ -2385,9 +2386,8 @@ var VRCIrqBase = /** @class */ (function (_super) {
         return _this;
     }
     VRCIrqBase.prototype.tickIrq = function () {
-        if (this.irqCounter == 0xff) {
-            this.prescaler = 341;
-            this.irqCounter = this.irqLatch & 0xff;
+        if (this.irqCounter >= 0xff) {
+            this.irqCounter = this.irqLatch;
             this.irqRaised = true;
             //this.CPU._handleIRQ = true;
         }
@@ -2409,9 +2409,9 @@ var VRCIrqBase = /** @class */ (function (_super) {
             }
         }
     };
-    VRCIrqBase.prototype.advanceClock = function (clock) {
+    VRCIrqBase.prototype.advanceClock = function (ticks) {
         if (this.irqEnable) {
-            this.tick(clock);
+            this.tick(ticks);
         }
     };
     VRCIrqBase.prototype.ackIrq = function () {
@@ -2420,13 +2420,12 @@ var VRCIrqBase = /** @class */ (function (_super) {
     };
     Object.defineProperty(VRCIrqBase.prototype, "irqControl", {
         set: function (val) {
-            var oldEnable = this.irqEnable;
             this.irqEnableAfterAck = (val & 0x1) == 0x1;
             this.irqEnable = (val & 0x2) == 0x2;
             this.irqMode = (val & 0x4) == 0x4;
-            if (this.irqEnable && !oldEnable) {
+            if (this.irqEnable) {
                 this.prescaler = 341;
-                this.irqCounter = this.irqLatch & 0xff;
+                this.irqCounter = this.irqLatch;
             }
         },
         enumerable: true,
@@ -2444,7 +2443,6 @@ var VRC2or4Cart = /** @class */ (function (_super) {
         _this.vrc2 = false;
         _this.swapMode = false;
         _this.microwireLatch = 0;
-        _this.irqlatches = [0, 0];
         _this.latches = [
             0,
             0,
@@ -2465,14 +2463,7 @@ var VRC2or4Cart = /** @class */ (function (_super) {
         _this.ramMask = 0xfff;
         _this.vrc2mirroring = function (clock, address, data) {
             if (address <= 0x9003) {
-                switch (data & 1) {
-                    case 0:// vertical
-                        _this.mirror(clock, 1);
-                        break;
-                    case 1:// horizontal
-                        _this.mirror(clock, 2);
-                        break;
-                }
+                _this.mirror(clock, (data & 1) + 1);
             }
         };
         _this.vrc4mirroring = function (clock, address, data) {
@@ -2608,6 +2599,8 @@ var KonamiVRC2Cart = /** @class */ (function (_super) {
     };
     KonamiVRC2Cart.prototype.InitializeCart = function () {
         this.mapperName = 'KonamiVRC2';
+        this.usesSRAM = true;
+        this.ramMask = 0xfff;
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);
         switch (this.ROMHashFunction) {
@@ -2615,9 +2608,7 @@ var KonamiVRC2Cart = /** @class */ (function (_super) {
             case 'B27B8CF4':// Gryzor (contra j)
                 this.useMicrowire();
                 break;
-            case 'D467C0CC':// parodius da!
-                this.altRegNums();
-                break;
+            case 'D467C0CC': // parodius da!
             case 'C1FBF659': // boku dracula kun
             case '91328C1D': // tiny toon adventures j
             case 'FCBF28B1':
@@ -2637,12 +2628,7 @@ var KonamiVRC022Cart = /** @class */ (function (_super) {
         this.mapperName = 'KonamiVRC2a';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);
-        this.regNums = [
-            0x0,
-            0x2,
-            0x1,
-            0x3,
-        ];
+        this.regNums = [0x0, 0x2, 0x1, 0x3];
         this.vrcmirroring = this.vrc2mirroring;
         this.useMicrowire();
         switch (this.ROMHashFunction) {
@@ -2671,7 +2657,7 @@ var KonamiVRC022Cart = /** @class */ (function (_super) {
                 }
                 break;
             case 0x9000:
-                this.vrcmirroring(clock, address, data);
+                this.vrc2mirroring(clock, address, data);
                 break;
             case 0xa000:
                 // 8kib prg rom at A000
@@ -2768,6 +2754,7 @@ var Konami025Cart = /** @class */ (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     Konami025Cart.prototype.InitializeCart = function () {
+        this.usesSRAM = true;
         this.mapperName = 'KonamiVRC4';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 1, 1);
@@ -2775,6 +2762,9 @@ var Konami025Cart = /** @class */ (function (_super) {
         this.regNums = [0x000, 0x002, 0x001, 0x003];
         this.regMask = 0xf;
         switch (this.ROMHashFunction) {
+            case '5ADBF660':
+                this.useMicrowire();
+                break;
             case '4A601A2C':// teenage mutant ninja turtles j
                 this.regNums = [
                     0x000, 0x008, 0x004, 0x00C
@@ -2868,6 +2858,7 @@ var MapperFactory = /** @class */ (function () {
         this[75] = VRC.KonamiVRC1Cart;
         this[77] = Discrete.Mapper077Cart;
         this[78] = Discrete.Mapper078Cart;
+        this[79] = Discrete.Mapper079Cart;
         this[81] = Discrete.Mapper081Cart;
         this[87] = Discrete.Mapper087Cart;
         this[89] = Sunsoft.Mapper089Cart;
@@ -3513,7 +3504,7 @@ var CNROMCart = /** @class */ (function (_super) {
     //SRAMEnabled = SRAMCanSave;
     CNROMCart.prototype.InitializeCart = function () {
         this.mapperName = 'CNROM';
-        this.copyBanks(0, 0, 0, 1);
+        this.copyBanks(0, 0, this.chrRomCount - 1, 1);
         if (this.prgRomCount == 1) {
             this.SetupBankStarts(0, 1, 0, 1);
         }
@@ -3523,7 +3514,11 @@ var CNROMCart = /** @class */ (function (_super) {
     };
     CNROMCart.prototype.SetByte = function (clock, address, val) {
         if (address >= 0x8000 && address <= 0xFFFF) {
-            this.copyBanks(clock, 0, val & 0xff, 1);
+            var x = val; // > this.chrRomCount - 1? this.chrRomCount -1 : val;
+            while (x >= this.chrRomCount) {
+                x = x >> 1;
+            }
+            this.copyBanks(clock, 0, x, 1);
         }
     };
     return CNROMCart;
@@ -3726,6 +3721,31 @@ var Mapper077Cart = /** @class */ (function (_super) {
     return Mapper077Cart;
 }(BaseCart_1.BaseCart));
 exports.Mapper077Cart = Mapper077Cart;
+var Mapper079Cart = /** @class */ (function (_super) {
+    __extends(Mapper079Cart, _super);
+    function Mapper079Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper079Cart.prototype.InitializeCart = function () {
+        this.mapsBelow6000 = true;
+        this.usesSRAM = false;
+        this.mapperName = 'NINA-003-006';
+        if (this.chrRomCount > 0) {
+            this.copyBanks(0, 0, 0, 2);
+        }
+        this.SetupBankStarts((this.prgRomCount * 2) - 4, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+    };
+    Mapper079Cart.prototype.SetByte = function (clock, address, val) {
+        if ((address >> 13) == 2 && (address & 0x100)) {
+            var chrbank = (val & 0x7);
+            var prgbank = ((val >> 3) & 0x1) << 2;
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            this.copyBanks(clock, 0, chrbank, 1);
+        }
+    };
+    return Mapper079Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper079Cart = Mapper079Cart;
 var Mapper078Cart = /** @class */ (function (_super) {
     __extends(Mapper078Cart, _super);
     function Mapper078Cart() {
@@ -4198,16 +4218,18 @@ var MMC1Cart = /** @class */ (function (_super) {
     MMC1Cart.prototype.SetByte = function (clock, address, val) {
         // if write is to a different register, reset
         this.lastClock = clock;
-        switch (address & 0xF000) {
+        switch (address & 0xe000) {
             case 0x6000:
-            case 0x7000:
                 this.prgRomBank6[address & 8191] = val & 255;
                 break;
-            default:
+            case 0x8000:
+            case 0xa000:
+            case 0xc000:
+            case 0xe000:
                 this.lastwriteAddress = address;
                 if ((val & 128) === 128) {
                     this._registers[0] = this._registers[0] | 12;
-                    this.accumulator = 0; // _registers[(address / 0x2000) & 3];
+                    this.accumulator = 0;
                     this.sequence = 0;
                 }
                 else {
@@ -4757,11 +4779,15 @@ var BaseCart_1 = __webpack_require__(1);
 var Mapper068Cart = /** @class */ (function (_super) {
     __extends(Mapper068Cart, _super);
     function Mapper068Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.cramStart = 0;
+        _this.cromStart = 0;
+        return _this;
     }
     Mapper068Cart.prototype.InitializeCart = function () {
         this.mapperName = 'Sunsoft-4';
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.cramStart = this.chrRamStart;
         //this.mirror(0, 0);
     };
     Mapper068Cart.prototype.SetByte = function (clock, address, val) {
@@ -4796,6 +4822,8 @@ var Mapper068Cart = /** @class */ (function (_super) {
                 break;
             case 0xC000:
                 // Map a 1 KiB CHR ROM bank in place of the lower nametable (CIRAM $000-$3FF). Only D6-D0 are used; D7 is ignored and treated as 1, so nametables must be in the last 128 KiB of CHR ROM.   
+                this.cromStart = (val | 0x80) * 0x400;
+                this.chrRamStart = this.cromStart;
                 this.copyBanks1k(clock, 8, val | 0x80, 1);
                 break;
             case 0xD000:
@@ -4803,8 +4831,14 @@ var Mapper068Cart = /** @class */ (function (_super) {
                 this.copyBanks1k(clock, 9, val | 0x80, 1);
                 break;
             case 0xE000:
-                this.mirror(clock, val & 0x3);
                 var useCRAM = (val & 0x10) == 0x10;
+                if (useCRAM) {
+                    this.chrRamStart = this.cramStart;
+                }
+                else {
+                    this.chrRamStart = this.cromStart;
+                }
+                this.mirror(clock, val & 0x3);
                 break;
         }
         // this.Whizzler.DrawTo(clock);
@@ -5392,9 +5426,10 @@ var VSCart = /** @class */ (function (_super) {
         this.mapperName = 'VS Unisystem';
         this.mapsBelow6000 = true;
         if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 1);
+            this.copyBanks(0, 0, 0, 2);
         }
         this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.mirror(0, 3);
     };
     VSCart.prototype.SetByte = function (clock, address, val) {
         this.setPrgRam(address, val);
@@ -5441,6 +5476,7 @@ var KonamiVRC1Cart = /** @class */ (function (_super) {
         this.mapperName = 'KonamiVRC1';
         if (this.mapperId == 151) {
             this.mapperName = 'KonamiVRC1 (VS)';
+            this.mirror(0, 3);
         }
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);
@@ -5755,6 +5791,7 @@ var Mapper093Cart = /** @class */ (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     Mapper093Cart.prototype.InitializeCart = function () {
+        this.usesSRAM = true;
         this.mapperName = 'Sunsoft-2';
         if (this.chrRomCount > 0) {
             this.copyBanks(0, 0, 0, 1);
@@ -5785,10 +5822,10 @@ var Mapper089Cart = /** @class */ (function (_super) {
     Mapper089Cart.prototype.SetByte = function (clock, address, val) {
         if (address >= 0x8000 && address <= 0xFFFF) {
             var lobank = val & 0x7;
-            lobank |= ((val >> 7) & 1) << 3;
+            lobank |= ((val >> 4) & 8);
             var prgbank = ((val >> 4) & 0x7) << 1;
-            var mirror = (val >> 3) & 1;
-            this.oneScreenOffset = mirror * 1024;
+            var mirror = (val & 8) ? 1024 : 0;
+            this.oneScreenOffset = mirror;
             this.mirror(clock, 0);
             this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
             this.copyBanks(clock, 0, lobank, 1);
@@ -5805,17 +5842,16 @@ var Mapper184Cart = /** @class */ (function (_super) {
     Mapper184Cart.prototype.InitializeCart = function () {
         this.usesSRAM = false;
         this.mapperName = 'Sunsoft-1';
-        if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 1);
-        }
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.copyBanks4k(0, 0, 0, 1);
+        this.copyBanks4k(0, 3, 1, 1);
     };
     Mapper184Cart.prototype.SetByte = function (clock, address, val) {
         if (address >= 0x6000 && address <= 0x7FFF) {
-            var lobank = val & 0x7;
-            var hibank = (val >> 4) & 0x3;
+            var lobank = val & 0xf;
+            var hibank = (val >> 4);
             this.copyBanks4k(clock, 0, lobank, 1);
-            this.copyBanks4k(clock, 1, hibank + 4, 1);
+            this.copyBanks4k(clock, 1, hibank, 1);
         }
     };
     return Mapper184Cart;

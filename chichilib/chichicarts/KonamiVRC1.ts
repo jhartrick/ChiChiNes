@@ -5,6 +5,7 @@ export class KonamiVRC1Cart extends BaseCart {
         this.mapperName = 'KonamiVRC1';
         if (this.mapperId == 151) {
             this.mapperName = 'KonamiVRC1 (VS)';
+            this.mirror(0,3);
         }
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);

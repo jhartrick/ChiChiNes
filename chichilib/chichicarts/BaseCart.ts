@@ -258,12 +258,12 @@ export class BaseCart implements IBaseCart {
         // initialize
         this.InitializeCart();
     }
-    
+    ramMask = 0x1fff;
     GetByte(clock: number, address: number): number {
         let bank = (address >> 12) - 0x6;
         if ( bank < 2) {
             if (this.usesSRAM) {
-                return this.prgRomBank6[address & 0x1fff];
+                return this.prgRomBank6[address & this.ramMask];
             }else {
                 return address >> 8;
             }
@@ -375,7 +375,7 @@ export class BaseCart implements IBaseCart {
     }
 
 
-    // 0 - onescreen, 1 - horz, 2- vert, 3 - fourscreen
+    // 0 - onescreen, 1 -v, 2- h, 3 - fourscreen
     mirror(clockNum: number, mirroring: number): void {
         this.mirroring = mirroring;
 

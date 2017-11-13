@@ -468,9 +468,10 @@ import { WavSharer } from './Audio/CommonAudio';
             this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
             this.fetchInstructionParameters();
 
+            this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
+            
             this.execute();
 
-            this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
             this.advanceClock(this._currentInstruction_ExtraTiming);
 
             //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);

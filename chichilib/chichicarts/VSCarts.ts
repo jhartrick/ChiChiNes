@@ -13,9 +13,10 @@ export class VSCart extends BaseCart {
             this.mapperName = 'VS Unisystem';
             this.mapsBelow6000 = true;
             if (this.chrRomCount > 0) {
-                this.copyBanks(0, 0, 0, 1);
+                this.copyBanks(0, 0, 0, 2);
             }
             this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+            this.mirror(0,3);
         }
 
         SetByte(clock: number, address: number, val: number): void {

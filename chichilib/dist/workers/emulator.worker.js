@@ -1478,8 +1478,8 @@ var ChiChiCPPU = /** @class */ (function () {
         this._currentInstruction_OpCode = this.GetByte((this._programCounter++) & 0xFFFF);
         this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
         this.fetchInstructionParameters();
-        this.execute();
         this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
+        this.execute();
         this.advanceClock(this._currentInstruction_ExtraTiming);
         //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
         if (this._debugging) {
@@ -2564,7 +2564,7 @@ var CommonAudio_1 = __webpack_require__(0);
 var ChiChiBopper = /** @class */ (function () {
     function ChiChiBopper(writer) {
         this.writer = writer;
-        this.throwingIRQs = true;
+        this.throwingIRQs = false;
         this.reg15 = 0;
         this._sampleRate = 44100;
         this.master_vol = 4369;
@@ -3713,15 +3713,10 @@ var ChiChiPPU = /** @class */ (function () {
                     }
                 }
                 else {
-                    // if its a nametable byte, mask it according to current mirroring
-                    if ((this._PPUAddress & 0xF000) === 0x2000) {
-                        this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
-                    }
-                    else {
-                        if (this.vidRamIsRam) {
-                            this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
-                        }
-                    }
+                    // if ((this._PPUAddress & 0xF000) === 0x2000) {
+                    //     this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
+                    // }
+                    this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
                 }
                 // if controlbyte0.4, set ppuaddress + 32, else inc
                 if ((this._PPUControlByte0 & 4) === 4) {
@@ -3940,7 +3935,15 @@ var ChiChiPPU = /** @class */ (function () {
     };
     ChiChiPPU.prototype.advanceClock = function (ticks) {
         var ppuTicks = ticks * 3;
-        var frameLine = this.frameClock / 341;
+        if (this.frameClock > 89002) {
+            this.frameClock += ppuTicks;
+            if (this.frameClock > 89342) {
+                ppuTicks = this.frameClock - 89342;
+            }
+            else {
+                return;
+            }
+        }
         while (ppuTicks--) {
             switch (this.frameClock) {
                 case 0:

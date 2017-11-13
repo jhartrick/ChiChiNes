@@ -2,9 +2,13 @@ import { BaseCart } from "./BaseCart";
 
 // BNROM (34)
 export class Mapper068Cart extends BaseCart {
+    cramStart = 0;
+    cromStart = 0;
+    
     InitializeCart(): void {
         this.mapperName = 'Sunsoft-4';
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.cramStart = this.chrRamStart;
         //this.mirror(0, 0);
      }
 
@@ -40,6 +44,8 @@ export class Mapper068Cart extends BaseCart {
                 break;
             case 0xC000:
                 // Map a 1 KiB CHR ROM bank in place of the lower nametable (CIRAM $000-$3FF). Only D6-D0 are used; D7 is ignored and treated as 1, so nametables must be in the last 128 KiB of CHR ROM.   
+                this.cromStart = (val | 0x80) * 0x400;
+                this.chrRamStart = this.cromStart;
                 this.copyBanks1k(clock, 8, val | 0x80, 1);
                 break;
             case 0xD000:
@@ -48,9 +54,14 @@ export class Mapper068Cart extends BaseCart {
                 break;
 
             case 0xE000:
-                this.mirror(clock, val & 0x3);
                 let useCRAM = (val & 0x10) == 0x10;
-            break;
+                if (useCRAM) {
+                    this.chrRamStart = this.cramStart;
+                } else {
+                    this.chrRamStart = this.cromStart;
+                }
+                this.mirror(clock, val & 0x3);
+                break;
         }
 
        // this.Whizzler.DrawTo(clock);

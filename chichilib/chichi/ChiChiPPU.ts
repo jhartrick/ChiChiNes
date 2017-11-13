@@ -330,14 +330,11 @@ export class ChiChiPPU {
                         this._palette[(palAddress ^ 16) & 0x1F] = data;
                     }
                 } else {
-                    // if its a nametable byte, mask it according to current mirroring
-                    if ((this._PPUAddress & 0xF000) === 0x2000) {
-                        this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
-                    } else {
-                        if (this.vidRamIsRam) {
-                            this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
-                        }
-                    }
+                    // if ((this._PPUAddress & 0xF000) === 0x2000) {
+                    //     this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
+                    // }
+                    
+                    this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
                 }
                 // if controlbyte0.4, set ppuaddress + 32, else inc
                 if ((this._PPUControlByte0 & 4) === 4) {
@@ -593,7 +590,15 @@ export class ChiChiPPU {
 
     advanceClock(ticks: number) {
         let ppuTicks = ticks * 3;
-        const frameLine = this.frameClock / 341;
+
+        if (this.frameClock > 89002 ) {
+            this.frameClock += ppuTicks;
+            if (this.frameClock > 89342) {
+                ppuTicks = this.frameClock - 89342;
+            } else {
+                return;
+            }
+        }
         while (ppuTicks--) {
             switch (this.frameClock) {
                 case 0:

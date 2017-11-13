@@ -34,7 +34,7 @@ export class ChiChiBopper {
     }
 
     lastClock: number;
-    throwingIRQs: boolean = true;
+    throwingIRQs: boolean = false;
     reg15: number = 0;
     // blipper
     private myBlipper: Blip;

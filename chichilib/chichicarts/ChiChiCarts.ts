@@ -47,6 +47,7 @@ class MapperFactory {
     75 = VRC.KonamiVRC1Cart;
     77 = Discrete.Mapper077Cart;
     78 = Discrete.Mapper078Cart;
+    79 = Discrete.Mapper079Cart;
     81 = Discrete.Mapper081Cart;
     87 = Discrete.Mapper087Cart;
     89 = Sunsoft.Mapper089Cart;
