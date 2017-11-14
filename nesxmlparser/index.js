@@ -1,6 +1,8 @@
 #!/usr/local/bin/env node
 "use strict";
 var fs = require('fs'), dom = require('xmldom').DOMParser, xpath = require('xpath');
+//let parser = require('xml2json-light');
+var parseString = require('xml2js').parseString;
 var crcs = new Array();
 console.log('this is a test');
 fs.readFile('./nescarts.xml', 'utf16le', function (err, data) {
@@ -41,7 +43,9 @@ fs.readFile('./nescarts.xml', 'utf16le', function (err, data) {
                             cart.appendChild(gameElem);
                         }
                     }
-                    fs.writeFileSync('./carts/' + crc + '.xml', cart.toString());
+                    var json = parseString(cart.toString(), function (err, result) {
+                        fs.writeFileSync('./carts/' + crc + '.json', JSON.stringify(result));
+                    });
                 }
             };
             for (var j = 0; j < cartnodes.length; ++j) {

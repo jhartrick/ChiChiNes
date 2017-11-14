@@ -1,1 +1,3 @@
 carts/*.xml
+carts/*.json
+carts/*.js

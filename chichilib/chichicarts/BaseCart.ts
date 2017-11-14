@@ -1,5 +1,7 @@
 import { ChiChiCPPU } from '../chichi/ChiChiMachine';
 import { ChiChiPPU } from '../chichi/ChiChiPPU';
+import { CartridgeInfo } from './CartridgeInfo';
+
 import * as crc from 'crc';
 
 
@@ -16,6 +18,8 @@ export interface IBaseCart {
     supported: boolean;
     submapperId: number;
     ROMHashFunction: string;
+
+    cartInfo: CartridgeInfo;
 
     mapsBelow6000: boolean;
     irqRaised: boolean;
@@ -67,6 +71,7 @@ export class BaseCart implements IBaseCart {
         }
     }
 
+    cartInfo: CartridgeInfo;
 
     advanceClock(clock: number){}
     fourScreen: boolean = false;
@@ -175,7 +180,8 @@ export class BaseCart implements IBaseCart {
         //this.DebugEvents.clear();
     }
 
-    LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: Uint8Array, chrRomData: Uint8Array, chrRomOffset: number): void {
+    LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: Uint8Array, chrRomData: Uint8Array, chrRomOffset: number, cartInfo?: CartridgeInfo): void {
+        this.cartInfo = cartInfo;
         this.romControlBytes[0] = header[6];
         this.romControlBytes[1] = header[7];
 

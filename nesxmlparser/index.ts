@@ -1,5 +1,8 @@
 #!/usr/local/bin/env node
 let fs = require('fs'), dom = require('xmldom').DOMParser, xpath = require('xpath');
+//let parser = require('xml2json-light');
+var parseString = require('xml2js').parseString;
+
 let crcs = new Array<string>();
 console.log('this is a test')
 
@@ -49,8 +52,10 @@ fs.readFile('./nescarts.xml', 'utf16le', (err: any, data: any) => {
                         }
                     }
 
-                    
-                    fs.writeFileSync('./carts/' + crc + '.xml', cart.toString())
+                    let json = parseString(cart.toString(), function(err: any, result: any) {
+                        fs.writeFileSync('./carts/' + crc + '.json', JSON.stringify(result))
+                        
+                    });
                 }
 
             }

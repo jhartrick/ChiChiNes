@@ -252,6 +252,7 @@ export class iNESFileHandler  {
         _cart.ROMHashFunction = crc.crc32(new Buffer(thefile.slice(16, thefile.length))).toString(16).toUpperCase(); //Hashers.HashFunction;
         _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
 
+        
 
         // if (_cart != null) {
         
