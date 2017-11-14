@@ -6,6 +6,10 @@ export class WishboneCart {
         return this.realCart ? this.realCart.supported : false;
     }
 
+    get cartInfo() : any {
+        return this.realCart ? this.realCart.cartInfo : {};
+    }
+
     get prgRomCount(): number {
         return this.realCart ? this.realCart.prgRomCount : -1;
     }

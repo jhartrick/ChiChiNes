@@ -1,8 +1,7 @@
 #!/usr/local/bin/env node
 "use strict";
 var fs = require('fs'), dom = require('xmldom').DOMParser, xpath = require('xpath');
-//let parser = require('xml2json-light');
-var parseString = require('xml2js').parseString;
+var xml2js = require('xml2js');
 var crcs = new Array();
 console.log('this is a test');
 fs.readFile('./nescarts.xml', 'utf16le', function (err, data) {
@@ -10,6 +9,7 @@ fs.readFile('./nescarts.xml', 'utf16le', function (err, data) {
         console.log('error opening nescarts.xml: ' + err);
     }
     else {
+        var xmlParser = new xml2js.Parser({ mergeAttr: true, attrkey: 'attributes' });
         var doc = new dom().parseFromString(data.toString(), "text/xml");
         var nodes = xpath.select('//game', doc);
         for (var i = 0; i < nodes.length; ++i) {
@@ -43,7 +43,7 @@ fs.readFile('./nescarts.xml', 'utf16le', function (err, data) {
                             cart.appendChild(gameElem);
                         }
                     }
-                    var json = parseString(cart.toString(), function (err, result) {
+                    var json = xmlParser.parseString(cart.toString(), function (err, result) {
                         fs.writeFileSync('./carts/' + crc + '.json', JSON.stringify(result));
                     });
                 }

@@ -7,9 +7,10 @@ import { Component, Inject, ChangeDetectorRef, ElementRef, AfterContentInit } fr
   templateUrl: './chichi.cartinfo.dialog.html',
   styleUrls: ['./chichi.cartinfo.dialog.css']
 })
-export class CartInfoDialogComponent implements AfterContentInit {
+export class CartInfoDialogComponent {
     wishbone: WishboneMachine;
-    info: any;
+    cartInfo: any;
+
     constructor(
         public dialogRef: MatDialogRef<CartInfoDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: any,
@@ -17,12 +18,7 @@ export class CartInfoDialogComponent implements AfterContentInit {
         private elementRef: ElementRef
     ) {
         this.wishbone = data.wishbone;
-        this.info = data.info ? data.info : undefined;
-
-    }
-
-    get cartInfo(): string {
-      return  JSON.stringify(this.info);
+        this.cartInfo = data.wishbone.Cart.cartInfo;
     }
 
     apply() {
@@ -32,9 +28,4 @@ export class CartInfoDialogComponent implements AfterContentInit {
     onNoClick(): void {
         this.dialogRef.close();
     }
-
-    ngAfterContentInit(): void {
-        // this.elementRef.nativeElement.appendChild(this.info.documentElement)
-    }
-
 }

@@ -75,8 +75,6 @@ class MapperFactory {
 }
 
 export class iNESFileHandler  {
-    
-
     static LoadROM(cpu: ChiChiCPPU, thefile: number[]): IBaseCart  {
         let _cart: IBaseCart = null;
         let mf = new MapperFactory();
@@ -105,29 +103,26 @@ export class iNESFileHandler  {
         mapperId = mapperId >> 4;
         mapperId = mapperId | (iNesHeader[7] & 0xF0);
 
-        
         // byte 7  lower bits PC10/VSUNI, xxPV 
         let isPC10 = (iNesHeader[7] & 0x2) == 0x2;
         let isVS = (iNesHeader[7] & 0x1) == 0x01;
-        
 
-
-// NES2.0 stuff 
+        // NES2.0 stuff 
         mapperId |= (iNesHeader[8] & 0xF) << 8;
         let submapperId = iNesHeader[8] >> 4;
-// Byte 9 (Upper bits of ROM size)
+        // Byte 9 (Upper bits of ROM size)
         let upperPrgRomSize = iNesHeader[9] & 0xF;
         console.log('upperprgrom ' + upperPrgRomSize);
         let upperChrRomSize = (iNesHeader[9] & 0xF0) >> 4;
         console.log('upperChrRom ' + upperChrRomSize);
-// byte 10 (RAM Size) 
+        // byte 10 (RAM Size) 
         let prgRamBanks = iNesHeader[10]  & 0xF;
         let prgRamBanks_batteryBacked = (iNesHeader[10] >> 4) & 0xF;
-// byte 11 (video RAM size) 
+        // byte 11 (video RAM size) 
         let chrRamBanks = iNesHeader[11]  & 0xF;
         let chrRamBanks_batteryBacked = (iNesHeader[11] >> 4) & 0xF;
 
-// byte 12 (video RAM size) 
+        // byte 12 (video RAM size) 
 
         let prgRomCount: number = iNesHeader[4]; // | (upperPrgRomSize << 8);
         let chrRomCount: number = iNesHeader[5]; // | (upperChrRomSize << 8);
@@ -144,7 +139,7 @@ export class iNESFileHandler  {
         // chrRom.fill(0);
         let chrOffset = 0;
 
-// create cart
+        // create cart
         // bytesRead = zipStream.Read(theRom, 0, theRom.Length);
         BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
         chrOffset = (16 + theRom.length) | 0;

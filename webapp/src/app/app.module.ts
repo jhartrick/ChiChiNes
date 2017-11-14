@@ -5,6 +5,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatTableModule, MatPaginatorModule, MatGridListModule, MatTabsModule } from '@angular/material';
 import { MatButtonModule, MatCheckboxModule, MatSidenavModule, MatSliderModule } from '@angular/material';
 import { MatButtonToggleModule, MatExpansionModule, MatDialogModule } from '@angular/material';
+import {MatProgressSpinnerModule} from '@angular/material';
 import * as JSZip from 'jszip';
 
 import { Emulator , RomLoader } from './services/NESService';
@@ -25,8 +26,8 @@ import { GameGenieDialogComponent } from './controlpanel/chichi.gamegenie/chichi
 import { PatternViewerComponent } from './debugoutput/pattern.viewer/patternviewer.component';
 import { WishboneCheats } from './services/wishbone/wishbone.cheats';
 import { WishboneMachine } from './services/wishbone/wishbone';
-import { CartInfoComponent } from './controlpanel/chichi.cartinfo/chichi.cartinfo';
-import { CartInfoDialogComponent } from './controlpanel/chichi.cartinfo/chichi.cartinfo.dialog';
+import { CartInfoModule } from './cartinfo/cartinfo.module';
+import { ProgressComponent } from './controlpanel/progress.component';
 
 @NgModule({
   declarations: [
@@ -49,14 +50,14 @@ import { CartInfoDialogComponent } from './controlpanel/chichi.cartinfo/chichi.c
       GameGenieComponent,
       GameGenieDialogComponent,
       PatternViewerComponent,
-      CartInfoDialogComponent,
-      CartInfoComponent
+      ProgressComponent
+
   ],
   entryComponents: [
     ControlConfigComponent,
     ControlDialogComponent,
     GameGenieDialogComponent,
-    CartInfoDialogComponent
+    ProgressComponent
 ],
   imports: [
       BrowserModule,
@@ -71,7 +72,9 @@ import { CartInfoDialogComponent } from './controlpanel/chichi.cartinfo/chichi.c
       MatGridListModule,
       MatTabsModule,
       MatDialogModule,
-      MatSliderModule
+      MatSliderModule,
+      MatProgressSpinnerModule,
+      CartInfoModule
   ],
   providers: [HttpModule, Emulator, RomLoader],
   bootstrap: [AppComponent]
