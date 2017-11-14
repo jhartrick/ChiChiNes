@@ -411,7 +411,7 @@ export class WishboneMachine  {
         this.postNesMessage({ command: 'stop' });
     }
 
-    loadCart(rom: number[], name: string) {
+    loadCart(rom: number[], name: string, cartInfo: any) {
         
         this.boneThread.start((threadHandler)=>{
             const createCommand = 'create';
@@ -422,8 +422,9 @@ export class WishboneMachine  {
                 audioSettings: this.SoundBopper.cloneSettings(),
                 iops: this.nesInterop });
 
-            CartLoader.doLoadCart(rom, name, this).subscribe((cart) => {
+            CartLoader.doLoadCart(rom, name, this, cartInfo).subscribe((cart) => {
                 this.Cart.realCart = cart;
+                
                 this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
                 this.Cart.CartName = this.Cart.realCart.CartName = name;
                 this.ppu.chrRomHandler = this.Cart.realCart;

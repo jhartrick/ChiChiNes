@@ -56,8 +56,4 @@ export class WishboneWorker {
         }
         this.nesMessageData.next(data);
     }
-
-
-    
-
 }

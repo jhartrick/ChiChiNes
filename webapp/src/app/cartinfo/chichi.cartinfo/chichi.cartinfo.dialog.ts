@@ -9,6 +9,7 @@ import { Component, Inject, ChangeDetectorRef } from '@angular/core';
 })
 export class CartInfoDialogComponent {
     wishbone: WishboneMachine;
+    cartInfo: any;
 
     constructor(
         public dialogRef: MatDialogRef<CartInfoDialogComponent>,
@@ -16,6 +17,7 @@ export class CartInfoDialogComponent {
         private cd: ChangeDetectorRef
     ) {
         this.wishbone = data.wishbone;
+        this.cartInfo = data.wishbone.Cart.cartInfo;
     }
 
     apply() {
@@ -24,5 +26,5 @@ export class CartInfoDialogComponent {
 
     onNoClick(): void {
         this.dialogRef.close();
-   }
+    }
 }

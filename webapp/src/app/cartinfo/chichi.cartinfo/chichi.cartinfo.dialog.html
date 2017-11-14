@@ -1,0 +1,14 @@
+<div style="display:flex">
+    <div>
+        <p>Loaded: {{ wishbone.Cart.CartName }}</p>
+        <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
+        <p>Mapper: {{ wishbone.Cart.mapperName }} ({{ wishbone.Cart.mapperID }}<span *ngIf="wishbone.Cart.submapperId">, {{ wishbone.Cart.submapperId }}</span>)</p>
+        <p>CRC: {{ wishbone.Cart.ROMHashFunction }} </p>
+        <p>Prg Roms: {{ wishbone.Cart.prgRomCount }}</p>
+        <p>Chr Roms: {{ wishbone.Cart.chrRomCount }}</p>
+    </div>
+
+    <div>
+        <cartinfo-details *ngIf="wishbone.Cart.cartInfo" [cart]="wishbone.Cart.cartInfo"></cartinfo-details>
+    </div>
+</div>

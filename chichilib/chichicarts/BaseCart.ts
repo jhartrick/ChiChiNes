@@ -17,6 +17,8 @@ export interface IBaseCart {
     submapperId: number;
     ROMHashFunction: string;
 
+    cartInfo: any;
+
     mapsBelow6000: boolean;
     irqRaised: boolean;
 
@@ -39,6 +41,9 @@ export interface IBaseCart {
 }
 
 export class BaseCart implements IBaseCart {
+    cartInfo: any;
+    
+
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
         if (!dest) {
             throw new Error("dest Value cannot be null");

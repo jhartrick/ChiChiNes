@@ -6,6 +6,8 @@ import { AudioSettings } from 'chichi';
 import { WishboneMachine } from '../services/wishbone/wishbone';
 import * as crc from 'crc';
 import { LocalAudioSettings } from '../services/wishbone/wishbone.audio';
+import { ProgressComponent } from './progress.component';
+import { MatDialog } from '@angular/material';
 
 @Component({
     selector: 'chichi-status',
@@ -34,7 +36,12 @@ export class ControlPanelComponent {
 
     wishbone: WishboneMachine;
 
-    constructor(public nesService: Emulator, cd: ChangeDetectorRef, private romLoader: RomLoader, private ngZone: NgZone) {
+    constructor(public nesService: Emulator,
+        cd: ChangeDetectorRef,
+        private romLoader: RomLoader,
+        private ngZone: NgZone,
+        private dialog: MatDialog) {
+
         this.powerstate = 'OFF';
         this.wishbone = nesService.wishbone;
         this.localSettings = this.wishbone.SoundBopper.localSettings;
@@ -46,15 +53,26 @@ export class ControlPanelComponent {
     }
 
     handleFile(e: Event) {
-        const files: FileList = (<HTMLInputElement>e.target).files;
-        this.romLoader.loadRom(files).subscribe((rom) => {
-            this.poweroff();
-            if (rom.nsf) {
-                this.nesService.LoadNsf(rom.data, rom.name);
-            } else {
-                this.wishbone.loadCart(rom.data, rom.name);
-                // this.nesService.LoadRom(rom.data, rom.name);
-            }
+        const dialogRef = this.dialog.open(ProgressComponent, {
+            height: '50%',
+            width: '50%',
+            disableClose: true,
+            data: { wishbone: this.wishbone }
+        });
+        dialogRef.afterOpen().subscribe(() => {
+            const files: FileList = (<HTMLInputElement>e.target).files;
+            this.romLoader.loadRom(files).subscribe((rom) => {
+                this.poweroff();
+                dialogRef.close();
+                if (rom.nsf) {
+                    // this.nesService.LoadNsf(rom.data, rom.name);
+                } else if (rom.data) {
+                    this.wishbone.loadCart(rom.data, rom.name, rom.info);
+                } 
+            }, (error) => {
+                console.log('handleFile error %s', error);
+                dialogRef.close();
+            });
         });
     }
 

@@ -1,5 +1,6 @@
 #!/usr/local/bin/env node
 let fs = require('fs'), dom = require('xmldom').DOMParser, xpath = require('xpath');
+const xml2js = require('xml2js');
 let crcs = new Array<string>();
 console.log('this is a test')
 
@@ -8,7 +9,7 @@ fs.readFile('./nescarts.xml', 'utf16le', (err: any, data: any) => {
     if (err) {
         console.log('error opening nescarts.xml: ' + err)
     } else {
-        
+        const xmlParser = new xml2js.Parser({mergeAttr: true, attrkey: 'attributes'})
         const doc = new dom().parseFromString(data.toString(), "text/xml");
         let nodes = xpath.select('//game', doc)
 
@@ -49,8 +50,10 @@ fs.readFile('./nescarts.xml', 'utf16le', (err: any, data: any) => {
                         }
                     }
 
+                    const json = xmlParser.parseString(cart.toString(),  (err: any, result: any) => {
+                        fs.writeFileSync('./carts/' + crc + '.json', JSON.stringify(result));
+                    });
                     
-                    fs.writeFileSync('./carts/' + crc + '.xml', cart.toString())
                 }
 
             }
