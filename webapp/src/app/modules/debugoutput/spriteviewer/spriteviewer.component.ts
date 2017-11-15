@@ -1,4 +1,4 @@
-﻿import { Emulator } from '../../services/NESService'
+﻿import { Emulator } from '../../../services/NESService'
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 // import { Pipe, PipeTransform } from '@angular/core';
 

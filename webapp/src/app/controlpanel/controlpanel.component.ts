@@ -1,5 +1,5 @@
 ﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Emulator, EmuState, RomLoader } from '../services/NESService';
+import { Emulator, EmuState } from '../services/NESService';
 import { Observable } from 'rxjs/Observable';
 import * as JSZip from 'jszip';
 import { AudioSettings } from 'chichi';
@@ -8,6 +8,7 @@ import * as crc from 'crc';
 import { LocalAudioSettings } from '../services/wishbone/wishbone.audio';
 import { ProgressComponent } from './progress.component';
 import { MatDialog } from '@angular/material';
+import { RomLoader } from '../services/cartloader';
 
 @Component({
     selector: 'chichi-status',
@@ -61,14 +62,10 @@ export class ControlPanelComponent {
         });
         dialogRef.afterOpen().subscribe(() => {
             const files: FileList = (<HTMLInputElement>e.target).files;
+            this.romLoader.wishbone = this.wishbone;
             this.romLoader.loadRom(files).subscribe((rom) => {
                 this.poweroff();
                 dialogRef.close();
-                if (rom.nsf) {
-                    // this.nesService.LoadNsf(rom.data, rom.name);
-                } else if (rom.data) {
-                    this.wishbone.loadCart(rom.data, rom.name, rom.info);
-                } 
             }, (error) => {
                 console.log('handleFile error %s', error);
                 dialogRef.close();

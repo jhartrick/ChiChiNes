@@ -1,6 +1,7 @@
-﻿import { Emulator } from '../../services/NESService'
+﻿import { Emulator } from '../../../services/NESService'
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
-//import { Pipe, PipeTransform } from '@angular/core';
+
+// import { Pipe, PipeTransform } from '@angular/core';
 
 // @Component({
 //     styleUrls: ['./chichines.memviewer.component.css'],
@@ -17,22 +18,22 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 // }
 
 @Component({
-  selector: 'app-nametableviewer',
-  templateUrl: './nametableviewer.component.html',
-  styleUrls: ['./nametableviewer.component.css']
+  selector: 'chichi-patternviewer',
+  templateUrl: './patternviewer.component.html',
+  styleUrls: ['./patternviewer.component.css']
 })
 
-export class NameTableViewerComponent {
+export class PatternViewerComponent {
 
     @ViewChild('tileDoodle') tileDoodle: ElementRef;
-    
+    @ViewChild('tileDoodle2') tileDoodle2: ElementRef;
+
     constructor(private nes: Emulator) {
     }
 
     private doDoodle(ctx: CanvasRenderingContext2D, nametable: number, x: number, y: number) : void {
-        const imgData = ctx.getImageData(0, 0, 256, 256);
-
-        this.nes.tiler.DoodleNameTable(nametable, imgData.data);
+        const imgData = ctx.getImageData(0, 0, 128, 128);
+        this.nes.tiler.DoodlePatternTable(nametable, imgData.data);
         ctx.putImageData(imgData, x, y);
     }
 
@@ -40,9 +41,7 @@ export class NameTableViewerComponent {
         //debugger;
         requestAnimationFrame(() => {
             this.doDoodle(this.tileDoodle.nativeElement.getContext('2d'), 0, 0, 0);
-            this.doDoodle(this.tileDoodle.nativeElement.getContext('2d'), 0x400, 256, 0);
-            this.doDoodle(this.tileDoodle.nativeElement.getContext('2d'), 0x800, 0, 240);
-            this.doDoodle(this.tileDoodle.nativeElement.getContext('2d'), 0xC00, 256, 240);
+            this.doDoodle(this.tileDoodle2.nativeElement.getContext('2d'), 0x1000, 0, 0);
         });
     }
 

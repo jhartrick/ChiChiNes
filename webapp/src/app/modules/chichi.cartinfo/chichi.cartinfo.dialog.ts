@@ -10,15 +10,16 @@ import { Component, Inject, ChangeDetectorRef, ElementRef, AfterContentInit } fr
 export class CartInfoDialogComponent {
     wishbone: WishboneMachine;
     cartInfo: any;
-
+    
     constructor(
         public dialogRef: MatDialogRef<CartInfoDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: any,
-        private cd: ChangeDetectorRef, 
+        private cd: ChangeDetectorRef,
         private elementRef: ElementRef
     ) {
         this.wishbone = data.wishbone;
-        this.cartInfo = data.wishbone.Cart.cartInfo;
+        this.cartInfo = data.info;
+        debugger;
     }
 
     apply() {

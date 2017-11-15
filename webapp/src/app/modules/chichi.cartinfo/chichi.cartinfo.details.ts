@@ -31,10 +31,10 @@ export class CartInfoBoardComponent {
 @Component({
     selector: 'cartinfo-board-rom',
     template: `<div *ngIf='rom'>
-    <h4>{{heading}}</h4>
-    <p>Name: {{ rom.attributes?.name }}</p>
-    <p>Size: {{ rom.attributes?.size }}</p>
-    <p>Crc: {{ rom.attributes?.crc }}</p>
+        <h4>{{heading}}</h4>
+        <p>Name: {{ rom.attributes?.name }}</p>
+        <p>Size: {{ rom.attributes?.size }}</p>
+        <p>Crc: {{ rom.attributes?.crc }}</p>
     </div>
     `
 })
@@ -57,6 +57,29 @@ export class CartInfoPrgComponent {
 export class CartInfoPadComponent {
     @Input('pad') pad: any;
     @Input('heading') heading: string;
+    constructor() {
+    }
+}
+
+
+@Component({
+    selector: 'cartinfo-game',
+    template: `<div *ngIf='game'>
+    <h4>{{ game.attributes?.name }}</h4>
+    <p>alt name: {{ game.attributes?.altName }}</p>
+    <p>class: {{ game.attributes?.class }} </p>
+    <p>subclass: {{ game.attributes?.subclass }} </p>
+    <p>catalog: {{ game.attributes?.catalog }} </p>
+    <p>publisher: {{ game.attributes?.publisher }} </p>
+    <p>developer:  {{ game.attributes?.developer }} </p>
+    <p>region:  {{ game.attributes?.region }} </p>
+    <p>players:  {{ game.attributes?.players }} </p>
+    <p>date: {{ game.attributes?.date }} </p>
+    </div>
+    `
+})
+export class CartInfoGameComponent {
+    @Input('game') game: any;
     constructor() {
     }
 }

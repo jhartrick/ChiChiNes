@@ -1,15 +1,6 @@
-import { BaseCart, IBaseCart } from '../chichicarts/BaseCart';
+import { IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from "./ChiChiMachine";
-import { ChiChiBopper } from "./ChiChiAudio";
-export declare class ChiChiMemMap {
-    cpu: ChiChiCPPU;
-    ppu: ChiChiPPU;
-    apu: ChiChiBopper;
-    cart: BaseCart;
-    getByte(address: number): number;
-    setByte(address: number, data: number): void;
-}
 export declare class ChiChiPPU {
     static pal: Uint32Array;
     LastcpuClock: number;

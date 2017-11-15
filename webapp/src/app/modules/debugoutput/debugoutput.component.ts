@@ -1,12 +1,8 @@
 ﻿import { Component, OnInit, ViewChild, ElementRef, ChangeDetectionStrategy, ChangeDetectorRef, Input } from '@angular/core';
-import { Emulator } from '../services/NESService';
-import { DecodedInstruction, InstructionHistoryDatabase, DebugInstructionDataSource } from '../services/debug.interface';
 import { MatPaginator } from '@angular/material';
-
-import { CpuStatus, PpuStatus } from "chichi";
-import { WishboneMachine } from "../services/wishbone/wishbone";
-import { Observable } from "rxjs/Observable";
-
+import { CpuStatus, PpuStatus } from 'chichi';
+import { Observable } from 'rxjs/Observable';
+import { Emulator } from '../../services/NESService';
 
 @Component({
     selector: '[ppuStatus]',
@@ -16,7 +12,6 @@ export class PpuStatusComponent {
     @Input('ppuStatus') ppuStatus;
 }
 
-
 @Component({
     selector: '[cpuStatus]',
     template: `PC: {{ cpuStatus?.PC.toString(16) }} A: {{ cpuStatus?.A.toString(16) }} X: {{ cpuStatus?.X.toString(16) }} Y: {{ cpuStatus?.Y.toString(16) }} SP: {{ cpuStatus?.SP.toString(16) }}`
@@ -24,8 +19,6 @@ export class PpuStatusComponent {
 export class CpuStatusComponent {
     @Input('cpuStatus') cpuStatus;
 }
-
-
 
 @Component({
   selector: 'app-debugoutput',
@@ -38,9 +31,8 @@ export class DebugOutputComponent implements OnInit  {
     selectedTabIndex = 0;
     @ViewChild(MatPaginator) paginator: MatPaginator;
     public instructions: string[];
-    public dbgDataSource:  DebugInstructionDataSource ;
-
-    decodedStatusRegister: string  = '';
+ 
+    decodedStatusRegister = '';
 
     constructor(public nes: Emulator, private cd: ChangeDetectorRef) {
         // this.cd.detach();

@@ -298,7 +298,17 @@ export class tendoWrapper {
                 baseUrl: "./assets" 
             },['romloader.worker'], 
             (romloader: any) => {
-                const cart = romloader.loader.loadRom(rom, name, this.machine);
+                const machine = this.machine;
+                const cart = romloader.loader.loadRom(rom, name);
+                cart.installCart(this.machine.Cpu, this.machine.ppu);
+                machine.ppu.ChrRomHandler = machine.Cpu.Cart = cart;
+        
+                machine.Cart.NMIHandler = () => { this.machine.Cpu._handleIRQ = true; };
+                        
+                this.machine.Cpu.cheating = false;
+                this.machine.Cpu.genieCodes = new Array<GeniePatch>();
+            
+
                 this.updateBuffers();
                 delete romloader.loader;
                 this.require.undef('romloader.worker');
@@ -311,10 +321,13 @@ export class tendoWrapper {
 
         switch (event.data.command) {
             case 'create':
-            this.buffers = event.data;
+                this.buffers = event.data;
                 this.createMachine();
 //                this.sharedAudioBufferPos = 0;
                 this.iops = event.data.iops;
+                if (event.data.rom) {
+                    this.loadCart(event.data.rom, event.data.name);
+                }
                 break;
             case 'cheats':
                 this.machine.Cpu.cheating = event.data.cheats.length > 0;

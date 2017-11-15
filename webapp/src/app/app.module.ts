@@ -8,50 +8,35 @@ import { MatButtonToggleModule, MatExpansionModule, MatDialogModule } from '@ang
 import {MatProgressSpinnerModule} from '@angular/material';
 import * as JSZip from 'jszip';
 
-import { Emulator , RomLoader } from './services/NESService';
+import { Emulator  } from './services/NESService';
 
 import { AppComponent } from './app.component';
 import { ChiChiComponent } from './chichines/chichines.component';
 import { ControlPanelComponent, PowerStatusComponent } from './controlpanel/controlpanel.component';
-import { DebugOutputComponent, CpuStatusComponent, PpuStatusComponent } from './debugoutput/debugoutput.component';
-import { MemViewerComponent, MyTrComponent, AsciiPipe } from './chichines.memviewer/chichines.memviewer.component';
-import { InstructionHistoryComponent } from './chichines.instructionhistory/chichines.instructionhistory.component';
-import { NameTableViewerComponent } from './debugoutput/nametableviewer/nametableviewer.component';
-import { SpriteViewerComponent } from './debugoutput/spriteviewer/spriteviewer.component';
 import { ControlConfigComponent } from './chichines.controlconfig/chichines.controlconfig.component';
 import { ControlDialogComponent } from './chichines.controlconfig/chichines.controldialog.component';
 import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/chichi.audiosettings';
 import { GameGenieComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie';
 import { GameGenieDialogComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie.dialog';
-import { PatternViewerComponent } from './debugoutput/pattern.viewer/patternviewer.component';
 import { WishboneCheats } from './services/wishbone/wishbone.cheats';
 import { WishboneMachine } from './services/wishbone/wishbone';
-import { CartInfoModule } from './cartinfo/cartinfo.module';
+import { CartInfoModule } from './modules/chichi.cartinfo/cartinfo.module';
+import { DebugOutputModule } from './modules/debugoutput/debugoutput.module';
 import { ProgressComponent } from './controlpanel/progress.component';
+import { RomLoader } from './services/cartloader';
 
 @NgModule({
   declarations: [
       AppComponent,
       ChiChiComponent,
       ControlPanelComponent,
-      DebugOutputComponent,
-      MemViewerComponent,
-      MyTrComponent,
-      InstructionHistoryComponent,
-      AsciiPipe,
       PowerStatusComponent,
-      CpuStatusComponent,
-      PpuStatusComponent,
-      NameTableViewerComponent,
-      SpriteViewerComponent,
       ControlConfigComponent,
       ControlDialogComponent,
       AudioSettingsComponent,
       GameGenieComponent,
       GameGenieDialogComponent,
-      PatternViewerComponent,
       ProgressComponent
-
   ],
   entryComponents: [
     ControlConfigComponent,
@@ -74,7 +59,8 @@ import { ProgressComponent } from './controlpanel/progress.component';
       MatDialogModule,
       MatSliderModule,
       MatProgressSpinnerModule,
-      CartInfoModule
+      CartInfoModule,
+      DebugOutputModule
   ],
   providers: [HttpModule, Emulator, RomLoader],
   bootstrap: [AppComponent]

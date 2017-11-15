@@ -30,28 +30,10 @@ export class WishboneCart {
         return this.realCart.submapperId > 0 ? this.realCart.submapperId : 0;
     }
 
-    mapsBelow6000: boolean;
-    irqRaised: boolean;
-    realCart: BaseCart = null;
-
-    Whizzler: ChiChiCPPU;
-    CPU: ChiChiCPPU;
-    ChrRom: any;
-    ChrRamStart: number;
-    PPUBankStarts: any;
-    ROMHashFunction: string;
-    SRAM: any;
-    Mirroring: ChiChiNES.NameTableMirroring;
     CartName: string;
+    ROMHashFunction: string;
 
-    BankSwitchesChanged: boolean;
-    BankStartCache: any;
-    CurrentBank: number;
-
-    UsesSRAM: boolean;
-    NMIHandler: () => void;
-    IRQAsserted: boolean;
-    NextEventAt: number;
+    realCart: BaseCart = null;
 
     GetPPUByte(clock: number, address: number): number {
         if (this.realCart) {

@@ -1016,7 +1016,13 @@ var tendoWrapper = /** @class */ (function () {
         this.require({
             baseUrl: "./assets"
         }, ['romloader.worker'], function (romloader) {
-            var cart = romloader.loader.loadRom(rom, name, _this.machine);
+            var machine = _this.machine;
+            var cart = romloader.loader.loadRom(rom, name);
+            cart.installCart(_this.machine.Cpu, _this.machine.ppu);
+            machine.ppu.ChrRomHandler = machine.Cpu.Cart = cart;
+            machine.Cart.NMIHandler = function () { _this.machine.Cpu._handleIRQ = true; };
+            _this.machine.Cpu.cheating = false;
+            _this.machine.Cpu.genieCodes = new Array();
             _this.updateBuffers();
             delete romloader.loader;
             _this.require.undef('romloader.worker');
@@ -1030,6 +1036,9 @@ var tendoWrapper = /** @class */ (function () {
                 this.createMachine();
                 //                this.sharedAudioBufferPos = 0;
                 this.iops = event.data.iops;
+                if (event.data.rom) {
+                    this.loadCart(event.data.rom, event.data.name);
+                }
                 break;
             case 'cheats':
                 this.machine.Cpu.cheating = event.data.cheats.length > 0;
@@ -3430,17 +3439,6 @@ exports.ChiChiControlPad = ChiChiControlPad;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiTypes_1 = __webpack_require__(1);
-var ChiChiMemMap = /** @class */ (function () {
-    function ChiChiMemMap() {
-    }
-    ChiChiMemMap.prototype.getByte = function (address) {
-        return 0;
-    };
-    ChiChiMemMap.prototype.setByte = function (address, data) {
-    };
-    return ChiChiMemMap;
-}());
-exports.ChiChiMemMap = ChiChiMemMap;
 var ChiChiPPU = /** @class */ (function () {
     function ChiChiPPU() {
         this.LastcpuClock = 0;

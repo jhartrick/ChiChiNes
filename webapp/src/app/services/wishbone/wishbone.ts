@@ -11,7 +11,6 @@ import { WishBopper } from './wishbone.audio';
 import { KeyboardSettings } from '../keyboardsettings';
 import { WishboneCheats } from './wishbone.cheats';
 import { Http } from '@angular/http';
-import { CartLoader } from '../cartloader';
 import { WishboneWorker } from './wishbone.worker';
 
 
@@ -184,6 +183,7 @@ export class WishbonePPU extends ChiChiPPU {
 }
 
 export class WishboneMachine  {
+    interval: NodeJS.Timer;
     keyHandler: WishboneKeyHandler;
     ppuStatus: PpuStatus = new PpuStatus();
     cpuStatus: CpuStatus = new CpuStatus();
@@ -229,16 +229,16 @@ export class WishboneMachine  {
 
     startWorker() 
     {
-        this.boneThread.start((threadHandler)=>{
-            const createCommand = 'create';
-            this.nesInterop = threadHandler.nesInterop;
-            threadHandler.postNesMessage({ command: createCommand,
-                vbuffer: this.ppu.byteOutBuffer,
-                abuffer: this.WaveForms.SharedBuffer,
-                audioSettings: this.SoundBopper.cloneSettings(),
-                iops: this.nesInterop });
-        });
-        this.boneThread.nesMessageData.subscribe((data)=>this.handleMessage(data));
+        // this.boneThread.start((threadHandler)=>{
+        //     const createCommand = 'create';
+        //     this.nesInterop = threadHandler.nesInterop;
+        //     threadHandler.postNesMessage({ command: createCommand,
+        //         vbuffer: this.ppu.byteOutBuffer,
+        //         abuffer: this.WaveForms.SharedBuffer,
+        //         audioSettings: this.SoundBopper.cloneSettings(),
+        //         iops: this.nesInterop });
+        // });
+        // this.boneThread.nesMessageData.subscribe((data)=>this.handleMessage(data));
 
     }
 
@@ -267,9 +267,6 @@ export class WishboneMachine  {
 
     readonly iop_runStatus = 2;
 
-    initChiChiWorker() {
-    }
-
     asObservable() {
         return this.nesStateSubject.asObservable();
     }
@@ -282,7 +279,8 @@ export class WishboneMachine  {
 
     Run() {
         this.postNesMessage({ command: 'run', debug: false });
-        setInterval(() => {
+        clearInterval(this.interval);
+        this.interval = setInterval(() => {
             this.fps = this.nesInterop[1];
         }, 500);
         // (<any>Atomics).store(this.nesInterop, 2, 1);
@@ -356,7 +354,7 @@ export class WishboneMachine  {
     Drawscreen() {
         // throw new Error('Method not implemented.');
     }
-    RunState: ChiChiNES.Machine.ControlPanel.RunningStatuses;
+    RunState: number;
     Cpu: WishboneCPPU;
     ppu: WishbonePPU;
     Cart: WishboneCart;
@@ -411,32 +409,56 @@ export class WishboneMachine  {
         this.postNesMessage({ command: 'stop' });
     }
 
-    loadCart(rom: number[], name: string, cartInfo: any) {
-        
+    insertCart(cart: BaseCart, rom: number[]) {
         this.boneThread.start((threadHandler)=>{
             const createCommand = 'create';
             this.nesInterop = threadHandler.nesInterop;
-            threadHandler.postNesMessage({ command: createCommand,
+            threadHandler.postNesMessage({ 
+                command: createCommand,
                 vbuffer: this.ppu.byteOutBuffer,
                 abuffer: this.WaveForms.SharedBuffer,
                 audioSettings: this.SoundBopper.cloneSettings(),
-                iops: this.nesInterop });
+                iops: this.nesInterop
+            });
 
-            CartLoader.doLoadCart(rom, name, this, cartInfo).subscribe((cart) => {
-                this.Cart.realCart = cart;
-                
-                this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
-                this.Cart.CartName = this.Cart.realCart.CartName = name;
-                this.ppu.chrRomHandler = this.Cart.realCart;
-                this.tileDoodler = new TileDoodler(this.ppu);
-                this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
-    
-            });                
+            cart.installCart(this.ppu, this.Cpu);
+            this.Cpu.Cart = this.ppu.ChrRomHandler = this.Cart.realCart = cart;
+            this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
+            this.Cart.CartName = this.Cart.realCart.CartName = name;
+            this.ppu.chrRomHandler = this.Cart.realCart;
+            
+            this.tileDoodler = new TileDoodler(this.ppu);
+            threadHandler.postNesMessage({ command: 'loadrom', rom: rom, name: cart.CartName });
         });
         this.boneThread.nesMessageData.subscribe((data)=>this.handleMessage(data));
-
-
     }
+
+    // loadCart(rom: number[], name: string, cartInfo: any) {
+        
+    //     this.boneThread.start((threadHandler)=>{
+    //         const createCommand = 'create';
+    //         this.nesInterop = threadHandler.nesInterop;
+    //         threadHandler.postNesMessage({ command: createCommand,
+    //             vbuffer: this.ppu.byteOutBuffer,
+    //             abuffer: this.WaveForms.SharedBuffer,
+    //             audioSettings: this.SoundBopper.cloneSettings(),
+    //             iops: this.nesInterop });
+
+    //         CartLoader.doLoadCart(rom, name, this, cartInfo).subscribe((cart) => {
+    //             this.Cart.realCart = cart;
+                
+    //             this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
+    //             this.Cart.CartName = this.Cart.realCart.CartName = name;
+    //             this.ppu.chrRomHandler = this.Cart.realCart;
+    //             this.tileDoodler = new TileDoodler(this.ppu);
+    //             this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
+    
+    //         });                
+    //     });
+    //     this.boneThread.nesMessageData.subscribe((data)=>this.handleMessage(data));
+
+
+    // }
 }
 
 class WishboneCPPU extends ChiChiCPPU {

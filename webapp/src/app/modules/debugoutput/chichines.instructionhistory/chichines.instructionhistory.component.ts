@@ -1,7 +1,7 @@
 ﻿import { Component, OnInit, ViewChild } from '@angular/core';
-import { Emulator } from '../services/NESService'
-import { DecodedInstruction, InstructionHistoryDatabase, DebugInstructionDataSource } from '../services/debug.interface'
 import { MatPaginator } from '@angular/material';
+import { DebugInstructionDataSource } from '../../../services/debug.interface';
+import { Emulator } from '../../../services/NESService';
 
 @Component({
     selector: 'chichines-instructionhistory',
@@ -22,9 +22,9 @@ export class InstructionHistoryComponent {
 
     constructor(public nes: Emulator) { }
 
-    ngOnInit(): void {
-        //   debugger;
-        this.dbgDataSource = new DebugInstructionDataSource(this.nes.debugger.lastInstructions, this.paginator);
-    }
+    // ngOnInit(): void {
+    //     //   debugger;
+    //     this.dbgDataSource = new DebugInstructionDataSource(this.nes.debugger.lastInstructions, this.paginator);
+    // }
 
 }

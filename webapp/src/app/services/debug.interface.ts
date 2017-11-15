@@ -9,16 +9,17 @@ import 'rxjs/add/observable/of';
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/observable/fromEvent';
+import { ChiChiInstruction } from 'chichi';
 
 
 
-export interface DecodedInstruction extends ChiChiNES.CPU2A03.Instruction {
+export interface DecodedInstruction extends ChiChiInstruction {
     asm: string;
 }
 
 export class DebugEventInfo {
     eventType: string;
-    public instruction?: ChiChiNES.CPU2A03.Instruction[];
+    public instruction?: DecodedInstruction[];
 }
 
 export class InstructionHistoryDatabase {
@@ -172,7 +173,7 @@ export class Debugger {
         //    this.setInstructionPage(this.machine.Cpu.InstructionHistory, this.machine.Cpu.InstructionHistoryPointer & 0xFF);
     }
 
-    private setInstructionPage(inst: ChiChiNES.CPU2A03.Instruction[], start: number, frameNumber?: number): void {
+    private setInstructionPage(inst: ChiChiInstruction[], start: number, frameNumber?: number): void {
         var curPos: number = start + 1;
 
         var newInstructions: DecodedInstruction[] = new Array<DecodedInstruction>();
@@ -585,7 +586,7 @@ export class Debugger {
         }
     }
 
-    public disassemble(inst: ChiChiNES.CPU2A03.Instruction): string {
+    public disassemble(inst: ChiChiInstruction): string {
         if (!inst || !inst.OpCode) return '';
         var parms: string = "";
         parms = parms + inst.Parameters0.toString(16);

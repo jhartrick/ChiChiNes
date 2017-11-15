@@ -1,6 +1,6 @@
-﻿import { Emulator } from '../services/NESService'
-import { Component, OnInit, Input } from '@angular/core';
+﻿import { Component, OnInit, Input } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
+import { Emulator } from '../../../services/NESService';
 /*
  * Raise the value exponentially
  * Takes an exponent argument that defaults to 1.
@@ -51,37 +51,38 @@ export class MemViewerComponent implements OnInit {
     get data(): Array<Uint8Array> {
         return this._data;
     }
-    hexMode: boolean = true;
-    _ramStart: number = 0x0000;
-    _ramEnd: number = 0x07FF;
+    hexMode = true;
+    _ramStart = 0x0000;
+    _ramEnd = 0x07FF;
 
     get ramStart(): any {
         return this._ramStart;
     }
     set ramStart(value: any) {
-        this._ramStart = parseInt(value);
+        this._ramStart = parseInt(value, 16);
     }
 
     get displayType(): string {
-        if (this.hexMode)
-            return "hex";
-        else
-            return "ascii";
+        if (this.hexMode) {
+            return 'hex';
+        } else {
+            return 'ascii';
+        }
     }
 
     toggleHexMode() {
         this.hexMode = !this.hexMode;
         this.look();
     }
-    pageSize: number = 16;
+    pageSize = 16;
     constructor(private nes: Emulator) {
     }
 
     public look(): void {
-        let ram = new Uint8Array(this.nes.wishbone.Cpu.Rams.slice(0));//.grabRam(this._ramStart, this._ramStart + 0x7FF);
-        var chunks = 0x7FF / 16;
-        var data = new Array<Uint8Array>();
-        for (var i = 0; i < chunks ; ++i) {
+        const ram = new Uint8Array(this.nes.wishbone.Cpu.Rams.slice(0));
+        const chunks = 0x7FF / 16;
+        const data = new Array<Uint8Array>();
+        for (let i = 0; i < chunks ; ++i) {
             data.push(ram.slice(i * this.pageSize, i * this.pageSize + this.pageSize));
         }
         this._data = data;

@@ -2040,7 +2040,8 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.ClearDebugEvents = function () {
         //this.DebugEvents.clear();
     };
-    BaseCart.prototype.LoadiNESCart = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
+    BaseCart.prototype.LoadiNESCart = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset, cartInfo) {
+        this.cartInfo = cartInfo;
         this.romControlBytes[0] = header[6];
         this.romControlBytes[1] = header[7];
         this.mapperId = (this.romControlBytes[0] & 240) >> 4;
@@ -2788,14 +2789,8 @@ var ChiChiCarts_1 = __webpack_require__(6);
 var romLoader = /** @class */ (function () {
     function romLoader() {
     }
-    romLoader.prototype.loadRom = function (data, name, machine) {
+    romLoader.prototype.loadRom = function (data, name) {
         var cart = ChiChiCarts_1.iNESFileHandler.loadRomFile(data);
-        cart.installCart(machine.ppu, machine.Cpu);
-        machine.Cpu.Cart = cart;
-        machine.Cart.NMIHandler = function () { machine.Cpu._handleIRQ = true; };
-        machine.ppu.ChrRomHandler = machine.Cart;
-        machine.Cpu.cheating = false;
-        machine.Cpu.genieCodes = new Array();
         return cart;
     };
     return romLoader;

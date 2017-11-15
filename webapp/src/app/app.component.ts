@@ -12,7 +12,7 @@ import { Emulator } from './services/NESService'
 })
 export class AppComponent {
   @ViewChild('debugNav') public debugNav: MatDrawer;
-  constructor(private nesService: Emulator){
+  constructor(private nesService: Emulator) {
     this.nesService.DebugUpdateEvent.subscribe(() => {
       this.debugNav.open();
     });

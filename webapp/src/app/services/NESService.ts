@@ -3,7 +3,6 @@ import { Debugger, DecodedInstruction, DebugEventInfo } from './debug.interface'
 import { AngControlPad } from './chichines.service.controlpad'; 
 import { Observable, Subscriber } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
-import * as JSZip from 'jszip';
 import { WishboneMachine } from "./wishbone/wishbone";
 import { ChiChiCPPU, AudioSettings, ChiChiPPU } from 'chichi';
 import { Http } from '@angular/http';
@@ -25,20 +24,6 @@ class NesInfo {
         },
         currentPPUStatus: {}
     };
-}
-
-export class CartInfo {
-    mapperId: number;
-    name = '';
-    prgRomCount = 0;
-    chrRomCount = 0;
-    constructor(nes?: ChiChiNES.NESMachine) {
-      if (nes && nes.Cart) {
-          this.mapperId = nes.Cart.MapperID;
-          this.prgRomCount = nes.Cart.NumberOfPrgRoms;
-          this.chrRomCount = nes.Cart.NumberOfChrRoms;
-        }
-    }
 }
 
 export enum RunStatus {
@@ -110,95 +95,7 @@ export class EmuState {
     }
 }
 
-export class RomFile  {
-    name?: string;
-    data?: number[];
-    nsf? = false;
-    info?: any;
-}
 
-@Injectable()
-export class RomLoader {
-    constructor(private http: Http) {}
-
-    loadZipRom(files: FileList): Observable<RomFile> {
-        const file = files[0];
-        const romLoader = new Observable<RomFile>(observer => {
-            const fileReader: FileReader = new FileReader();
-            fileReader.onload = (e) => {
-                const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                // zip file
-                JSZip.loadAsync(rom).then((zip: any) => {
-                    zip.forEach((relativePath, zipEntry) => {  // 2) print entries
-                        zipEntry.async('blob').then((fileData) => {
-                            fileReader.onload = (ze) => {
-                                const zrom: number[] = Array.from(new Uint8Array(fileReader.result));
-                                this.deliverRom(observer, zrom, file.name,false);
-                            };
-                            fileReader.readAsArrayBuffer(fileData);
-                        });
-                    });
-                });
-
-            };
-            fileReader.readAsArrayBuffer(file);
-        });
-        return romLoader;
-    }
-
-    loadRom(files: FileList): Observable<RomFile> {
-        const file = files[0];
-        if (file.name.endsWith('.zip')) {
-            return this.loadZipRom(files);
-        } else 
-        if (file.name.endsWith('.nsf')) {
-            return this.loadNsf(files);
-        } else 
-        if (file.name.endsWith('.nes')) {
-            const romLoader = new Observable<RomFile>(observer => {
-                const fileReader: FileReader = new FileReader();
-                fileReader.onload = (e) => {
-                    const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                    this.deliverRom(observer, rom, file.name,false);
-                };
-                fileReader.readAsArrayBuffer(file);
-            });
-            return romLoader;
-        } else {
-            return new Observable<RomFile>(observer => { 
-                observer.next({});
-            });
-        }
-    }
-
-    loadNsf(files: FileList): Observable<RomFile> {
-        const file = files[0];
-        const romLoader = new Observable<RomFile>(observer => {
-            const fileReader: FileReader = new FileReader();
-            fileReader.onload = (e) => {
-                const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                this.deliverRom(observer, rom, file.name, true);
-            };
-            fileReader.readAsArrayBuffer(file);
-        });
-        return romLoader;
-    }
-
-    deliverRom(observer: Subscriber<RomFile>, rom: number[], name: string, isNsf: boolean) {
-        const myCrc = crc.crc32(new Buffer(rom.slice(16, rom.length))).toString(16).toUpperCase().padStart(8,'0');
-        this.http.get("assets/carts/" + myCrc + ".json").subscribe((resp)=> {
-            let cartInfo = resp.json();
-            if (cartInfo.cartridge) {
-                observer.next({ name: name, data: rom, nsf: isNsf, info: cartInfo.cartridge });
-            } else {
-                observer.next({ name: name, data: rom, nsf: isNsf, info: undefined });            
-            }
-        }, (err) => {
-            observer.next({ name: name, data: rom, nsf: isNsf, info: undefined });            
-        });
-    }
-
-}
 
 @Injectable()
 export class Emulator {
@@ -218,8 +115,6 @@ export class Emulator {
     }
 
     public DebugUpdateEvent: EventEmitter<DebugEventInfo> = new EventEmitter<DebugEventInfo>();
-    public cartInfo: CartInfo = new CartInfo();
-
 
     constructor() {
         this.debugger = new Debugger(this.wishbone.asObservable());
