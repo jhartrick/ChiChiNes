@@ -5,7 +5,8 @@ import 'rxjs/add/operator/catch';
 import * as THREE from 'three';
 import { AudioSettings } from 'chichi';
 import { WishBoneControlPad } from '../services/wishbone/wishbone';
-import { WishBopper, ChiChiThreeJSAudio } from '../services/wishbone/wishbone.audio';
+import { WishBopper } from '../services/wishbone/wishbone.audio';
+import { ChiChiThreeJSAudio } from '../services/wishbone/wishbone.audio.threejs';
 
 @Component({
     selector: 'chichi',

@@ -22,7 +22,5 @@ export class DebugOutputComponent {
 
     constructor(public nes: Emulator, private cd: ChangeDetectorRef) {
         this.debugger = new Debugger(this.nes.wishbone);
-        // this.cd.detach();
     }
-
 }

@@ -3,7 +3,8 @@ import { Emulator } from '../../services/NESService';
 import { Observable } from 'rxjs/Observable';
 import { AudioSettings } from 'chichi';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
-import { IAudioHandler, LocalAudioSettings } from '../../services/wishbone/wishbone.audio';
+import { IAudioHandler } from '../../services/wishbone/wishbone.audio';
+import { LocalAudioSettings } from '../../services/wishbone/wishbone.audio.localsettings';
 
 @Component({
   selector: 'chichi-audiosettings',

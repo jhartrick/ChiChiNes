@@ -613,6 +613,10 @@ import { WavSharer } from './Audio/CommonAudio';
             //throw new Error('Method not implemented.');
         }
 
+        handleBreakpoint(): void {
+            
+        }
+
         decodeOperand(): number {
             switch (this._currentInstruction_AddressingMode) {
                 case ChiChiCPPU_AddressingModes.Immediate:

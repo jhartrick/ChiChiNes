@@ -1,22 +1,25 @@
 ﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Emulator, EmuState } from '../services/NESService';
-import { Observable } from 'rxjs/Observable';
-import * as JSZip from 'jszip';
-import { AudioSettings } from 'chichi';
-import { WishboneMachine } from '../services/wishbone/wishbone';
-import * as crc from 'crc';
-import { LocalAudioSettings } from '../services/wishbone/wishbone.audio';
 import { MatDialog } from '@angular/material';
+
+import { Observable } from 'rxjs/Observable';
+
+import * as JSZip from 'jszip';
+import * as crc from 'crc';
+
+import { AudioSettings } from 'chichi';
+
+import { WishboneMachine } from '../services/wishbone/wishbone';
+import { LocalAudioSettings } from '../services/wishbone/wishbone.audio.localsettings';
 import { RomLoader } from '../services/cartloader';
 
 @Component({
     selector: 'chichi-status',
     template: `<p>Loaded: {{ (emuState | async)?.romLoaded }}</p>`
 })
+
 export class PowerStatusComponent {
-
     @Input('emuState') emuState: Observable<any>;
-
     constructor() {
     }
 }
