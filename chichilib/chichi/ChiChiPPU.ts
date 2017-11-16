@@ -588,7 +588,7 @@ export class ChiChiPPU {
         }
         while (ppuTicks--) {
             switch (this.frameClock) {
-                case 0:
+                case 0: // start of rendering
                     this.shouldRender = true;
                     this.vbufLocation = 0;
                     this.currentXPosition = 0;
@@ -607,11 +607,11 @@ export class ChiChiPPU {
                     this.shouldRender = false;
 
                     this.frameFinished();
-
+                    this.frameOn = false;
+                    
                     break;
                 case 82523: // first tick on scanline after post-render line
                     this.setupVINT();
-                    this.frameOn = false;
                     break;
                 case 89002: 
                     this._PPUStatus = 0;

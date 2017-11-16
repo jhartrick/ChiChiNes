@@ -6,7 +6,6 @@ import { AudioSettings } from 'chichi';
 import { WishboneMachine } from '../services/wishbone/wishbone';
 import * as crc from 'crc';
 import { LocalAudioSettings } from '../services/wishbone/wishbone.audio';
-import { ProgressComponent } from './progress.component';
 import { MatDialog } from '@angular/material';
 import { RomLoader } from '../services/cartloader';
 
@@ -54,22 +53,12 @@ export class ControlPanelComponent {
     }
 
     handleFile(e: Event) {
-        const dialogRef = this.dialog.open(ProgressComponent, {
-            height: '50%',
-            width: '50%',
-            disableClose: true,
-            data: { wishbone: this.wishbone }
-        });
-        dialogRef.afterOpen().subscribe(() => {
-            const files: FileList = (<HTMLInputElement>e.target).files;
-            this.romLoader.wishbone = this.wishbone;
-            this.romLoader.loadRom(files).subscribe((rom) => {
-                this.poweroff();
-                dialogRef.close();
-            }, (error) => {
-                console.log('handleFile error %s', error);
-                dialogRef.close();
-            });
+        const files: FileList = (<HTMLInputElement>e.target).files;
+        this.romLoader.wishbone = this.wishbone;
+        this.romLoader.loadRom(files).subscribe((rom) => {
+            this.poweroff();
+        }, (error) => {
+            console.log('handleFile error %s', error);
         });
     }
 

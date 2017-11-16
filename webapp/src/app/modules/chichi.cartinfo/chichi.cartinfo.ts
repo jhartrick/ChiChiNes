@@ -4,6 +4,7 @@ import { Emulator } from '../../services/NESService';
 import { MatDialog } from '@angular/material';
 import { CartInfoDialogComponent } from './chichi.cartinfo.dialog';
 import { Http } from '@angular/http';
+import { RomLoader } from '../../services/cartloader';
 
 
 @Component({
@@ -13,14 +14,18 @@ import { Http } from '@angular/http';
 })
 export class CartInfoComponent {
     wishbone: WishboneMachine;
-    constructor(private nesService: Emulator, private dialog: MatDialog, private http: Http) {
+    constructor(private nesService: Emulator, private loader: RomLoader, private dialog: MatDialog, private http: Http) {
         this.wishbone = nesService.wishbone;
     }
     showDialog () {
-        const dialogRef = this.dialog.open(CartInfoDialogComponent, {
-            height: '80%',
-            width: '60%',
-            data: { wishbone:  this.wishbone, info: this.wishbone.Cart.cartInfo }
+        this.loader.getCartInfo().subscribe((info)=>{
+            const dialogRef = this.dialog.open(CartInfoDialogComponent, {
+                height: '80%',
+                width: '60%',
+                data: { wishbone:  this.wishbone, info: info }
+            });
+        }, (err)=> {
+            console.log('cart info fail');
         });
     }
 }

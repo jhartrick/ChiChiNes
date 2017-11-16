@@ -8,22 +8,26 @@ import { MatButtonToggleModule, MatExpansionModule, MatDialogModule } from '@ang
 import {MatProgressSpinnerModule} from '@angular/material';
 import * as JSZip from 'jszip';
 
-import { Emulator  } from './services/NESService';
 
 import { AppComponent } from './app.component';
 import { ChiChiComponent } from './chichines/chichines.component';
+
 import { ControlPanelComponent, PowerStatusComponent } from './controlpanel/controlpanel.component';
 import { ControlConfigComponent } from './chichines.controlconfig/chichines.controlconfig.component';
 import { ControlDialogComponent } from './chichines.controlconfig/chichines.controldialog.component';
 import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/chichi.audiosettings';
+
 import { GameGenieComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie';
 import { GameGenieDialogComponent } from './controlpanel/chichi.gamegenie/chichi.gamegenie.dialog';
+
+import { Emulator  } from './services/NESService';
 import { WishboneCheats } from './services/wishbone/wishbone.cheats';
 import { WishboneMachine } from './services/wishbone/wishbone';
+import { RomLoader } from './services/cartloader';
+
 import { CartInfoModule } from './modules/chichi.cartinfo/cartinfo.module';
 import { DebugOutputModule } from './modules/debugoutput/debugoutput.module';
-import { ProgressComponent } from './controlpanel/progress.component';
-import { RomLoader } from './services/cartloader';
+
 
 @NgModule({
   declarations: [
@@ -36,13 +40,11 @@ import { RomLoader } from './services/cartloader';
       AudioSettingsComponent,
       GameGenieComponent,
       GameGenieDialogComponent,
-      ProgressComponent
   ],
   entryComponents: [
     ControlConfigComponent,
     ControlDialogComponent,
     GameGenieDialogComponent,
-    ProgressComponent
 ],
   imports: [
       BrowserModule,
@@ -58,7 +60,6 @@ import { RomLoader } from './services/cartloader';
       MatTabsModule,
       MatDialogModule,
       MatSliderModule,
-      MatProgressSpinnerModule,
       CartInfoModule,
       DebugOutputModule
   ],

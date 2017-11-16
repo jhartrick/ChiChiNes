@@ -14,13 +14,11 @@ export class CartInfoDetailsComponent {
 @Component({
     selector: 'cartinfo-board',
     template: `<div *ngIf="board">
+            <h4>Board</h4>
             <p>Type: {{ board.attributes?.type }}</p>
             <p>Pcb: {{ board.attributes?.pcb }}</p>
             <p>Mapper: {{ board.attributes?.mapper }}</p>
         </div>
-        <cartinfo-board-rom *ngFor="let prg of board.prg" [rom]='prg' [heading]='"Prg Rom"' ></cartinfo-board-rom>
-        <cartinfo-board-rom *ngFor="let chr of board.chr" [rom]='chr' [heading]='"Chr Rom"'></cartinfo-board-rom>
-        <cartinfo-board-pad *ngFor="let pad of board.pad" [pad]='pad' [heading]='"Solder Pads"'></cartinfo-board-pad>
     `
 })
 export class CartInfoBoardComponent {
@@ -48,9 +46,9 @@ export class CartInfoPrgComponent {
 @Component({
     selector: 'cartinfo-board-pad',
     template: `<div *ngIf='pad'>
-    <h4>{{heading}}</h4>
-    <p>Vert: {{ pad.attributes?.v }}</p>
-    <p>Horz: {{ pad.attributes?.h }}</p>
+        <h4>{{heading}}</h4>
+        <p>Vert: {{ pad.attributes?.v }}</p>
+        <p>Horz: {{ pad.attributes?.h }}</p>
     </div>
     `
 })

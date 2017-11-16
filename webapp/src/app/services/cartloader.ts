@@ -23,9 +23,21 @@ export class RomLoader {
 
     wishbone: WishboneMachine;
 
+    getCartInfo(): Observable<any> {
+        return new Observable<any>((subject)=> {
+            const myCrc =  this.wishbone.Cart.ROMHashFunction;
+            this.http.get("assets/carts/" + myCrc + ".json").subscribe((resp)=> {
+                let cartInfo = resp.json();
+                subject.next(cartInfo);
+            }, (err) => {
+                subject.next({ error: 'not found.' });
+            });
+        });
+    }
+
     loadZipRom(files: FileList): Observable<BaseCart> {
         const file = files[0];
-        const romLoader = new Observable<RomFile>(observer => {
+        const romLoader = new Observable<BaseCart>(observer => {
             const fileReader: FileReader = new FileReader();
             fileReader.onload = (e) => {
                 const rom: number[] = Array.from(new Uint8Array(fileReader.result));
@@ -57,7 +69,7 @@ export class RomLoader {
             return this.loadNsf(files);
         } else 
         if (file.name.endsWith('.nes')) {
-            const romLoader = new Observable<RomFile>(observer => {
+            const romLoader = new Observable<BaseCart>(observer => {
                 const fileReader: FileReader = new FileReader();
                 fileReader.onload = (e) => {
                     const rom: number[] = Array.from(new Uint8Array(fileReader.result));
@@ -67,15 +79,15 @@ export class RomLoader {
             });
             return romLoader;
         } else {
-            return new Observable<RomFile>(observer => { 
-                observer.next({});
+            return new Observable<BaseCart>(observer => { 
+                observer.next(null);
             });
         }
     }
 
     loadNsf(files: FileList): Observable<BaseCart> {
         const file = files[0];
-        const romLoader = new Observable<RomFile>(observer => {
+        const romLoader = new Observable<BaseCart>(observer => {
             const fileReader: FileReader = new FileReader();
             fileReader.onload = (e) => {
                 const rom: number[] = Array.from(new Uint8Array(fileReader.result));
@@ -87,28 +99,22 @@ export class RomLoader {
     }
 
     deliverRom(observer: Subscriber<BaseCart>, rom: number[], name: string, isNsf: boolean) {
-        const myCrc = crc.crc32(new Buffer(rom.slice(16, rom.length))).toString(16).toUpperCase().padStart(8,'0');
-        this.http.get("assets/carts/" + myCrc + ".json").subscribe((resp)=> {
-            let cartInfo = resp.json();
 
-            RomLoader.doLoadCart(rom, name, cartInfo ).subscribe((cart)=>{
+        
+            RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
                 this.wishbone.insertCart(cart, rom);
                 observer.next(cart);
             })
-            
-        }, (err) => {
-            observer.next(null);            
-        });
+
     }
 
-    static doLoadCart(rom: number[], name: string, cartInfo: any): Observable<BaseCart> {
+    static doLoadCart(rom: number[], name: string): Observable<BaseCart> {
         return new Observable<BaseCart>((subj) => {
             (require as any).ensure(['../../assets/romloader.worker.js'], (require) => {
                 const romLoader = require('../../assets/romloader.worker.js');
 
                 const cart = romLoader.loader.loadRom(rom, name);
-                cart.cartInfo = cartInfo;
-                
+
                 subj.next(cart);
 
                 delete romLoader.loader;

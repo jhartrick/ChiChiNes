@@ -3961,10 +3961,10 @@ var ChiChiPPU = /** @class */ (function () {
                 case 81840:// ChiChiNES.CPU2A03.frameClockEnd:
                     this.shouldRender = false;
                     this.frameFinished();
+                    this.frameOn = false;
                     break;
                 case 82523:// first tick on scanline after post-render line
                     this.setupVINT();
-                    this.frameOn = false;
                     break;
                 case 89002:
                     this._PPUStatus = 0;

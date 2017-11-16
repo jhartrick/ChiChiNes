@@ -1,4 +1,5 @@
 import { NgZone } from '@angular/core';
+import * as crc from 'crc';
 
 import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper,
         WavSharer, ChiChiCPPU, ChiChiMachine, ChiChiPPU, GameGenieCode, ChiChiCheats, IBaseCart  } from 'chichi';
@@ -270,6 +271,8 @@ export class WishboneMachine  {
     asObservable() {
         return this.nesStateSubject.asObservable();
     }
+
+
 
     pendingMessages: Array<any> = new Array<any>();
 

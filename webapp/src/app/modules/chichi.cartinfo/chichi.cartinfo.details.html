@@ -1,10 +1,7 @@
-<cartinfo-game *ngFor="let game of cart.game" [game]="game"></cartinfo-game>
-
 <div class="cartInfo">
-    <h3>Cart Info</h3>
+    <h4>Cart Info</h4>
     <p>System {{ cart.attributes?.system }}</p>
     <p>Dumped By {{ cart.attributes?.dumper }}</p>
     <p>Dumped On {{ cart.attributes?.dumpeddate }}</p>
 </div>
 
-<cartinfo-board *ngIf="cart.board" [board]="cart.board[0]" ></cartinfo-board>

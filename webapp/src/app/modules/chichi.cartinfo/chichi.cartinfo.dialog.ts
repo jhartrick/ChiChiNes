@@ -8,6 +8,9 @@ import { Component, Inject, ChangeDetectorRef, ElementRef, AfterContentInit } fr
   styleUrls: ['./chichi.cartinfo.dialog.css']
 })
 export class CartInfoDialogComponent {
+    board: any;
+    game: any;
+    cartridge: any;
     wishbone: WishboneMachine;
     cartInfo: any;
     
@@ -19,6 +22,15 @@ export class CartInfoDialogComponent {
     ) {
         this.wishbone = data.wishbone;
         this.cartInfo = data.info;
+        if (this.data.info && this.data.info.cartridge) {
+            this.cartridge = this.data.info.cartridge;
+            if (this.cartridge.board) {
+                this.board = this.cartridge.board;
+            }
+            if (this.cartridge.game) {
+                this.game = this.cartridge.game;
+            }
+        }
         debugger;
     }
 
