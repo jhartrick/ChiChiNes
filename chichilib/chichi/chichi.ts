@@ -7,3 +7,4 @@ export { WavSharer } from './Audio/CommonAudio'
 export { ChiChiPPU } from './ChiChiPPU';
 export { RunningStatuses, ChiChiCPPU_AddressingModes, CpuStatus, PpuStatus, ChiChiInstruction, ChiChiSprite, AudioSettings } from './ChiChiTypes';
 export { GameGenieCode, ChiChiCheats } from './ChiChiCheats';
+export { DebugHelpers } from './debugging/DebugHelpers';

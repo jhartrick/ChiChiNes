@@ -1,5 +1,4 @@
 import { Injectable, EventEmitter } from '@angular/core';
-import { Debugger, DecodedInstruction, DebugEventInfo } from './debug.interface'; 
 import { AngControlPad } from './chichines.service.controlpad'; 
 import { Observable, Subscriber } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
@@ -106,18 +105,14 @@ export class Emulator {
 
     private callback: () => void;
 
-
-    public debugger: Debugger ;
-
     public grabRam(start: number, finish: number): number[] {
 
         return this.wishbone.Cpu.PeekBytes(start, finish);
     }
 
-    public DebugUpdateEvent: EventEmitter<DebugEventInfo> = new EventEmitter<DebugEventInfo>();
+    public DebugUpdateEvent: EventEmitter<any> = new EventEmitter<any>();
 
     constructor() {
-        this.debugger = new Debugger(this.wishbone.asObservable());
     }
 
     get isDebugging(): boolean {

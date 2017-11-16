@@ -3,9 +3,9 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Component, Inject, ChangeDetectorRef, ElementRef, AfterContentInit } from '@angular/core';
 
 @Component({
-  selector: 'chichi-cartinfo-dialog',
-  templateUrl: './chichi.cartinfo.dialog.html',
-  styleUrls: ['./chichi.cartinfo.dialog.css']
+  selector: 'cartinfo-dialog',
+  templateUrl: './cartinfo-dialog.component.html',
+  styleUrls: ['./cartinfo-dialog.component.css']
 })
 export class CartInfoDialogComponent {
     board: any;
@@ -13,7 +13,7 @@ export class CartInfoDialogComponent {
     cartridge: any;
     wishbone: WishboneMachine;
     cartInfo: any;
-    
+
     constructor(
         public dialogRef: MatDialogRef<CartInfoDialogComponent>,
         @Inject(MAT_DIALOG_DATA) public data: any,
@@ -31,7 +31,6 @@ export class CartInfoDialogComponent {
                 this.game = this.cartridge.game;
             }
         }
-        debugger;
     }
 
     apply() {

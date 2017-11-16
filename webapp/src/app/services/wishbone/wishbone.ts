@@ -138,9 +138,6 @@ export class WishBoneControlPad {
         }
         // debugger;
         this.controlByteSubject.next(this.padOneState);
-        //this.machine.nesInterop[2] = this.padOneState;
-        // this.nesInterop[2] = this.padOneState & 0xFF;
-        // this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
     }
 
     handleKeyUpEvent(event: KeyboardEvent) {
@@ -171,13 +168,7 @@ export class WishBoneControlPad {
                 break;
         }
         this.controlByteSubject.next(this.padOneState);
-        //this.machine.nesInterop[2] = this.padOneState;
-
-        // this.postNesMessage({ command: "setpad", padOneState: this.padOneState });
     }
-
-    
-
 }
 
 export class WishbonePPU extends ChiChiPPU {
@@ -223,24 +214,12 @@ export class WishboneMachine  {
         })
 
         this.keyHandler = new WishboneKeyHandler([this.PadOne, this.PadTwo]);
-
-        this.startWorker();
-
     }
 
-    startWorker() 
-    {
-        // this.boneThread.start((threadHandler)=>{
-        //     const createCommand = 'create';
-        //     this.nesInterop = threadHandler.nesInterop;
-        //     threadHandler.postNesMessage({ command: createCommand,
-        //         vbuffer: this.ppu.byteOutBuffer,
-        //         abuffer: this.WaveForms.SharedBuffer,
-        //         audioSettings: this.SoundBopper.cloneSettings(),
-        //         iops: this.nesInterop });
-        // });
-        // this.boneThread.nesMessageData.subscribe((data)=>this.handleMessage(data));
-
+    private debugSubject: Subject<any> = new Subject<any>();
+    
+    get debugEvents(): Observable<any> {
+        return this.debugSubject.asObservable();
     }
 
     private _cheats: GameGenieCode[];
@@ -260,6 +239,9 @@ export class WishboneMachine  {
 
     handleMessage(data: MessageEvent) {
         const d = data.data;
+        if (d.debug) {
+            this.debugSubject.next(d.debug);
+        }
         this.Sync(d);
         this.nesStateSubject.next(this);
     }
@@ -271,8 +253,6 @@ export class WishboneMachine  {
     asObservable() {
         return this.nesStateSubject.asObservable();
     }
-
-
 
     pendingMessages: Array<any> = new Array<any>();
 
@@ -347,11 +327,7 @@ export class WishboneMachine  {
             this.SoundBopper.updateSettings(data.sound.settings);
         }
 
-        if (data.debug && data.debug.InstructionHistory) {
-            this.Cpu._instructionHistory = data.debug.InstructionHistory.Buffer;
-            this.Cpu.instructionHistoryPointer = data.debug.InstructionHistory.Index;
-            this.Cpu.flushHistory = data.debug.InstructionHistory.Finish ? true : false;
-        }
+
     }
 
     Drawscreen() {

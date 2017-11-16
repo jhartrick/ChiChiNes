@@ -1430,21 +1430,14 @@ var ChiChiCPPU = /** @class */ (function () {
     };
     ChiChiCPPU.prototype.interruptRequest = function () {
         this._handleIRQ = false;
-        //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
-        //  set is pushed on the stack, then the I flag is set. 
         if (!this.GetFlag(this.SRMasks_InterruptDisableMask)) {
             this.advanceClock(7);
             this.setFlag(this.SRMasks_InterruptDisableMask, true);
             var newStatusReg1 = this._statusRegister & ~0x10 | 0x20;
-            // if enabled
-            // push pc onto stack (high byte first)
             this.pushStack(this._programCounter >> 8);
             this.pushStack(this._programCounter);
-            // push sr onto stack
             this.pushStack(this._statusRegister);
-            // point pc to interrupt service routine
             this._programCounter = this.GetByte(0xFFFE) + (this.GetByte(0xFFFF) << 8);
-            // nonOpCodeticks = 7;
         }
     };
     ChiChiCPPU.prototype.nonMaskableInterrupt = function () {
@@ -3944,7 +3937,7 @@ var ChiChiPPU = /** @class */ (function () {
         }
         while (ppuTicks--) {
             switch (this.frameClock) {
-                case 0:
+                case 0:// start of rendering
                     this.shouldRender = true;
                     this.vbufLocation = 0;
                     this.currentXPosition = 0;

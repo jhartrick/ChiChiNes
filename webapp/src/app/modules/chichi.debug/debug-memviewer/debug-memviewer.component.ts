@@ -13,27 +13,27 @@ import { Emulator } from '../../../services/NESService';
 @Pipe({ name: 'ascii' })
 export class AsciiPipe implements PipeTransform {
     transform(value: number, ascii?: string): string {
-        if (ascii == "hex") {
-            var val = value.toString(16);
-            if (val.length == 1) {
-                val = "0" + val.toUpperCase();
+        if (ascii === 'hex') {
+            let val = value.toString(16);
+            if (val.length === 1) {
+                val = '0' + val.toUpperCase();
             }
             return val;
-        }
-        else {
+        } else {
             return String.fromCharCode(value);
         }
     }
 }
 
 @Component({
-    styleUrls: ['./chichines.memviewer.component.css'],
-    selector: '[myTr]',
-    template: `<td>{{ lineAddress() }}:</td><td *ngFor="let item of row">{{item | ascii: showAscii}}</td>`
+    styleUrls: ['./debug-memviewer.component.css'],
+    selector: '[debugTablerow]',
+    template: `<tr><td>{{ lineAddress() }}:</td><td *ngFor="let item of debugTablerow">{{item | ascii: showAscii}}</td></tr>`
 })
 export class MyTrComponent {
-    @Input('myTr') row;
-    @Input('myIndex') myIndex;
+    @Input() debugTablerow;
+    @Input() myIndex;
+    
     lineAddress() {
         return '0x' + ((this.myIndex * 16).toString(16)).padStart(4, '0');
     }
@@ -41,12 +41,12 @@ export class MyTrComponent {
 }
 
 @Component({
-  selector: 'chichines-memviewer',
-  templateUrl: './chichines.memviewer.component.html',
-  styleUrls: ['./chichines.memviewer.component.css']
+  selector: 'debug-memviewer',
+  templateUrl: './debug-memviewer.component.html',
+  styleUrls: ['./debug-memviewer.component.css']
 })
 export class MemViewerComponent implements OnInit {
-    _data = new Array<Uint8Array>();// [[1, 2, 3], [11, 12, 13]];
+    _data = new Array<Uint8Array>();
 
     get data(): Array<Uint8Array> {
         return this._data;

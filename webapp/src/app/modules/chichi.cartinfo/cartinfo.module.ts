@@ -1,7 +1,7 @@
-import { CartInfoComponent } from './chichi.cartinfo';
-import { CartInfoDialogComponent } from './chichi.cartinfo.dialog';
+import { CartInfoComponent } from './cartinfo-main.component';
+import { CartInfoDialogComponent } from './cartinfo-dialog.component';
 import { CartInfoBoardComponent, CartInfoDetailsComponent,
-    CartInfoPrgComponent, CartInfoPadComponent, CartInfoGameComponent } from './chichi.cartinfo.details';
+    CartInfoPrgComponent, CartInfoPadComponent, CartInfoGameComponent } from './cartinfo-details.component';
 import { MatDialogModule, MatButtonModule, MatExpansionModule } from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
@@ -15,7 +15,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
       CartInfoDetailsComponent,
       CartInfoPrgComponent,
       CartInfoPadComponent,
-      CartInfoGameComponent
+      CartInfoGameComponent,
+      CartInfoDialogComponent
   ],
   entryComponents: [
     CartInfoDialogComponent

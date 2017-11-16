@@ -4,7 +4,6 @@
   {{ displayType }}
 </mat-button-toggle>
 <div class="ramTable">
-  <table>
-    <tr *ngFor="let line of data;let i = index" [myTr]="line" [myIndex]="i" showAscii="{{displayType}}"></tr>
+  <table *ngFor="let line of data;let i = index" [debugTablerow]="line" [myIndex]="i" [showAscii]="displayType">
   </table>
 </div>

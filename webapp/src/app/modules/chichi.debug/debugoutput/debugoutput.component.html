@@ -3,20 +3,8 @@
   <button mat-button (click)="nes.DebugStepFrame()">StepFrame</button>
   <button mat-button (click)="nes.Continue()">Continue</button>
 </div>
-<p class="cpuStatus" [cpuStatus]="nes.wishbone.cpuStatus">
-</p>
-<p>
-  SR: {{ decodedStatusRegister }}
-</p>
-
-<div class="ppuStatus">
-  <p [ppuStatus]="nes.wishbone.ppuStatus">
-    
-  </p>
-  <p>
-    locked hscroll: {{ nes.wishbone.ppuStatus?.lockedHScroll }} locked vscroll: {{ nes.wishbone.ppuStatus?.lockedVScroll }} 
-  </p>
-</div>
+<debug-cpustatus [cpuStatus]="nes.wishbone.cpuStatus"></debug-cpustatus> 
+<debug-ppustatus [ppuStatus]="nes.wishbone.ppuStatus"></debug-ppustatus> 
 
 <mat-tab-group dynamicHeight="true" [(selectedIndex)]="selectedTabIndex">
   <mat-tab label="CPU">
@@ -27,7 +15,7 @@
           Instruction History
         </mat-panel-title>
       </mat-expansion-panel-header>
-      <chichines-instructionhistory></chichines-instructionhistory>
+      <debug-instructionhistory [debugger]="debugger" ></debug-instructionhistory>
     </mat-expansion-panel>
   </mat-tab>
   <mat-tab label="Memory">
@@ -37,7 +25,7 @@
           Ram Viewer
         </mat-panel-title>
       </mat-expansion-panel-header>
-        <chichines-memviewer></chichines-memviewer>
+        <debug-memviewer></debug-memviewer>
       </mat-expansion-panel>
   </mat-tab>
   <mat-tab label="PPU">
@@ -47,7 +35,7 @@
           NameTable Viewer
         </mat-panel-title>
       </mat-expansion-panel-header>
-      <app-nametableviewer></app-nametableviewer>
+      <debug-nametableviewer></debug-nametableviewer>
       </mat-expansion-panel>
       <mat-expansion-panel *ngIf="selectedTabIndex == 2">
           <mat-expansion-panel-header>
@@ -55,7 +43,7 @@
               PatternTable Viewer
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <chichi-patternviewer></chichi-patternviewer>
+          <debug-patternviewer></debug-patternviewer>
       </mat-expansion-panel>
       
       <mat-expansion-panel *ngIf="selectedTabIndex == 2">
@@ -64,7 +52,7 @@
             Sprite Viewer
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <app-spriteviewer></app-spriteviewer>
+        <debug-spriteviewer></debug-spriteviewer>
         </mat-expansion-panel>
 </mat-tab>
 </mat-tab-group>

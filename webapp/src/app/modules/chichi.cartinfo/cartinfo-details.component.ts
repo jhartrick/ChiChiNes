@@ -3,7 +3,7 @@ import { Component, Inject, ChangeDetectorRef, Input } from '@angular/core';
 
 @Component({
   selector: 'cartinfo-details',
-  templateUrl: 'chichi.cartinfo.details.html'
+  templateUrl: 'cartinfo-details.component.html'
 })
 export class CartInfoDetailsComponent {
     @Input('cart') cart: any;
