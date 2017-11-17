@@ -1,14 +1,14 @@
 import { NgZone } from '@angular/core';
 import * as crc from 'crc';
 
-import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, ChiChiBopper,
+import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, IChiChiAPU,
         WavSharer, ChiChiCPPU, ChiChiMachine, ChiChiPPU, GameGenieCode, ChiChiCheats, IBaseCart  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
 import { TileDoodler } from './wishbone.tiledoodler';
 import { WishboneCart } from './wishbone.cart';
-import { WishBopper } from './wishbone.audio';
+import { WishboneAPU } from './wishbone.audio';
 import { KeyboardSettings } from '../keyboardsettings';
 import { WishboneCheats } from './wishbone.cheats';
 import { Http } from '@angular/http';
@@ -196,7 +196,7 @@ export class WishboneMachine  {
     constructor() {
         // initialize sound
         this.WaveForms = new WavSharer();
-        this.SoundBopper = new WishBopper(this.WaveForms);
+        this.SoundBopper = new WishboneAPU(this.WaveForms);
 
         this.ppu = new WishbonePPU();
         this.Cpu = new WishboneCPPU(this.SoundBopper, this.ppu);
@@ -338,7 +338,7 @@ export class WishboneMachine  {
     ppu: WishbonePPU;
     Cart: WishboneCart;
 
-    SoundBopper: WishBopper;
+    SoundBopper: WishboneAPU;
     WaveForms: WavSharer;
 
     private _soundEnabled = false;
@@ -441,7 +441,7 @@ export class WishboneMachine  {
 }
 
 class WishboneCPPU extends ChiChiCPPU {
-    constructor(soundBopper: WishBopper, ppu: WishbonePPU) {
+    constructor(soundBopper: WishboneAPU, ppu: WishbonePPU) {
         super(soundBopper, ppu);
     }
 

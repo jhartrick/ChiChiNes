@@ -1,4 +1,4 @@
-import { ChiChiBopper, WavSharer, AudioSettings } from 'chichi';
+import { IChiChiAPU, WavSharer, AudioSettings } from 'chichi';
 import * as THREE from 'three';
 import { LocalAudioSettings } from './wishbone.audio.localsettings';
 

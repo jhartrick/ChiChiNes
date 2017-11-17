@@ -129,8 +129,8 @@ var WavSharer = /** @class */ (function () {
 }());
 exports.WavSharer = WavSharer;
 //apu classes
-var blip_buffer_t = /** @class */ (function () {
-    function blip_buffer_t(size) {
+var BlipBuffer = /** @class */ (function () {
+    function BlipBuffer(size) {
         this.size = size;
         this.factor = 0;
         this.offset = 0;
@@ -141,9 +141,8 @@ var blip_buffer_t = /** @class */ (function () {
         this.samples = new Array(size);
         this.samples.fill(0);
     }
-    return blip_buffer_t;
+    return BlipBuffer;
 }());
-exports.blip_buffer_t = blip_buffer_t;
 var Blip = /** @class */ (function () {
     // functions
     function Blip(size) {
@@ -154,79 +153,60 @@ var Blip = /** @class */ (function () {
         this.blip_new(size);
     }
     Blip.prototype.blip_new = function (size) {
-        this.BlipBuffer = new blip_buffer_t(size);
-        this.BlipBuffer.size = size;
-        this.BlipBuffer.factor = 0;
+        this.blipBuffer = new BlipBuffer(size);
+        this.blipBuffer.size = size;
+        this.blipBuffer.factor = 0;
         this.blip_clear();
     };
     Blip.prototype.blip_set_rates = function (clock_rate, sample_rate) {
-        this.BlipBuffer.factor = Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375);
+        this.blipBuffer.factor = Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375);
     };
     Blip.prototype.blip_clear = function () {
-        this.BlipBuffer.offset = 0;
-        this.BlipBuffer.avail = 0;
-        this.BlipBuffer.integrator = 0;
-        this.BlipBuffer.samples = new Array(this.BlipBuffer.size + Blip.buf_extra);
-        this.BlipBuffer.samples.fill(0);
+        this.blipBuffer.offset = 0;
+        this.blipBuffer.avail = 0;
+        this.blipBuffer.integrator = 0;
+        this.blipBuffer.samples = new Array(this.blipBuffer.size + Blip.buf_extra);
+        this.blipBuffer.samples.fill(0);
     };
     Blip.prototype.blip_clocks_needed = function (samples) {
-        var needed = samples * Blip.time_unit - this.BlipBuffer.offset;
-        /* Fails if buffer can't hold that many more samples */
-        //assert( s->avail + samples <= s->size );
-        return ((needed + this.BlipBuffer.factor - 1) / this.BlipBuffer.factor) | 0;
+        var needed = samples * Blip.time_unit - this.blipBuffer.offset;
+        return ((needed + this.blipBuffer.factor - 1) / this.blipBuffer.factor) | 0;
     };
     Blip.prototype.blip_end_frame = function (t) {
-        var off = t * this.BlipBuffer.factor + this.BlipBuffer.offset;
-        this.BlipBuffer.avail += off >> Blip.time_bits;
-        this.BlipBuffer.offset = off & (Blip.time_unit - 1);
+        var off = t * this.blipBuffer.factor + this.blipBuffer.offset;
+        this.blipBuffer.avail += off >> Blip.time_bits;
+        this.blipBuffer.offset = off & (Blip.time_unit - 1);
     };
     Blip.prototype.remove_samples = function (count) {
-        var remain = this.BlipBuffer.avail + Blip.buf_extra - count;
-        this.BlipBuffer.avail -= count;
-        this.BlipBuffer.samples.copyWithin(0, count, count + remain);
-        //for (let i = 0; i < remain; i++) {
-        //     this.BlipBuffer.samples[count + i] = this.BlipBuffer.samples[i];
-        // }
-        this.BlipBuffer.samples.fill(0, remain, remain + count);
-        //for (let i = 0;i < count; ++i) {
-        //    this.BlipBuffer.samples[i + remain] = 0;
-        //} 
-        //        this.BlipBuffer.samples = this
-        //        System.Array.copy(this._blipBuffer.samples, count, this._blipBuffer.samples, 0, remain);
-        //        System.Array.fill(this._blipBuffer.samples, 0, remain, count);
-        this.BlipBuffer.arrayLength = count;
+        var remain = this.blipBuffer.avail + Blip.buf_extra - count;
+        this.blipBuffer.avail -= count;
+        this.blipBuffer.samples.copyWithin(0, count, count + remain);
+        this.blipBuffer.samples.fill(0, remain, remain + count);
+        this.blipBuffer.arrayLength = count;
     };
     Blip.prototype.ReadBytes = function (outbuf, count, stereo) {
-        if (count > this.BlipBuffer.avail) {
-            count = this.BlipBuffer.avail;
+        if (count > this.blipBuffer.avail) {
+            count = this.blipBuffer.avail;
         }
         if (count !== 0) {
             var step = 1;
-            //int inPtr  = BLIP_SAMPLES( s );
-            //buf_t const* end = in + count;
             var inPtr = 0, outPtr = 0;
             var endPtr = inPtr + count;
-            var sum = this.BlipBuffer.integrator;
+            var sum = this.blipBuffer.integrator;
             do {
                 var st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
-                sum = sum + this.BlipBuffer.samples[inPtr];
+                sum = sum + this.blipBuffer.samples[inPtr];
                 inPtr++;
                 if (st !== st) {
                     st = (st >> 31) ^ 32767;
                 }
-                var f = st / 65536; // (st/0xFFFF) * 2 - 1;
-                //if (f < -1) {
-                //    f = -1;
-                //}
-                //if (f > 1) {
-                //    f = 1;
-                //}
+                var f = st / 65536;
                 outbuf[outPtr] = f;
                 // outbuf[outPtr+ 1] = (byte)(st >> 8);
                 outPtr += step;
                 sum = sum - (st << (7));
             } while (inPtr !== endPtr);
-            this.BlipBuffer.integrator = sum;
+            this.blipBuffer.integrator = sum;
             this.remove_samples(count);
         }
         return count;
@@ -236,15 +216,15 @@ var Blip = /** @class */ (function () {
     Blip.prototype.ReadElementsLoop = function (wavSharer) {
         var outbuf = wavSharer.SharedBuffer;
         var start = wavSharer.sharedAudioBufferPos;
-        var count = this.BlipBuffer.avail;
+        var count = this.blipBuffer.avail;
         var inPtr = 0, outPtr = start;
         var end = count;
-        var sum = this.BlipBuffer.integrator;
+        var sum = this.blipBuffer.integrator;
         if (count !== 0) {
             var step = 1;
             do {
                 var st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
-                sum = sum + this.BlipBuffer.samples[inPtr];
+                sum = sum + this.blipBuffer.samples[inPtr];
                 inPtr++;
                 if (st !== st) {
                     st = (st >> 31) ^ 32767;
@@ -258,7 +238,7 @@ var Blip = /** @class */ (function () {
                 // outbuf[outPtr+ 1] = (byte)(st >> 8);
                 sum = sum - (st << (7));
             } while (end-- > 0);
-            this.BlipBuffer.integrator = sum;
+            this.blipBuffer.integrator = sum;
             this.remove_samples(count);
         }
         wavSharer.sharedAudioBufferPos = outPtr;
@@ -270,8 +250,8 @@ var Blip = /** @class */ (function () {
         if (delta === 0) {
             return;
         }
-        var fixedTime = (time * this.BlipBuffer.factor + this.BlipBuffer.offset) | 0;
-        var outPtr = (this.BlipBuffer.avail + (fixedTime >> Blip.time_bits));
+        var fixedTime = (time * this.blipBuffer.factor + this.blipBuffer.offset) | 0;
+        var outPtr = (this.blipBuffer.avail + (fixedTime >> Blip.time_bits));
         var phase_shift = 16;
         //const phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((Blip.phase_count - 1))));
         var phase = (fixedTime >> phase_shift & (Blip.phase_count - 1)) >>> 0;
@@ -284,21 +264,21 @@ var Blip = /** @class */ (function () {
         /* Fails if buffer size was exceeded */
         //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
         for (var i = 0; i < 8; ++i) {
-            this.BlipBuffer.samples[outPtr + i] += (Blip.bl_step[inStep][i] * delta) + (Blip.bl_step[inStep][i] * delta2);
-            this.BlipBuffer.samples[outPtr + (15 - i)] += (Blip.bl_step[rev][i] * delta) + (Blip.bl_step[rev - 1][i] * delta2);
+            this.blipBuffer.samples[outPtr + i] += (Blip.bl_step[inStep][i] * delta) + (Blip.bl_step[inStep][i] * delta2);
+            this.blipBuffer.samples[outPtr + (15 - i)] += (Blip.bl_step[rev][i] * delta) + (Blip.bl_step[rev - 1][i] * delta2);
         }
     };
     Blip.prototype.blip_add_delta_fast = function (time, delta) {
-        var fixedTime = time * this.BlipBuffer.factor + this.BlipBuffer.offset;
-        var outPtr = this.BlipBuffer.avail + (fixedTime >> Blip.time_bits);
+        var fixedTime = time * this.blipBuffer.factor + this.blipBuffer.offset;
+        var outPtr = this.blipBuffer.avail + (fixedTime >> Blip.time_bits);
         var delta_unit = 1 << Blip.delta_bits;
         var phase_shift = Blip.time_bits - Blip.delta_bits;
         var phase = fixedTime >> phase_shift & (delta_unit - 1);
         var delta2 = delta * phase;
         /* Fails if buffer size was exceeded */
         //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
-        this.BlipBuffer.samples[outPtr + 8] += delta * delta_unit - delta2;
-        this.BlipBuffer.samples[outPtr + 9] += delta2;
+        this.blipBuffer.samples[outPtr + 8] += delta * delta_unit - delta2;
+        this.blipBuffer.samples[outPtr + 9] += delta2;
         //out [8] += delta * delta_unit - delta2;
         //out [9] += delta2;
     };
@@ -308,302 +288,41 @@ var Blip = /** @class */ (function () {
     Blip.time_bits = 21;
     Blip.delta_bits = 15;
     //sinc values
-    Blip.bl_step = [[43, -115,
-            350,
-            -488,
-            1136,
-            -914,
-            5861,
-            21022
-        ], [
-            44,
-            -118,
-            348,
-            -473,
-            1076,
-            -799,
-            5274,
-            21001
-        ], [
-            45,
-            -121,
-            344,
-            -454,
-            1011,
-            -677,
-            4706,
-            20936
-        ], [
-            46,
-            -122,
-            336,
-            -431,
-            942,
-            -549,
-            4156,
-            20829
-        ], [
-            47,
-            -123,
-            327,
-            -404,
-            868,
-            -418,
-            3629,
-            20679
-        ], [
-            47,
-            -122,
-            316,
-            -375,
-            792,
-            -285,
-            3124,
-            20488
-        ], [
-            47,
-            -120,
-            303,
-            -344,
-            714,
-            -151,
-            2644,
-            20256
-        ], [
-            46,
-            -117,
-            289,
-            -310,
-            634,
-            -17,
-            2188,
-            19985
-        ], [
-            46,
-            -114,
-            273,
-            -275,
-            553,
-            117,
-            1758,
-            19675
-        ], [
-            44,
-            -108,
-            255,
-            -237,
-            471,
-            247,
-            1356,
-            19327
-        ], [
-            43,
-            -103,
-            237,
-            -199,
-            390,
-            373,
-            981,
-            18944
-        ], [
-            42,
-            -98,
-            218,
-            -160,
-            310,
-            495,
-            633,
-            18527
-        ], [
-            40,
-            -91,
-            198,
-            -121,
-            231,
-            611,
-            314,
-            18078
-        ], [
-            38,
-            -84,
-            178,
-            -81,
-            153,
-            722,
-            22,
-            17599
-        ], [
-            36,
-            -76,
-            157,
-            -43,
-            80,
-            824,
-            -241,
-            17092
-        ], [
-            34,
-            -68,
-            135,
-            -3,
-            8,
-            919,
-            -476,
-            16558
-        ], [
-            32,
-            -61,
-            115,
-            34,
-            -60,
-            1006,
-            -683,
-            16001
-        ], [
-            29,
-            -52,
-            94,
-            70,
-            -123,
-            1083,
-            -862,
-            15422
-        ], [
-            27,
-            -44,
-            73,
-            106,
-            -184,
-            1152,
-            -1015,
-            14824
-        ], [
-            25,
-            -36,
-            53,
-            139,
-            -239,
-            1211,
-            -1142,
-            14210
-        ], [
-            22,
-            -27,
-            34,
-            170,
-            -290,
-            1261,
-            -1244,
-            13582
-        ], [
-            20,
-            -20,
-            16,
-            199,
-            -335,
-            1301,
-            -1322,
-            12942
-        ], [
-            18,
-            -12,
-            -3,
-            226,
-            -375,
-            1331,
-            -1376,
-            12293
-        ], [
-            15,
-            -4,
-            -19,
-            250,
-            -410,
-            1351,
-            -1408,
-            11638
-        ], [
-            13,
-            3,
-            -35,
-            272,
-            -439,
-            1361,
-            -1419,
-            10979
-        ], [
-            11,
-            9,
-            -49,
-            292,
-            -464,
-            1362,
-            -1410,
-            10319
-        ], [
-            9,
-            16,
-            -63,
-            309,
-            -483,
-            1354,
-            -1383,
-            9660
-        ], [
-            7,
-            22,
-            -75,
-            322,
-            -496,
-            1337,
-            -1339,
-            9005
-        ], [
-            6,
-            26,
-            -85,
-            333,
-            -504,
-            1312,
-            -1280,
-            8355
-        ], [
-            4,
-            31,
-            -94,
-            341,
-            -507,
-            1278,
-            -1205,
-            7713
-        ], [
-            3,
-            35,
-            -102,
-            347,
-            -506,
-            1238,
-            -1119,
-            7082
-        ], [
-            1,
-            40,
-            -110,
-            350,
-            -499,
-            1190,
-            -1021,
-            6464
-        ], [
-            0,
-            43,
-            -115,
-            350,
-            -488,
-            1136,
-            -914,
-            5861
-        ]];
+    Blip.bl_step = [
+        [43, -115, 350, -488, 1136, -914, 5861, 21022],
+        [44, -118, 348, -473, 1076, -799, 5274, 21001],
+        [45, -121, 344, -454, 1011, -677, 4706, 20936],
+        [46, -122, 336, -431, 942, -549, 4156, 20829],
+        [47, -123, 327, -404, 868, -418, 3629, 20679],
+        [47, -122, 316, -375, 792, -285, 3124, 20488],
+        [47, -120, 303, -344, 714, -151, 2644, 20256],
+        [46, -117, 289, -310, 634, -17, 2188, 19985],
+        [46, -114, 273, -275, 553, 117, 1758, 19675],
+        [44, -108, 255, -237, 471, 247, 1356, 19327],
+        [43, -103, 237, -199, 390, 373, 981, 18944],
+        [42, -98, 218, -160, 310, 495, 633, 18527],
+        [40, -91, 198, -121, 231, 611, 314, 18078],
+        [38, -84, 178, -81, 153, 722, 22, 17599],
+        [36, -76, 157, -43, 80, 824, -241, 17092],
+        [34, -68, 135, -3, 8, 919, -476, 16558],
+        [32, -61, 115, 34, -60, 1006, -683, 16001],
+        [29, -52, 94, 70, -123, 1083, -862, 15422],
+        [27, -44, 73, 106, -184, 1152, -1015, 14824],
+        [25, -36, 53, 139, -239, 1211, -1142, 14210],
+        [22, -27, 34, 170, -290, 1261, -1244, 13582],
+        [20, -20, 16, 199, -335, 1301, -1322, 12942],
+        [18, -12, -3, 226, -375, 1331, -1376, 12293],
+        [15, -4, -19, 250, -410, 1351, -1408, 11638],
+        [13, 3, -35, 272, -439, 1361, -1419, 10979],
+        [11, 9, -49, 292, -464, 1362, -1410, 10319],
+        [9, 16, -63, 309, -483, 1354, -1383, 9660],
+        [7, 22, -75, 322, -496, 1337, -1339, 9005],
+        [6, 26, -85, 333, -504, 1312, -1280, 8355],
+        [4, 31, -94, 341, -507, 1278, -1205, 7713],
+        [3, 35, -102, 347, -506, 1238, -1119, 7082],
+        [1, 40, -110, 350, -499, 1190, -1021, 6464],
+        [0, 43, -115, 350, -488, 1136, -914, 5861],
+    ];
     return Blip;
 }());
 exports.Blip = Blip;
@@ -1120,7 +839,7 @@ var ChiChiMachine = /** @class */ (function () {
         this._enableSound = false;
         this.evenFrame = true;
         var wavSharer = new CommonAudio_1.WavSharer();
-        this.SoundBopper = new ChiChiAudio_1.ChiChiBopper(wavSharer);
+        this.SoundBopper = new ChiChiAudio_1.ChiChiAPU(wavSharer);
         this.WaveForms = wavSharer;
         this.ppu = new ChiChiPPU_1.ChiChiPPU();
         this.Cpu = cpu ? cpu : new ChiChiCPPU(this.SoundBopper, this.ppu);
@@ -2565,8 +2284,8 @@ var SquareChannel_1 = __webpack_require__(6);
 var TriangleChannel_1 = __webpack_require__(7);
 var NoiseChannel_1 = __webpack_require__(8);
 var CommonAudio_1 = __webpack_require__(0);
-var ChiChiBopper = /** @class */ (function () {
-    function ChiChiBopper(writer) {
+var ChiChiAPU = /** @class */ (function () {
+    function ChiChiAPU(writer) {
         this.writer = writer;
         this.throwingIRQs = false;
         this.reg15 = 0;
@@ -2584,7 +2303,7 @@ var ChiChiBopper = /** @class */ (function () {
         this.interruptRaised = true;
         this.rebuildSound();
     }
-    Object.defineProperty(ChiChiBopper.prototype, "audioSettings", {
+    Object.defineProperty(ChiChiAPU.prototype, "audioSettings", {
         get: function () {
             var settings = {
                 sampleRate: this._sampleRate,
@@ -2611,7 +2330,7 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "sampleRate", {
+    Object.defineProperty(ChiChiAPU.prototype, "sampleRate", {
         get: function () {
             return this._sampleRate;
         },
@@ -2622,7 +2341,7 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "enableSquare0", {
+    Object.defineProperty(ChiChiAPU.prototype, "enableSquare0", {
         get: function () {
             return this.square0.gain > 0;
         },
@@ -2632,7 +2351,7 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "enableSquare1", {
+    Object.defineProperty(ChiChiAPU.prototype, "enableSquare1", {
         get: function () {
             return this.square1.gain > 0;
         },
@@ -2642,7 +2361,7 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "enableTriangle", {
+    Object.defineProperty(ChiChiAPU.prototype, "enableTriangle", {
         get: function () {
             return this.triangle.gain > 0;
         },
@@ -2652,7 +2371,7 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "enableNoise", {
+    Object.defineProperty(ChiChiAPU.prototype, "enableNoise", {
         get: function () {
             return this.noise.gain > 0;
         },
@@ -2662,9 +2381,9 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    ChiChiBopper.prototype.rebuildSound = function () {
+    ChiChiAPU.prototype.rebuildSound = function () {
         this.myBlipper = new CommonAudio_1.Blip(this._sampleRate / 5);
-        this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
+        this.myBlipper.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
         this.writer.audioBytesWritten = 0;
         this.square0Gain = 873;
@@ -2688,7 +2407,7 @@ var ChiChiBopper = /** @class */ (function () {
         this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, null);
         //  this.dmc.Gain = 873; this.dmc.Period = 10;
     };
-    ChiChiBopper.prototype.GetByte = function (Clock, address) {
+    ChiChiAPU.prototype.GetByte = function (Clock, address) {
         if (address === 0x4000) {
             this.interruptRaised = false;
         }
@@ -2699,7 +2418,7 @@ var ChiChiBopper = /** @class */ (function () {
             return 66;
         }
     };
-    ChiChiBopper.prototype.SetByte = function (clock, address, data) {
+    ChiChiAPU.prototype.SetByte = function (clock, address, data) {
         if (address === 16384) {
             this.interruptRaised = false;
         }
@@ -2748,7 +2467,7 @@ var ChiChiBopper = /** @class */ (function () {
                 break;
         }
     };
-    ChiChiBopper.prototype.advanceClock = function (ticks) {
+    ChiChiAPU.prototype.advanceClock = function (ticks) {
         this.currentClock += ticks;
         this.frameClocker += ticks;
         if (this.frameClocker > 7445) {
@@ -2756,7 +2475,7 @@ var ChiChiBopper = /** @class */ (function () {
             this.frameClocker -= 7445;
         }
     };
-    ChiChiBopper.prototype.updateFrame = function (time) {
+    ChiChiAPU.prototype.updateFrame = function (time) {
         this.runFrameEvents(time, this.lastFrameHit);
         if (this.lastFrameHit === 3) {
             this.lastFrameHit = 0;
@@ -2770,13 +2489,13 @@ var ChiChiBopper = /** @class */ (function () {
             this.lastFrameHit++;
         }
     };
-    ChiChiBopper.prototype.runFrameEvents = function (time, step) {
+    ChiChiAPU.prototype.runFrameEvents = function (time, step) {
         this.triangle.frameClock(time, step);
         this.noise.FrameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
     };
-    ChiChiBopper.prototype.endFrame = function (time) {
+    ChiChiAPU.prototype.endFrame = function (time) {
         this.square0.endFrame(time);
         this.square1.endFrame(time);
         this.triangle.endFrame(time);
@@ -2785,10 +2504,10 @@ var ChiChiBopper = /** @class */ (function () {
         this.myBlipper.ReadElementsLoop(this.writer);
         this.currentClock = 0;
     };
-    ChiChiBopper.clock_rate = 1789772.727;
-    return ChiChiBopper;
+    ChiChiAPU.clock_rate = 1789772.727;
+    return ChiChiAPU;
 }());
-exports.ChiChiBopper = ChiChiBopper;
+exports.ChiChiAPU = ChiChiAPU;
 
 
 /***/ }),

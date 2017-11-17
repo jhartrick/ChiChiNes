@@ -9,11 +9,11 @@ import { Blip, WavSharer } from './Audio/CommonAudio';
 export interface IChiChiAPU {
     writer: WavSharer;
     audioSettings: AudioSettings;
-    lastClock: number;
-    throwingIRQs: boolean;
-    reg15: number;
-    currentClock: number;
-    frameClocker: number;
+    // lastClock: number;
+    // throwingIRQs: boolean;
+    // reg15: number;
+    // currentClock: number;
+    // frameClocker: number;
 
     sampleRate: number;
     interruptRaised: boolean;
@@ -23,18 +23,18 @@ export interface IChiChiAPU {
     enableTriangle: boolean;
     enableNoise: boolean;
 
-    NMIHandler: () => void;
-    IRQAsserted: boolean;
-    NextEventAt: number;
+    // NMIHandler: () => void;
+    // IRQAsserted: boolean;
+    // NextEventAt: number;
 
     GetByte(clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;
 
     rebuildSound(): void;
     advanceClock(ticks: number): void;
-    updateFrame(time: number): void;
-    runFrameEvents(time: number, step: number): void;
-    endFrame(time: number): void;
+    // updateFrame(time: number): void;
+    // runFrameEvents(time: number, step: number): void;
+    // endFrame(time: number): void;
 }
 
 export class ChiChiAPU implements IChiChiAPU {
@@ -137,10 +137,6 @@ export class ChiChiAPU implements IChiChiAPU {
     set enableNoise(value: boolean) {
         this.noise.gain = value ? this.noiseGain : 0;
     }
-
-    NMIHandler: () => void;
-    IRQAsserted: boolean;
-    NextEventAt: number;
 
     rebuildSound(): void {
         this.myBlipper = new Blip(this._sampleRate / 5);
@@ -251,7 +247,6 @@ export class ChiChiAPU implements IChiChiAPU {
             this.endFrame(time)
             if (this.throwingIRQs) {
                 this.interruptRaised = true;
-                this.NMIHandler();
             }
 
         } else {

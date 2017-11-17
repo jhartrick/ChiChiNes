@@ -23,9 +23,7 @@ import { WavSharer } from './Audio/CommonAudio';
             this.ppu.NMIHandler = () => {
                 this.Cpu.nmiHandler();
             }
-            this.SoundBopper.NMIHandler = () => {
-                this.Cpu._handleIRQ = true;
-            }
+
             this.ppu.frameFinished = () => { this.FrameFinished(); };
         }
 
@@ -324,8 +322,6 @@ import { WavSharer } from './Audio/CommonAudio';
 
             this.SoundBopper = bopper;
 
-            bopper.NMIHandler = this.irqUpdater;
-
             // init PPU
             this.ppu = ppu;
             this.ppu.initSprites();
@@ -446,7 +442,7 @@ import { WavSharer } from './Audio/CommonAudio';
                 this.advanceClock(7);
                 this._handleNMI = false;
                 this.nonMaskableInterrupt();
-            } else if (this._handleIRQ || this.Cart.irqRaised ) {
+            } else if (this._handleIRQ || this.Cart.irqRaised || this.SoundBopper.interruptRaised ) {
                 this.interruptRequest();
             }
 
@@ -1203,7 +1199,7 @@ import { WavSharer } from './Audio/CommonAudio';
         }
 
         irqUpdater(): void {
-            this._handleIRQ = this.SoundBopper.IRQAsserted || this.Cart.irqRaised;
+            this._handleIRQ = this.SoundBopper.interruptRaised || this.Cart.irqRaised;
         }
 
         private pushStack(data: number): void {

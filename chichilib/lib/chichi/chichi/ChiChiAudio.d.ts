@@ -3,27 +3,16 @@ import { WavSharer } from './Audio/CommonAudio';
 export interface IChiChiAPU {
     writer: WavSharer;
     audioSettings: AudioSettings;
-    lastClock: number;
-    throwingIRQs: boolean;
-    reg15: number;
-    currentClock: number;
-    frameClocker: number;
     sampleRate: number;
     interruptRaised: boolean;
     enableSquare0: boolean;
     enableSquare1: boolean;
     enableTriangle: boolean;
     enableNoise: boolean;
-    NMIHandler: () => void;
-    IRQAsserted: boolean;
-    NextEventAt: number;
     GetByte(clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;
     rebuildSound(): void;
     advanceClock(ticks: number): void;
-    updateFrame(time: number): void;
-    runFrameEvents(time: number, step: number): void;
-    endFrame(time: number): void;
 }
 export declare class ChiChiAPU implements IChiChiAPU {
     writer: WavSharer;
@@ -55,9 +44,6 @@ export declare class ChiChiAPU implements IChiChiAPU {
     enableSquare1: boolean;
     enableTriangle: boolean;
     enableNoise: boolean;
-    NMIHandler: () => void;
-    IRQAsserted: boolean;
-    NextEventAt: number;
     rebuildSound(): void;
     GetByte(Clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;

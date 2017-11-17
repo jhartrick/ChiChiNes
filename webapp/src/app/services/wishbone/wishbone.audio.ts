@@ -1,14 +1,49 @@
 import { WishboneMachine } from './wishbone';
-import { ChiChiBopper, WavSharer, AudioSettings } from 'chichi';
+import { IChiChiAPU , WavSharer, AudioSettings } from 'chichi';
 import { LocalAudioSettings } from './wishbone.audio.localsettings';
-
-
 
 export interface IAudioHandler {
 	getSound() : any;
 }
 
-export class WishBopper  extends ChiChiBopper {
+export class WishboneAPU  implements IChiChiAPU {
+	lastClock: number;
+	throwingIRQs: boolean;
+	reg15: number;
+	currentClock: number;
+	frameClocker: number;
+	sampleRate: number;
+	interruptRaised: boolean;
+	enableSquare0: boolean;
+	enableSquare1: boolean;
+	enableTriangle: boolean;
+	enableNoise: boolean;
+	NMIHandler: () => void;
+	IRQAsserted: boolean;
+	NextEventAt: number;
+	GetByte(clock: number, address: number): number {
+		throw new Error("Method not implemented.");
+	}
+	SetByte(clock: number, address: number, data: number): void {
+		throw new Error("Method not implemented.");
+	}
+	rebuildSound(): void {
+		throw new Error("Method not implemented.");
+	}
+	advanceClock(ticks: number): void {
+		throw new Error("Method not implemented.");
+	}
+	updateFrame(time: number): void {
+		throw new Error("Method not implemented.");
+	}
+	runFrameEvents(time: number, step: number): void {
+		throw new Error("Method not implemented.");
+	}
+	endFrame(time: number): void {
+		throw new Error("Method not implemented.");
+	}
+
+	writer: WavSharer;
 
 	_audioHandler: IAudioHandler;
 	get audioHandler(): IAudioHandler {
@@ -85,7 +120,7 @@ export class WishBopper  extends ChiChiBopper {
 	}
 
 	constructor(wavSharer: WavSharer) {
-		super(wavSharer);
+		this.writer = wavSharer;
 	}
 }
 
