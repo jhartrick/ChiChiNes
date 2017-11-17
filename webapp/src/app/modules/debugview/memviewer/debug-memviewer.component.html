@@ -1,0 +1,9 @@
+﻿<button mat-button  (click)="look()">Refresh ZP</button>
+
+<mat-button-toggle value="hexMode" (change)="toggleHexMode()" >
+  {{ displayType }}
+</mat-button-toggle>
+<div class="ramTable">
+  <table *ngFor="let line of data;let i = index" [debugTablerow]="line" [myIndex]="i" [showAscii]="displayType">
+  </table>
+</div>
