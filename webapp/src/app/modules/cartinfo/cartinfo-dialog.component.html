@@ -1,0 +1,47 @@
+    <mat-tab-group>
+        <mat-tab label="File Information">
+            <p>Filename: {{ wishbone.Cart.CartName }}</p>
+            <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
+            <p>Mapper: {{ wishbone.Cart.mapperName }} ({{ wishbone.Cart.mapperID }}<span *ngIf="wishbone.Cart.submapperId">, {{ wishbone.Cart.submapperId }}</span>)</p>
+            <p>CRC: {{ wishbone.Cart.ROMHashFunction }} </p>
+            <p>Prg Roms: {{ wishbone.Cart.prgRomCount }}</p>
+            <p>Chr Roms: {{ wishbone.Cart.chrRomCount }}</p>
+        </mat-tab>
+        <mat-tab *ngIf="game" label="Game Info">
+            <table class='gametable'>
+                <thead>
+                    <td>alt name</td>
+                    <td>class</td>
+                    <td>subclass</td>
+                    <td>catalog</td>
+                    <td>publisher</td>
+                    <td>developer</td>
+                    <td>region</td>
+                    <td>players</td>
+                    <td>date</td>            
+                </thead>
+                <tbody>
+                    <tr *ngFor="let g of game; let i = index">
+                        <td>{{ g.attributes?.altName }}</td>
+                        <td>{{ g.attributes?.class }} </td>
+                        <td>{{ g.attributes?.subclass }} </td>
+                        <td>{{ g.attributes?.catalog }} </td>
+                        <td>{{ g.attributes?.publisher }} </td>
+                        <td>{{ g.attributes?.developer }} </td>
+                        <td>{{ g.attributes?.region }} </td>
+                        <td>{{ g.attributes?.players }} </td>
+                        <td>{{ g.attributes?.date }} </td>
+                    </tr>
+                </tbody>
+            </table>
+        </mat-tab>
+        <mat-tab *ngIf="board" label="Board">
+            <div style='height:80%; overflow:auto'>
+            <cartinfo-board [board]="board[0]" ></cartinfo-board>
+            <cartinfo-board-rom *ngFor="let prg of board[0].prg" [rom]='prg' [heading]='"Prg Rom"' ></cartinfo-board-rom>
+            <cartinfo-board-rom *ngFor="let chr of board[0].chr" [rom]='chr' [heading]='"Chr Rom"'></cartinfo-board-rom>
+            <cartinfo-board-pad *ngFor="let pad of board[0].pad" [pad]='pad' [heading]='"Solder Pads"'></cartinfo-board-pad>
+            <cartinfo-details *ngIf="cartridge" [cart]="cartridge"></cartinfo-details>
+            </div>
+        </mat-tab>
+    </mat-tab-group>

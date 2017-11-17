@@ -1,13 +1,15 @@
 import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Component, Inject, ChangeDetectorRef, ElementRef, AfterContentInit } from '@angular/core';
+import { setTimeout } from 'timers';
 
 @Component({
   selector: 'cartinfo-dialog',
   templateUrl: './cartinfo-dialog.component.html',
   styleUrls: ['./cartinfo-dialog.component.css']
 })
-export class CartInfoDialogComponent {
+export class CartInfoDialogComponent implements AfterContentInit {
+
     board: any;
     game: any;
     cartridge: any;
@@ -31,6 +33,12 @@ export class CartInfoDialogComponent {
                 this.game = this.cartridge.game;
             }
         }
+    }
+
+    ngAfterContentInit(): void {
+        setTimeout(()=> {
+        this.cd.detectChanges();
+        },0);
     }
 
     apply() {

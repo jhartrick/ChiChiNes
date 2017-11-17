@@ -2,7 +2,10 @@ import { CartInfoComponent } from './cartinfo-main.component';
 import { CartInfoDialogComponent } from './cartinfo-dialog.component';
 import { CartInfoBoardComponent, CartInfoDetailsComponent,
     CartInfoPrgComponent, CartInfoPadComponent, CartInfoGameComponent } from './cartinfo-details.component';
-import { MatDialogModule, MatButtonModule, MatExpansionModule } from '@angular/material';
+import { MatDialogModule, MatButtonModule } from '@angular/material';
+import { MatTabsModule } from '@angular/material';
+import { MatExpansionModule } from '@angular/material';
+
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -26,7 +29,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
       MatDialogModule,
       BrowserAnimationsModule,
       MatButtonModule,
-      MatExpansionModule,
+      MatTabsModule,
+      MatExpansionModule
   ],
   exports: [
     CartInfoDialogComponent,

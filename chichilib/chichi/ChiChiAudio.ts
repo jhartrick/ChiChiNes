@@ -6,32 +6,39 @@ import { NoiseChannel } from './Audio/NoiseChannel';
 
 import { Blip, WavSharer } from './Audio/CommonAudio';
 
-export class ChiChiBopper {
+export interface IChiChiAPU {
+    writer: WavSharer;
+    audioSettings: AudioSettings;
+    lastClock: number;
+    throwingIRQs: boolean;
+    reg15: number;
+    currentClock: number;
+    frameClocker: number;
 
-    set audioSettings(value: AudioSettings) {
-        this.EnableNoise = value.enableNoise;
-        this.EnableSquare0 = value.enableSquare0;
-        this.EnableSquare1 = value.enableSquare1;
-        this.enableTriangle = value.enableTriangle;
-        this.writer.synced = value.synced;
-        if (value.sampleRate != this._sampleRate) {
-            this._sampleRate = value.sampleRate;
-        }
-    }
+    sampleRate: number;
+    interruptRaised: boolean;
 
-    get audioSettings(): AudioSettings {
-        const settings =  {
-            sampleRate: this._sampleRate,
-            master_volume: 1.0,
-            enableSquare0: this.EnableSquare0,
-            enableSquare1: this.EnableSquare1,
-            enableTriangle: this.enableTriangle,
-            enableNoise: this.EnableNoise,
-            enablePCM: false,
-            synced: this.writer.synced
-        };
-        return settings;
-    }
+    enableSquare0: boolean;
+    enableSquare1: boolean;
+    enableTriangle: boolean;
+    enableNoise: boolean;
+
+    NMIHandler: () => void;
+    IRQAsserted: boolean;
+    NextEventAt: number;
+
+    GetByte(clock: number, address: number): number;
+    SetByte(clock: number, address: number, data: number): void;
+
+    rebuildSound(): void;
+    advanceClock(ticks: number): void;
+    updateFrame(time: number): void;
+    runFrameEvents(time: number, step: number): void;
+    endFrame(time: number): void;
+}
+
+export class ChiChiAPU implements IChiChiAPU {
+
 
     lastClock: number;
     throwingIRQs: boolean = false;
@@ -45,7 +52,6 @@ export class ChiChiBopper {
     private triangle: TriangleChannel;
     private noise: NoiseChannel;
     private dmc: DMCChannel;
-
 
     private _sampleRate = 44100;
     private static clock_rate = 1789772.727;
@@ -61,32 +67,58 @@ export class ChiChiBopper {
     frameClocker = 0;
 
     constructor(public writer: WavSharer) {
-        this.RebuildSound();
+        this.rebuildSound();
     }
-    get SampleRate(): number {
+
+    set audioSettings(value: AudioSettings) {
+        this.enableNoise = value.enableNoise;
+        this.enableSquare0 = value.enableSquare0;
+        this.enableSquare1 = value.enableSquare1;
+        this.enableTriangle = value.enableTriangle;
+        this.writer.synced = value.synced;
+        if (value.sampleRate != this._sampleRate) {
+            this._sampleRate = value.sampleRate;
+        }
+    }
+
+    get audioSettings(): AudioSettings {
+        const settings =  {
+            sampleRate: this._sampleRate,
+            master_volume: 1.0,
+            enableSquare0: this.enableSquare0,
+            enableSquare1: this.enableSquare1,
+            enableTriangle: this.enableTriangle,
+            enableNoise: this.enableNoise,
+            enablePCM: false,
+            synced: this.writer.synced
+        };
+        return settings;
+    }
+
+    get sampleRate(): number {
         return this._sampleRate;
     }
 
     set sampleRate(value: number) {
         this._sampleRate = value;
-        this.RebuildSound();
+        this.rebuildSound();
     }
 
     //Muted: boolean;
-    InterruptRaised: boolean = true;
-    get EnableSquare0(): boolean {
+    interruptRaised: boolean = true;
+    get enableSquare0(): boolean {
         return this.square0.gain > 0;
     }
 
-    set EnableSquare0(value: boolean) {
+    set enableSquare0(value: boolean) {
         this.square0.gain = value ? this.square0Gain : 0;
     }
 
-    get EnableSquare1(): boolean {
+    get enableSquare1(): boolean {
         return this.square1.gain > 0;
     }
 
-    set EnableSquare1(value: boolean) {
+    set enableSquare1(value: boolean) {
         this.square1.gain = value ? this.square1Gain : 0;
     }
 
@@ -98,11 +130,11 @@ export class ChiChiBopper {
         this.triangle.gain = value ? this.triangleGain : 0;
     }
 
-    get EnableNoise(): boolean {
+    get enableNoise(): boolean {
         return this.noise.gain > 0;
     }
 
-    set EnableNoise(value: boolean) {
+    set enableNoise(value: boolean) {
         this.noise.gain = value ? this.noiseGain : 0;
     }
 
@@ -110,9 +142,9 @@ export class ChiChiBopper {
     IRQAsserted: boolean;
     NextEventAt: number;
 
-    RebuildSound(): void {
+    rebuildSound(): void {
         this.myBlipper = new Blip(this._sampleRate / 5);
-        this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
+        this.myBlipper.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
         this.writer.audioBytesWritten = 0;
 
@@ -143,10 +175,10 @@ export class ChiChiBopper {
 
     GetByte(Clock: number, address: number): number {
         if (address === 0x4000) {
-            this.InterruptRaised = false;
+            this.interruptRaised = false;
         }
         if (address === 0x4015) {
-            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.InterruptRaised ? 64 : 0);
+            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.interruptRaised ? 64 : 0);
         } else {
             return 66;
         }
@@ -155,7 +187,7 @@ export class ChiChiBopper {
     
     SetByte(clock: number, address: number, data: number): void {
         if (address === 16384) {
-            this.InterruptRaised = false;
+            this.interruptRaised = false;
         }
         switch (address) {
             case 0x4000:
@@ -218,7 +250,7 @@ export class ChiChiBopper {
             this.lastFrameHit = 0;
             this.endFrame(time)
             if (this.throwingIRQs) {
-                this.InterruptRaised = true;
+                this.interruptRaised = true;
                 this.NMIHandler();
             }
 

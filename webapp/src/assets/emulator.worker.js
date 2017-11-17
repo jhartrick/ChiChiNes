@@ -1149,7 +1149,7 @@ var ChiChiMachine = /** @class */ (function () {
         set: function (value) {
             this._enableSound = value;
             if (this._enableSound) {
-                this.SoundBopper.RebuildSound();
+                this.SoundBopper.rebuildSound();
             }
         },
         enumerable: true,
@@ -1173,7 +1173,7 @@ var ChiChiMachine = /** @class */ (function () {
         if (this.Cpu && this.Cart && this.Cart.supported) {
             this.Cart.InitializeCart(true);
             this.Cpu.ResetCPU();
-            this.SoundBopper.RebuildSound();
+            this.SoundBopper.rebuildSound();
             //ClearGenieCodes();
             //this.Cpu.PowerOn();
             this.RunState = ChiChiTypes_1.RunningStatuses.Running;
@@ -1183,7 +1183,7 @@ var ChiChiMachine = /** @class */ (function () {
         if (this.Cpu && this.Cart && this.Cart.supported) {
             this.Cart.InitializeCart();
             this.Cpu.ppu.Initialize();
-            this.SoundBopper.RebuildSound();
+            this.SoundBopper.rebuildSound();
             this.Cpu.PowerOn();
             this.RunState = ChiChiTypes_1.RunningStatuses.Running;
         }
@@ -1621,6 +1621,8 @@ var ChiChiCPPU = /** @class */ (function () {
     };
     ChiChiCPPU.prototype.HandleBadOperation = function () {
         //throw new Error('Method not implemented.');
+    };
+    ChiChiCPPU.prototype.handleBreakpoint = function () {
     };
     ChiChiCPPU.prototype.decodeOperand = function () {
         switch (this._currentInstruction_AddressingMode) {
@@ -2579,27 +2581,27 @@ var ChiChiBopper = /** @class */ (function () {
         this.currentClock = 0;
         this.frameClocker = 0;
         //Muted: boolean;
-        this.InterruptRaised = true;
-        this.RebuildSound();
+        this.interruptRaised = true;
+        this.rebuildSound();
     }
     Object.defineProperty(ChiChiBopper.prototype, "audioSettings", {
         get: function () {
             var settings = {
                 sampleRate: this._sampleRate,
                 master_volume: 1.0,
-                enableSquare0: this.EnableSquare0,
-                enableSquare1: this.EnableSquare1,
+                enableSquare0: this.enableSquare0,
+                enableSquare1: this.enableSquare1,
                 enableTriangle: this.enableTriangle,
-                enableNoise: this.EnableNoise,
+                enableNoise: this.enableNoise,
                 enablePCM: false,
                 synced: this.writer.synced
             };
             return settings;
         },
         set: function (value) {
-            this.EnableNoise = value.enableNoise;
-            this.EnableSquare0 = value.enableSquare0;
-            this.EnableSquare1 = value.enableSquare1;
+            this.enableNoise = value.enableNoise;
+            this.enableSquare0 = value.enableSquare0;
+            this.enableSquare1 = value.enableSquare1;
             this.enableTriangle = value.enableTriangle;
             this.writer.synced = value.synced;
             if (value.sampleRate != this._sampleRate) {
@@ -2609,22 +2611,18 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "SampleRate", {
+    Object.defineProperty(ChiChiBopper.prototype, "sampleRate", {
         get: function () {
             return this._sampleRate;
         },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiBopper.prototype, "sampleRate", {
         set: function (value) {
             this._sampleRate = value;
-            this.RebuildSound();
+            this.rebuildSound();
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "EnableSquare0", {
+    Object.defineProperty(ChiChiBopper.prototype, "enableSquare0", {
         get: function () {
             return this.square0.gain > 0;
         },
@@ -2634,7 +2632,7 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "EnableSquare1", {
+    Object.defineProperty(ChiChiBopper.prototype, "enableSquare1", {
         get: function () {
             return this.square1.gain > 0;
         },
@@ -2654,7 +2652,7 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiBopper.prototype, "EnableNoise", {
+    Object.defineProperty(ChiChiBopper.prototype, "enableNoise", {
         get: function () {
             return this.noise.gain > 0;
         },
@@ -2664,7 +2662,7 @@ var ChiChiBopper = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    ChiChiBopper.prototype.RebuildSound = function () {
+    ChiChiBopper.prototype.rebuildSound = function () {
         this.myBlipper = new CommonAudio_1.Blip(this._sampleRate / 5);
         this.myBlipper.blip_set_rates(ChiChiBopper.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
@@ -2692,10 +2690,10 @@ var ChiChiBopper = /** @class */ (function () {
     };
     ChiChiBopper.prototype.GetByte = function (Clock, address) {
         if (address === 0x4000) {
-            this.InterruptRaised = false;
+            this.interruptRaised = false;
         }
         if (address === 0x4015) {
-            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.InterruptRaised ? 64 : 0);
+            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.interruptRaised ? 64 : 0);
         }
         else {
             return 66;
@@ -2703,7 +2701,7 @@ var ChiChiBopper = /** @class */ (function () {
     };
     ChiChiBopper.prototype.SetByte = function (clock, address, data) {
         if (address === 16384) {
-            this.InterruptRaised = false;
+            this.interruptRaised = false;
         }
         switch (address) {
             case 0x4000:
@@ -2764,7 +2762,7 @@ var ChiChiBopper = /** @class */ (function () {
             this.lastFrameHit = 0;
             this.endFrame(time);
             if (this.throwingIRQs) {
-                this.InterruptRaised = true;
+                this.interruptRaised = true;
                 this.NMIHandler();
             }
         }

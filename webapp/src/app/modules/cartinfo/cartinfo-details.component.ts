@@ -14,7 +14,6 @@ export class CartInfoDetailsComponent {
 @Component({
     selector: 'cartinfo-board',
     template: `<div *ngIf="board">
-            <h4>Board</h4>
             <p>Type: {{ board.attributes?.type }}</p>
             <p>Pcb: {{ board.attributes?.pcb }}</p>
             <p>Mapper: {{ board.attributes?.mapper }}</p>
@@ -62,18 +61,17 @@ export class CartInfoPadComponent {
 
 @Component({
     selector: 'cartinfo-game',
-    template: `<div *ngIf='game'>
-    <h4>{{ game.attributes?.name }}</h4>
-    <p>alt name: {{ game.attributes?.altName }}</p>
-    <p>class: {{ game.attributes?.class }} </p>
-    <p>subclass: {{ game.attributes?.subclass }} </p>
-    <p>catalog: {{ game.attributes?.catalog }} </p>
-    <p>publisher: {{ game.attributes?.publisher }} </p>
-    <p>developer:  {{ game.attributes?.developer }} </p>
-    <p>region:  {{ game.attributes?.region }} </p>
-    <p>players:  {{ game.attributes?.players }} </p>
-    <p>date: {{ game.attributes?.date }} </p>
-    </div>
+    template: `<table>
+        <tr><td>alt name</td><td> {{ game.attributes?.altName }}</td>
+        <tr><td>class</td><td> {{ game.attributes?.class }} </td>
+        <tr><td>subclass</td><td> {{ game.attributes?.subclass }} </td>
+        <tr><td>catalog</td><td> {{ game.attributes?.catalog }} </td>
+        <tr><td>publisher</td><td> {{ game.attributes?.publisher }} </td>
+        <tr><td>developer</td><td>  {{ game.attributes?.developer }} </td>
+        <tr><td>region</td><td>  {{ game.attributes?.region }} </td>
+        <tr><td>players</td><td>  {{ game.attributes?.players }} </td>
+        <tr><td>date</td><td> {{ game.attributes?.date }} </td>
+    </table>
     `
 })
 export class CartInfoGameComponent {

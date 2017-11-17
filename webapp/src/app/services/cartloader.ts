@@ -18,7 +18,6 @@ export class RomFile  {
 @Injectable()
 export class RomLoader {
 
-
     constructor(private http: Http) {}
 
     wishbone: WishboneMachine;
@@ -35,9 +34,9 @@ export class RomLoader {
         });
     }
 
-    loadZipRom(files: FileList): Observable<BaseCart> {
+    private loadZipRom(files: FileList): Observable<BaseCart> {
         const file = files[0];
-        const romLoader = new Observable<BaseCart>(observer => {
+        return new Observable<BaseCart>(observer => {
             const fileReader: FileReader = new FileReader();
             fileReader.onload = (e) => {
                 const rom: number[] = Array.from(new Uint8Array(fileReader.result));
@@ -46,8 +45,11 @@ export class RomLoader {
                     zip.forEach((relativePath, zipEntry) => {  // 2) print entries
                         zipEntry.async('blob').then((fileData) => {
                             fileReader.onload = (ze) => {
-                                const zrom: number[] = Array.from(new Uint8Array(fileReader.result));
-                                this.deliverRom(observer, zrom, file.name,false);
+                                const rom: number[] = Array.from(new Uint8Array(fileReader.result));
+                                RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
+                                    this.wishbone.insertCart(cart, rom);
+                                    observer.next(cart);
+                                })
                             };
                             fileReader.readAsArrayBuffer(fileData);
                         });
@@ -57,54 +59,31 @@ export class RomLoader {
             };
             fileReader.readAsArrayBuffer(file);
         });
-        return romLoader;
     }
 
     loadRom(files: FileList): Observable<BaseCart> {
-        const file = files[0];
-        if (file.name.endsWith('.zip')) {
-            return this.loadZipRom(files);
-        } else 
-        if (file.name.endsWith('.nsf')) {
-            return this.loadNsf(files);
-        } else 
-        if (file.name.endsWith('.nes')) {
-            const romLoader = new Observable<BaseCart>(observer => {
+        return new Observable<BaseCart>(observer => {
+            const file = files[0];
+            if (file.name.endsWith('.zip')) {
+                 this.loadZipRom(files).subscribe((cart) => {
+                     observer.next(cart);
+                 });
+            } else if (file.name.endsWith('.nes')) {
                 const fileReader: FileReader = new FileReader();
                 fileReader.onload = (e) => {
                     const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                    this.deliverRom(observer, rom, file.name,false);
+                    RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
+                        this.wishbone.insertCart(cart, rom);
+                        observer.next(cart);
+                    })
+
                 };
                 fileReader.readAsArrayBuffer(file);
-            });
-            return romLoader;
-        } else {
-            return new Observable<BaseCart>(observer => { 
+                
+            } else {
                 observer.next(null);
-            });
-        }
-    }
-
-    loadNsf(files: FileList): Observable<BaseCart> {
-        const file = files[0];
-        const romLoader = new Observable<BaseCart>(observer => {
-            const fileReader: FileReader = new FileReader();
-            fileReader.onload = (e) => {
-                const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                this.deliverRom(observer, rom, file.name, true);
-            };
-            fileReader.readAsArrayBuffer(file);
-        });
-        return romLoader;
-    }
-
-    deliverRom(observer: Subscriber<BaseCart>, rom: number[], name: string, isNsf: boolean) {
-
-        
-            RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
-                this.wishbone.insertCart(cart, rom);
-                observer.next(cart);
-            })
+            }
+        }); 
 
     }
 
@@ -112,11 +91,8 @@ export class RomLoader {
         return new Observable<BaseCart>((subj) => {
             (require as any).ensure(['../../assets/romloader.worker.js'], (require) => {
                 const romLoader = require('../../assets/romloader.worker.js');
-
                 const cart = romLoader.loader.loadRom(rom, name);
-
                 subj.next(cart);
-
                 delete romLoader.loader;
                 delete require.cache[require.resolve('../../assets/romloader.worker.js')];
             });

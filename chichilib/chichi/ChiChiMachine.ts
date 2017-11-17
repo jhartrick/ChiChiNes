@@ -1,5 +1,5 @@
 ﻿import { BaseCart, IBaseCart } from '../chichicarts/BaseCart'
-import { ChiChiBopper } from './ChiChiAudio'
+import { ChiChiAPU, IChiChiAPU } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
 import { ChiChiPPU } from "./ChiChiPPU";
@@ -15,7 +15,7 @@ import { WavSharer } from './Audio/CommonAudio';
 
         constructor(cpu? : ChiChiCPPU) {
             var wavSharer = new WavSharer();
-            this.SoundBopper = new ChiChiBopper(wavSharer);
+            this.SoundBopper = new ChiChiAPU(wavSharer);
             this.WaveForms = wavSharer;
             this.ppu = new ChiChiPPU();
             this.Cpu = cpu ? cpu : new ChiChiCPPU(this.SoundBopper, this.ppu);
@@ -40,7 +40,7 @@ import { WavSharer } from './Audio/CommonAudio';
             return <BaseCart>this.Cpu.Cart;
         }
 
-        SoundBopper: ChiChiBopper;
+        SoundBopper: ChiChiAPU;
         WaveForms: WavSharer;
 
         private _enableSound: boolean = false;
@@ -52,7 +52,7 @@ import { WavSharer } from './Audio/CommonAudio';
         set EnableSound(value: boolean) {
             this._enableSound = value;
             if (this._enableSound) {
-                 this.SoundBopper.RebuildSound();
+                 this.SoundBopper.rebuildSound();
             }
         }
 
@@ -77,7 +77,7 @@ import { WavSharer } from './Audio/CommonAudio';
 
                 this.Cart.InitializeCart(true);
                 this.Cpu.ResetCPU();
-                this.SoundBopper.RebuildSound();
+                this.SoundBopper.rebuildSound();
                 //ClearGenieCodes();
                 //this.Cpu.PowerOn();
                 this.RunState = RunningStatuses.Running;
@@ -88,7 +88,7 @@ import { WavSharer } from './Audio/CommonAudio';
             if (this.Cpu && this.Cart && this.Cart.supported) {
                 this.Cart.InitializeCart();
                 this.Cpu.ppu.Initialize();
-                this.SoundBopper.RebuildSound();
+                this.SoundBopper.rebuildSound();
                 this.Cpu.PowerOn();
                 this.RunState = RunningStatuses.Running;
             }
@@ -274,7 +274,7 @@ import { WavSharer } from './Audio/CommonAudio';
             this._debugging = value;
         }
 
-// #region Cheats
+        // #region Cheats
         cheating = false;
         
         genieCodes: GeniePatch[] = new Array<GeniePatch>();
@@ -320,7 +320,7 @@ import { WavSharer } from './Audio/CommonAudio';
 
         ppu: ChiChiPPU;
 
-        constructor(bopper: ChiChiBopper, ppu: ChiChiPPU) {
+        constructor(bopper: IChiChiAPU, ppu: ChiChiPPU) {
 
             this.SoundBopper = bopper;
 
@@ -363,7 +363,7 @@ import { WavSharer } from './Audio/CommonAudio';
 
         CurrentInstruction: ChiChiInstruction;
 
-        SoundBopper: ChiChiBopper;
+        SoundBopper: IChiChiAPU;
 
         Cart: IBaseCart;
 

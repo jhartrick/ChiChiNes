@@ -25,8 +25,8 @@ import { WishboneCheats } from './services/wishbone/wishbone.cheats';
 import { WishboneMachine } from './services/wishbone/wishbone';
 import { RomLoader } from './services/cartloader';
 
-import { CartInfoModule } from './modules/chichi.cartinfo/cartinfo.module';
-import { DebugOutputModule } from './modules/chichi.debug/debug.module';
+import { CartInfoModule } from './modules/cartinfo/cartinfo.module';
+import { DebugOutputModule } from './modules/debug/debug.module';
 
 
 @NgModule({

@@ -1,0 +1,10 @@
+.gametable {
+    font-size: 0.75em;
+}
+td {
+    padding-right: 5px;
+}
+tr:nth-child(even) {
+    background: #CCC
+}
+tr:nth-child(odd) {background: #FFF}

@@ -1,5 +1,5 @@
 import { BaseCart, IBaseCart } from '../chichicarts/BaseCart';
-import { ChiChiBopper } from './ChiChiAudio';
+import { ChiChiAPU, IChiChiAPU } from './ChiChiAudio';
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, RunningStatuses, CpuStatus } from './ChiChiTypes';
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl';
 import { ChiChiPPU } from "./ChiChiPPU";
@@ -15,7 +15,7 @@ export declare class ChiChiMachine {
     ppu: ChiChiPPU;
     Cpu: ChiChiCPPU;
     readonly Cart: BaseCart;
-    SoundBopper: ChiChiBopper;
+    SoundBopper: ChiChiAPU;
     WaveForms: WavSharer;
     private _enableSound;
     EnableSound: boolean;
@@ -94,14 +94,14 @@ export declare class ChiChiCPPU {
     private _padOne;
     private _padTwo;
     ppu: ChiChiPPU;
-    constructor(bopper: ChiChiBopper, ppu: ChiChiPPU);
+    constructor(bopper: IChiChiAPU, ppu: ChiChiPPU);
     PadOne: ChiChiInputHandler;
     PadTwo: ChiChiInputHandler;
     private debugEvents;
     addDebugEvent(value: (sender: any, e: any) => void): void;
     removeDebugEvent(value: (sender: any, e: any) => void): void;
     CurrentInstruction: ChiChiInstruction;
-    SoundBopper: ChiChiBopper;
+    SoundBopper: IChiChiAPU;
     Cart: IBaseCart;
     FrameOn: boolean;
     CurrentFrame: number[];
@@ -119,6 +119,7 @@ export declare class ChiChiCPPU {
     SetState(inStream: any): void;
     decodeAddress(): number;
     HandleBadOperation(): void;
+    handleBreakpoint(): void;
     decodeOperand(): number;
     execute(): void;
     setZNFlags(data: number): void;
