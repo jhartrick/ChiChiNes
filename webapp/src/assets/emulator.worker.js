@@ -847,9 +847,6 @@ var ChiChiMachine = /** @class */ (function () {
         this.ppu.NMIHandler = function () {
             _this.Cpu.nmiHandler();
         };
-        this.SoundBopper.NMIHandler = function () {
-            _this.Cpu._handleIRQ = true;
-        };
         this.ppu.frameFinished = function () { _this.FrameFinished(); };
     }
     ChiChiMachine.prototype.Drawscreen = function () {
@@ -1033,7 +1030,6 @@ var ChiChiCPPU = /** @class */ (function () {
         this._instructionHistory = new Array(256); //System.Array.init(256, null, ChiChiInstruction);
         this.debugEvents = new Array();
         this.SoundBopper = bopper;
-        bopper.NMIHandler = this.irqUpdater;
         // init PPU
         this.ppu = ppu;
         this.ppu.initSprites();
@@ -1191,7 +1187,7 @@ var ChiChiCPPU = /** @class */ (function () {
             this._handleNMI = false;
             this.nonMaskableInterrupt();
         }
-        else if (this._handleIRQ || this.Cart.irqRaised) {
+        else if (this._handleIRQ || this.Cart.irqRaised || this.SoundBopper.interruptRaised) {
             this.interruptRequest();
         }
         //FetchNextInstruction();
@@ -1992,7 +1988,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this._handleNMI = true;
     };
     ChiChiCPPU.prototype.irqUpdater = function () {
-        this._handleIRQ = this.SoundBopper.IRQAsserted || this.Cart.irqRaised;
+        this._handleIRQ = this.SoundBopper.interruptRaised || this.Cart.irqRaised;
     };
     ChiChiCPPU.prototype.pushStack = function (data) {
         this.Rams[this._stackPointer + 256] = data;
@@ -2482,7 +2478,6 @@ var ChiChiAPU = /** @class */ (function () {
             this.endFrame(time);
             if (this.throwingIRQs) {
                 this.interruptRaised = true;
-                this.NMIHandler();
             }
         }
         else {

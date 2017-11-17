@@ -3,16 +3,16 @@ import { Emulator } from '../../services/NESService';
 import { Observable } from 'rxjs/Observable';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { MatDialog } from '@angular/material';
-import { GameGenieDialogComponent } from './chichi.gamegenie.dialog';
+import { GameGenieDialogComponent } from './gamegenie.dialog.component';
 
 import { GameGenieCode } from 'chichi'
 import { WishboneCheats } from '../../services/wishbone/wishbone.cheats';
 import { Http } from '@angular/http';
 
 @Component({
-  selector: 'chichi-gamegenie',
-  templateUrl: './chichi.gamegenie.html',
-  styleUrls: ['./chichi.gamegenie.css'],
+  selector: 'cheating-gamegenie',
+  templateUrl: './gamegenie.component.html',
+  styleUrls: ['./gamegenie.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GameGenieComponent {

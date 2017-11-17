@@ -7,9 +7,9 @@ import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { GameGenieCode } from 'chichi';
 
 @Component({
-  selector: 'chichi-gamegeniedialog',
-  templateUrl: './chichi.gamegenie.dialog.html',
-  styleUrls: ['./chichi.gamegenie.dialog.css']
+  selector: 'cheating-gamegeniedialog',
+  templateUrl: './gamegenie.dialog.component.html',
+  styleUrls: ['./gamegenie.dialog.component.css']
 })
 export class GameGenieDialogComponent {
     wishbone: WishboneMachine;
@@ -27,9 +27,8 @@ export class GameGenieDialogComponent {
     apply() {
         // TODO:
         // this.wishbone.setCheats(this.cheats);
-        for(let i = 0; i < this.cheats.length; ++i) {
+        for (let i = 0; i < this.cheats.length; ++i) {
             console.log(this.cheats[i].code + ' ' + this.cheats[i].active);
-            
         }
         this.dialogRef.close();
     }
