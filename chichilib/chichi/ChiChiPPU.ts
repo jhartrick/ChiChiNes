@@ -3,7 +3,38 @@ import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from "./ChiChiMachine";
 import { ChiChiAPU } from "./ChiChiAudio";
 
-export class ChiChiPPU {
+export interface IChiChiPPU {
+    LastcpuClock: number;
+    NMIHandler: () => void;
+    frameFinished: () => void;
+    cpu: ChiChiCPPU;
+    greyScale: boolean;
+    chrRomHandler: IBaseCart;
+    unpackedSprites: ChiChiSprite[];
+    emphasisBits: number;
+    backgroundPatternTableIndex: number;
+    spriteRAM: Uint8Array;
+    byteOutBuffer: Uint8Array;
+    ChrRomHandler: IBaseCart;
+
+    GetPPUStatus(): PpuStatus;
+
+    readonly SpritePatternTableIndex: number;
+
+    Initialize(): void;
+    WriteState(writer: any): void;
+    ReadState(state: any): void;
+    readonly NMIIsThrown: boolean;
+    setupVINT(): void;
+
+
+    SetByte(Clock: number, address: number, data: number): void;
+    GetByte(Clock: number, address: number): number;
+    copySprites(copyFrom: number): void;
+    advanceClock(ticks: number): void;
+}
+
+export class ChiChiPPU implements IChiChiPPU {
     public static pal: Uint32Array = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
     public LastcpuClock: number = 0;
@@ -15,6 +46,7 @@ export class ChiChiPPU {
     greyScale: boolean = false;
     
     constructor() {
+        this.initSprites();
     }
 
     // Rom handler
@@ -121,12 +153,6 @@ export class ChiChiPPU {
         }
     }
 
-    PPU_SpriteCopyHasHappened: boolean;
-    PPU_MaxSpritesPerScanline: number;
-
-    PPU_SpriteRam: number[];
-    SpritesOnLine: number[];
-
     GetPPUStatus(): PpuStatus {
         return {
             status: this._PPUStatus,
@@ -141,27 +167,9 @@ export class ChiChiPPU {
 
         }
     }
-
-    get PPU_FrameFinishHandler(): () => void {
-        return this.frameFinished;
-    }
-    set PPU_FrameFinishHandler(value: () => void) {
-        this.frameFinished = value;
-    }
-
-
-    get PPU_NameTableMemoryStart(): number {
-        return this.nameTableMemoryStart;
-    }
-
-    set PPU_NameTableMemoryStart(value: number) {
-        this.nameTableMemoryStart = value;
-    }
-
     public get PatternTableIndex(): number {
         return this.backgroundPatternTableIndex;
     }
-
     public get SpritePatternTableIndex(): number {
         let spritePatternTable = 0;
         if ((this._PPUControlByte0 & 32) === 32) {
@@ -181,6 +189,8 @@ export class ChiChiPPU {
         //this.scanlineNum = 0;
         //this.scanlinePos = 0;
         this._spriteAddress = 0;
+        
+        this.initSprites();
     }
 
     WriteState(writer: any): void {
@@ -214,14 +224,6 @@ export class ChiChiPPU {
             result = this.chrRomHandler.GetPPUByte(0, address);
         }
         return result;
-    }
-
-    UpdatePPUControlByte0(): void {
-        if ((this._PPUControlByte0 & 16)) {
-            this.backgroundPatternTableIndex = 4096;
-        } else {
-            this.backgroundPatternTableIndex = 0;
-        }
     }
 
     SetByte(Clock: number, address: number, data: number): void {

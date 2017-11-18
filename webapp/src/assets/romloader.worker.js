@@ -2393,7 +2393,6 @@ var VRCIrqBase = /** @class */ (function (_super) {
         if (this.irqCounter >= 0xff) {
             this.irqCounter = this.irqLatch;
             this.irqRaised = true;
-            //this.CPU._handleIRQ = true;
         }
         else {
             this.irqCounter++;
@@ -2427,10 +2426,6 @@ var VRCIrqBase = /** @class */ (function (_super) {
             this.irqEnableAfterAck = (val & 0x1) == 0x1;
             this.irqEnable = (val & 0x2) == 0x2;
             this.irqMode = (val & 0x4) == 0x4;
-            if (this.irqEnable) {
-                // this.prescaler = 341;
-                // this.irqCounter = this.irqLatch; 
-            }
         },
         enumerable: true,
         configurable: true
@@ -4106,9 +4101,9 @@ var ColorDreams = /** @class */ (function (_super) {
     // https://wiki.nesdev.com/w/index.php/Color_Dreams
     ColorDreams.prototype.InitializeCart = function () {
         this.mapperName = 'Color Dreams';
-        if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 1);
-        }
+        //  if (this.chrRomCount > 0) {
+        //      this.copyBanks(0, 0, 0, 1);
+        //  }
         this.SetupBankStarts(0, 1, 2, 3);
     };
     ColorDreams.prototype.SetByte = function (clock, address, val) {
@@ -5231,7 +5226,7 @@ var MMC3Cart = /** @class */ (function (_super) {
             this._mmc3TmpVal = 0;
         }
         else {
-            this.scanlineCounter = (this.scanlineCounter - 1) & 255;
+            this.scanlineCounter = (this.scanlineCounter + 1) & 255;
         }
     };
     return MMC3Cart;

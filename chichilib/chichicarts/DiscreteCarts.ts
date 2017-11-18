@@ -306,9 +306,9 @@ export class Mapper145Cart extends BaseCart {
      InitializeCart(): void {
          
          this.mapperName = 'Color Dreams';
-         if (this.chrRomCount > 0) {
-             this.copyBanks(0, 0, 0, 1);
-         }
+        //  if (this.chrRomCount > 0) {
+        //      this.copyBanks(0, 0, 0, 1);
+        //  }
          this.SetupBankStarts(0, 1, 2, 3);
      }
  

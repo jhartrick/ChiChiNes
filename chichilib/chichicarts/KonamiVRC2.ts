@@ -22,7 +22,6 @@ export class VRCIrqBase extends BaseCart {
         if (this.irqCounter >= 0xff) {
             this.irqCounter = this.irqLatch;
             this.irqRaised = true;
-            //this.CPU._handleIRQ = true;
         } else {
             this.irqCounter++;
         }
@@ -59,10 +58,6 @@ export class VRCIrqBase extends BaseCart {
         this.irqEnableAfterAck = (val & 0x1) == 0x1;
         this.irqEnable = (val & 0x2) == 0x2;
         this.irqMode = (val & 0x4) == 0x4;
-        if (this.irqEnable ) {
-            // this.prescaler = 341;
-            // this.irqCounter = this.irqLatch; 
-        }
     }
 
 }

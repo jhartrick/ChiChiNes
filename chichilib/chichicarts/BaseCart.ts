@@ -1,5 +1,5 @@
 import { ChiChiCPPU } from '../chichi/ChiChiMachine';
-import { ChiChiPPU } from '../chichi/ChiChiPPU';
+import { ChiChiPPU, IChiChiPPU } from '../chichi/ChiChiPPU';
 import { CartridgeInfo } from './CartridgeInfo';
 
 import * as crc from 'crc';
@@ -25,7 +25,7 @@ export interface IBaseCart {
     irqRaised: boolean;
 
     advanceClock(clock: number): void;
-    Whizzler: ChiChiPPU;
+    Whizzler: IChiChiPPU;
     CPU: ChiChiCPPU;
 
     LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: Uint8Array, chrRomData: Uint8Array, chrRomOffset: number): void;

@@ -1031,7 +1031,6 @@ var ChiChiCPPU = /** @class */ (function () {
         this.SoundBopper = bopper;
         // init PPU
         this.ppu = ppu;
-        this.ppu.initSprites();
         this._padOne = new ChiChiControl_1.ChiChiInputHandler();
         this._padTwo = new ChiChiControl_1.ChiChiInputHandler();
         for (var i = 0; i < this._instructionHistory.length; ++i) {
@@ -1969,18 +1968,16 @@ var ChiChiCPPU = /** @class */ (function () {
         this.setZNFlags(data & 255);
     };
     ChiChiCPPU.prototype.branch = function () {
+        var highByte = (this._programCounter >> 8) & 0xff;
         this._currentInstruction_ExtraTiming = 1;
         var addr = this._currentInstruction_Parameters0 & 255;
         if ((addr & 128) === 128) {
             addr = addr - 256;
-            this._programCounter += addr;
-            this._programCounter &= 0xFFFF;
         }
-        else {
-            this._programCounter += addr;
-            this._programCounter &= 0xFFFF;
-        }
-        if ((this._programCounter & 255) < addr) {
+        this._programCounter += addr;
+        this._programCounter &= 0xffff;
+        var newHighByte = (this._programCounter >> 8) & 0xff;
+        if (highByte != newHighByte) {
             this._currentInstruction_ExtraTiming = 2;
         }
     };
@@ -3220,6 +3217,7 @@ var ChiChiPPU = /** @class */ (function () {
         this.patternEntryByte2 = 0;
         this.byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
         this.oddFrame = true;
+        this.initSprites();
     }
     Object.defineProperty(ChiChiPPU.prototype, "ChrRomHandler", {
         get: function () {
@@ -3256,26 +3254,6 @@ var ChiChiPPU = /** @class */ (function () {
             Y: this.currentYPosition
         };
     };
-    Object.defineProperty(ChiChiPPU.prototype, "PPU_FrameFinishHandler", {
-        get: function () {
-            return this.frameFinished;
-        },
-        set: function (value) {
-            this.frameFinished = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiPPU.prototype, "PPU_NameTableMemoryStart", {
-        get: function () {
-            return this.nameTableMemoryStart;
-        },
-        set: function (value) {
-            this.nameTableMemoryStart = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(ChiChiPPU.prototype, "PatternTableIndex", {
         get: function () {
             return this.backgroundPatternTableIndex;
@@ -3304,6 +3282,7 @@ var ChiChiPPU = /** @class */ (function () {
         //this.scanlineNum = 0;
         //this.scanlinePos = 0;
         this._spriteAddress = 0;
+        this.initSprites();
     };
     ChiChiPPU.prototype.WriteState = function (writer) {
         throw new Error('Method not implemented.');
@@ -3334,14 +3313,6 @@ var ChiChiPPU = /** @class */ (function () {
             result = this.chrRomHandler.GetPPUByte(0, address);
         }
         return result;
-    };
-    ChiChiPPU.prototype.UpdatePPUControlByte0 = function () {
-        if ((this._PPUControlByte0 & 16)) {
-            this.backgroundPatternTableIndex = 4096;
-        }
-        else {
-            this.backgroundPatternTableIndex = 0;
-        }
     };
     ChiChiPPU.prototype.SetByte = function (Clock, address, data) {
         switch (address & 7) {

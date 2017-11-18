@@ -2,7 +2,7 @@ import { BaseCart, IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiAPU, IChiChiAPU } from './ChiChiAudio';
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, RunningStatuses, CpuStatus } from './ChiChiTypes';
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl';
-import { ChiChiPPU } from "./ChiChiPPU";
+import { IChiChiPPU } from "./ChiChiPPU";
 import { GeniePatch } from './ChiChiCheats';
 import { WavSharer } from './Audio/CommonAudio';
 export declare class ChiChiMachine {
@@ -12,7 +12,7 @@ export declare class ChiChiMachine {
     constructor(cpu?: ChiChiCPPU);
     Drawscreen(): void;
     RunState: RunningStatuses;
-    ppu: ChiChiPPU;
+    ppu: IChiChiPPU;
     Cpu: ChiChiCPPU;
     readonly Cart: BaseCart;
     SoundBopper: ChiChiAPU;
@@ -93,8 +93,8 @@ export declare class ChiChiCPPU {
     readonly InstructionHistoryPointer: number;
     private _padOne;
     private _padTwo;
-    ppu: ChiChiPPU;
-    constructor(bopper: IChiChiAPU, ppu: ChiChiPPU);
+    ppu: IChiChiPPU;
+    constructor(bopper: IChiChiAPU, ppu: IChiChiPPU);
     PadOne: ChiChiInputHandler;
     PadTwo: ChiChiInputHandler;
     private debugEvents;

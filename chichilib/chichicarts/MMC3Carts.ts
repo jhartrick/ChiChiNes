@@ -239,7 +239,7 @@ export class MMC3Cart extends BaseCart {
             this.scanlineCounter = this._mmc3TmpVal;
             this._mmc3TmpVal = 0;
         } else {
-            this.scanlineCounter = (this.scanlineCounter - 1)  & 255;
+            this.scanlineCounter = (this.scanlineCounter + 1)  & 255;
         }
 
     }

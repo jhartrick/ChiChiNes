@@ -2,7 +2,7 @@
 import { ChiChiAPU, IChiChiAPU } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
-import { ChiChiPPU } from "./ChiChiPPU";
+import { ChiChiPPU, IChiChiPPU } from "./ChiChiPPU";
 import { GameGenieCode, GeniePatch } from './ChiChiCheats';
 import { WavSharer } from './Audio/CommonAudio';
 
@@ -30,7 +30,7 @@ import { WavSharer } from './Audio/CommonAudio';
         }
 
         RunState: RunningStatuses;
-        ppu: ChiChiPPU;
+        ppu: IChiChiPPU;
         Cpu: ChiChiCPPU;
         get Cart(): BaseCart {
             return <BaseCart>this.Cpu.Cart;
@@ -314,15 +314,15 @@ import { WavSharer } from './Audio/CommonAudio';
         private _padOne: ChiChiInputHandler;
         private _padTwo: ChiChiInputHandler;
 
-        ppu: ChiChiPPU;
+        ppu: IChiChiPPU;
 
-        constructor(bopper: IChiChiAPU, ppu: ChiChiPPU) {
+        constructor(bopper: IChiChiAPU, ppu: IChiChiPPU) {
 
             this.SoundBopper = bopper;
 
             // init PPU
             this.ppu = ppu;
-            this.ppu.initSprites();
+
             this._padOne = new ChiChiInputHandler();
             this._padTwo = new ChiChiInputHandler();
             for (let i = 0; i < this._instructionHistory.length; ++i) {
@@ -1177,18 +1177,19 @@ import { WavSharer } from './Audio/CommonAudio';
         }
 
         branch(): void {
+            const highByte = (this._programCounter >> 8) & 0xff;
+            
             this._currentInstruction_ExtraTiming = 1;
-            var addr = this._currentInstruction_Parameters0 & 255;
+            let addr = this._currentInstruction_Parameters0 & 255;
             if ((addr & 128) === 128) {
                 addr = addr - 256;
-                this._programCounter += addr;
-                this._programCounter &= 0xFFFF;
-            } else {
-                this._programCounter += addr;
-                this._programCounter &= 0xFFFF;
-            }
 
-            if ((this._programCounter & 255) < addr) {
+            } 
+
+            this._programCounter += addr;
+            this._programCounter &= 0xffff;
+            const newHighByte = (this._programCounter >> 8) & 0xff;
+            if (highByte != newHighByte) {
                 this._currentInstruction_ExtraTiming = 2;
             }
         }

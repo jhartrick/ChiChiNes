@@ -1,7 +1,32 @@
 import { IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from "./ChiChiMachine";
-export declare class ChiChiPPU {
+export interface IChiChiPPU {
+    LastcpuClock: number;
+    NMIHandler: () => void;
+    frameFinished: () => void;
+    cpu: ChiChiCPPU;
+    greyScale: boolean;
+    chrRomHandler: IBaseCart;
+    unpackedSprites: ChiChiSprite[];
+    emphasisBits: number;
+    backgroundPatternTableIndex: number;
+    spriteRAM: Uint8Array;
+    byteOutBuffer: Uint8Array;
+    ChrRomHandler: IBaseCart;
+    GetPPUStatus(): PpuStatus;
+    readonly SpritePatternTableIndex: number;
+    Initialize(): void;
+    WriteState(writer: any): void;
+    ReadState(state: any): void;
+    readonly NMIIsThrown: boolean;
+    setupVINT(): void;
+    SetByte(Clock: number, address: number, data: number): void;
+    GetByte(Clock: number, address: number): number;
+    copySprites(copyFrom: number): void;
+    advanceClock(ticks: number): void;
+}
+export declare class ChiChiPPU implements IChiChiPPU {
     static pal: Uint32Array;
     LastcpuClock: number;
     NMIHandler: () => void;
@@ -70,13 +95,7 @@ export declare class ChiChiPPU {
     ChrRomHandler: IBaseCart;
     PPU_IRQAsserted: boolean;
     readonly NextEventAt: number;
-    PPU_SpriteCopyHasHappened: boolean;
-    PPU_MaxSpritesPerScanline: number;
-    PPU_SpriteRam: number[];
-    SpritesOnLine: number[];
     GetPPUStatus(): PpuStatus;
-    PPU_FrameFinishHandler: () => void;
-    PPU_NameTableMemoryStart: number;
     readonly PatternTableIndex: number;
     readonly SpritePatternTableIndex: number;
     Initialize(): void;
@@ -85,7 +104,6 @@ export declare class ChiChiPPU {
     readonly NMIIsThrown: boolean;
     setupVINT(): void;
     VidRAM_GetNTByte(address: number): number;
-    UpdatePPUControlByte0(): void;
     SetByte(Clock: number, address: number, data: number): void;
     GetByte(Clock: number, address: number): number;
     copySprites(copyFrom: number): void;
