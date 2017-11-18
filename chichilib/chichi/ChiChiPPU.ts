@@ -52,55 +52,55 @@ export class ChiChiPPU {
     backgroundPatternTableIndex: number = 0;
 
 
-        //PPU implementation
-        private _PPUAddress: number = 0;
-        private _PPUStatus: number = 0;
-        _PPUControlByte0: number = 0; _PPUControlByte1: number = 0;
-        private _spriteAddress: number = 0;
-    
-    
-        private currentXPosition = 0;
-        private currentYPosition = 0;
-        private _hScroll = 0;
-        private _vScroll = 0;
-        private lockedHScroll = 0;
-        private lockedVScroll = 0;
-        //private scanlineNum = 0;
-        //private scanlinePos = 0;
-    
-        private shouldRender = false;
-    
-        //private NMIHasBeenThrownThisFrame = false;
-        private _frames = 0;
-        private hitSprite = false;
-        private PPUAddressLatchIsHigh = true;
-        private p32 = new Uint32Array(256);// System.Array.init(256, 0, System.Int32);
-        private isRendering = true;
-        public frameClock = 0;
-        public FrameEnded = false;
-        private frameOn = false;
-        //private framePalette = System.Array.init(256, 0, System.Int32);
-        private nameTableBits = 0;
-        private vidRamIsRam = true;
-        _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
-        private _openBus = 0;
-        private sprite0scanline = 0;
-        private sprite0x = 0;
-        private _maxSpritesPerScanline = 64;
-    
-        private xNTXor = 0; private yNTXor = 0;
-    
-        private spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
-        spriteRAM = new Uint8Array(<any>this.spriteRAMBuffer);// System.Array.init(256, 0, System.Int32);
-        private spritesOnLine = new Array<number>(512);// System.Array.init(512, 0, System.Int32);
-        private currentTileIndex = 0;
-        private fetchTile = true;
-    
-        // tile bytes currently latched in ppu
-        private patternEntry = 0; private patternEntryByte2 = 0;
+    //PPU implementation
+    private _PPUAddress: number = 0;
+    private _PPUStatus: number = 0;
+    _PPUControlByte0: number = 0; _PPUControlByte1: number = 0;
+    private _spriteAddress: number = 0;
 
-        public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
-    
+
+    private currentXPosition = 0;
+    private currentYPosition = 0;
+    private _hScroll = 0;
+    private _vScroll = 0;
+    private lockedHScroll = 0;
+    private lockedVScroll = 0;
+    //private scanlineNum = 0;
+    //private scanlinePos = 0;
+
+    private shouldRender = false;
+
+    //private NMIHasBeenThrownThisFrame = false;
+    private _frames = 0;
+    private hitSprite = false;
+    private PPUAddressLatchIsHigh = true;
+    private p32 = new Uint32Array(256);// System.Array.init(256, 0, System.Int32);
+    private isRendering = true;
+    public frameClock = 0;
+    public FrameEnded = false;
+    private frameOn = false;
+    //private framePalette = System.Array.init(256, 0, System.Int32);
+    private nameTableBits = 0;
+    private vidRamIsRam = true;
+    _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
+    private _openBus = 0;
+    private sprite0scanline = 0;
+    private sprite0x = 0;
+    private _maxSpritesPerScanline = 64;
+
+    private xNTXor = 0; private yNTXor = 0;
+
+    private spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
+    spriteRAM = new Uint8Array(<any>this.spriteRAMBuffer); // System.Array.init(256, 0, System.Int32);
+    private spritesOnLine = new Array<number>(512); // System.Array.init(512, 0, System.Int32);
+    private currentTileIndex = 0;
+    private fetchTile = true;
+
+    // tile bytes currently latched in ppu
+    private patternEntry = 0; private patternEntryByte2 = 0;
+
+    public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
+
 
     set ChrRomHandler(value: IBaseCart) {
         this.chrRomHandler = value;

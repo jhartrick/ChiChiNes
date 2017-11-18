@@ -198,7 +198,8 @@ export class NesCart extends BaseCart {
          //SRAMEnabled = SRAMCanSave;
      InitializeCart() {
         this.mapperName = 'CNROM';
-        this.copyBanks(0, 0, this.chrRomCount -1, 1);
+        this.usesSRAM = false;
+        // this.copyBanks(0, 0, 0, 2);
         
         if (this.prgRomCount == 1) 
         {
@@ -210,11 +211,9 @@ export class NesCart extends BaseCart {
     }
 
     SetByte(clock: number, address: number, val: number): void {
-        if (address >= 0x8000 && address <= 0xFFFF) {
-            let x = val;// > this.chrRomCount - 1? this.chrRomCount -1 : val;
-            while (x >= this.chrRomCount) {
-                x = x >> 1;
-            }
+        if (address >= 0x8000 && address <= 0xffff) {
+            let x = val & 0xf;// > this.chrRomCount - 1? this.chrRomCount -1 : val;
+
             this.copyBanks(clock, 0, x, 1);
         }
     }
@@ -224,9 +223,6 @@ export class NesCart extends BaseCart {
  export class Mapper185Cart extends BaseCart {
     InitializeCart() {
         this.mapperName = 'CNROM + CP';
-        if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 1);
-        }
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     }
 

@@ -138,7 +138,7 @@ export class ChiChiComponent implements AfterViewInit {
         this.text = new THREE.DataTexture(this.vbuffer, 256, 256, THREE.RGBAFormat);
 
         for (let i = 0; i < 256; i++) {
-            const color = this.pal32[i];
+            const color = this.pal32[i & 0x3f];
             this.pal[i * 4] = color & 0xFF;
             this.pal[(i * 4) + 1] = (color >> 8) & 0xFF;
             this.pal[(i * 4) + 2] = (color >> 16) & 0xFF;
