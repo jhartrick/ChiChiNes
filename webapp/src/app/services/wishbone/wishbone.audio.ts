@@ -9,6 +9,7 @@ export interface IAudioHandler {
 export class WishboneAPU  implements IChiChiAPU {
 	sampleRate: number;
 	interruptRaised: boolean;
+	irqHandler() {};
 	enableSquare0: boolean;
 	enableSquare1: boolean;
 	enableTriangle: boolean;
@@ -28,7 +29,7 @@ export class WishboneAPU  implements IChiChiAPU {
 
 	writer: WavSharer;
 
-	
+
 	_audioHandler: IAudioHandler;
 	get audioHandler(): IAudioHandler {
 		return this._audioHandler;

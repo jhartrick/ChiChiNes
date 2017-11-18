@@ -31,7 +31,9 @@ import { PatternViewerComponent } from './patternviewer/debug-patternviewer.comp
       PpuStatusComponent,
       NameTableViewerComponent,
       SpriteViewerComponent,
-      PatternViewerComponent
+      PatternViewerComponent,
+      CpuStatusComponent,
+      PpuStatusComponent
   ],
   imports: [
     BrowserModule,

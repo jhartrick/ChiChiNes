@@ -18,6 +18,8 @@ export interface IChiChiAPU {
     sampleRate: number;
     interruptRaised: boolean;
 
+    irqHandler(): void;
+
     enableSquare0: boolean;
     enableSquare1: boolean;
     enableTriangle: boolean;
@@ -38,6 +40,8 @@ export interface IChiChiAPU {
 }
 
 export class ChiChiAPU implements IChiChiAPU {
+    irqHandler(): any {
+    }
 
 
     lastClock: number;
@@ -105,7 +109,8 @@ export class ChiChiAPU implements IChiChiAPU {
     }
 
     //Muted: boolean;
-    interruptRaised: boolean = true;
+    interruptRaised: boolean = false;
+    
     get enableSquare0(): boolean {
         return this.square0.gain > 0;
     }
@@ -247,6 +252,7 @@ export class ChiChiAPU implements IChiChiAPU {
             this.endFrame(time)
             if (this.throwingIRQs) {
                 this.interruptRaised = true;
+                this.irqHandler();
             }
 
         } else {

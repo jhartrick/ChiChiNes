@@ -1,15 +1,15 @@
-import { Emulator } from '../services/NESService';
+import { Emulator } from '../../services/NESService';
 import { Component, Inject, HostListener, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { WishboneMachine, KeyBindings, WishBoneControlPad } from '../services/wishbone/wishbone';
+import { WishboneMachine, KeyBindings, WishBoneControlPad } from '../../services/wishbone/wishbone';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
-import { KeyboardSettings } from '../services/keyboardsettings';
+import { KeyboardSettings } from '../../services/keyboardsettings';
 
 @Component({
-  selector: 'chichines-controldialog',
-  templateUrl: './chichines.controldialog.component.html',
-  styleUrls: ['./chichines.controldialog.component.css'],
+  selector: 'controlpad-dialog',
+  templateUrl: './controlpad.dialog.component.html',
+  styleUrls: ['./controlpad.dialog.component.css'],
   changeDetection: ChangeDetectionStrategy.Default
 })
 export class ControlDialogComponent {

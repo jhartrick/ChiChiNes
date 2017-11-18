@@ -436,7 +436,7 @@ export class BaseCart implements IBaseCart {
         
 
         if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
+            dest = this.chrRomCount - 2;
         }
 
         var oneKsrc = src << 2;
@@ -451,20 +451,24 @@ export class BaseCart implements IBaseCart {
 
     copyBanks2k(clock: number, dest: number, src: number, numberOf2kBanks: number): void {
 
+        if (dest >= this.chrRomCount) {
+            dest = this.chrRomCount - 4;
+        }
+
+
         var oneKsrc = src << 1;
         var oneKdest = dest << 1;
         //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
         //  setup ppuBankStarts in 0x400 block chunks 
         for (var i = 0; i < (numberOf2kBanks << 1); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
-
         }
     }
     
     copyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
         
         if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
+            dest = this.chrRomCount - 8;
         }
 
         var oneKsrc = src ;

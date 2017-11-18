@@ -5,6 +5,7 @@ export interface IChiChiAPU {
     audioSettings: AudioSettings;
     sampleRate: number;
     interruptRaised: boolean;
+    irqHandler(): void;
     enableSquare0: boolean;
     enableSquare1: boolean;
     enableTriangle: boolean;
@@ -16,6 +17,7 @@ export interface IChiChiAPU {
 }
 export declare class ChiChiAPU implements IChiChiAPU {
     writer: WavSharer;
+    irqHandler(): any;
     lastClock: number;
     throwingIRQs: boolean;
     reg15: number;

@@ -1,5 +1,8 @@
-﻿import { ChiChiCPPU } from '../chichi/ChiChiMachine';
+﻿import * as crc from 'crc';
+
+import { ChiChiCPPU } from '../chichi/ChiChiMachine';
 import { ChiChiPPU } from '../chichi/ChiChiPPU';
+
 import { BaseCart, UnsupportedCart, NameTableMirroring, IBaseCart } from './BaseCart';
 import * as Discrete from './DiscreteCarts'
 import * as Multi from './MultiCarts'
@@ -9,7 +12,6 @@ import * as MMC3 from './MMC3Carts'
 import * as M068 from './Mapper068'
 import * as Nsf from './Nsf031Cart'
 import * as Smb2j from './Smb2jCart'
-import * as crc from 'crc';
 import * as  VS  from './VSCarts';
 import * as VRC from './KonamiVRC1';
 import * as VRC2 from './KonamiVRC2';

@@ -98,7 +98,15 @@ class VRC2or4Cart extends VRCIrqBase {
     vrc2mirroring = (clock: number, address: number, data: number) => {
         if (address <= 0x9003 )
         {
-            this.mirror(clock, (data & 1) + 1);
+            switch (data & 1) {
+                case 0:
+                    this.mirror(clock, 1);
+                    break;
+                case 1:
+                    this.mirror(clock, 2);
+                    break;
+                
+            }
         }
     }
 
@@ -113,11 +121,11 @@ class VRC2or4Cart extends VRCIrqBase {
                 this.mirror(clock, 2);
                 break;
             case 2: // onescreen - low
-                this.oneScreenOffset= 0x0400;
+                this.oneScreenOffset= 0x0;
                 this.mirror(clock, 0);
                 break;
             case 3: // onescreen - high
-                this.oneScreenOffset = 0x0;
+                this.oneScreenOffset = 0x0400;
                 this.mirror(clock, 0);
                 break;
             }
@@ -144,15 +152,75 @@ class VRC2or4Cart extends VRCIrqBase {
         return this.peekByte(address);
     }
 
-    SetByte(clock:number, address:number, data: number) {
+    setByteVRC4(clock:number, address:number, data: number) {
+        switch(address & 0xf000) {
+        case 0x6000:
+        case 0x7000:
+            this.prgRomBank6[data & this.ramMask] = data;
+            break;
+        case 0x8000:
+            let bank8 = data & 0x1F;
+            if (this.swapMode) {
+                this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
+            } else {
+                this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
+            }           
+            break;      
+        case 0x9000:
+            this.vrc4mirroring(clock, address, data);
+            break;
+        case 0xa000:
+            // 8kib prg rom at A000
+            let bankA = data & 0x1F;
+            this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+            break;
+        case 0xb000:
+        case 0xc000:
+        case 0xd000:
+        case 0xe000:
+            const addmask = address & this.regMask;
+            const bank = ((address >> 12) & 0xf) - 0xb;
+            const index = bank << 1;
+            if (addmask == this.regNums[0]) {
+                this.latches[index]  =  (this.latches[index] & 0x1f0) | (data & 0xf);
+                this.copyBanks1k(clock, index, this.latches[index], 1);
+            } else if (addmask == this.regNums[1]) {
+                this.latches[index]  =  (this.latches[index] & 0xf) | ((data << 4) & 0x1f0);
+                this.copyBanks1k(clock, index, this.latches[index], 1);
+            } else if (addmask == this.regNums[2]) {
+                this.latches[index + 1]  =  (this.latches[index + 1] & 0x1f0) | (data & 0xf);
+                this.copyBanks1k(clock, index + 1, this.latches[index + 1], 1);
+            } else if (addmask == this.regNums[3]) {
+                this.latches[index + 1]  =  (this.latches[index + 1] & 0xf) | ((data << 4) & 0x1f0);
+                this.copyBanks1k(clock, index + 1, this.latches[index + 1], 1);
+            }
+            break;
+        case 0xf000:
+            switch(address & 0x3)
+            {
+            case 0:
+                this.irqLatch = (this.irqLatch & 0xf0) | (data & 0xf); 
+                break;
+            case 1:
+                this.irqLatch = (this.irqLatch & 0x0f) | ((data << 4) & 0xf0);  
+                break;
+            case 2:
+                this.irqControl = data;
+                break;
+            case 3:
+                this.ackIrq();
+                break;
+            }    
+        }
+    }
+
+    
+
+    setByteVRC2(clock:number, address:number, data: number) {
         switch(address & 0xf000) {
             case 0x6000:
             case 0x7000:
-                if (this.microwire) {
-                    this.microwireLatch = data & 0x1;
-                } else {
-                    this.prgRomBank6[data & this.ramMask] = data;
-                }
+                this.microwireLatch = data & 0x1;
                 break;
             case 0x8000:
                 let bank8 = data & 0x1F;
@@ -163,7 +231,7 @@ class VRC2or4Cart extends VRCIrqBase {
                 }           
                 break;      
             case 0x9000:
-                this.vrcmirroring(clock, address, data);
+                this.vrc2mirroring(clock, address, data);
                 break;
             case 0xa000:
                 // 8kib prg rom at A000
@@ -205,72 +273,10 @@ class VRC2or4Cart extends VRCIrqBase {
 
         }
 
-        // const map = this.writeMap;
-        // for (let i =0;i < map.length; ++i) {
-        //     const x = map[i].mask & address;
-        //     if (map[i].address.find( (v) => {
-        //         return v ==  x; 
-        //     })) {
-        //         map[i].func(clock, address,data);
-        //         return;
-        //     }
-        // }
     }
 
-}
 
-export class KonamiVRC2Cart extends VRC2or4Cart {
-
-    altRegNums (){
-        this.regNums = [
-            0x00,
-            0x04,
-            0x08,
-            0x0c,
-        ];
-        this.regMask = 0xf;
-    }
-
-    InitializeCart() {
-        this.mapperName = 'KonamiVRC2';
-        this.usesSRAM = true;
-        this.ramMask = 0xfff;
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.copyBanks4k(0, 0, 0, 2);
-
-        switch (this.ROMHashFunction)
-        {
-            case 'CC9FFEC': // ganbare goemon 2 
-            case 'B27B8CF4': // Gryzor (contra j)
-                this.useMicrowire();
-                break;
-            case 'D467C0CC': // parodius da!
-            case 'C1FBF659': // boku dracula kun
-            case '91328C1D':  // tiny toon adventures j
-            case 'FCBF28B1':
-                this.altRegNums();
-                break;
-        }
-    }
-
-}
-
-export class KonamiVRC022Cart extends VRC2or4Cart {
-    InitializeCart() {
-        this.mapperName = 'KonamiVRC2a';
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.copyBanks4k(0, 0, 0, 2);
-        this.regNums = [0x0, 0x2, 0x1, 0x3];
-        this.vrcmirroring = this.vrc2mirroring;
-        this.useMicrowire();
-        
-        switch (this.ROMHashFunction) {
-            case 'D4645E14':
-            break;
-        }
-    }
-
-    SetByte(clock:number, address:number, data: number) {
+    setByteVRC2a(clock:number, address:number, data: number) {
         switch(address & 0xf000) {
             case 0x6000:
             case 0x7000:
@@ -343,6 +349,65 @@ export class KonamiVRC022Cart extends VRC2or4Cart {
         // }
     }
 
+}
+
+export class KonamiVRC2Cart extends VRC2or4Cart {
+
+    altRegNums (){
+        this.regNums = [
+            0x00,
+            0x04,
+            0x08,
+            0x0c,
+        ];
+        this.regMask = 0xf;
+    }
+
+    InitializeCart() {
+        this.mapperName = 'KonamiVRC2';
+        this.usesSRAM = true;
+        this.ramMask = 0xfff;
+        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.copyBanks4k(0, 0, 0, 2);
+
+        this.SetByte = this.setByteVRC4;
+
+        switch (this.ROMHashFunction)
+        {
+            case 'CC9FFEC': // ganbare goemon 2 
+            case 'B27B8CF4': // Gryzor (contra j)
+                this.SetByte = this.setByteVRC2;
+                this.useMicrowire();
+                break;
+            case 'D467C0CC': // parodius da!
+            case 'C1FBF659': // boku dracula kun
+            case '91328C1D':  // tiny toon adventures j
+            case 'FCBF28B1':
+                this.altRegNums();
+                break;
+        }
+    }
+
+}
+
+export class KonamiVRC022Cart extends VRC2or4Cart {
+    InitializeCart() {
+        this.mapperName = 'KonamiVRC2a';
+        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.copyBanks4k(0, 0, 0, 2);
+        this.regNums = [0x0, 0x2, 0x1, 0x3];
+        this.vrcmirroring = this.vrc2mirroring;
+        this.useMicrowire();
+        this.SetByte = this.setByteVRC2a;
+        
+        
+        switch (this.ROMHashFunction) {
+            case 'D4645E14':
+            break;
+        }
+    }
+
+
 
 }
 
@@ -371,6 +436,8 @@ export class Konami021Cart extends VRC2or4Cart {
                 this.ramMask = 0x1fff;
             break;
         }
+        this.SetByte = this.setByteVRC2;
+        
     }
 }
 
@@ -387,15 +454,14 @@ export class Konami025Cart extends VRC2or4Cart {
         this.regMask = 0xf;
         switch (this.ROMHashFunction)
         {
-            case '5ADBF660':
-                this.useMicrowire();
-                break;
             case '4A601A2C': // teenage mutant ninja turtles j
                 this.regNums = [
                     0x000, 0x008, 0x004, 0x00C
                 ];
             break;
         }
+        this.SetByte = this.setByteVRC4;
+        
     }
 
 }

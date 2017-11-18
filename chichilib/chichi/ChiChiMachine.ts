@@ -20,10 +20,8 @@ import { WavSharer } from './Audio/CommonAudio';
             this.ppu = new ChiChiPPU();
             this.Cpu = cpu ? cpu : new ChiChiCPPU(this.SoundBopper, this.ppu);
             this.ppu.cpu = this.Cpu;
-            this.ppu.NMIHandler = () => {
-                this.Cpu.nmiHandler();
-            }
-
+            this.ppu.NMIHandler = () => {  this.Cpu.nmiHandler(); }
+            this.SoundBopper.irqHandler = () => { this.Cpu.irqUpdater(); };
             this.ppu.frameFinished = () => { this.FrameFinished(); };
         }
 
@@ -442,13 +440,14 @@ import { WavSharer } from './Audio/CommonAudio';
                 this.advanceClock(7);
                 this._handleNMI = false;
                 this.nonMaskableInterrupt();
-            } else if (this._handleIRQ || this.Cart.irqRaised || this.SoundBopper.interruptRaised ) {
+            } else if (this.Cart.irqRaised || this.SoundBopper.interruptRaised ) {
                 this.interruptRequest();
             }
 
             //FetchNextInstruction();
             this._currentInstruction_Address = this._programCounter;
-            this._currentInstruction_OpCode = this.GetByte((this._programCounter++) & 0xFFFF);
+            this._currentInstruction_OpCode = this.GetByte(this._programCounter );
+            this._programCounter = (this._programCounter + 1) & 0xffff;
             this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
             this.fetchInstructionParameters();
 

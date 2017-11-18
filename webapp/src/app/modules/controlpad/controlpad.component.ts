@@ -1,13 +1,13 @@
-﻿import { Emulator } from '../services/NESService';
+﻿import { Emulator } from '../../services/NESService';
 import { Component } from '@angular/core';
-import { WishboneMachine } from '../services/wishbone/wishbone';
-import { ControlDialogComponent } from './chichines.controldialog.component';
+import { WishboneMachine } from '../../services/wishbone/wishbone';
+import { ControlDialogComponent } from './controlpad.dialog.component';
 import { MatDialog } from '@angular/material';
 
 @Component({
-  selector: 'chichines-controlconfig',
-  templateUrl: './chichines.controlconfig.component.html',
-  styleUrls: ['./chichines.controlconfig.component.css']
+  selector: 'controlpad-config',
+  templateUrl: './controlpad.component.html',
+  styleUrls: ['./controlpad.component.css']
 })
 export class ControlConfigComponent {
     wishbone: WishboneMachine;

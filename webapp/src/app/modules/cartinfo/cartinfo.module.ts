@@ -33,8 +33,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
       MatExpansionModule
   ],
   exports: [
-    CartInfoDialogComponent,
-    CartInfoComponent,
+    CartInfoComponent
   ]
 })
 export class CartInfoModule { }
