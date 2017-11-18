@@ -1,19 +1,23 @@
 import { IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
-import { ChiChiCPPU } from "./ChiChiMachine";
-export interface IChiChiPPU {
-    LastcpuClock: number;
-    NMIHandler: () => void;
-    frameFinished: () => void;
-    cpu: ChiChiCPPU;
+import { ChiChiCPPU } from "./ChiChiCPU";
+export interface IChiChiPPUState {
     greyScale: boolean;
-    chrRomHandler: IBaseCart;
-    unpackedSprites: ChiChiSprite[];
     emphasisBits: number;
     backgroundPatternTableIndex: number;
+    SpritePatternTableIndex: number;
     spriteRAM: Uint8Array;
     byteOutBuffer: Uint8Array;
-    ChrRomHandler: IBaseCart;
+    _PPUControlByte0: number;
+    _PPUControlByte1: number;
+}
+export interface IChiChiPPU extends IChiChiPPUState {
+    LastcpuClock: number;
+    cpu: ChiChiCPPU;
+    chrRomHandler: IBaseCart;
+    unpackedSprites: ChiChiSprite[];
+    NMIHandler: () => void;
+    frameFinished: () => void;
     GetPPUStatus(): PpuStatus;
     readonly SpritePatternTableIndex: number;
     Initialize(): void;
@@ -25,6 +29,7 @@ export interface IChiChiPPU {
     GetByte(Clock: number, address: number): number;
     copySprites(copyFrom: number): void;
     advanceClock(ticks: number): void;
+    state: IChiChiPPUState;
 }
 export declare class ChiChiPPU implements IChiChiPPU {
     static pal: Uint32Array;
@@ -120,4 +125,5 @@ export declare class ChiChiPPU implements IChiChiPPU {
     oddFrame: boolean;
     advanceClock(ticks: number): void;
     UpdatePixelInfo(): void;
+    state: IChiChiPPUState;
 }

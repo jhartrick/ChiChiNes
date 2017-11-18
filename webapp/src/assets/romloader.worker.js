@@ -2294,6 +2294,40 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.updateScanlineCounter = function () {
         //throw new Error('Method not implemented.');
     };
+    Object.defineProperty(BaseCart.prototype, "state", {
+        get: function () {
+            return {
+                irqRaised: this.irqRaised,
+                chrRamStart: this.chrRamStart,
+                chrRamLength: this.chrRamLength,
+                iNesHeader: this.iNesHeader,
+                prgRomBank6: this.prgRomBank6,
+                // starting locations of PPU 0x0000-0x3FFF in 1k blocks
+                ppuBankStarts: this.ppuBankStarts,
+                // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
+                prgBankStarts: this.prgBankStarts,
+                romControlBytes: this.romControlBytes,
+                nesCart: this.nesCart,
+                chrRom: this.chrRom
+            };
+        },
+        set: function (value) {
+            this.irqRaised = value.irqRaised;
+            this.chrRamStart = value.chrRamStart;
+            this.chrRamLength = value.chrRamLength;
+            this.iNesHeader = value.iNesHeader;
+            this.prgRomBank6 = value.prgRomBank6;
+            // starting locations of PPU 0x0000-0x3FFF in 1k blocks
+            this.ppuBankStarts = value.ppuBankStarts;
+            // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
+            this.prgBankStarts = value.prgBankStarts;
+            this.romControlBytes = value.romControlBytes;
+            this.nesCart = value.nesCart;
+            this.chrRom = value.chrRom;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return BaseCart;
 }());
 exports.BaseCart = BaseCart;
@@ -3012,7 +3046,7 @@ var iNESFileHandler = /** @class */ (function () {
             _cart.Whizzler = cpu.ppu;
             _cart.CPU = cpu;
             cpu.Cart = _cart;
-            cpu.ppu.ChrRomHandler = _cart;
+            cpu.ppu.chrRomHandler = _cart;
             _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
         }
         return _cart;
@@ -5459,6 +5493,10 @@ var VSCart = /** @class */ (function (_super) {
     __extends(VSCart, _super);
     function VSCart() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.customPalette = [430, 326, 44, 660, 0, 755, 14, 630, 555, 310, 70, 3, 764, 770, 4, 572,
+            737, 200, 27, 747, 0, 222, 510, 740, 653, 53, 447, 140, 403, 0, 473, 357,
+            503, 31, 420, 6, 407, 507, 333, 704, 22, 666, 36, 20, 111, 773, 444, 707,
+            757, 777, 320, 700, 760, 276, 777, 467, 0, 750, 637, 567, 360, 657, 77, 120];
         //for (var i = 0; i < 8; i = (i + 1) | 0) {
         //    this.prevBSSrc[i] = -1;
         //}

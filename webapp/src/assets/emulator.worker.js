@@ -79,6 +79,118 @@ return /******/ (function(modules) { // webpackBootstrap
 
 "use strict";
 
+// utility classes
+Object.defineProperty(exports, "__esModule", { value: true });
+var BufferMaker = /** @class */ (function () {
+    function BufferMaker() {
+    }
+    BufferMaker.MakeUint32Array = function (count) {
+        return new Uint32Array(count);
+    };
+    BufferMaker.MakeUint8Array = function (count) {
+        return new Uint8Array(count);
+    };
+    return BufferMaker;
+}());
+exports.BufferMaker = BufferMaker;
+var RunningStatuses;
+(function (RunningStatuses) {
+    RunningStatuses[RunningStatuses["Unloaded"] = 0] = "Unloaded";
+    RunningStatuses[RunningStatuses["Off"] = 1] = "Off";
+    RunningStatuses[RunningStatuses["Running"] = 2] = "Running";
+    RunningStatuses[RunningStatuses["Frozen"] = 3] = "Frozen";
+    RunningStatuses[RunningStatuses["Paused"] = 4] = "Paused";
+})(RunningStatuses = exports.RunningStatuses || (exports.RunningStatuses = {}));
+var ChiChiCPPU_AddressingModes;
+(function (ChiChiCPPU_AddressingModes) {
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Bullshit"] = 0] = "Bullshit";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Implicit"] = 1] = "Implicit";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Accumulator"] = 2] = "Accumulator";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Immediate"] = 3] = "Immediate";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPage"] = 4] = "ZeroPage";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPageX"] = 5] = "ZeroPageX";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPageY"] = 6] = "ZeroPageY";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Relative"] = 7] = "Relative";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Absolute"] = 8] = "Absolute";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["AbsoluteX"] = 9] = "AbsoluteX";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["AbsoluteY"] = 10] = "AbsoluteY";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Indirect"] = 11] = "Indirect";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndexedIndirect"] = 12] = "IndexedIndirect";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectIndexed"] = 13] = "IndirectIndexed";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectZeroPage"] = 14] = "IndirectZeroPage";
+    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectAbsoluteX"] = 15] = "IndirectAbsoluteX";
+})(ChiChiCPPU_AddressingModes = exports.ChiChiCPPU_AddressingModes || (exports.ChiChiCPPU_AddressingModes = {}));
+var CpuStatus = /** @class */ (function () {
+    function CpuStatus() {
+        this.PC = 0;
+        this.A = 0;
+        this.X = 0;
+        this.Y = 0;
+        this.SP = 0;
+        this.SR = 0;
+    }
+    return CpuStatus;
+}());
+exports.CpuStatus = CpuStatus;
+var PpuStatus = /** @class */ (function () {
+    function PpuStatus() {
+        this.status = 0;
+        this.controlByte0 = 0;
+        this.controlByte1 = 0;
+        this.nameTableStart = 0;
+        this.currentTile = 0;
+        this.lockedVScroll = 0;
+        this.lockedHScroll = 0;
+        this.X = 0;
+        this.Y = 0;
+    }
+    return PpuStatus;
+}());
+exports.PpuStatus = PpuStatus;
+var ChiChiInstruction = /** @class */ (function () {
+    function ChiChiInstruction() {
+        this.AddressingMode = 0;
+        this.frame = 0;
+        this.time = 0;
+        this.A = 0;
+        this.X = 0;
+        this.Y = 0;
+        this.SR = 0;
+        this.SP = 0;
+        this.Address = 0;
+        this.OpCode = 0;
+        this.Parameters0 = 0;
+        this.Parameters1 = 0;
+        this.ExtraTiming = 0;
+        this.Length = 0;
+    }
+    return ChiChiInstruction;
+}());
+exports.ChiChiInstruction = ChiChiInstruction;
+var ChiChiSprite = /** @class */ (function () {
+    function ChiChiSprite() {
+        this.YPosition = 0;
+        this.XPosition = 0;
+        this.SpriteNumber = 0;
+        this.Foreground = false;
+        this.IsVisible = false;
+        this.TileIndex = 0;
+        this.AttributeByte = 0;
+        this.FlipX = false;
+        this.FlipY = false;
+        this.Changed = false;
+    }
+    return ChiChiSprite;
+}());
+exports.ChiChiSprite = ChiChiSprite;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
 // shared buffer to get sound out
 var WavSharer = /** @class */ (function () {
@@ -361,118 +473,6 @@ exports.QueuedPort = QueuedPort;
 
 
 /***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// utility classes
-Object.defineProperty(exports, "__esModule", { value: true });
-var BufferMaker = /** @class */ (function () {
-    function BufferMaker() {
-    }
-    BufferMaker.MakeUint32Array = function (count) {
-        return new Uint32Array(count);
-    };
-    BufferMaker.MakeUint8Array = function (count) {
-        return new Uint8Array(count);
-    };
-    return BufferMaker;
-}());
-exports.BufferMaker = BufferMaker;
-var RunningStatuses;
-(function (RunningStatuses) {
-    RunningStatuses[RunningStatuses["Unloaded"] = 0] = "Unloaded";
-    RunningStatuses[RunningStatuses["Off"] = 1] = "Off";
-    RunningStatuses[RunningStatuses["Running"] = 2] = "Running";
-    RunningStatuses[RunningStatuses["Frozen"] = 3] = "Frozen";
-    RunningStatuses[RunningStatuses["Paused"] = 4] = "Paused";
-})(RunningStatuses = exports.RunningStatuses || (exports.RunningStatuses = {}));
-var ChiChiCPPU_AddressingModes;
-(function (ChiChiCPPU_AddressingModes) {
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Bullshit"] = 0] = "Bullshit";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Implicit"] = 1] = "Implicit";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Accumulator"] = 2] = "Accumulator";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Immediate"] = 3] = "Immediate";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPage"] = 4] = "ZeroPage";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPageX"] = 5] = "ZeroPageX";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["ZeroPageY"] = 6] = "ZeroPageY";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Relative"] = 7] = "Relative";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Absolute"] = 8] = "Absolute";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["AbsoluteX"] = 9] = "AbsoluteX";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["AbsoluteY"] = 10] = "AbsoluteY";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Indirect"] = 11] = "Indirect";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndexedIndirect"] = 12] = "IndexedIndirect";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectIndexed"] = 13] = "IndirectIndexed";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectZeroPage"] = 14] = "IndirectZeroPage";
-    ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["IndirectAbsoluteX"] = 15] = "IndirectAbsoluteX";
-})(ChiChiCPPU_AddressingModes = exports.ChiChiCPPU_AddressingModes || (exports.ChiChiCPPU_AddressingModes = {}));
-var CpuStatus = /** @class */ (function () {
-    function CpuStatus() {
-        this.PC = 0;
-        this.A = 0;
-        this.X = 0;
-        this.Y = 0;
-        this.SP = 0;
-        this.SR = 0;
-    }
-    return CpuStatus;
-}());
-exports.CpuStatus = CpuStatus;
-var PpuStatus = /** @class */ (function () {
-    function PpuStatus() {
-        this.status = 0;
-        this.controlByte0 = 0;
-        this.controlByte1 = 0;
-        this.nameTableStart = 0;
-        this.currentTile = 0;
-        this.lockedVScroll = 0;
-        this.lockedHScroll = 0;
-        this.X = 0;
-        this.Y = 0;
-    }
-    return PpuStatus;
-}());
-exports.PpuStatus = PpuStatus;
-var ChiChiInstruction = /** @class */ (function () {
-    function ChiChiInstruction() {
-        this.AddressingMode = 0;
-        this.frame = 0;
-        this.time = 0;
-        this.A = 0;
-        this.X = 0;
-        this.Y = 0;
-        this.SR = 0;
-        this.SP = 0;
-        this.Address = 0;
-        this.OpCode = 0;
-        this.Parameters0 = 0;
-        this.Parameters1 = 0;
-        this.ExtraTiming = 0;
-        this.Length = 0;
-    }
-    return ChiChiInstruction;
-}());
-exports.ChiChiInstruction = ChiChiInstruction;
-var ChiChiSprite = /** @class */ (function () {
-    function ChiChiSprite() {
-        this.YPosition = 0;
-        this.XPosition = 0;
-        this.SpriteNumber = 0;
-        this.Foreground = false;
-        this.IsVisible = false;
-        this.TileIndex = 0;
-        this.AttributeByte = 0;
-        this.FlipX = false;
-        this.FlipY = false;
-        this.Changed = false;
-    }
-    return ChiChiSprite;
-}());
-exports.ChiChiSprite = ChiChiSprite;
-
-
-/***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -738,7 +738,7 @@ var tendoWrapper = /** @class */ (function () {
             var machine = _this.machine;
             var cart = romloader.loader.loadRom(rom, name);
             cart.installCart(_this.machine.Cpu, _this.machine.ppu);
-            machine.ppu.ChrRomHandler = machine.Cpu.Cart = cart;
+            machine.ppu.chrRomHandler = machine.Cpu.Cart = cart;
             machine.Cart.NMIHandler = function () { _this.machine.Cpu._handleIRQ = true; };
             _this.machine.Cpu.cheating = false;
             _this.machine.Cpu.genieCodes = new Array();
@@ -825,10 +825,10 @@ exports.tendoWrapper = tendoWrapper;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiAudio_1 = __webpack_require__(4);
-var ChiChiTypes_1 = __webpack_require__(1);
-var ChiChiControl_1 = __webpack_require__(9);
-var ChiChiPPU_1 = __webpack_require__(10);
-var CommonAudio_1 = __webpack_require__(0);
+var ChiChiTypes_1 = __webpack_require__(0);
+var ChiChiPPU_1 = __webpack_require__(9);
+var CommonAudio_1 = __webpack_require__(1);
+var ChiChiCPU_1 = __webpack_require__(10);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -842,7 +842,7 @@ var ChiChiMachine = /** @class */ (function () {
         this.SoundBopper = new ChiChiAudio_1.ChiChiAPU(wavSharer);
         this.WaveForms = wavSharer;
         this.ppu = new ChiChiPPU_1.ChiChiPPU();
-        this.Cpu = cpu ? cpu : new ChiChiCPPU(this.SoundBopper, this.ppu);
+        this.Cpu = cpu ? cpu : new ChiChiCPU_1.ChiChiCPPU(this.SoundBopper, this.ppu);
         this.ppu.cpu = this.Cpu;
         this.ppu.NMIHandler = function () { _this.Cpu.nmiHandler(); };
         this.SoundBopper.irqHandler = function () { _this.Cpu.irqUpdater(); };
@@ -936,7 +936,7 @@ var ChiChiMachine = /** @class */ (function () {
     };
     ChiChiMachine.prototype.EjectCart = function () {
         this.Cpu.Cart = null;
-        this.ppu.ChrRomHandler = null;
+        this.ppu.chrRomHandler = null;
     };
     ChiChiMachine.prototype.LoadNSF = function (rom) {
     };
@@ -975,6 +975,1477 @@ var ChiChiMachine = /** @class */ (function () {
     return ChiChiMachine;
 }());
 exports.ChiChiMachine = ChiChiMachine;
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var DMCChannel_1 = __webpack_require__(5);
+var SquareChannel_1 = __webpack_require__(6);
+var TriangleChannel_1 = __webpack_require__(7);
+var NoiseChannel_1 = __webpack_require__(8);
+var CommonAudio_1 = __webpack_require__(1);
+var ChiChiAPU = /** @class */ (function () {
+    function ChiChiAPU(writer) {
+        this.writer = writer;
+        this.throwingIRQs = false;
+        this.reg15 = 0;
+        this._sampleRate = 44100;
+        this.master_vol = 4369;
+        this.square0Gain = 873;
+        this.square1Gain = 873;
+        this.triangleGain = 1004;
+        this.noiseGain = 567;
+        this.muted = false;
+        this.lastFrameHit = 0;
+        this.currentClock = 0;
+        this.frameClocker = 0;
+        //Muted: boolean;
+        this.interruptRaised = false;
+        this.rebuildSound();
+    }
+    ChiChiAPU.prototype.irqHandler = function () {
+    };
+    Object.defineProperty(ChiChiAPU.prototype, "audioSettings", {
+        get: function () {
+            var settings = {
+                sampleRate: this._sampleRate,
+                master_volume: 1.0,
+                enableSquare0: this.enableSquare0,
+                enableSquare1: this.enableSquare1,
+                enableTriangle: this.enableTriangle,
+                enableNoise: this.enableNoise,
+                enablePCM: false,
+                synced: this.writer.synced
+            };
+            return settings;
+        },
+        set: function (value) {
+            this.enableNoise = value.enableNoise;
+            this.enableSquare0 = value.enableSquare0;
+            this.enableSquare1 = value.enableSquare1;
+            this.enableTriangle = value.enableTriangle;
+            this.writer.synced = value.synced;
+            if (value.sampleRate != this._sampleRate) {
+                this._sampleRate = value.sampleRate;
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiAPU.prototype, "sampleRate", {
+        get: function () {
+            return this._sampleRate;
+        },
+        set: function (value) {
+            this._sampleRate = value;
+            this.rebuildSound();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiAPU.prototype, "enableSquare0", {
+        get: function () {
+            return this.square0.gain > 0;
+        },
+        set: function (value) {
+            this.square0.gain = value ? this.square0Gain : 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiAPU.prototype, "enableSquare1", {
+        get: function () {
+            return this.square1.gain > 0;
+        },
+        set: function (value) {
+            this.square1.gain = value ? this.square1Gain : 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiAPU.prototype, "enableTriangle", {
+        get: function () {
+            return this.triangle.gain > 0;
+        },
+        set: function (value) {
+            this.triangle.gain = value ? this.triangleGain : 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiAPU.prototype, "enableNoise", {
+        get: function () {
+            return this.noise.gain > 0;
+        },
+        set: function (value) {
+            this.noise.gain = value ? this.noiseGain : 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ChiChiAPU.prototype.rebuildSound = function () {
+        this.myBlipper = new CommonAudio_1.Blip(this._sampleRate / 5);
+        this.myBlipper.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
+        //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
+        this.writer.audioBytesWritten = 0;
+        this.square0Gain = 873;
+        this.square1Gain = 873;
+        this.triangleGain = 1004;
+        this.noiseGain = 567;
+        this.square0 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
+        this.square0.gain = this.square0Gain;
+        this.square0.period = 10;
+        this.square0.sweepComplement = true;
+        this.square1 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
+        this.square1.gain = this.square1Gain;
+        this.square1.period = 10;
+        this.square1.sweepComplement = false;
+        this.triangle = new TriangleChannel_1.TriangleChannel(this.myBlipper, 2);
+        this.triangle.gain = this.triangleGain;
+        this.triangle.period = 0;
+        this.noise = new NoiseChannel_1.NoiseChannel(this.myBlipper, 3);
+        this.noise.gain = this.noiseGain;
+        this.noise.period = 0;
+        this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, null);
+        //  this.dmc.Gain = 873; this.dmc.Period = 10;
+    };
+    ChiChiAPU.prototype.GetByte = function (Clock, address) {
+        if (address === 0x4000) {
+            this.interruptRaised = false;
+        }
+        if (address === 0x4015) {
+            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.interruptRaised ? 64 : 0);
+        }
+        else {
+            return 66;
+        }
+    };
+    ChiChiAPU.prototype.SetByte = function (clock, address, data) {
+        if (address === 16384) {
+            this.interruptRaised = false;
+        }
+        switch (address) {
+            case 0x4000:
+            case 0x4001:
+            case 0x4002:
+            case 0x4003:
+                this.square0.writeRegister(address - 0x4000, data, clock);
+                break;
+            case 0x4004:
+            case 0x4005:
+            case 0x4006:
+            case 0x4007:
+                this.square1.writeRegister(address - 0x4004, data, clock);
+                break;
+            case 0x4008:
+            case 0x4009:
+            case 0x400a:
+            case 0x400b:
+                this.triangle.writeRegister(address - 0x4008, data, clock);
+                break;
+            case 0x400c:
+            case 0x400d:
+            case 0x400e:
+            case 0x400f:
+                this.noise.writeRegister(address - 0x400c, data, clock);
+                break;
+            case 0x4010:
+            case 0x4011:
+            case 0x4012:
+            case 0x4013:
+                // dmc.WriteRegister(address - 0x40010, data, Clock);
+                break;
+            case 0x4015:
+                this.reg15 = data;
+                this.square0.writeRegister(4, data & 1, clock);
+                this.square1.writeRegister(4, data & 2, clock);
+                this.triangle.writeRegister(4, data & 4, clock);
+                this.noise.writeRegister(4, data & 8, clock);
+                break;
+            case 0x4017:
+                this.throwingIRQs = ((data & 64) !== 64);
+                //this.endFrame(clock);
+                //this.lastFrameHit = 0;
+                break;
+        }
+    };
+    ChiChiAPU.prototype.advanceClock = function (ticks) {
+        this.currentClock += ticks;
+        this.frameClocker += ticks;
+        if (this.frameClocker > 7445) {
+            this.updateFrame(this.currentClock);
+            this.frameClocker -= 7445;
+        }
+    };
+    ChiChiAPU.prototype.updateFrame = function (time) {
+        this.runFrameEvents(time, this.lastFrameHit);
+        if (this.lastFrameHit === 3) {
+            this.lastFrameHit = 0;
+            this.endFrame(time);
+            if (this.throwingIRQs) {
+                this.interruptRaised = true;
+                this.irqHandler();
+            }
+        }
+        else {
+            this.lastFrameHit++;
+        }
+    };
+    ChiChiAPU.prototype.runFrameEvents = function (time, step) {
+        this.triangle.frameClock(time, step);
+        this.noise.FrameClock(time, step);
+        this.square0.frameClock(time, step);
+        this.square1.frameClock(time, step);
+    };
+    ChiChiAPU.prototype.endFrame = function (time) {
+        this.square0.endFrame(time);
+        this.square1.endFrame(time);
+        this.triangle.endFrame(time);
+        this.noise.EndFrame(time);
+        this.myBlipper.blip_end_frame(time);
+        this.myBlipper.ReadElementsLoop(this.writer);
+        this.currentClock = 0;
+    };
+    Object.defineProperty(ChiChiAPU.prototype, "state", {
+        get: function () {
+            return {
+                audioSettings: this.audioSettings,
+                sampleRate: this.sampleRate,
+                interruptRaised: this.interruptRaised,
+                enableSquare0: this.enableSquare0,
+                enableSquare1: this.enableSquare1,
+                enableTriangle: this.enableTriangle,
+                enableNoise: this.enableNoise
+            };
+        },
+        set: function (value) {
+            this.audioSettings = value.audioSettings;
+            this.sampleRate = value.sampleRate;
+            this.interruptRaised = value.interruptRaised;
+            this.enableSquare0 = value.enableSquare0;
+            this.enableSquare1 = value.enableSquare1;
+            this.enableTriangle = value.enableTriangle;
+            this.enableNoise = value.enableNoise;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ChiChiAPU.clock_rate = 1789772.727;
+    return ChiChiAPU;
+}());
+exports.ChiChiAPU = ChiChiAPU;
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var DMCChannel = /** @class */ (function () {
+    function DMCChannel(bleeper, chan, cpu) {
+        this.cpu = cpu;
+        this.internalClock = 0;
+        this.fetching = false;
+        this.buffer = 0;
+        this.bufempty = false;
+        this.outbits = 0;
+        this.freqTable = [
+            0x1AC, 0x17C, 0x154, 0x140, 0x11E, 0x0FE, 0x0E2, 0x0D6,
+            0x0BE, 0x0A0, 0x08E, 0x080, 0x06A, 0x054, 0x048, 0x036,
+        ];
+        this.shiftreg = 0;
+        this.silenced = false;
+        this.cycles = 0;
+        this.curAddr = 0;
+        this.lengthCtr = 0;
+        this.length = 0;
+        this.addr = 0;
+        this.pos = 0;
+        this.pcmdata = 0;
+        this.doirq = 0;
+        this.frequency = 0;
+        this.wavehold = 0;
+        this._chan = 0;
+        this.delta = 0;
+        this._bleeper = null;
+        this._bleeper = bleeper;
+        this._chan = chan;
+    }
+    DMCChannel.prototype.WriteRegister = function (register, data, time) {
+        switch (register) {
+            case 0:
+                this.frequency = data & 0xF;
+                this.wavehold = (data >> 6) & 0x1;
+                this.doirq = data >> 7;
+                if (!this.doirq) {
+                    //CPU::WantIRQ &= ~IRQ_DPCM;
+                }
+                break;
+            case 1:
+                this.pcmdata = data & 0x7F;
+                this.pos = (this.pcmdata - 0x40) * 3;
+                break;
+            case 2:
+                this.addr = data;
+                break;
+            case 3:
+                this.length = data;
+                break;
+            case 4:
+                if (data) {
+                    if (!this.lengthCtr) {
+                        this.curAddr = 0xC000 | (this.addr << 6);
+                        this.lengthCtr = (this.length << 4) + 1;
+                    }
+                }
+                else {
+                    this.lengthCtr = 0;
+                }
+                // CPU::WantIRQ &= ~IRQ_DPCM;
+                break;
+        }
+    };
+    DMCChannel.prototype.Run = function (end_time) {
+        // this uses pre-decrement due to the lookup table
+        for (; this.time < end_time; this.time++) {
+            for (var i = 0; i < 8; ++i) {
+                if (!--this.cycles) {
+                    this.cycles = this.freqTable[this.frequency];
+                    if (!this.silenced) {
+                        if (this.shiftreg & 1) {
+                            if (this.pcmdata <= 0x7D)
+                                this.pcmdata += 2;
+                        }
+                        else {
+                            if (this.pcmdata >= 0x02)
+                                this.pcmdata -= 2;
+                        }
+                        this.shiftreg >>= 1;
+                        this.pos = (this.pcmdata - 0x40) * 3;
+                    }
+                    if (!--this.outbits) {
+                        this.outbits = 8;
+                        if (!this.bufempty) {
+                            this.shiftreg = this.buffer;
+                            this.bufempty = true;
+                            this.silenced = false;
+                        }
+                        else {
+                            this.silenced = true;
+                        }
+                    }
+                }
+                if (this.bufempty && !this.fetching && this.lengthCtr && (this.internalClock & 1)) {
+                    this.fetching = true;
+                    //CPU::EnableDMA |= DMA_PCM;
+                    // decrement LengthCtr now, so $4015 reads are updated in time
+                    this.lengthCtr--;
+                }
+            }
+        }
+    };
+    DMCChannel.prototype.fetch = function () {
+        this.buffer = this.cpu.GetByte(this.curAddr);
+        this.bufempty = false;
+        this.fetching = false;
+        if (++this.curAddr == 0x10000)
+            this.curAddr = 0x8000;
+        if (!this.lengthCtr) {
+            if (this.wavehold) {
+                this.curAddr = 0xC000 | (this.addr << 6);
+                this.lengthCtr = (this.length << 4) + 1;
+            }
+            else if (this.doirq) {
+                this.cpu._handleIRQ = true;
+            }
+        }
+    };
+    DMCChannel.prototype.UpdateAmplitude = function (new_amp) {
+    };
+    DMCChannel.prototype.EndFrame = function (time) {
+    };
+    DMCChannel.prototype.FrameClock = function (time, step) {
+    };
+    return DMCChannel;
+}());
+exports.DMCChannel = DMCChannel;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var SquareChannel = /** @class */ (function () {
+    function SquareChannel(bleeper, chan) {
+        this._chan = 0;
+        this._bleeper = null;
+        this.lengthCounts = new Uint8Array([
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ]);
+        this._length = 0;
+        this.period = 0;
+        this._rawTimer = 0;
+        this.volume = 0;
+        this.time = 0;
+        this.envelope = 0;
+        this.looping = false;
+        this.enabled = false;
+        this._amplitude = 0;
+        this.doodies = [2, 6, 30, 249];
+        this._sweepShift = 0;
+        this._sweepCounter = 0;
+        this._sweepDivider = 0;
+        this._sweepNegateFlag = false;
+        this._sweepEnabled = false;
+        this._startSweep = false;
+        this._sweepInvalid = false;
+        this._phase = 0;
+        this._envTimer = 0;
+        this._envStart = false;
+        this._envConstantVolume = false;
+        this._envVolume = 0;
+        this.gain = 0;
+        this.sweepComplement = false;
+        this.dutyCycle = 0;
+        this._bleeper = bleeper;
+        this._chan = chan;
+        this.enabled = true;
+        this._sweepDivider = 1;
+        this._envTimer = 15;
+    }
+    // functions
+    SquareChannel.prototype.writeRegister = function (register, data, time) {
+        switch (register) {
+            case 0:
+                this._envConstantVolume = (data & 0x10) === 0x10;
+                this.volume = data & 15;
+                this.dutyCycle = this.doodies[(data >> 6) & 0x3];
+                this.looping = (data & 0x20) === 0x20;
+                this._sweepInvalid = false;
+                break;
+            case 1:
+                this._sweepShift = data & 7;
+                this._sweepNegateFlag = (data & 8) === 8;
+                this._sweepDivider = (data >> 4) & 7;
+                this._sweepEnabled = (data & 0x80) === 0x80;
+                this._startSweep = true;
+                this._sweepInvalid = false;
+                break;
+            case 2:
+                this.period &= 0x700;
+                this.period |= data;
+                this._rawTimer = this.period;
+                break;
+            case 3:
+                this.period &= 0xFF;
+                this.period |= (data & 7) << 8;
+                this._rawTimer = this.period;
+                this._phase = 0;
+                // setup length
+                if (this.enabled) {
+                    this._length = this.lengthCounts[(data >> 3) & 0x1f];
+                }
+                this._envStart = true;
+                break;
+            case 4:
+                this.enabled = (data !== 0);
+                if (!this.enabled) {
+                    this._length = 0;
+                }
+                break;
+        }
+    };
+    SquareChannel.prototype.run = function (end_time) {
+        var period = this._sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
+        if (period === 0) {
+            this.time = end_time;
+            this.updateAmplitude(0);
+            return;
+        }
+        var volume = this._envConstantVolume ? this.volume : this._envVolume;
+        if (this._length === 0 || volume === 0 || this._sweepInvalid) {
+            this._phase += ((end_time - this.time) / period) & 7;
+            this.time = end_time;
+            this.updateAmplitude(0);
+            return;
+        }
+        for (; this.time < end_time; this.time += period, this._phase++) {
+            this.updateAmplitude((this.dutyCycle >> (this._phase & 7) & 1) * volume);
+        }
+        this._phase &= 7;
+    };
+    SquareChannel.prototype.updateAmplitude = function (new_amp) {
+        var delta = new_amp * this.gain - this._amplitude;
+        this._amplitude += delta;
+        this._bleeper.blip_add_delta(this.time, delta);
+    };
+    SquareChannel.prototype.endFrame = function (time) {
+        this.run(time);
+        this.time = 0;
+    };
+    SquareChannel.prototype.frameClock = function (time, step) {
+        this.run(time);
+        if (!this._envStart) {
+            this._envTimer--;
+            if (this._envTimer === 0) {
+                this._envTimer = this.volume + 1;
+                if (this._envVolume > 0) {
+                    this._envVolume--;
+                }
+                else {
+                    this._envVolume = this.looping ? 15 : 0;
+                }
+            }
+        }
+        else {
+            this._envStart = false;
+            this._envTimer = this.volume + 1;
+            this._envVolume = 15;
+        }
+        switch (step) {
+            case 1:
+            case 3:
+                --this._sweepCounter;
+                if (this._sweepCounter === 0) {
+                    this._sweepCounter = this._sweepDivider + 1;
+                    if (this._sweepEnabled && this._sweepShift > 0) {
+                        var sweep = this.period >> this._sweepShift;
+                        if (this.sweepComplement) {
+                            this.period += this._sweepNegateFlag ? ~sweep : sweep;
+                        }
+                        else {
+                            this.period += this._sweepNegateFlag ? ~sweep + 1 : sweep;
+                        }
+                        this._sweepInvalid = (this._rawTimer < 8 || (this.period & 2048) === 2048);
+                        //if (_sweepInvalid)
+                        //{
+                        //    _sweepInvalid = true;
+                        //}
+                    }
+                }
+                if (this._startSweep) {
+                    this._startSweep = false;
+                    this._sweepCounter = this._sweepDivider + 1;
+                }
+                if (!this.looping && this._length > 0) {
+                    this._length--;
+                }
+                break;
+        }
+    };
+    return SquareChannel;
+}());
+exports.SquareChannel = SquareChannel;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var TriangleChannel = /** @class */ (function () {
+    function TriangleChannel(bleeper, chan) {
+        this._chan = 0;
+        this.lengthCounts = new Uint8Array([
+            0x0A, 0xFE,
+            0x14, 0x02,
+            0x28, 0x04,
+            0x50, 0x06,
+            0xA0, 0x08,
+            0x3C, 0x0A,
+            0x0E, 0x0C,
+            0x1A, 0x0E,
+            0x0C, 0x10,
+            0x18, 0x12,
+            0x30, 0x14,
+            0x60, 0x16,
+            0xC0, 0x18,
+            0x48, 0x1A,
+            0x10, 0x1C,
+            0x20, 0x1E
+        ]);
+        this.length = 0;
+        this.period = 0;
+        this.time = 0;
+        this.envelope = 0;
+        this.looping = false;
+        this.enabled = false;
+        this.amplitude = 0;
+        this.gain = 0;
+        this._linCtr = 0;
+        this._phase = 0;
+        this._linVal = 0;
+        this._linStart = false;
+        this._bleeper = bleeper;
+        this._chan = chan;
+        this.enabled = true;
+    }
+    TriangleChannel.prototype.writeRegister = function (register, data, time) {
+        //Run(time);
+        switch (register) {
+            case 0:
+                this.looping = (data & 0x80) === 0x80;
+                this._linVal = data & 0x7F;
+                break;
+            case 1:
+                break;
+            case 2:
+                this.period &= 0x700;
+                this.period |= data;
+                break;
+            case 3:
+                this.period &= 0xFF;
+                this.period |= (data & 7) << 8;
+                // setup lengthhave
+                if (this.enabled) {
+                    this.length = this.lengthCounts[(data >> 3) & 0x1f];
+                }
+                this._linStart = true;
+                break;
+            case 4:
+                this.enabled = (data !== 0);
+                if (!this.enabled) {
+                    this.length = 0;
+                }
+                break;
+        }
+    };
+    TriangleChannel.prototype.run = function (end_time) {
+        var period = this.period + 1;
+        if (this._linCtr === 0 || this.length === 0 || this.period < 4) {
+            // leave it at it's current phase
+            this.time = end_time;
+            return;
+        }
+        for (; this.time < end_time; this.time += period, this._phase = (this._phase + 1) % 32) {
+            this.updateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
+        }
+    };
+    TriangleChannel.prototype.updateAmplitude = function (new_amp) {
+        var delta = new_amp * this.gain - this.amplitude;
+        this.amplitude += delta;
+        this._bleeper.blip_add_delta(this.time, delta);
+    };
+    TriangleChannel.prototype.endFrame = function (time) {
+        this.run(time);
+        this.time = 0;
+    };
+    TriangleChannel.prototype.frameClock = function (time, step) {
+        this.run(time);
+        if (this._linStart) {
+            this._linCtr = this._linVal;
+        }
+        else {
+            if (this._linCtr > 0) {
+                this._linCtr--;
+            }
+        }
+        if (!this.looping) {
+            this._linStart = false;
+        }
+        switch (step) {
+            case 1:
+            case 3:
+                if (this.length > 0 && !this.looping) {
+                    this.length--;
+                }
+                break;
+        }
+    };
+    return TriangleChannel;
+}());
+exports.TriangleChannel = TriangleChannel;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var NoiseChannel = /** @class */ (function () {
+    function NoiseChannel(bleeper, chan) {
+        this._bleeper = null;
+        this._chan = 0;
+        this.noisePeriods = [4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068];
+        this.lengthCounts = [10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30];
+        this._time = 0;
+        this._envConstantVolume = false;
+        this._envVolume = 0;
+        this.amplitude = 0;
+        this._phase = 0;
+        this._envTimer = 0;
+        this._envStart = false;
+        this.length = 0;
+        this.period = 0;
+        this.volume = 0;
+        this.looping = false;
+        this.gain = 0;
+        this.enabled = true;
+        this._bleeper = bleeper;
+        this._chan = chan;
+        this._phase = 1;
+        this._envTimer = 15;
+    }
+    NoiseChannel.prototype.writeRegister = function (register, data, time) {
+        // Run(time);
+        switch (register) {
+            case 0:
+                this._envConstantVolume = (data & 16) === 16;
+                this.volume = data & 15;
+                this.looping = (data & 128) === 128;
+                break;
+            case 1:
+                break;
+            case 2:
+                this.period = this.noisePeriods[data & 15];
+                // _period |= data;
+                break;
+            case 3:
+                // setup length
+                if (this.enabled) {
+                    this.length = this.lengthCounts[(data >> 3) & 31];
+                }
+                this._envStart = true;
+                break;
+            case 4:
+                this.enabled = (data !== 0);
+                if (!this.enabled) {
+                    this.length = 0;
+                }
+                break;
+        }
+    };
+    NoiseChannel.prototype.Run = function (end_time) {
+        var volume = this._envConstantVolume ? this.volume : this._envVolume;
+        if (this.length === 0) {
+            volume = 0;
+        }
+        if (this.period === 0) {
+            this._time = end_time;
+            this.UpdateAmplitude(0);
+            return;
+        }
+        if (this._phase === 0) {
+            this._phase = 1;
+        }
+        for (; this._time < end_time; this._time += this.period) {
+            var new15;
+            if (this.looping) {
+                new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
+            }
+            else {
+                new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
+            }
+            this.UpdateAmplitude(this._phase & 1 * volume);
+            this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
+        }
+    };
+    NoiseChannel.prototype.UpdateAmplitude = function (amp) {
+        var delta = amp * this.gain - this.amplitude;
+        this.amplitude += delta;
+        this._bleeper.blip_add_delta(this._time, delta);
+    };
+    NoiseChannel.prototype.EndFrame = function (time) {
+        this.Run(time);
+        this._time = 0;
+    };
+    NoiseChannel.prototype.FrameClock = function (time, step) {
+        this.Run(time);
+        if (!this._envStart) {
+            this._envTimer--;
+            if (this._envTimer === 0) {
+                this._envTimer = this.volume + 1;
+                if (this._envVolume > 0) {
+                    this._envVolume--;
+                }
+                else {
+                    this._envVolume = this.looping ? 15 : 0;
+                }
+            }
+        }
+        else {
+            this._envStart = false;
+            this._envTimer = this.volume + 1;
+            this._envVolume = 15;
+        }
+        switch (step) {
+            case 1:
+            case 2:
+                if (!this.looping && this.length > 0) {
+                    this.length--;
+                }
+                break;
+        }
+    };
+    return NoiseChannel;
+}());
+exports.NoiseChannel = NoiseChannel;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChiChiTypes_1 = __webpack_require__(0);
+var ChiChiPPU = /** @class */ (function () {
+    function ChiChiPPU() {
+        this.LastcpuClock = 0;
+        this.greyScale = false;
+        // private members
+        // scanline position
+        this.yPosition = 0;
+        this.xPosition = 0;
+        // current draw location in outbuffer    
+        this.vbufLocation = 0;
+        this.currentAttributeByte = 0;
+        // sprite info
+        this.spriteSize = 0;
+        this.spritesOnThisScanline = 0;
+        this._spriteCopyHasHappened = false;
+        this.spriteZeroHit = false;
+        this.emphasisBits = 0;
+        this.isForegroundPixel = false;
+        this.spriteChanges = false;
+        this.ppuReadBuffer = 0;
+        this._clipSprites = false;
+        this._clipTiles = false;
+        this._tilesAreVisible = false;
+        this._spritesAreVisible = false;
+        this.nameTableMemoryStart = 0;
+        this.backgroundPatternTableIndex = 0;
+        //PPU implementation
+        this._PPUAddress = 0;
+        this._PPUStatus = 0;
+        this._PPUControlByte0 = 0;
+        this._PPUControlByte1 = 0;
+        this._spriteAddress = 0;
+        this.currentXPosition = 0;
+        this.currentYPosition = 0;
+        this._hScroll = 0;
+        this._vScroll = 0;
+        this.lockedHScroll = 0;
+        this.lockedVScroll = 0;
+        //private scanlineNum = 0;
+        //private scanlinePos = 0;
+        this.shouldRender = false;
+        //private NMIHasBeenThrownThisFrame = false;
+        this._frames = 0;
+        this.hitSprite = false;
+        this.PPUAddressLatchIsHigh = true;
+        this.p32 = new Uint32Array(256); // System.Array.init(256, 0, System.Int32);
+        this.isRendering = true;
+        this.frameClock = 0;
+        this.FrameEnded = false;
+        this.frameOn = false;
+        //private framePalette = System.Array.init(256, 0, System.Int32);
+        this.nameTableBits = 0;
+        this.vidRamIsRam = true;
+        this._palette = new Uint8Array(32); // System.Array.init(32, 0, System.Int32);
+        this._openBus = 0;
+        this.sprite0scanline = 0;
+        this.sprite0x = 0;
+        this._maxSpritesPerScanline = 64;
+        this.xNTXor = 0;
+        this.yNTXor = 0;
+        this.spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
+        this.spriteRAM = new Uint8Array(this.spriteRAMBuffer); // System.Array.init(256, 0, System.Int32);
+        this.spritesOnLine = new Array(512); // System.Array.init(512, 0, System.Int32);
+        this.currentTileIndex = 0;
+        this.fetchTile = true;
+        // tile bytes currently latched in ppu
+        this.patternEntry = 0;
+        this.patternEntryByte2 = 0;
+        this.byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
+        this.oddFrame = true;
+        this.initSprites();
+    }
+    Object.defineProperty(ChiChiPPU.prototype, "ChrRomHandler", {
+        get: function () {
+            return this.chrRomHandler;
+        },
+        set: function (value) {
+            this.chrRomHandler = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiPPU.prototype, "NextEventAt", {
+        get: function () {
+            if (this.frameClock < 6820) {
+                return (6820 - this.frameClock) / 3;
+            }
+            else {
+                return (((89345 - this.frameClock) / 341) / 3);
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ChiChiPPU.prototype.GetPPUStatus = function () {
+        return {
+            status: this._PPUStatus,
+            controlByte0: this._PPUControlByte0,
+            controlByte1: this._PPUControlByte1,
+            nameTableStart: this.nameTableMemoryStart,
+            currentTile: this.currentTileIndex,
+            lockedVScroll: this.lockedVScroll,
+            lockedHScroll: this.lockedHScroll,
+            X: this.currentXPosition,
+            Y: this.currentYPosition
+        };
+    };
+    Object.defineProperty(ChiChiPPU.prototype, "PatternTableIndex", {
+        get: function () {
+            return this.backgroundPatternTableIndex;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiPPU.prototype, "SpritePatternTableIndex", {
+        get: function () {
+            var spritePatternTable = 0;
+            if ((this._PPUControlByte0 & 32) === 32) {
+                spritePatternTable = 4096;
+            }
+            return spritePatternTable;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ChiChiPPU.prototype.Initialize = function () {
+        this._PPUAddress = 0;
+        this._PPUStatus = 0;
+        this._PPUControlByte0 = 0;
+        this._PPUControlByte1 = 0;
+        this._hScroll = 0;
+        this._vScroll = 0;
+        //this.scanlineNum = 0;
+        //this.scanlinePos = 0;
+        this._spriteAddress = 0;
+        this.initSprites();
+    };
+    ChiChiPPU.prototype.WriteState = function (writer) {
+        throw new Error('Method not implemented.');
+    };
+    ChiChiPPU.prototype.ReadState = function (state) {
+        throw new Error('Method not implemented.');
+    };
+    Object.defineProperty(ChiChiPPU.prototype, "NMIIsThrown", {
+        get: function () {
+            return (this._PPUControlByte0 & 128) === 128;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ChiChiPPU.prototype.setupVINT = function () {
+        this._PPUStatus = this._PPUStatus | 128;
+        this._frames = this._frames + 1;
+        if (this._PPUControlByte0 & 128) {
+            this.cpu._handleNMI = true;
+        }
+    };
+    ChiChiPPU.prototype.VidRAM_GetNTByte = function (address) {
+        var result = 0;
+        if (address >= 8192 && address < 12288) {
+            result = this.chrRomHandler.GetPPUByte(0, address);
+        }
+        else {
+            result = this.chrRomHandler.GetPPUByte(0, address);
+        }
+        return result;
+    };
+    ChiChiPPU.prototype.SetByte = function (Clock, address, data) {
+        switch (address & 7) {
+            case 0:
+                this._PPUControlByte0 = data;
+                this._openBus = data;
+                this.nameTableBits = this._PPUControlByte0 & 3;
+                this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
+                this.nameTableMemoryStart = this.nameTableBits * 0x400;
+                break;
+            case 1:
+                this.isRendering = (data & 0x18) !== 0;
+                this._PPUControlByte1 = data;
+                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
+                this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
+                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
+                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
+                this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
+                this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
+                this.nameTableMemoryStart = this.nameTableBits * 0x400;
+                break;
+            case 2:
+                this.ppuReadBuffer = data;
+                this._openBus = data;
+                break;
+            case 3:
+                this._spriteAddress = data & 0xFF;
+                this._openBus = this._spriteAddress;
+                break;
+            case 4:
+                this.spriteRAM[this._spriteAddress] = data;
+                this._spriteAddress = (this._spriteAddress + 1) & 255;
+                this.unpackedSprites[this._spriteAddress >> 2].Changed = true;
+                this.spriteChanges = true;
+                break;
+            case 5:
+                if (this.PPUAddressLatchIsHigh) {
+                    this._hScroll = data;
+                    this.lockedHScroll = this._hScroll & 7;
+                    this.PPUAddressLatchIsHigh = false;
+                }
+                else {
+                    this._vScroll = data;
+                    if (data > 240) {
+                        this._vScroll = data - 256;
+                    }
+                    if (!this.frameOn || (this.frameOn && !this.isRendering)) {
+                        this.lockedVScroll = this._vScroll;
+                    }
+                    this.PPUAddressLatchIsHigh = true;
+                    this.UpdatePixelInfo();
+                }
+                break;
+            case 6:
+                if (this.PPUAddressLatchIsHigh) {
+                    this._PPUAddress = (this._PPUAddress & 0xFF) | ((data & 0x3F) << 8);
+                    this.PPUAddressLatchIsHigh = false;
+                }
+                else {
+                    this._PPUAddress = (this._PPUAddress & 0x7F00) | data & 0xFF;
+                    this.PPUAddressLatchIsHigh = true;
+                    this._hScroll = ((this._PPUAddress & 0x1f) << 3);
+                    this._vScroll = (((this._PPUAddress >> 5) & 0x1f) << 3);
+                    this._vScroll |= ((this._PPUAddress >> 12) & 3);
+                    if (this.frameOn) {
+                        this.lockedHScroll = this._hScroll;
+                        this.lockedVScroll = this._vScroll;
+                        this.lockedVScroll = this.lockedVScroll - this.currentYPosition;
+                    }
+                    this.nameTableBits = ((this._PPUAddress >> 10) & 3);
+                    this.nameTableMemoryStart = this.nameTableBits * 0x400;
+                }
+                break;
+            case 7:
+                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
+                    var palAddress = (this._PPUAddress) & 0x1F;
+                    this._palette[palAddress] = data;
+                    if ((this._PPUAddress & 0xFFEF) === 0x3F00) {
+                        this._palette[(palAddress ^ 16) & 0x1F] = data;
+                    }
+                }
+                else {
+                    // if ((this._PPUAddress & 0xF000) === 0x2000) {
+                    //     this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
+                    // }
+                    this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
+                }
+                // if controlbyte0.4, set ppuaddress + 32, else inc
+                if ((this._PPUControlByte0 & 4) === 4) {
+                    this._PPUAddress = (this._PPUAddress + 32);
+                }
+                else {
+                    this._PPUAddress = (this._PPUAddress + 1);
+                }
+                // reset the flag which makex xxx6 set the high byte of address
+                this.PPUAddressLatchIsHigh = true;
+                this._PPUAddress = (this._PPUAddress & 0x3FFF);
+                break;
+        }
+    };
+    ChiChiPPU.prototype.GetByte = function (Clock, address) {
+        switch (address & 7) {
+            case 3:
+            case 0:
+            case 1:
+            case 5:
+            case 6:
+                return this._openBus;
+            case 2:
+                var ret = 0;
+                this.PPUAddressLatchIsHigh = true;
+                ret = (this.ppuReadBuffer & 0x1F) | this._PPUStatus;
+                if ((ret & 0x80) === 0x80) {
+                    this._PPUStatus = this._PPUStatus & ~0x80;
+                }
+                return ret;
+            case 4:
+                return this.spriteRAM[this._spriteAddress];
+            case 7:
+                var tmp = 0;
+                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
+                    tmp = this._palette[this._PPUAddress & 0x1F];
+                    this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress - 4096);
+                }
+                else {
+                    tmp = this.ppuReadBuffer;
+                    if (this._PPUAddress >= 0x2000 && this._PPUAddress <= 0x2FFF) {
+                        this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress);
+                    }
+                    else {
+                        this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress & 0x3FFF);
+                    }
+                }
+                if ((this._PPUControlByte0 & 4) === 4) {
+                    this._PPUAddress = this._PPUAddress + 32;
+                }
+                else {
+                    this._PPUAddress = this._PPUAddress + 1;
+                }
+                this._PPUAddress = (this._PPUAddress & 0x3FFF);
+                return tmp;
+        }
+        return 0;
+    };
+    ChiChiPPU.prototype.copySprites = function (copyFrom) {
+        for (var i = 0; i < 256; ++i) {
+            var spriteLocation = (this._spriteAddress + i) & 255;
+            if (this.spriteRAM[spriteLocation] !== this.cpu.Rams[copyFrom + i]) {
+                this.spriteRAM[spriteLocation] = this.cpu.Rams[copyFrom + i];
+                this.unpackedSprites[(spriteLocation >> 2) & 255].Changed = true;
+            }
+        }
+        this._spriteCopyHasHappened = true;
+        this.spriteChanges = true;
+    };
+    ChiChiPPU.prototype.initSprites = function () {
+        this.currentSprites = new Array(this._maxSpritesPerScanline);
+        for (var i = 0; i < this._maxSpritesPerScanline; ++i) {
+            this.currentSprites[i] = new ChiChiTypes_1.ChiChiSprite();
+        }
+        this.unpackedSprites = new Array(64);
+        for (var i = 0; i < 64; ++i) {
+            this.unpackedSprites[i] = new ChiChiTypes_1.ChiChiSprite();
+        }
+    };
+    ChiChiPPU.prototype.getSpritePixel = function () {
+        this.isForegroundPixel = false;
+        this.spriteZeroHit = false;
+        var result = 0;
+        var yLine = 0;
+        var xPos = 0;
+        var tileIndex = 0;
+        for (var i = 0; i < this.spritesOnThisScanline; ++i) {
+            var currSprite = this.currentSprites[i];
+            if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < currSprite.XPosition + 8) {
+                var spritePatternTable = 0;
+                if ((this._PPUControlByte0 & 8) === 8) {
+                    spritePatternTable = 4096;
+                }
+                xPos = this.currentXPosition - currSprite.XPosition;
+                yLine = this.currentYPosition - currSprite.YPosition - 1;
+                yLine = yLine & (this.spriteSize - 1);
+                tileIndex = currSprite.TileIndex;
+                if ((this._PPUControlByte0 & 32) === 32) {
+                    if ((tileIndex & 1) === 1) {
+                        spritePatternTable = 4096;
+                        tileIndex = tileIndex ^ 1;
+                    }
+                    else {
+                        spritePatternTable = 0;
+                    }
+                }
+                var patternEntry = 0;
+                var patternEntryBit2 = 0;
+                if (currSprite.FlipY) {
+                    yLine = this.spriteSize - yLine - 1;
+                }
+                if (yLine >= 8) {
+                    yLine += 8;
+                }
+                patternEntry = this.chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine);
+                patternEntryBit2 = this.chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine + 8);
+                result = (currSprite.FlipX ? ((patternEntry >> xPos) & 1) | (((patternEntryBit2 >> xPos) << 1) & 2) : ((patternEntry >> 7 - xPos) & 1) | (((patternEntryBit2 >> 7 - xPos) << 1) & 2)) & 255;
+                if (result !== 0) {
+                    if (currSprite.SpriteNumber === 0) {
+                        this.spriteZeroHit = true;
+                    }
+                    this.isForegroundPixel = currSprite.Foreground;
+                    return (result | currSprite.AttributeByte);
+                }
+            }
+        }
+        return 0;
+    };
+    ChiChiPPU.prototype.decodeSpritePixel = function (patternTableIndex, x, y, sprite, tileIndex) {
+        // 8x8 tile
+        var patternEntry = 0;
+        var patternEntryBit2 = 0;
+        if (sprite.v.FlipY) {
+            y = this.spriteSize - y - 1;
+        }
+        if (y >= 8) {
+            y += 8;
+        }
+        var dataAddress = patternTableIndex + (tileIndex << 4) + y;
+        patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock, dataAddress);
+        patternEntryBit2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock, dataAddress + 8);
+        return (sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> 7 - x) & 1) | (((patternEntryBit2 >> 7 - x) << 1) & 2));
+    };
+    ChiChiPPU.prototype.preloadSprites = function (scanline) {
+        this.spritesOnThisScanline = 0;
+        this.sprite0scanline = -1;
+        var yLine = this.currentYPosition - 1;
+        for (var spriteNum = 0; spriteNum < 256; spriteNum += 4) {
+            var spriteID = ((spriteNum + this._spriteAddress) & 0xff) >> 2;
+            var y = this.unpackedSprites[spriteID].YPosition + 1;
+            if (scanline >= y && scanline < y + this.spriteSize) {
+                if (spriteID === 0) {
+                    this.sprite0scanline = scanline;
+                    this.sprite0x = this.unpackedSprites[spriteID].XPosition;
+                }
+                // var spId = spriteNum >> 2;
+                // if (spId < 32) {
+                //     this.outBuffer[(64768) + yLine] |= 1 << spId;
+                // } else {
+                //     this.outBuffer[(65024) + yLine] |= 1 << (spId - 32);
+                // }
+                this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID];
+                this.currentSprites[this.spritesOnThisScanline].IsVisible = true;
+                this.spritesOnThisScanline++;
+                if (this.spritesOnThisScanline === this._maxSpritesPerScanline) {
+                    break;
+                }
+            }
+        }
+        if (this.spritesOnThisScanline > 7) {
+            this._PPUStatus = this._PPUStatus | 32;
+        }
+    };
+    ChiChiPPU.prototype.unpackSprites = function () {
+        for (var currSprite = 0; currSprite < this.unpackedSprites.length; ++currSprite) {
+            if (this.unpackedSprites[currSprite].Changed) {
+                this.unpackSprite(currSprite);
+            }
+        }
+    };
+    ChiChiPPU.prototype.unpackSprite = function (currSprite) {
+        var attrByte = this.spriteRAM[(currSprite << 2) + 2 | 0];
+        this.unpackedSprites[currSprite].IsVisible = true;
+        this.unpackedSprites[currSprite].AttributeByte = ((attrByte & 3) << 2) | 16;
+        this.unpackedSprites[currSprite].YPosition = this.spriteRAM[currSprite * 4];
+        this.unpackedSprites[currSprite].XPosition = this.spriteRAM[currSprite * 4 + 3];
+        this.unpackedSprites[currSprite].SpriteNumber = currSprite;
+        this.unpackedSprites[currSprite].Foreground = (attrByte & 32) !== 32;
+        this.unpackedSprites[currSprite].FlipX = (attrByte & 64) === 64;
+        this.unpackedSprites[currSprite].FlipY = (attrByte & 128) === 128;
+        this.unpackedSprites[currSprite].TileIndex = this.spriteRAM[currSprite * 4 + 1];
+        this.unpackedSprites[currSprite].Changed = false;
+    };
+    ChiChiPPU.prototype.getNameTablePixel = function () {
+        var result = ((this.patternEntry & 128) >> 7) | ((this.patternEntryByte2 & 128) >> 6);
+        this.patternEntry <<= 1;
+        this.patternEntryByte2 <<= 1;
+        if (result > 0) {
+            result |= this.currentAttributeByte;
+        }
+        return result & 255;
+    };
+    ChiChiPPU.prototype.getAttrEntry = function (ppuNameTableMemoryStart, i, j) {
+        var LookUp = this.chrRomHandler.GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
+        switch ((i & 2) | (j & 2) * 2) {
+            case 0:
+                return (LookUp << 2) & 12;
+            case 2:
+                return LookUp & 12;
+            case 4:
+                return (LookUp >> 2) & 12;
+            case 6:
+                return (LookUp >> 4) & 12;
+        }
+        return 0;
+    };
+    ChiChiPPU.prototype.advanceClock = function (ticks) {
+        var ppuTicks = ticks * 3;
+        if (this.frameClock > 89002) {
+            this.frameClock += ppuTicks;
+            if (this.frameClock > 89342) {
+                ppuTicks = this.frameClock - 89342;
+            }
+            else {
+                return;
+            }
+        }
+        while (ppuTicks--) {
+            switch (this.frameClock) {
+                case 0:// start of rendering
+                    this.shouldRender = true;
+                    this.vbufLocation = 0;
+                    this.currentXPosition = 0;
+                    this.currentYPosition = 0;
+                    this.xNTXor = 0;
+                    this.yNTXor = 0;
+                    if ((this._PPUControlByte1 & 0x18) !== 0) {
+                        this.oddFrame = !this.oddFrame;
+                        this.isRendering = true;
+                        if (this.oddFrame)
+                            this.frameClock++;
+                    }
+                    break;
+                case 81840:// ChiChiNES.CPU2A03.frameClockEnd:
+                    this.shouldRender = false;
+                    this.frameFinished();
+                    this.frameOn = false;
+                    break;
+                case 82523:// first tick on scanline after post-render line
+                    this.setupVINT();
+                    break;
+                case 89002:
+                    this._PPUStatus = 0;
+                    this.hitSprite = false;
+                    this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
+                    if (this.spriteChanges) {
+                        this.unpackSprites();
+                        this.spriteChanges = false;
+                    }
+                    this.frameOn = true;
+                    break;
+            }
+            if (this.shouldRender) {
+                if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
+                    /* update x position */
+                    this.xPosition = (this.currentXPosition + this.lockedHScroll);
+                    if ((this.xPosition & 7) === 0) {
+                        this.xNTXor = (this.xPosition & 0x100) ? 0x400 : 0;
+                        this.xPosition &= 0xFF;
+                        /* fetch next tile */
+                        var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
+                        var xTilePosition = this.xPosition >> 3;
+                        var tileRow = (this.yPosition >> 3) % 30 << 5;
+                        var tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+                        var tileIndex = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, tileNametablePosition);
+                        var patternTableYOffset = this.yPosition & 7;
+                        var patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
+                        this.patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID);
+                        this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID + 8);
+                        this.currentAttributeByte = this.getAttrEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
+                        /* end fetch next tile */
+                    }
+                    var tilesVis = this._tilesAreVisible;
+                    var spriteVis = this._spritesAreVisible;
+                    if (this.currentXPosition < 8) {
+                        tilesVis = tilesVis && !this._clipTiles;
+                        spriteVis = tilesVis && !this._clipSprites;
+                    }
+                    this.spriteZeroHit = false;
+                    var tilePixel = tilesVis ? this.getNameTablePixel() : 0;
+                    var spritePixel = spriteVis ? this.getSpritePixel() : 0;
+                    if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
+                        this.hitSprite = true;
+                        this._PPUStatus = this._PPUStatus | 64;
+                    }
+                    this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+                    this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
+                    this.vbufLocation++;
+                }
+                if (this.currentXPosition === 324) {
+                    this.chrRomHandler.updateScanlineCounter();
+                }
+                this.currentXPosition++;
+                if (this.currentXPosition > 340) {
+                    this.currentXPosition = 0;
+                    this.currentYPosition++;
+                    this.preloadSprites(this.currentYPosition);
+                    if (this.spritesOnThisScanline >= 7) {
+                        this._PPUStatus = this._PPUStatus | 32;
+                    }
+                    this.lockedHScroll = this._hScroll;
+                    this.UpdatePixelInfo();
+                    //RunNewScanlineEvents 
+                    this.yPosition = this.currentYPosition + this.lockedVScroll;
+                    if (this.yPosition < 0) {
+                        this.yPosition += 240;
+                    }
+                    if (this.yPosition >= 240) {
+                        this.yPosition -= 240;
+                        this.yNTXor = 2048;
+                    }
+                    else {
+                        this.yNTXor = 0;
+                    }
+                }
+            }
+            this.frameClock++;
+            if (this.frameClock >= 89342) {
+                this.frameClock = 0;
+            }
+        }
+    };
+    ChiChiPPU.prototype.UpdatePixelInfo = function () {
+        this.nameTableMemoryStart = this.nameTableBits * 0x400;
+    };
+    Object.defineProperty(ChiChiPPU.prototype, "state", {
+        get: function () {
+            return {
+                SpritePatternTableIndex: this.SpritePatternTableIndex,
+                greyScale: this.greyScale,
+                emphasisBits: this.emphasisBits,
+                backgroundPatternTableIndex: this.backgroundPatternTableIndex,
+                spriteRAM: this.spriteRAM,
+                byteOutBuffer: this.byteOutBuffer,
+                _PPUControlByte0: this._PPUControlByte0,
+                _PPUControlByte1: this._PPUControlByte1
+            };
+        },
+        set: function (value) {
+            this.greyScale = value.greyScale;
+            this.emphasisBits = value.emphasisBits;
+            this.backgroundPatternTableIndex = value.backgroundPatternTableIndex;
+            this.spriteRAM = value.spriteRAM;
+            this.byteOutBuffer = value.byteOutBuffer;
+            this._PPUControlByte0 = value._PPUControlByte0;
+            this._PPUControlByte1 = value._PPUControlByte1;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ChiChiPPU.pal = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    return ChiChiPPU;
+}());
+exports.ChiChiPPU = ChiChiPPU;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChiChiTypes_1 = __webpack_require__(0);
+var ChiChiControl_1 = __webpack_require__(11);
 //chichipig
 var ChiChiCPPU = /** @class */ (function () {
     function ChiChiCPPU(bopper, ppu) {
@@ -2269,817 +3740,7 @@ exports.ChiChiCPPU = ChiChiCPPU;
 
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var DMCChannel_1 = __webpack_require__(5);
-var SquareChannel_1 = __webpack_require__(6);
-var TriangleChannel_1 = __webpack_require__(7);
-var NoiseChannel_1 = __webpack_require__(8);
-var CommonAudio_1 = __webpack_require__(0);
-var ChiChiAPU = /** @class */ (function () {
-    function ChiChiAPU(writer) {
-        this.writer = writer;
-        this.throwingIRQs = false;
-        this.reg15 = 0;
-        this._sampleRate = 44100;
-        this.master_vol = 4369;
-        this.square0Gain = 873;
-        this.square1Gain = 873;
-        this.triangleGain = 1004;
-        this.noiseGain = 567;
-        this.muted = false;
-        this.lastFrameHit = 0;
-        this.currentClock = 0;
-        this.frameClocker = 0;
-        //Muted: boolean;
-        this.interruptRaised = false;
-        this.rebuildSound();
-    }
-    ChiChiAPU.prototype.irqHandler = function () {
-    };
-    Object.defineProperty(ChiChiAPU.prototype, "audioSettings", {
-        get: function () {
-            var settings = {
-                sampleRate: this._sampleRate,
-                master_volume: 1.0,
-                enableSquare0: this.enableSquare0,
-                enableSquare1: this.enableSquare1,
-                enableTriangle: this.enableTriangle,
-                enableNoise: this.enableNoise,
-                enablePCM: false,
-                synced: this.writer.synced
-            };
-            return settings;
-        },
-        set: function (value) {
-            this.enableNoise = value.enableNoise;
-            this.enableSquare0 = value.enableSquare0;
-            this.enableSquare1 = value.enableSquare1;
-            this.enableTriangle = value.enableTriangle;
-            this.writer.synced = value.synced;
-            if (value.sampleRate != this._sampleRate) {
-                this._sampleRate = value.sampleRate;
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "sampleRate", {
-        get: function () {
-            return this._sampleRate;
-        },
-        set: function (value) {
-            this._sampleRate = value;
-            this.rebuildSound();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "enableSquare0", {
-        get: function () {
-            return this.square0.gain > 0;
-        },
-        set: function (value) {
-            this.square0.gain = value ? this.square0Gain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "enableSquare1", {
-        get: function () {
-            return this.square1.gain > 0;
-        },
-        set: function (value) {
-            this.square1.gain = value ? this.square1Gain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "enableTriangle", {
-        get: function () {
-            return this.triangle.gain > 0;
-        },
-        set: function (value) {
-            this.triangle.gain = value ? this.triangleGain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "enableNoise", {
-        get: function () {
-            return this.noise.gain > 0;
-        },
-        set: function (value) {
-            this.noise.gain = value ? this.noiseGain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    ChiChiAPU.prototype.rebuildSound = function () {
-        this.myBlipper = new CommonAudio_1.Blip(this._sampleRate / 5);
-        this.myBlipper.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
-        //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
-        this.writer.audioBytesWritten = 0;
-        this.square0Gain = 873;
-        this.square1Gain = 873;
-        this.triangleGain = 1004;
-        this.noiseGain = 567;
-        this.square0 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
-        this.square0.gain = this.square0Gain;
-        this.square0.period = 10;
-        this.square0.sweepComplement = true;
-        this.square1 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
-        this.square1.gain = this.square1Gain;
-        this.square1.period = 10;
-        this.square1.sweepComplement = false;
-        this.triangle = new TriangleChannel_1.TriangleChannel(this.myBlipper, 2);
-        this.triangle.gain = this.triangleGain;
-        this.triangle.period = 0;
-        this.noise = new NoiseChannel_1.NoiseChannel(this.myBlipper, 3);
-        this.noise.gain = this.noiseGain;
-        this.noise.period = 0;
-        this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, null);
-        //  this.dmc.Gain = 873; this.dmc.Period = 10;
-    };
-    ChiChiAPU.prototype.GetByte = function (Clock, address) {
-        if (address === 0x4000) {
-            this.interruptRaised = false;
-        }
-        if (address === 0x4015) {
-            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.interruptRaised ? 64 : 0);
-        }
-        else {
-            return 66;
-        }
-    };
-    ChiChiAPU.prototype.SetByte = function (clock, address, data) {
-        if (address === 16384) {
-            this.interruptRaised = false;
-        }
-        switch (address) {
-            case 0x4000:
-            case 0x4001:
-            case 0x4002:
-            case 0x4003:
-                this.square0.writeRegister(address - 0x4000, data, clock);
-                break;
-            case 0x4004:
-            case 0x4005:
-            case 0x4006:
-            case 0x4007:
-                this.square1.writeRegister(address - 0x4004, data, clock);
-                break;
-            case 0x4008:
-            case 0x4009:
-            case 0x400a:
-            case 0x400b:
-                this.triangle.writeRegister(address - 0x4008, data, clock);
-                break;
-            case 0x400c:
-            case 0x400d:
-            case 0x400e:
-            case 0x400f:
-                this.noise.writeRegister(address - 0x400c, data, clock);
-                break;
-            case 0x4010:
-            case 0x4011:
-            case 0x4012:
-            case 0x4013:
-                // dmc.WriteRegister(address - 0x40010, data, Clock);
-                break;
-            case 0x4015:
-                this.reg15 = data;
-                this.square0.writeRegister(4, data & 1, clock);
-                this.square1.writeRegister(4, data & 2, clock);
-                this.triangle.writeRegister(4, data & 4, clock);
-                this.noise.writeRegister(4, data & 8, clock);
-                break;
-            case 0x4017:
-                this.throwingIRQs = ((data & 64) !== 64);
-                //this.endFrame(clock);
-                //this.lastFrameHit = 0;
-                break;
-        }
-    };
-    ChiChiAPU.prototype.advanceClock = function (ticks) {
-        this.currentClock += ticks;
-        this.frameClocker += ticks;
-        if (this.frameClocker > 7445) {
-            this.updateFrame(this.currentClock);
-            this.frameClocker -= 7445;
-        }
-    };
-    ChiChiAPU.prototype.updateFrame = function (time) {
-        this.runFrameEvents(time, this.lastFrameHit);
-        if (this.lastFrameHit === 3) {
-            this.lastFrameHit = 0;
-            this.endFrame(time);
-            if (this.throwingIRQs) {
-                this.interruptRaised = true;
-                this.irqHandler();
-            }
-        }
-        else {
-            this.lastFrameHit++;
-        }
-    };
-    ChiChiAPU.prototype.runFrameEvents = function (time, step) {
-        this.triangle.frameClock(time, step);
-        this.noise.FrameClock(time, step);
-        this.square0.frameClock(time, step);
-        this.square1.frameClock(time, step);
-    };
-    ChiChiAPU.prototype.endFrame = function (time) {
-        this.square0.endFrame(time);
-        this.square1.endFrame(time);
-        this.triangle.endFrame(time);
-        this.noise.EndFrame(time);
-        this.myBlipper.blip_end_frame(time);
-        this.myBlipper.ReadElementsLoop(this.writer);
-        this.currentClock = 0;
-    };
-    ChiChiAPU.clock_rate = 1789772.727;
-    return ChiChiAPU;
-}());
-exports.ChiChiAPU = ChiChiAPU;
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var DMCChannel = /** @class */ (function () {
-    function DMCChannel(bleeper, chan, cpu) {
-        this.cpu = cpu;
-        this.internalClock = 0;
-        this.fetching = false;
-        this.buffer = 0;
-        this.bufempty = false;
-        this.outbits = 0;
-        this.freqTable = [
-            0x1AC, 0x17C, 0x154, 0x140, 0x11E, 0x0FE, 0x0E2, 0x0D6,
-            0x0BE, 0x0A0, 0x08E, 0x080, 0x06A, 0x054, 0x048, 0x036,
-        ];
-        this.shiftreg = 0;
-        this.silenced = false;
-        this.cycles = 0;
-        this.curAddr = 0;
-        this.lengthCtr = 0;
-        this.length = 0;
-        this.addr = 0;
-        this.pos = 0;
-        this.pcmdata = 0;
-        this.doirq = 0;
-        this.frequency = 0;
-        this.wavehold = 0;
-        this._chan = 0;
-        this.delta = 0;
-        this._bleeper = null;
-        this._bleeper = bleeper;
-        this._chan = chan;
-    }
-    DMCChannel.prototype.WriteRegister = function (register, data, time) {
-        switch (register) {
-            case 0:
-                this.frequency = data & 0xF;
-                this.wavehold = (data >> 6) & 0x1;
-                this.doirq = data >> 7;
-                if (!this.doirq) {
-                    //CPU::WantIRQ &= ~IRQ_DPCM;
-                }
-                break;
-            case 1:
-                this.pcmdata = data & 0x7F;
-                this.pos = (this.pcmdata - 0x40) * 3;
-                break;
-            case 2:
-                this.addr = data;
-                break;
-            case 3:
-                this.length = data;
-                break;
-            case 4:
-                if (data) {
-                    if (!this.lengthCtr) {
-                        this.curAddr = 0xC000 | (this.addr << 6);
-                        this.lengthCtr = (this.length << 4) + 1;
-                    }
-                }
-                else {
-                    this.lengthCtr = 0;
-                }
-                // CPU::WantIRQ &= ~IRQ_DPCM;
-                break;
-        }
-    };
-    DMCChannel.prototype.Run = function (end_time) {
-        // this uses pre-decrement due to the lookup table
-        for (; this.time < end_time; this.time++) {
-            for (var i = 0; i < 8; ++i) {
-                if (!--this.cycles) {
-                    this.cycles = this.freqTable[this.frequency];
-                    if (!this.silenced) {
-                        if (this.shiftreg & 1) {
-                            if (this.pcmdata <= 0x7D)
-                                this.pcmdata += 2;
-                        }
-                        else {
-                            if (this.pcmdata >= 0x02)
-                                this.pcmdata -= 2;
-                        }
-                        this.shiftreg >>= 1;
-                        this.pos = (this.pcmdata - 0x40) * 3;
-                    }
-                    if (!--this.outbits) {
-                        this.outbits = 8;
-                        if (!this.bufempty) {
-                            this.shiftreg = this.buffer;
-                            this.bufempty = true;
-                            this.silenced = false;
-                        }
-                        else {
-                            this.silenced = true;
-                        }
-                    }
-                }
-                if (this.bufempty && !this.fetching && this.lengthCtr && (this.internalClock & 1)) {
-                    this.fetching = true;
-                    //CPU::EnableDMA |= DMA_PCM;
-                    // decrement LengthCtr now, so $4015 reads are updated in time
-                    this.lengthCtr--;
-                }
-            }
-        }
-    };
-    DMCChannel.prototype.fetch = function () {
-        this.buffer = this.cpu.GetByte(this.curAddr);
-        this.bufempty = false;
-        this.fetching = false;
-        if (++this.curAddr == 0x10000)
-            this.curAddr = 0x8000;
-        if (!this.lengthCtr) {
-            if (this.wavehold) {
-                this.curAddr = 0xC000 | (this.addr << 6);
-                this.lengthCtr = (this.length << 4) + 1;
-            }
-            else if (this.doirq) {
-                this.cpu._handleIRQ = true;
-            }
-        }
-    };
-    DMCChannel.prototype.UpdateAmplitude = function (new_amp) {
-    };
-    DMCChannel.prototype.EndFrame = function (time) {
-    };
-    DMCChannel.prototype.FrameClock = function (time, step) {
-    };
-    return DMCChannel;
-}());
-exports.DMCChannel = DMCChannel;
-
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var SquareChannel = /** @class */ (function () {
-    function SquareChannel(bleeper, chan) {
-        this._chan = 0;
-        this._bleeper = null;
-        this.lengthCounts = new Uint8Array([
-            0x0A, 0xFE,
-            0x14, 0x02,
-            0x28, 0x04,
-            0x50, 0x06,
-            0xA0, 0x08,
-            0x3C, 0x0A,
-            0x0E, 0x0C,
-            0x1A, 0x0E,
-            0x0C, 0x10,
-            0x18, 0x12,
-            0x30, 0x14,
-            0x60, 0x16,
-            0xC0, 0x18,
-            0x48, 0x1A,
-            0x10, 0x1C,
-            0x20, 0x1E
-        ]);
-        this._length = 0;
-        this.period = 0;
-        this._rawTimer = 0;
-        this.volume = 0;
-        this.time = 0;
-        this.envelope = 0;
-        this.looping = false;
-        this.enabled = false;
-        this._amplitude = 0;
-        this.doodies = [2, 6, 30, 249];
-        this._sweepShift = 0;
-        this._sweepCounter = 0;
-        this._sweepDivider = 0;
-        this._sweepNegateFlag = false;
-        this._sweepEnabled = false;
-        this._startSweep = false;
-        this._sweepInvalid = false;
-        this._phase = 0;
-        this._envTimer = 0;
-        this._envStart = false;
-        this._envConstantVolume = false;
-        this._envVolume = 0;
-        this.gain = 0;
-        this.sweepComplement = false;
-        this.dutyCycle = 0;
-        this._bleeper = bleeper;
-        this._chan = chan;
-        this.enabled = true;
-        this._sweepDivider = 1;
-        this._envTimer = 15;
-    }
-    // functions
-    SquareChannel.prototype.writeRegister = function (register, data, time) {
-        switch (register) {
-            case 0:
-                this._envConstantVolume = (data & 0x10) === 0x10;
-                this.volume = data & 15;
-                this.dutyCycle = this.doodies[(data >> 6) & 0x3];
-                this.looping = (data & 0x20) === 0x20;
-                this._sweepInvalid = false;
-                break;
-            case 1:
-                this._sweepShift = data & 7;
-                this._sweepNegateFlag = (data & 8) === 8;
-                this._sweepDivider = (data >> 4) & 7;
-                this._sweepEnabled = (data & 0x80) === 0x80;
-                this._startSweep = true;
-                this._sweepInvalid = false;
-                break;
-            case 2:
-                this.period &= 0x700;
-                this.period |= data;
-                this._rawTimer = this.period;
-                break;
-            case 3:
-                this.period &= 0xFF;
-                this.period |= (data & 7) << 8;
-                this._rawTimer = this.period;
-                this._phase = 0;
-                // setup length
-                if (this.enabled) {
-                    this._length = this.lengthCounts[(data >> 3) & 0x1f];
-                }
-                this._envStart = true;
-                break;
-            case 4:
-                this.enabled = (data !== 0);
-                if (!this.enabled) {
-                    this._length = 0;
-                }
-                break;
-        }
-    };
-    SquareChannel.prototype.run = function (end_time) {
-        var period = this._sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
-        if (period === 0) {
-            this.time = end_time;
-            this.updateAmplitude(0);
-            return;
-        }
-        var volume = this._envConstantVolume ? this.volume : this._envVolume;
-        if (this._length === 0 || volume === 0 || this._sweepInvalid) {
-            this._phase += ((end_time - this.time) / period) & 7;
-            this.time = end_time;
-            this.updateAmplitude(0);
-            return;
-        }
-        for (; this.time < end_time; this.time += period, this._phase++) {
-            this.updateAmplitude((this.dutyCycle >> (this._phase & 7) & 1) * volume);
-        }
-        this._phase &= 7;
-    };
-    SquareChannel.prototype.updateAmplitude = function (new_amp) {
-        var delta = new_amp * this.gain - this._amplitude;
-        this._amplitude += delta;
-        this._bleeper.blip_add_delta(this.time, delta);
-    };
-    SquareChannel.prototype.endFrame = function (time) {
-        this.run(time);
-        this.time = 0;
-    };
-    SquareChannel.prototype.frameClock = function (time, step) {
-        this.run(time);
-        if (!this._envStart) {
-            this._envTimer--;
-            if (this._envTimer === 0) {
-                this._envTimer = this.volume + 1;
-                if (this._envVolume > 0) {
-                    this._envVolume--;
-                }
-                else {
-                    this._envVolume = this.looping ? 15 : 0;
-                }
-            }
-        }
-        else {
-            this._envStart = false;
-            this._envTimer = this.volume + 1;
-            this._envVolume = 15;
-        }
-        switch (step) {
-            case 1:
-            case 3:
-                --this._sweepCounter;
-                if (this._sweepCounter === 0) {
-                    this._sweepCounter = this._sweepDivider + 1;
-                    if (this._sweepEnabled && this._sweepShift > 0) {
-                        var sweep = this.period >> this._sweepShift;
-                        if (this.sweepComplement) {
-                            this.period += this._sweepNegateFlag ? ~sweep : sweep;
-                        }
-                        else {
-                            this.period += this._sweepNegateFlag ? ~sweep + 1 : sweep;
-                        }
-                        this._sweepInvalid = (this._rawTimer < 8 || (this.period & 2048) === 2048);
-                        //if (_sweepInvalid)
-                        //{
-                        //    _sweepInvalid = true;
-                        //}
-                    }
-                }
-                if (this._startSweep) {
-                    this._startSweep = false;
-                    this._sweepCounter = this._sweepDivider + 1;
-                }
-                if (!this.looping && this._length > 0) {
-                    this._length--;
-                }
-                break;
-        }
-    };
-    return SquareChannel;
-}());
-exports.SquareChannel = SquareChannel;
-
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var TriangleChannel = /** @class */ (function () {
-    function TriangleChannel(bleeper, chan) {
-        this._chan = 0;
-        this.lengthCounts = new Uint8Array([
-            0x0A, 0xFE,
-            0x14, 0x02,
-            0x28, 0x04,
-            0x50, 0x06,
-            0xA0, 0x08,
-            0x3C, 0x0A,
-            0x0E, 0x0C,
-            0x1A, 0x0E,
-            0x0C, 0x10,
-            0x18, 0x12,
-            0x30, 0x14,
-            0x60, 0x16,
-            0xC0, 0x18,
-            0x48, 0x1A,
-            0x10, 0x1C,
-            0x20, 0x1E
-        ]);
-        this.length = 0;
-        this.period = 0;
-        this.time = 0;
-        this.envelope = 0;
-        this.looping = false;
-        this.enabled = false;
-        this.amplitude = 0;
-        this.gain = 0;
-        this._linCtr = 0;
-        this._phase = 0;
-        this._linVal = 0;
-        this._linStart = false;
-        this._bleeper = bleeper;
-        this._chan = chan;
-        this.enabled = true;
-    }
-    TriangleChannel.prototype.writeRegister = function (register, data, time) {
-        //Run(time);
-        switch (register) {
-            case 0:
-                this.looping = (data & 0x80) === 0x80;
-                this._linVal = data & 0x7F;
-                break;
-            case 1:
-                break;
-            case 2:
-                this.period &= 0x700;
-                this.period |= data;
-                break;
-            case 3:
-                this.period &= 0xFF;
-                this.period |= (data & 7) << 8;
-                // setup lengthhave
-                if (this.enabled) {
-                    this.length = this.lengthCounts[(data >> 3) & 0x1f];
-                }
-                this._linStart = true;
-                break;
-            case 4:
-                this.enabled = (data !== 0);
-                if (!this.enabled) {
-                    this.length = 0;
-                }
-                break;
-        }
-    };
-    TriangleChannel.prototype.run = function (end_time) {
-        var period = this.period + 1;
-        if (this._linCtr === 0 || this.length === 0 || this.period < 4) {
-            // leave it at it's current phase
-            this.time = end_time;
-            return;
-        }
-        for (; this.time < end_time; this.time += period, this._phase = (this._phase + 1) % 32) {
-            this.updateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
-        }
-    };
-    TriangleChannel.prototype.updateAmplitude = function (new_amp) {
-        var delta = new_amp * this.gain - this.amplitude;
-        this.amplitude += delta;
-        this._bleeper.blip_add_delta(this.time, delta);
-    };
-    TriangleChannel.prototype.endFrame = function (time) {
-        this.run(time);
-        this.time = 0;
-    };
-    TriangleChannel.prototype.frameClock = function (time, step) {
-        this.run(time);
-        if (this._linStart) {
-            this._linCtr = this._linVal;
-        }
-        else {
-            if (this._linCtr > 0) {
-                this._linCtr--;
-            }
-        }
-        if (!this.looping) {
-            this._linStart = false;
-        }
-        switch (step) {
-            case 1:
-            case 3:
-                if (this.length > 0 && !this.looping) {
-                    this.length--;
-                }
-                break;
-        }
-    };
-    return TriangleChannel;
-}());
-exports.TriangleChannel = TriangleChannel;
-
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var NoiseChannel = /** @class */ (function () {
-    function NoiseChannel(bleeper, chan) {
-        this._bleeper = null;
-        this._chan = 0;
-        this.noisePeriods = [4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068];
-        this.lengthCounts = [10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30];
-        this._time = 0;
-        this._envConstantVolume = false;
-        this._envVolume = 0;
-        this.amplitude = 0;
-        this._phase = 0;
-        this._envTimer = 0;
-        this._envStart = false;
-        this.length = 0;
-        this.period = 0;
-        this.volume = 0;
-        this.looping = false;
-        this.gain = 0;
-        this.enabled = true;
-        this._bleeper = bleeper;
-        this._chan = chan;
-        this._phase = 1;
-        this._envTimer = 15;
-    }
-    NoiseChannel.prototype.writeRegister = function (register, data, time) {
-        // Run(time);
-        switch (register) {
-            case 0:
-                this._envConstantVolume = (data & 16) === 16;
-                this.volume = data & 15;
-                this.looping = (data & 128) === 128;
-                break;
-            case 1:
-                break;
-            case 2:
-                this.period = this.noisePeriods[data & 15];
-                // _period |= data;
-                break;
-            case 3:
-                // setup length
-                if (this.enabled) {
-                    this.length = this.lengthCounts[(data >> 3) & 31];
-                }
-                this._envStart = true;
-                break;
-            case 4:
-                this.enabled = (data !== 0);
-                if (!this.enabled) {
-                    this.length = 0;
-                }
-                break;
-        }
-    };
-    NoiseChannel.prototype.Run = function (end_time) {
-        var volume = this._envConstantVolume ? this.volume : this._envVolume;
-        if (this.length === 0) {
-            volume = 0;
-        }
-        if (this.period === 0) {
-            this._time = end_time;
-            this.UpdateAmplitude(0);
-            return;
-        }
-        if (this._phase === 0) {
-            this._phase = 1;
-        }
-        for (; this._time < end_time; this._time += this.period) {
-            var new15;
-            if (this.looping) {
-                new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
-            }
-            else {
-                new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
-            }
-            this.UpdateAmplitude(this._phase & 1 * volume);
-            this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
-        }
-    };
-    NoiseChannel.prototype.UpdateAmplitude = function (amp) {
-        var delta = amp * this.gain - this.amplitude;
-        this.amplitude += delta;
-        this._bleeper.blip_add_delta(this._time, delta);
-    };
-    NoiseChannel.prototype.EndFrame = function (time) {
-        this.Run(time);
-        this._time = 0;
-    };
-    NoiseChannel.prototype.FrameClock = function (time, step) {
-        this.Run(time);
-        if (!this._envStart) {
-            this._envTimer--;
-            if (this._envTimer === 0) {
-                this._envTimer = this.volume + 1;
-                if (this._envVolume > 0) {
-                    this._envVolume--;
-                }
-                else {
-                    this._envVolume = this.looping ? 15 : 0;
-                }
-            }
-        }
-        else {
-            this._envStart = false;
-            this._envTimer = this.volume + 1;
-            this._envVolume = 15;
-        }
-        switch (step) {
-            case 1:
-            case 2:
-                if (!this.looping && this.length > 0) {
-                    this.length--;
-                }
-                break;
-        }
-    };
-    return NoiseChannel;
-}());
-exports.NoiseChannel = NoiseChannel;
-
-
-/***/ }),
-/* 9 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3137,607 +3798,6 @@ var ChiChiControlPad = /** @class */ (function () {
     return ChiChiControlPad;
 }());
 exports.ChiChiControlPad = ChiChiControlPad;
-
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiTypes_1 = __webpack_require__(1);
-var ChiChiPPU = /** @class */ (function () {
-    function ChiChiPPU() {
-        this.LastcpuClock = 0;
-        this.greyScale = false;
-        // private members
-        // scanline position
-        this.yPosition = 0;
-        this.xPosition = 0;
-        // current draw location in outbuffer    
-        this.vbufLocation = 0;
-        this.currentAttributeByte = 0;
-        // sprite info
-        this.spriteSize = 0;
-        this.spritesOnThisScanline = 0;
-        this._spriteCopyHasHappened = false;
-        this.spriteZeroHit = false;
-        this.emphasisBits = 0;
-        this.isForegroundPixel = false;
-        this.spriteChanges = false;
-        this.ppuReadBuffer = 0;
-        this._clipSprites = false;
-        this._clipTiles = false;
-        this._tilesAreVisible = false;
-        this._spritesAreVisible = false;
-        this.nameTableMemoryStart = 0;
-        this.backgroundPatternTableIndex = 0;
-        //PPU implementation
-        this._PPUAddress = 0;
-        this._PPUStatus = 0;
-        this._PPUControlByte0 = 0;
-        this._PPUControlByte1 = 0;
-        this._spriteAddress = 0;
-        this.currentXPosition = 0;
-        this.currentYPosition = 0;
-        this._hScroll = 0;
-        this._vScroll = 0;
-        this.lockedHScroll = 0;
-        this.lockedVScroll = 0;
-        //private scanlineNum = 0;
-        //private scanlinePos = 0;
-        this.shouldRender = false;
-        //private NMIHasBeenThrownThisFrame = false;
-        this._frames = 0;
-        this.hitSprite = false;
-        this.PPUAddressLatchIsHigh = true;
-        this.p32 = new Uint32Array(256); // System.Array.init(256, 0, System.Int32);
-        this.isRendering = true;
-        this.frameClock = 0;
-        this.FrameEnded = false;
-        this.frameOn = false;
-        //private framePalette = System.Array.init(256, 0, System.Int32);
-        this.nameTableBits = 0;
-        this.vidRamIsRam = true;
-        this._palette = new Uint8Array(32); // System.Array.init(32, 0, System.Int32);
-        this._openBus = 0;
-        this.sprite0scanline = 0;
-        this.sprite0x = 0;
-        this._maxSpritesPerScanline = 64;
-        this.xNTXor = 0;
-        this.yNTXor = 0;
-        this.spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
-        this.spriteRAM = new Uint8Array(this.spriteRAMBuffer); // System.Array.init(256, 0, System.Int32);
-        this.spritesOnLine = new Array(512); // System.Array.init(512, 0, System.Int32);
-        this.currentTileIndex = 0;
-        this.fetchTile = true;
-        // tile bytes currently latched in ppu
-        this.patternEntry = 0;
-        this.patternEntryByte2 = 0;
-        this.byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
-        this.oddFrame = true;
-        this.initSprites();
-    }
-    Object.defineProperty(ChiChiPPU.prototype, "ChrRomHandler", {
-        get: function () {
-            return this.chrRomHandler;
-        },
-        set: function (value) {
-            this.chrRomHandler = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiPPU.prototype, "NextEventAt", {
-        get: function () {
-            if (this.frameClock < 6820) {
-                return (6820 - this.frameClock) / 3;
-            }
-            else {
-                return (((89345 - this.frameClock) / 341) / 3);
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    ChiChiPPU.prototype.GetPPUStatus = function () {
-        return {
-            status: this._PPUStatus,
-            controlByte0: this._PPUControlByte0,
-            controlByte1: this._PPUControlByte1,
-            nameTableStart: this.nameTableMemoryStart,
-            currentTile: this.currentTileIndex,
-            lockedVScroll: this.lockedVScroll,
-            lockedHScroll: this.lockedHScroll,
-            X: this.currentXPosition,
-            Y: this.currentYPosition
-        };
-    };
-    Object.defineProperty(ChiChiPPU.prototype, "PatternTableIndex", {
-        get: function () {
-            return this.backgroundPatternTableIndex;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiPPU.prototype, "SpritePatternTableIndex", {
-        get: function () {
-            var spritePatternTable = 0;
-            if ((this._PPUControlByte0 & 32) === 32) {
-                spritePatternTable = 4096;
-            }
-            return spritePatternTable;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    ChiChiPPU.prototype.Initialize = function () {
-        this._PPUAddress = 0;
-        this._PPUStatus = 0;
-        this._PPUControlByte0 = 0;
-        this._PPUControlByte1 = 0;
-        this._hScroll = 0;
-        this._vScroll = 0;
-        //this.scanlineNum = 0;
-        //this.scanlinePos = 0;
-        this._spriteAddress = 0;
-        this.initSprites();
-    };
-    ChiChiPPU.prototype.WriteState = function (writer) {
-        throw new Error('Method not implemented.');
-    };
-    ChiChiPPU.prototype.ReadState = function (state) {
-        throw new Error('Method not implemented.');
-    };
-    Object.defineProperty(ChiChiPPU.prototype, "NMIIsThrown", {
-        get: function () {
-            return (this._PPUControlByte0 & 128) === 128;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    ChiChiPPU.prototype.setupVINT = function () {
-        this._PPUStatus = this._PPUStatus | 128;
-        this._frames = this._frames + 1;
-        if (this._PPUControlByte0 & 128) {
-            this.cpu._handleNMI = true;
-        }
-    };
-    ChiChiPPU.prototype.VidRAM_GetNTByte = function (address) {
-        var result = 0;
-        if (address >= 8192 && address < 12288) {
-            result = this.chrRomHandler.GetPPUByte(0, address);
-        }
-        else {
-            result = this.chrRomHandler.GetPPUByte(0, address);
-        }
-        return result;
-    };
-    ChiChiPPU.prototype.SetByte = function (Clock, address, data) {
-        switch (address & 7) {
-            case 0:
-                this._PPUControlByte0 = data;
-                this._openBus = data;
-                this.nameTableBits = this._PPUControlByte0 & 3;
-                this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
-                this.nameTableMemoryStart = this.nameTableBits * 0x400;
-                break;
-            case 1:
-                this.isRendering = (data & 0x18) !== 0;
-                this._PPUControlByte1 = data;
-                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
-                this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
-                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
-                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
-                this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
-                this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
-                this.nameTableMemoryStart = this.nameTableBits * 0x400;
-                break;
-            case 2:
-                this.ppuReadBuffer = data;
-                this._openBus = data;
-                break;
-            case 3:
-                this._spriteAddress = data & 0xFF;
-                this._openBus = this._spriteAddress;
-                break;
-            case 4:
-                this.spriteRAM[this._spriteAddress] = data;
-                this._spriteAddress = (this._spriteAddress + 1) & 255;
-                this.unpackedSprites[this._spriteAddress >> 2].Changed = true;
-                this.spriteChanges = true;
-                break;
-            case 5:
-                if (this.PPUAddressLatchIsHigh) {
-                    this._hScroll = data;
-                    this.lockedHScroll = this._hScroll & 7;
-                    this.PPUAddressLatchIsHigh = false;
-                }
-                else {
-                    this._vScroll = data;
-                    if (data > 240) {
-                        this._vScroll = data - 256;
-                    }
-                    if (!this.frameOn || (this.frameOn && !this.isRendering)) {
-                        this.lockedVScroll = this._vScroll;
-                    }
-                    this.PPUAddressLatchIsHigh = true;
-                    this.UpdatePixelInfo();
-                }
-                break;
-            case 6:
-                if (this.PPUAddressLatchIsHigh) {
-                    this._PPUAddress = (this._PPUAddress & 0xFF) | ((data & 0x3F) << 8);
-                    this.PPUAddressLatchIsHigh = false;
-                }
-                else {
-                    this._PPUAddress = (this._PPUAddress & 0x7F00) | data & 0xFF;
-                    this.PPUAddressLatchIsHigh = true;
-                    this._hScroll = ((this._PPUAddress & 0x1f) << 3);
-                    this._vScroll = (((this._PPUAddress >> 5) & 0x1f) << 3);
-                    this._vScroll |= ((this._PPUAddress >> 12) & 3);
-                    if (this.frameOn) {
-                        this.lockedHScroll = this._hScroll;
-                        this.lockedVScroll = this._vScroll;
-                        this.lockedVScroll = this.lockedVScroll - this.currentYPosition;
-                    }
-                    this.nameTableBits = ((this._PPUAddress >> 10) & 3);
-                    this.nameTableMemoryStart = this.nameTableBits * 0x400;
-                }
-                break;
-            case 7:
-                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
-                    var palAddress = (this._PPUAddress) & 0x1F;
-                    this._palette[palAddress] = data;
-                    if ((this._PPUAddress & 0xFFEF) === 0x3F00) {
-                        this._palette[(palAddress ^ 16) & 0x1F] = data;
-                    }
-                }
-                else {
-                    // if ((this._PPUAddress & 0xF000) === 0x2000) {
-                    //     this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
-                    // }
-                    this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
-                }
-                // if controlbyte0.4, set ppuaddress + 32, else inc
-                if ((this._PPUControlByte0 & 4) === 4) {
-                    this._PPUAddress = (this._PPUAddress + 32);
-                }
-                else {
-                    this._PPUAddress = (this._PPUAddress + 1);
-                }
-                // reset the flag which makex xxx6 set the high byte of address
-                this.PPUAddressLatchIsHigh = true;
-                this._PPUAddress = (this._PPUAddress & 0x3FFF);
-                break;
-        }
-    };
-    ChiChiPPU.prototype.GetByte = function (Clock, address) {
-        switch (address & 7) {
-            case 3:
-            case 0:
-            case 1:
-            case 5:
-            case 6:
-                return this._openBus;
-            case 2:
-                var ret = 0;
-                this.PPUAddressLatchIsHigh = true;
-                ret = (this.ppuReadBuffer & 0x1F) | this._PPUStatus;
-                if ((ret & 0x80) === 0x80) {
-                    this._PPUStatus = this._PPUStatus & ~0x80;
-                }
-                return ret;
-            case 4:
-                return this.spriteRAM[this._spriteAddress];
-            case 7:
-                var tmp = 0;
-                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
-                    tmp = this._palette[this._PPUAddress & 0x1F];
-                    this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress - 4096);
-                }
-                else {
-                    tmp = this.ppuReadBuffer;
-                    if (this._PPUAddress >= 0x2000 && this._PPUAddress <= 0x2FFF) {
-                        this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress);
-                    }
-                    else {
-                        this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress & 0x3FFF);
-                    }
-                }
-                if ((this._PPUControlByte0 & 4) === 4) {
-                    this._PPUAddress = this._PPUAddress + 32;
-                }
-                else {
-                    this._PPUAddress = this._PPUAddress + 1;
-                }
-                this._PPUAddress = (this._PPUAddress & 0x3FFF);
-                return tmp;
-        }
-        return 0;
-    };
-    ChiChiPPU.prototype.copySprites = function (copyFrom) {
-        for (var i = 0; i < 256; ++i) {
-            var spriteLocation = (this._spriteAddress + i) & 255;
-            if (this.spriteRAM[spriteLocation] !== this.cpu.Rams[copyFrom + i]) {
-                this.spriteRAM[spriteLocation] = this.cpu.Rams[copyFrom + i];
-                this.unpackedSprites[(spriteLocation >> 2) & 255].Changed = true;
-            }
-        }
-        this._spriteCopyHasHappened = true;
-        this.spriteChanges = true;
-    };
-    ChiChiPPU.prototype.initSprites = function () {
-        this.currentSprites = new Array(this._maxSpritesPerScanline);
-        for (var i = 0; i < this._maxSpritesPerScanline; ++i) {
-            this.currentSprites[i] = new ChiChiTypes_1.ChiChiSprite();
-        }
-        this.unpackedSprites = new Array(64);
-        for (var i = 0; i < 64; ++i) {
-            this.unpackedSprites[i] = new ChiChiTypes_1.ChiChiSprite();
-        }
-    };
-    ChiChiPPU.prototype.getSpritePixel = function () {
-        this.isForegroundPixel = false;
-        this.spriteZeroHit = false;
-        var result = 0;
-        var yLine = 0;
-        var xPos = 0;
-        var tileIndex = 0;
-        for (var i = 0; i < this.spritesOnThisScanline; ++i) {
-            var currSprite = this.currentSprites[i];
-            if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < currSprite.XPosition + 8) {
-                var spritePatternTable = 0;
-                if ((this._PPUControlByte0 & 8) === 8) {
-                    spritePatternTable = 4096;
-                }
-                xPos = this.currentXPosition - currSprite.XPosition;
-                yLine = this.currentYPosition - currSprite.YPosition - 1;
-                yLine = yLine & (this.spriteSize - 1);
-                tileIndex = currSprite.TileIndex;
-                if ((this._PPUControlByte0 & 32) === 32) {
-                    if ((tileIndex & 1) === 1) {
-                        spritePatternTable = 4096;
-                        tileIndex = tileIndex ^ 1;
-                    }
-                    else {
-                        spritePatternTable = 0;
-                    }
-                }
-                var patternEntry = 0;
-                var patternEntryBit2 = 0;
-                if (currSprite.FlipY) {
-                    yLine = this.spriteSize - yLine - 1;
-                }
-                if (yLine >= 8) {
-                    yLine += 8;
-                }
-                patternEntry = this.chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine);
-                patternEntryBit2 = this.chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine + 8);
-                result = (currSprite.FlipX ? ((patternEntry >> xPos) & 1) | (((patternEntryBit2 >> xPos) << 1) & 2) : ((patternEntry >> 7 - xPos) & 1) | (((patternEntryBit2 >> 7 - xPos) << 1) & 2)) & 255;
-                if (result !== 0) {
-                    if (currSprite.SpriteNumber === 0) {
-                        this.spriteZeroHit = true;
-                    }
-                    this.isForegroundPixel = currSprite.Foreground;
-                    return (result | currSprite.AttributeByte);
-                }
-            }
-        }
-        return 0;
-    };
-    ChiChiPPU.prototype.decodeSpritePixel = function (patternTableIndex, x, y, sprite, tileIndex) {
-        // 8x8 tile
-        var patternEntry = 0;
-        var patternEntryBit2 = 0;
-        if (sprite.v.FlipY) {
-            y = this.spriteSize - y - 1;
-        }
-        if (y >= 8) {
-            y += 8;
-        }
-        var dataAddress = patternTableIndex + (tileIndex << 4) + y;
-        patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock, dataAddress);
-        patternEntryBit2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock, dataAddress + 8);
-        return (sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> 7 - x) & 1) | (((patternEntryBit2 >> 7 - x) << 1) & 2));
-    };
-    ChiChiPPU.prototype.preloadSprites = function (scanline) {
-        this.spritesOnThisScanline = 0;
-        this.sprite0scanline = -1;
-        var yLine = this.currentYPosition - 1;
-        for (var spriteNum = 0; spriteNum < 256; spriteNum += 4) {
-            var spriteID = ((spriteNum + this._spriteAddress) & 0xff) >> 2;
-            var y = this.unpackedSprites[spriteID].YPosition + 1;
-            if (scanline >= y && scanline < y + this.spriteSize) {
-                if (spriteID === 0) {
-                    this.sprite0scanline = scanline;
-                    this.sprite0x = this.unpackedSprites[spriteID].XPosition;
-                }
-                // var spId = spriteNum >> 2;
-                // if (spId < 32) {
-                //     this.outBuffer[(64768) + yLine] |= 1 << spId;
-                // } else {
-                //     this.outBuffer[(65024) + yLine] |= 1 << (spId - 32);
-                // }
-                this.currentSprites[this.spritesOnThisScanline] = this.unpackedSprites[spriteID];
-                this.currentSprites[this.spritesOnThisScanline].IsVisible = true;
-                this.spritesOnThisScanline++;
-                if (this.spritesOnThisScanline === this._maxSpritesPerScanline) {
-                    break;
-                }
-            }
-        }
-        if (this.spritesOnThisScanline > 7) {
-            this._PPUStatus = this._PPUStatus | 32;
-        }
-    };
-    ChiChiPPU.prototype.unpackSprites = function () {
-        for (var currSprite = 0; currSprite < this.unpackedSprites.length; ++currSprite) {
-            if (this.unpackedSprites[currSprite].Changed) {
-                this.unpackSprite(currSprite);
-            }
-        }
-    };
-    ChiChiPPU.prototype.unpackSprite = function (currSprite) {
-        var attrByte = this.spriteRAM[(currSprite << 2) + 2 | 0];
-        this.unpackedSprites[currSprite].IsVisible = true;
-        this.unpackedSprites[currSprite].AttributeByte = ((attrByte & 3) << 2) | 16;
-        this.unpackedSprites[currSprite].YPosition = this.spriteRAM[currSprite * 4];
-        this.unpackedSprites[currSprite].XPosition = this.spriteRAM[currSprite * 4 + 3];
-        this.unpackedSprites[currSprite].SpriteNumber = currSprite;
-        this.unpackedSprites[currSprite].Foreground = (attrByte & 32) !== 32;
-        this.unpackedSprites[currSprite].FlipX = (attrByte & 64) === 64;
-        this.unpackedSprites[currSprite].FlipY = (attrByte & 128) === 128;
-        this.unpackedSprites[currSprite].TileIndex = this.spriteRAM[currSprite * 4 + 1];
-        this.unpackedSprites[currSprite].Changed = false;
-    };
-    ChiChiPPU.prototype.getNameTablePixel = function () {
-        var result = ((this.patternEntry & 128) >> 7) | ((this.patternEntryByte2 & 128) >> 6);
-        this.patternEntry <<= 1;
-        this.patternEntryByte2 <<= 1;
-        if (result > 0) {
-            result |= this.currentAttributeByte;
-        }
-        return result & 255;
-    };
-    ChiChiPPU.prototype.getAttrEntry = function (ppuNameTableMemoryStart, i, j) {
-        var LookUp = this.chrRomHandler.GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
-        switch ((i & 2) | (j & 2) * 2) {
-            case 0:
-                return (LookUp << 2) & 12;
-            case 2:
-                return LookUp & 12;
-            case 4:
-                return (LookUp >> 2) & 12;
-            case 6:
-                return (LookUp >> 4) & 12;
-        }
-        return 0;
-    };
-    ChiChiPPU.prototype.advanceClock = function (ticks) {
-        var ppuTicks = ticks * 3;
-        if (this.frameClock > 89002) {
-            this.frameClock += ppuTicks;
-            if (this.frameClock > 89342) {
-                ppuTicks = this.frameClock - 89342;
-            }
-            else {
-                return;
-            }
-        }
-        while (ppuTicks--) {
-            switch (this.frameClock) {
-                case 0:// start of rendering
-                    this.shouldRender = true;
-                    this.vbufLocation = 0;
-                    this.currentXPosition = 0;
-                    this.currentYPosition = 0;
-                    this.xNTXor = 0;
-                    this.yNTXor = 0;
-                    if ((this._PPUControlByte1 & 0x18) !== 0) {
-                        this.oddFrame = !this.oddFrame;
-                        this.isRendering = true;
-                        if (this.oddFrame)
-                            this.frameClock++;
-                    }
-                    break;
-                case 81840:// ChiChiNES.CPU2A03.frameClockEnd:
-                    this.shouldRender = false;
-                    this.frameFinished();
-                    this.frameOn = false;
-                    break;
-                case 82523:// first tick on scanline after post-render line
-                    this.setupVINT();
-                    break;
-                case 89002:
-                    this._PPUStatus = 0;
-                    this.hitSprite = false;
-                    this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
-                    if (this.spriteChanges) {
-                        this.unpackSprites();
-                        this.spriteChanges = false;
-                    }
-                    this.frameOn = true;
-                    break;
-            }
-            if (this.shouldRender) {
-                if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
-                    /* update x position */
-                    this.xPosition = (this.currentXPosition + this.lockedHScroll);
-                    if ((this.xPosition & 7) === 0) {
-                        this.xNTXor = (this.xPosition & 0x100) ? 0x400 : 0;
-                        this.xPosition &= 0xFF;
-                        /* fetch next tile */
-                        var ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
-                        var xTilePosition = this.xPosition >> 3;
-                        var tileRow = (this.yPosition >> 3) % 30 << 5;
-                        var tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
-                        var tileIndex = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, tileNametablePosition);
-                        var patternTableYOffset = this.yPosition & 7;
-                        var patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
-                        this.patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID);
-                        this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID + 8);
-                        this.currentAttributeByte = this.getAttrEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
-                        /* end fetch next tile */
-                    }
-                    var tilesVis = this._tilesAreVisible;
-                    var spriteVis = this._spritesAreVisible;
-                    if (this.currentXPosition < 8) {
-                        tilesVis = tilesVis && !this._clipTiles;
-                        spriteVis = tilesVis && !this._clipSprites;
-                    }
-                    this.spriteZeroHit = false;
-                    var tilePixel = tilesVis ? this.getNameTablePixel() : 0;
-                    var spritePixel = spriteVis ? this.getSpritePixel() : 0;
-                    if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
-                        this.hitSprite = true;
-                        this._PPUStatus = this._PPUStatus | 64;
-                    }
-                    this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
-                    this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
-                    this.vbufLocation++;
-                }
-                if (this.currentXPosition === 324) {
-                    this.chrRomHandler.updateScanlineCounter();
-                }
-                this.currentXPosition++;
-                if (this.currentXPosition > 340) {
-                    this.currentXPosition = 0;
-                    this.currentYPosition++;
-                    this.preloadSprites(this.currentYPosition);
-                    if (this.spritesOnThisScanline >= 7) {
-                        this._PPUStatus = this._PPUStatus | 32;
-                    }
-                    this.lockedHScroll = this._hScroll;
-                    this.UpdatePixelInfo();
-                    //RunNewScanlineEvents 
-                    this.yPosition = this.currentYPosition + this.lockedVScroll;
-                    if (this.yPosition < 0) {
-                        this.yPosition += 240;
-                    }
-                    if (this.yPosition >= 240) {
-                        this.yPosition -= 240;
-                        this.yNTXor = 2048;
-                    }
-                    else {
-                        this.yNTXor = 0;
-                    }
-                }
-            }
-            this.frameClock++;
-            if (this.frameClock >= 89342) {
-                this.frameClock = 0;
-            }
-        }
-    };
-    ChiChiPPU.prototype.UpdatePixelInfo = function () {
-        this.nameTableMemoryStart = this.nameTableBits * 0x400;
-    };
-    ChiChiPPU.pal = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-    return ChiChiPPU;
-}());
-exports.ChiChiPPU = ChiChiPPU;
 
 
 /***/ })

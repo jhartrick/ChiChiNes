@@ -1,5 +1,5 @@
 import { Blip } from "./CommonAudio";
-import { ChiChiCPPU } from "../ChiChiMachine";
+import { ChiChiCPPU } from "../ChiChiCPU";
 
 export class DMCChannel  {
     time: number;

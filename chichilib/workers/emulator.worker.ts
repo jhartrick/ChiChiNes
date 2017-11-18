@@ -2,6 +2,7 @@
 import {  RunningStatuses } from '../chichi/ChiChiTypes';
 import { ChiChiMachine } from '../chichi/ChiChiMachine';
 import { GeniePatch } from '../chichi/ChiChiCheats';
+import { ChiChiStateManager, ChiChiState } from '../chichi/ChiChiState'; 
 
 class NesInfo {
     bufferupdate = false;
@@ -301,7 +302,7 @@ export class tendoWrapper {
                 const machine = this.machine;
                 const cart = romloader.loader.loadRom(rom, name);
                 cart.installCart(this.machine.Cpu, this.machine.ppu);
-                machine.ppu.ChrRomHandler = machine.Cpu.Cart = cart;
+                machine.ppu.chrRomHandler = machine.Cpu.Cart = cart;
         
                 machine.Cart.NMIHandler = () => { this.machine.Cpu._handleIRQ = true; };
                         
@@ -378,6 +379,15 @@ export class tendoWrapper {
                 break;
             case 'reset':
                 this.reset();
+                break;
+
+            case 'getstate':
+                const state = new ChiChiStateManager().read(this.machine);
+                postMessage( { state: state } );
+                break;
+
+            case 'setstate':
+                new ChiChiStateManager().write(this.machine, <ChiChiState>event.data.state);
                 break;
             default:
                 return;

@@ -1,6 +1,6 @@
 ﻿import * as crc from 'crc';
 
-import { ChiChiCPPU } from '../chichi/ChiChiMachine';
+import { ChiChiCPPU } from '../chichi/ChiChiCpu';
 import { ChiChiPPU } from '../chichi/ChiChiPPU';
 
 import { BaseCart, UnsupportedCart, NameTableMirroring, IBaseCart } from './BaseCart';
@@ -158,7 +158,7 @@ export class iNESFileHandler  {
             _cart.Whizzler = cpu.ppu;
             _cart.CPU = cpu;
             cpu.Cart = _cart;
-            cpu.ppu.ChrRomHandler = _cart;
+            cpu.ppu.chrRomHandler = _cart;
             _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
         }
 

@@ -1,5 +1,5 @@
-import { ChiChiCPPU } from '../chichi/ChiChiMachine';
-import { ChiChiPPU, IChiChiPPU } from '../chichi/ChiChiPPU';
+import { ChiChiCPPU } from '../chichi/ChiChiCPU';
+import { ChiChiPPU, IChiChiPPU, IChiChiPPUState } from '../chichi/ChiChiPPU';
 import { CartridgeInfo } from './CartridgeInfo';
 
 import * as crc from 'crc';
@@ -13,16 +13,42 @@ export enum NameTableMirroring {
     FourScreen = 3
 }
 
-export interface IBaseCart {
+export interface IBaseCartState  {
+
+    irqRaised: boolean;
+    
+    chrRamStart: number;
+    chrRamLength: number;
+
+    iNesHeader: Uint8Array;
+    prgRomBank6: Uint8Array;
+
+    // starting locations of PPU 0x0000-0x3FFF in 1k blocks
+    ppuBankStarts: Uint32Array;
+     
+    // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
+    prgBankStarts: Uint32Array; 
+
+    romControlBytes: Uint8Array;
+
+    nesCart: Uint8Array;
+    chrRom: Uint8Array;
+}
+
+export interface IBaseCart extends IBaseCartState {
+
+    customPalette: number[];
     mapperName: string;
     supported: boolean;
     submapperId: number;
     ROMHashFunction: string;
-
+    usesSRAM: boolean;
     cartInfo: any;
-
     mapsBelow6000: boolean;
-    irqRaised: boolean;
+    prgRomCount: number;
+    chrRomOffset: number;
+    chrRomCount: number;
+    mapperId: number;
 
     advanceClock(clock: number): void;
     Whizzler: IChiChiPPU;
@@ -40,10 +66,14 @@ export interface IBaseCart {
     SetByte(clock: number, address: number, data: number): void;
     GetPPUByte(clock: number, address: number): number;
     SetPPUByte(clock: number, address: number, data: number): void;
+
+    state: IBaseCartState;
+    
 }
 
 export class BaseCart implements IBaseCart {
     cartInfo: any;
+    customPalette: number[];
     
 
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
@@ -487,6 +517,45 @@ export class BaseCart implements IBaseCart {
 
     updateScanlineCounter(): void {
         //throw new Error('Method not implemented.');
+    }
+
+    get state(): IBaseCartState {
+        return {
+                
+            irqRaised: this.irqRaised,
+            
+            chrRamStart: this.chrRamStart,
+            chrRamLength: this.chrRamLength,
+
+            iNesHeader: this.iNesHeader.slice(),
+            prgRomBank6: this.prgRomBank6.slice(),
+
+            // starting locations of PPU 0x0000-0x3FFF in 1k blocks
+            ppuBankStarts: this.ppuBankStarts.slice(),
+            
+            // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
+            prgBankStarts: this.prgBankStarts.slice(),
+
+            romControlBytes: this.romControlBytes.slice(),
+
+            nesCart: this.nesCart.slice(),
+            chrRom: this.chrRom.slice()
+        }
+    }
+
+    set state(value: IBaseCartState) {
+
+        this.irqRaised = value.irqRaised;
+        
+        this.chrRamStart = value.chrRamStart;
+        this.chrRamLength = value.chrRamLength;
+
+        value.prgRomBank6.every((v, i) => { this.prgRomBank6[i] = v; return true; }); 
+        value.ppuBankStarts.every((v, i) => { this.ppuBankStarts[i] = v; return true; }); 
+        value.prgBankStarts.every((v, i) => { this.prgBankStarts[i] = v; return true; }); 
+        value.romControlBytes.every((v, i) => { this.romControlBytes[i] = v; return true; }); 
+        value.nesCart.every((v, i) => { this.nesCart[i] = v; return true; }); 
+        value.chrRom.every((v, i) => { this.chrRom[i] = v; return true; }); 
     }
 
 }

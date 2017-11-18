@@ -1,5 +1,6 @@
-import { ChiChiCPPU, ChiChiMachine } from "./ChiChiMachine";
-import { ChiChiPPU } from "./ChiChiPPU";
+import { ChiChiMachine } from './ChiChiMachine';
+import { ChiChiCPPU } from './ChiChiCPU';
+import { ChiChiPPU } from './ChiChiPPU';
 export declare class ChiChiNsfMachine extends ChiChiMachine {
     Cpu: ChiChiNsfCPPU;
     ppu: ChiChiPPU;

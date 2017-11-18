@@ -1,5 +1,4 @@
 import { Blip } from "./CommonAudio";
-import { ChiChiCPPU } from "../ChiChiMachine";
 
 export class TriangleChannel {
     private _bleeper: Blip;

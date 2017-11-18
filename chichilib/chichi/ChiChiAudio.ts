@@ -6,37 +6,29 @@ import { NoiseChannel } from './Audio/NoiseChannel';
 
 import { Blip, WavSharer } from './Audio/CommonAudio';
 
-export interface IChiChiAPU {
-    writer: WavSharer;
+export interface IChiChiAPUState {
     audioSettings: AudioSettings;
-    // lastClock: number;
-    // throwingIRQs: boolean;
-    // reg15: number;
-    // currentClock: number;
-    // frameClocker: number;
 
     sampleRate: number;
     interruptRaised: boolean;
-
-    irqHandler(): void;
-
     enableSquare0: boolean;
     enableSquare1: boolean;
     enableTriangle: boolean;
     enableNoise: boolean;
+}
 
-    // NMIHandler: () => void;
-    // IRQAsserted: boolean;
-    // NextEventAt: number;
+export interface IChiChiAPU extends IChiChiAPUState {
+    writer: WavSharer;
+    
+    irqHandler(): void;
 
     GetByte(clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;
 
     rebuildSound(): void;
     advanceClock(ticks: number): void;
-    // updateFrame(time: number): void;
-    // runFrameEvents(time: number, step: number): void;
-    // endFrame(time: number): void;
+
+    state: IChiChiAPUState;
 }
 
 export class ChiChiAPU implements IChiChiAPU {
@@ -280,6 +272,28 @@ export class ChiChiAPU implements IChiChiAPU {
 
         this.currentClock = 0;
         
+    }
+
+    get state(): IChiChiAPUState {
+        return {
+            audioSettings: this.audioSettings,
+            sampleRate: this.sampleRate,
+            interruptRaised: this.interruptRaised,
+            enableSquare0: this.enableSquare0,
+            enableSquare1: this.enableSquare1,
+            enableTriangle: this.enableTriangle,
+            enableNoise: this.enableNoise
+        };
+    }
+
+    set state(value: IChiChiAPUState) {
+        this.audioSettings = value.audioSettings;
+        this.sampleRate = value.sampleRate;
+        this.interruptRaised = value.interruptRaised;
+        this.enableSquare0 = value.enableSquare0;
+        this.enableSquare1 = value.enableSquare1;
+        this.enableTriangle = value.enableTriangle;
+        this.enableNoise = value.enableNoise;
     }
 
 }

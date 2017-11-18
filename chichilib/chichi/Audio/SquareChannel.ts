@@ -1,5 +1,4 @@
 import { Blip } from "./CommonAudio";
-import { ChiChiCPPU } from "../ChiChiMachine";
 
 export class SquareChannel {
     private _chan = 0;

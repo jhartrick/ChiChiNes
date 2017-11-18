@@ -1,21 +1,31 @@
 import { BaseCart, IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
-import { ChiChiCPPU } from "./ChiChiMachine";
+import { ChiChiCPPU } from "./ChiChiCPU";
 import { ChiChiAPU } from "./ChiChiAudio";
 
-export interface IChiChiPPU {
-    LastcpuClock: number;
-    NMIHandler: () => void;
-    frameFinished: () => void;
-    cpu: ChiChiCPPU;
+export interface IChiChiPPUState {
     greyScale: boolean;
-    chrRomHandler: IBaseCart;
-    unpackedSprites: ChiChiSprite[];
     emphasisBits: number;
     backgroundPatternTableIndex: number;
+    SpritePatternTableIndex: number;
     spriteRAM: Uint8Array;
     byteOutBuffer: Uint8Array;
-    ChrRomHandler: IBaseCart;
+    _PPUControlByte0: number;
+    _PPUControlByte1: number;
+
+}
+
+export interface IChiChiPPU extends IChiChiPPUState {
+    LastcpuClock: number;
+    
+    cpu: ChiChiCPPU;
+    
+    chrRomHandler: IBaseCart;
+    unpackedSprites: ChiChiSprite[];
+
+
+    NMIHandler: () => void;
+    frameFinished: () => void;
 
     GetPPUStatus(): PpuStatus;
 
@@ -32,6 +42,8 @@ export interface IChiChiPPU {
     GetByte(Clock: number, address: number): number;
     copySprites(copyFrom: number): void;
     advanceClock(ticks: number): void;
+
+    state: IChiChiPPUState;
 }
 
 export class ChiChiPPU implements IChiChiPPU {
@@ -90,8 +102,6 @@ export class ChiChiPPU implements IChiChiPPU {
     private _PPUStatus: number = 0;
     _PPUControlByte0: number = 0; _PPUControlByte1: number = 0;
     private _spriteAddress: number = 0;
-
-
     private currentXPosition = 0;
     private currentYPosition = 0;
     private _hScroll = 0;
@@ -729,6 +739,30 @@ export class ChiChiPPU implements IChiChiPPU {
 
     UpdatePixelInfo(): void {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;
+    }
+
+    get state(): IChiChiPPUState {
+        return {
+            SpritePatternTableIndex: this.SpritePatternTableIndex,
+            greyScale:  this.greyScale,
+            emphasisBits:  this.emphasisBits,
+            backgroundPatternTableIndex: this.backgroundPatternTableIndex,
+            _PPUControlByte0:  this._PPUControlByte0,
+            _PPUControlByte1:  this._PPUControlByte1,
+            spriteRAM:  this.spriteRAM.slice(),
+            byteOutBuffer:  this.byteOutBuffer.slice(),
+        };
+    }
+
+    set state(value: IChiChiPPUState) {
+        this.greyScale = value.greyScale;
+        this.emphasisBits = value.emphasisBits;
+        this.backgroundPatternTableIndex = value.backgroundPatternTableIndex;
+        this._PPUControlByte0 = value._PPUControlByte0;
+        this._PPUControlByte1  = value._PPUControlByte1;
+
+        value.spriteRAM.map((v, i) => { return this.spriteRAM[i] = v; }); 
+        value.byteOutBuffer.map((v, i) => { return this.byteOutBuffer[i] = v; }); 
     }
 
 } 
