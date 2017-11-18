@@ -36,7 +36,8 @@ export class ChiChiPPU {
     private _spriteCopyHasHappened: boolean = false;
     private spriteZeroHit: boolean = false;
     unpackedSprites: ChiChiSprite[];
-
+    emphasisBits = 0;
+    
     private isForegroundPixel: boolean = false;
 
     private spriteChanges: boolean = false;
@@ -238,7 +239,7 @@ export class ChiChiPPU {
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
                 this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
-
+                this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
                 this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
                 this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
                 this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
@@ -677,12 +678,8 @@ export class ChiChiPPU {
                     }
 
 
-                    //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
-                    //var x = 
                     this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
-                    //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
-                    //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
-                    //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
+                    this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
                     this.vbufLocation++;
                 }
                 if (this.currentXPosition === 324) {

@@ -60,8 +60,8 @@ export class VRCIrqBase extends BaseCart {
         this.irqEnable = (val & 0x2) == 0x2;
         this.irqMode = (val & 0x4) == 0x4;
         if (this.irqEnable ) {
-            this.prescaler = 341;
-            this.irqCounter = this.irqLatch; 
+            // this.prescaler = 341;
+            // this.irqCounter = this.irqLatch; 
         }
     }
 

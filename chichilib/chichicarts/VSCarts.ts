@@ -9,12 +9,9 @@ export class VSCart extends BaseCart {
         reg16 = 0;
         bankSelect = 0;
         InitializeCart() {
-            this.usesSRAM = true;
+            // this.usesSRAM = true;
             this.mapperName = 'VS Unisystem';
             this.mapsBelow6000 = true;
-            if (this.chrRomCount > 0) {
-                this.copyBanks(0, 0, 0, 2);
-            }
             this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
             this.mirror(0,3);
         }

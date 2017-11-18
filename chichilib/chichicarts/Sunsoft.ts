@@ -4,9 +4,9 @@ export class Mapper093Cart extends BaseCart {
     InitializeCart(): void {
         this.usesSRAM = true;
         this.mapperName = 'Sunsoft-2';
-        if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 1);
-        }
+        // if (this.chrRomCount > 0) {
+        //     this.copyBanks(0, 0, 0, 1);
+        // }
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     }
 
@@ -27,9 +27,9 @@ export class Mapper089Cart extends BaseCart {
     InitializeCart(): void {
         
         this.mapperName = 'Sunsoft-2 on 3';
-        if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 1);
-        }
+        // if (this.chrRomCount > 0) {
+        //     this.copyBanks(0, 0, 0, 1);
+        // }
         
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     }
@@ -61,8 +61,8 @@ export class Mapper184Cart extends BaseCart {
         this.mapperName = 'Sunsoft-1';
 
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.copyBanks4k(0, 0, 0, 1);
-        this.copyBanks4k(0, 3, 1, 1);
+        // this.copyBanks4k(0, 0, 0, 1);
+        // this.copyBanks4k(0, 3, 1, 1);
 
     }
 

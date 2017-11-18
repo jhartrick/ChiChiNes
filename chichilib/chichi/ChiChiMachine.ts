@@ -1417,7 +1417,10 @@ import { WavSharer } from './Audio/CommonAudio';
                             break;
                         case 16404:
                             this.ppu.copySprites(data * 256);
-                            this._currentInstruction_ExtraTiming = this._currentInstruction_ExtraTiming + 512;
+                            this._currentInstruction_ExtraTiming = this._currentInstruction_ExtraTiming + 513;
+                            if (this.clock & 1) {
+                                this._currentInstruction_ExtraTiming++;
+                            }
                             break;
                         case 16406:
                             this._padOne.SetByte(this.clock, address, data & 1);

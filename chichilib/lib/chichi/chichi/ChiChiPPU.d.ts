@@ -20,6 +20,7 @@ export declare class ChiChiPPU {
     private _spriteCopyHasHappened;
     private spriteZeroHit;
     unpackedSprites: ChiChiSprite[];
+    emphasisBits: number;
     private isForegroundPixel;
     private spriteChanges;
     private ppuReadBuffer;

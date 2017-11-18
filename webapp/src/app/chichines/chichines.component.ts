@@ -170,6 +170,7 @@ void main()	{
   vec2 texCoord = vec2(v_texCoord.s, 1.0 - v_texCoord.t);
   vec4 color = texture2D(myTexture, texCoord);
   vec4 finalColor = texture2D(myPalette,vec2(color.r,0.5));
+  
   gl_FragColor = vec4(finalColor.rgb, 1.0);
 }
 `

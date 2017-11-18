@@ -2428,8 +2428,8 @@ var VRCIrqBase = /** @class */ (function (_super) {
             this.irqEnable = (val & 0x2) == 0x2;
             this.irqMode = (val & 0x4) == 0x4;
             if (this.irqEnable) {
-                this.prescaler = 341;
-                this.irqCounter = this.irqLatch;
+                // this.prescaler = 341;
+                // this.irqCounter = this.irqLatch; 
             }
         },
         enumerable: true,
@@ -5473,12 +5473,9 @@ var VSCart = /** @class */ (function (_super) {
         return _this;
     }
     VSCart.prototype.InitializeCart = function () {
-        this.usesSRAM = true;
+        // this.usesSRAM = true;
         this.mapperName = 'VS Unisystem';
         this.mapsBelow6000 = true;
-        if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 2);
-        }
         this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
         this.mirror(0, 3);
     };
@@ -5844,9 +5841,9 @@ var Mapper093Cart = /** @class */ (function (_super) {
     Mapper093Cart.prototype.InitializeCart = function () {
         this.usesSRAM = true;
         this.mapperName = 'Sunsoft-2';
-        if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 1);
-        }
+        // if (this.chrRomCount > 0) {
+        //     this.copyBanks(0, 0, 0, 1);
+        // }
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     };
     Mapper093Cart.prototype.SetByte = function (clock, address, val) {
@@ -5865,9 +5862,9 @@ var Mapper089Cart = /** @class */ (function (_super) {
     }
     Mapper089Cart.prototype.InitializeCart = function () {
         this.mapperName = 'Sunsoft-2 on 3';
-        if (this.chrRomCount > 0) {
-            this.copyBanks(0, 0, 0, 1);
-        }
+        // if (this.chrRomCount > 0) {
+        //     this.copyBanks(0, 0, 0, 1);
+        // }
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     };
     Mapper089Cart.prototype.SetByte = function (clock, address, val) {
@@ -5894,8 +5891,8 @@ var Mapper184Cart = /** @class */ (function (_super) {
         this.usesSRAM = false;
         this.mapperName = 'Sunsoft-1';
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.copyBanks4k(0, 0, 0, 1);
-        this.copyBanks4k(0, 3, 1, 1);
+        // this.copyBanks4k(0, 0, 0, 1);
+        // this.copyBanks4k(0, 3, 1, 1);
     };
     Mapper184Cart.prototype.SetByte = function (clock, address, val) {
         if (address >= 0x6000 && address <= 0x7FFF) {

@@ -2199,7 +2199,10 @@ var ChiChiCPPU = /** @class */ (function () {
                         break;
                     case 16404:
                         this.ppu.copySprites(data * 256);
-                        this._currentInstruction_ExtraTiming = this._currentInstruction_ExtraTiming + 512;
+                        this._currentInstruction_ExtraTiming = this._currentInstruction_ExtraTiming + 513;
+                        if (this.clock & 1) {
+                            this._currentInstruction_ExtraTiming++;
+                        }
                         break;
                     case 16406:
                         this._padOne.SetByte(this.clock, address, data & 1);
@@ -3163,6 +3166,7 @@ var ChiChiPPU = /** @class */ (function () {
         this.spritesOnThisScanline = 0;
         this._spriteCopyHasHappened = false;
         this.spriteZeroHit = false;
+        this.emphasisBits = 0;
         this.isForegroundPixel = false;
         this.spriteChanges = false;
         this.ppuReadBuffer = 0;
@@ -3352,6 +3356,7 @@ var ChiChiPPU = /** @class */ (function () {
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
                 this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
+                this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
                 this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
                 this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
                 this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
@@ -3718,12 +3723,8 @@ var ChiChiPPU = /** @class */ (function () {
                         this.hitSprite = true;
                         this._PPUStatus = this._PPUStatus | 64;
                     }
-                    //var x = pal[_palette[(foregroundPixel || (tilePixel == 0 && spritePixel != 0)) ? spritePixel : tilePixel]];
-                    //var x = 
                     this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
-                    //byteOutBuffer[(vbufLocation * 4) + 1] = x;// (byte)(x >> 8);
-                    //byteOutBuffer[(vbufLocation * 4) + 2] = x;//  (byte)(x >> 16);
-                    //byteOutBuffer[(vbufLocation * 4) + 3] = 0xFF;// (byte)(x);// (byte)rgb32OutBuffer[vbufLocation];
+                    this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
                     this.vbufLocation++;
                 }
                 if (this.currentXPosition === 324) {
