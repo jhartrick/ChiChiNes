@@ -93,6 +93,7 @@ export class DMCChannel  {
                         }
                         this.shiftreg >>= 1;
                         this.pos = (this.pcmdata - 0x40) * 3;
+                        this._bleeper.blip_add_delta(this.time, this.pcmdata);
                     }
                     if (!--this.outbits)
                     {
@@ -141,17 +142,13 @@ export class DMCChannel  {
         }
     }
 
-    UpdateAmplitude(new_amp: number): void {
-
-    }
-
     EndFrame(time: number): void {
-
+        this.Run(time);
         
     }
 
     FrameClock(time: number, step: number): void {
-  
+        this.Run(time);
     }
 
 

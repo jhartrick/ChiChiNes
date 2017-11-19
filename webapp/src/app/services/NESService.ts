@@ -7,24 +7,10 @@ import { Http } from '@angular/http';
 import * as crc from 'crc';
 import { WishboneWorker } from './wishbone/wishbone.worker';
 import { IBaseCart } from 'chichi';
+import { ChiChiThreeJSAudio, ThreeJSAudioSettings } from './wishbone/wishbone.audio.threejs';
+import { IBaseCartState } from '../../../../chichilib/lib/chichi/chichicarts/BaseCart';
+import { ICartSettings } from './ICartSettings';
 
-class NesInfo {
-    stateupdate = true;
-    runStatus: any = {};
-    cartInfo: any = {};
-    sound: any = {};
-    debug: any = {
-        currentCpuStatus: {
-            PC: 0,
-            A: 0,
-            X: 0,
-            Y: 0,
-            SP: 0,
-            SR: 0
-        },
-        currentPPUStatus: {}
-    };
-}
 
 export enum RunStatus {
     Off,
@@ -34,48 +20,85 @@ export enum RunStatus {
     Stepping
 }
 
-
 export class EmuState {
     constructor(public romLoaded: string, public powerState: boolean, public paused: boolean, public debugging: boolean) {
     }
 }
 
-
-
 @Injectable()
 export class Emulator {
-    public wishbone;
+    wishbone : WishboneMachine;
+    audioSettings: ThreeJSAudioSettings;
+    cartSettings: ICartSettings;
+    
+    cartChanged = new EventEmitter<ICartSettings>(true);
 
-    initNes: any;
-
-    private callback: () => void;
-
-    public DebugUpdateEvent: EventEmitter<any> = new EventEmitter<any>();
+    worker: WishboneWorker;
+    
+    private audioHandler: ChiChiThreeJSAudio;
+    
+    public onDebug: EventEmitter<any> = new EventEmitter<any>();
 
     constructor() {
-        console.log("making wishbone")
         this.wishbone = new WishboneMachine();
         this.worker = new WishboneWorker(this.wishbone);
-
-        
+        this.audioHandler = new ChiChiThreeJSAudio(this.wishbone.WaveForms);
+        this.audioSettings = this.audioHandler.getSound();
     }
 
+    saveState(){
+        const r = this.wishbone.Cart.realCart ;
+        if (r)
+        {
+            let obs = this.worker.nesMessageData.filter((d)=>d.state ? true: false).subscribe((d) => {
+                localStorage.setItem(this.cartSettings.crc + '_state', JSON.stringify(d.state));
+                obs.unsubscribe();
+            });
+
+            this.worker.postNesMessage({ command: 'getstate' })
+        }
+    }
+
+    restoreState() {
+        const r = this.wishbone.Cart.realCart ;
+        if (r)
+        {
+            let item = localStorage.getItem(this.cartSettings.crc + '_state');
+            if (item) {
+                this.worker.postNesMessage({ command: 'setstate', state: JSON.parse(item) })
+            }
+
+        }
+        
+    }
 
     setupCart(cart: BaseCart, rom: number[]) {
 
         this.worker.start((threadHandler)=>{
             this.wishbone.nesInterop = threadHandler.nesInterop;
-            this.wishbone.insertCart(cart);
-            
+
             threadHandler.postNesMessage({ 
                 command: 'create',
-                vbuffer: this.wishbone.ppu.byteOutBuffer,
-                abuffer: this.wishbone.WaveForms.SharedBuffer,
+                vbuffer: this.vbuffer,
+                abuffer: this.audioSettings.abuffer,
                 audioSettings: this.wishbone.SoundBopper.cloneSettings(),
                 iops: this.wishbone.nesInterop
             });
 
             threadHandler.postNesMessage({ command: 'loadrom', rom: rom, name: cart.CartName });
+            
+            this.wishbone.insertCart(cart);
+            this.cartSettings = {
+                name: cart.CartName,
+                mapperName: cart.mapperName,
+                mapperId: cart.mapperId,
+                submapperId: cart.submapperId,
+                crc: cart.ROMHashFunction,
+                prgRomCount: cart.prgRomCount,
+                chrRomCount: cart.chrRomCount
+            }
+
+            this.cartChanged.emit(this.cartSettings);
         });
     }
 
@@ -83,23 +106,15 @@ export class Emulator {
         return false;
     }
 
-    vbuffer: Uint8Array;
+    private vbuffer: Uint8Array = new Uint8Array(<any>new SharedArrayBuffer(256 * 256 * 4));
 
-    SetVideoBuffer(array: Uint8Array): void {
-        // this.vbuffer = array;
-        this.wishbone.ppu.byteOutBuffer = array;
-        // this.machine.PPU.ByteOutBuffer = array;
-    }
-
-    abuffer: Float32Array;
-    SetAudioBuffer(array: Float32Array): void {
-        this.wishbone.WaveForms.SharedBuffer = array;
+    get videoBuffer(): Uint8Array {
+        return this.vbuffer;
     }
 
     SetDebugCallbackFunction(callback: () => void) {
     }
 
 
-    worker: WishboneWorker;
-
+ 
 }

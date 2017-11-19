@@ -854,7 +854,7 @@ var ChiChiMachine = /** @class */ (function () {
         this.ppu.cpu = this.Cpu;
         this.ppu.NMIHandler = function () { _this.Cpu.nmiHandler(); };
         this.SoundBopper.irqHandler = function () { _this.Cpu.irqUpdater(); };
-        this.ppu.frameFinished = function () { _this.FrameFinished(); };
+        this.ppu.frameFinished = function () { _this.frameFinished(); };
     }
     ChiChiMachine.prototype.Drawscreen = function () {
     };
@@ -930,14 +930,9 @@ var ChiChiMachine = /** @class */ (function () {
     ChiChiMachine.prototype.RunFrame = function () {
         this.frameOn = true;
         this.frameJustEnded = false;
-        //_cpu.RunFrame();
         do {
             this.Cpu.Step();
         } while (this.frameOn);
-        this.totalCPUClocks = this.Cpu.Clock;
-        // this.SoundBopper.flushFrame(this.totalCPUClocks);
-        // this.SoundBopper.endFrame(this.totalCPUClocks);
-        //this.SoundBopper.writer.ReadWaves();
         this.totalCPUClocks = 0;
         this.Cpu.Clock = 0;
         this.ppu.LastcpuClock = 0;
@@ -948,32 +943,7 @@ var ChiChiMachine = /** @class */ (function () {
     };
     ChiChiMachine.prototype.LoadNSF = function (rom) {
     };
-    ChiChiMachine.prototype.LoadCart = function (rom) {
-        this.EjectCart();
-        // var cart = iNESFileHandler.LoadROM(this.Cpu, rom);
-        // if (cart != null) {
-        //     this.Cpu.cheating = false;
-        //     this.Cpu.genieCodes = new Array<GeniePatch>();
-        //     this.Cpu.Cart = cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
-        //     this.Cart.NMIHandler = () => { this.Cpu.InterruptRequest() };
-        //     this.ppu.ChrRomHandler = this.Cart;
-        // } else {
-        //     throw new Error("Unsupported ROM type - load failed.");
-        // }
-    };
-    ChiChiMachine.prototype.HasState = function (index) {
-        throw new Error("Method not implemented.");
-    };
-    ChiChiMachine.prototype.GetState = function (index) {
-        throw new Error("Method not implemented.");
-    };
-    ChiChiMachine.prototype.SetState = function (index) {
-        throw new Error("Method not implemented.");
-    };
-    ChiChiMachine.prototype.SetupSound = function () {
-        throw new Error("Method not implemented.");
-    };
-    ChiChiMachine.prototype.FrameFinished = function () {
+    ChiChiMachine.prototype.frameFinished = function () {
         this.frameJustEnded = true;
         this.frameOn = false;
         this.Drawscreen();
@@ -1214,6 +1184,7 @@ var ChiChiAPU = /** @class */ (function () {
         this.noise.FrameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
+        // this.dmc.FrameClock(time, step)
     };
     ChiChiAPU.prototype.endFrame = function (time) {
         this.square0.endFrame(time);
@@ -1342,6 +1313,7 @@ var DMCChannel = /** @class */ (function () {
                         }
                         this.shiftreg >>= 1;
                         this.pos = (this.pcmdata - 0x40) * 3;
+                        this._bleeper.blip_add_delta(this.time, this.pcmdata);
                     }
                     if (!--this.outbits) {
                         this.outbits = 8;
@@ -1380,11 +1352,11 @@ var DMCChannel = /** @class */ (function () {
             }
         }
     };
-    DMCChannel.prototype.UpdateAmplitude = function (new_amp) {
-    };
     DMCChannel.prototype.EndFrame = function (time) {
+        this.Run(time);
     };
     DMCChannel.prototype.FrameClock = function (time, step) {
+        this.Run(time);
     };
     return DMCChannel;
 }());
@@ -1612,10 +1584,10 @@ var TriangleChannel = /** @class */ (function () {
         this.enabled = false;
         this.amplitude = 0;
         this.gain = 0;
-        this._linCtr = 0;
+        this.linCtr = 0;
         this._phase = 0;
         this._linVal = 0;
-        this._linStart = false;
+        this.linStart = false;
         this._bleeper = bleeper;
         this._chan = chan;
         this.enabled = true;
@@ -1640,7 +1612,7 @@ var TriangleChannel = /** @class */ (function () {
                 if (this.enabled) {
                     this.length = this.lengthCounts[(data >> 3) & 0x1f];
                 }
-                this._linStart = true;
+                this.linStart = true;
                 break;
             case 4:
                 this.enabled = (data !== 0);
@@ -1652,7 +1624,7 @@ var TriangleChannel = /** @class */ (function () {
     };
     TriangleChannel.prototype.run = function (end_time) {
         var period = this.period + 1;
-        if (this._linCtr === 0 || this.length === 0 || this.period < 4) {
+        if (this.linCtr === 0 || this.length === 0 || this.period < 4) {
             // leave it at it's current phase
             this.time = end_time;
             return;
@@ -1672,16 +1644,16 @@ var TriangleChannel = /** @class */ (function () {
     };
     TriangleChannel.prototype.frameClock = function (time, step) {
         this.run(time);
-        if (this._linStart) {
-            this._linCtr = this._linVal;
+        if (this.linStart) {
+            this.linCtr = this._linVal;
         }
         else {
-            if (this._linCtr > 0) {
-                this._linCtr--;
+            if (this.linCtr > 0) {
+                this.linCtr--;
             }
         }
         if (!this.looping) {
-            this._linStart = false;
+            this.linStart = false;
         }
         switch (step) {
             case 1:
@@ -2323,8 +2295,6 @@ var ChiChiPPU = /** @class */ (function () {
                     if ((this._PPUControlByte1 & 0x18) !== 0) {
                         this.oddFrame = !this.oddFrame;
                         this.isRendering = true;
-                        if (this.oddFrame)
-                            this.frameClock++;
                     }
                     break;
                 case 81840:// ChiChiNES.CPU2A03.frameClockEnd:
@@ -2344,6 +2314,8 @@ var ChiChiPPU = /** @class */ (function () {
                         this.spriteChanges = false;
                     }
                     this.frameOn = true;
+                    if (this.oddFrame)
+                        this.frameClock++;
                     break;
             }
             if (this.shouldRender) {
@@ -2422,25 +2394,43 @@ var ChiChiPPU = /** @class */ (function () {
     Object.defineProperty(ChiChiPPU.prototype, "state", {
         get: function () {
             return {
-                SpritePatternTableIndex: this.SpritePatternTableIndex,
-                greyScale: this.greyScale,
-                emphasisBits: this.emphasisBits,
-                backgroundPatternTableIndex: this.backgroundPatternTableIndex,
                 _PPUControlByte0: this._PPUControlByte0,
                 _PPUControlByte1: this._PPUControlByte1,
-                spriteRAM: this.spriteRAM.slice(),
-                byteOutBuffer: this.byteOutBuffer.slice(),
+                _PPUAddress: this._PPUAddress,
+                _PPUStatus: this._PPUStatus,
+                _spriteAddress: this._spriteAddress,
+                currentXPosition: this.currentXPosition,
+                currentYPosition: this.currentYPosition,
+                _hScroll: this._hScroll,
+                _vScroll: this._vScroll,
+                lockedHScroll: this.lockedHScroll,
+                lockedVScroll: this.lockedVScroll,
+                spriteRAM: this.spriteRAM.slice()
             };
         },
         set: function (value) {
-            var _this = this;
-            this.greyScale = value.greyScale;
-            this.emphasisBits = value.emphasisBits;
-            this.backgroundPatternTableIndex = value.backgroundPatternTableIndex;
             this._PPUControlByte0 = value._PPUControlByte0;
             this._PPUControlByte1 = value._PPUControlByte1;
-            value.spriteRAM.map(function (v, i) { return _this.spriteRAM[i] = v; });
-            value.byteOutBuffer.map(function (v, i) { return _this.byteOutBuffer[i] = v; });
+            this._PPUAddress = value._PPUAddress;
+            this._PPUStatus = value._PPUStatus;
+            this._spriteAddress = value._spriteAddress;
+            this.currentXPosition = value.currentXPosition;
+            this.currentYPosition = value.currentYPosition;
+            this._hScroll = value._hScroll;
+            this._vScroll = value._vScroll;
+            this.lockedHScroll = value.lockedHScroll;
+            this.lockedVScroll = value.lockedVScroll;
+            for (var i = 0; i < this.spriteRAM.length; ++i) {
+                this.spriteRAM[i] = value.spriteRAM[i];
+            }
+            this.nameTableBits = this._PPUControlByte0 & 3;
+            this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
+            this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
+            this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
+            this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
+            this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
+            this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
+            this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
         },
         enumerable: true,
         configurable: true
@@ -2611,10 +2601,8 @@ var ChiChiCPPU = /** @class */ (function () {
             return this.clock;
         },
         set: function (value) {
+            this.advanceClock(value);
             this.clock = value;
-            if (value === 0) {
-                this.systemClock = (this.systemClock + this.clock) & 0xFFFFFFFFFF;
-            }
         },
         enumerable: true,
         configurable: true
@@ -2655,11 +2643,6 @@ var ChiChiCPPU = /** @class */ (function () {
         var jumpTo = lowByte | (highByte << 8);
         this._programCounter = jumpTo;
         //nonOpCodeticks = 7;
-    };
-    ChiChiCPPU.prototype.RunFast = function () {
-        while (this.clock < 29780) {
-            this.Step();
-        }
     };
     ChiChiCPPU.prototype.Step = function () {
         //let tickCount = 0;
@@ -3774,7 +3757,6 @@ var ChiChiCPPU = /** @class */ (function () {
             };
         },
         set: function (value) {
-            var _this = this;
             this.clock = value.clock,
                 this._statusRegister = value._statusRegister,
                 this._programCounter = value._programCounter,
@@ -3797,7 +3779,9 @@ var ChiChiCPPU = /** @class */ (function () {
                 this.Debugging = value.Debugging,
                 this.cheating = value.cheating,
                 this.genieCodes = value.genieCodes;
-            value.Rams.every(function (v, i) { _this.Rams[i] = v; return true; });
+            for (var i = 0; i < this.Rams.length; ++i) {
+                this.Rams[i] = value.Rams[i];
+            }
         },
         enumerable: true,
         configurable: true

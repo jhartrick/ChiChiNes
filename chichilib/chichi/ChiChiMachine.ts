@@ -23,7 +23,7 @@ export class ChiChiMachine {
         this.ppu.cpu = this.Cpu;
         this.ppu.NMIHandler = () => {  this.Cpu.nmiHandler(); }
         this.SoundBopper.irqHandler = () => { this.Cpu.irqUpdater(); };
-        this.ppu.frameFinished = () => { this.FrameFinished(); };
+        this.ppu.frameFinished = () => { this.frameFinished(); };
     }
 
 
@@ -64,10 +64,6 @@ export class ChiChiMachine {
     get PadTwo(): ChiChiControlPad {
         return this.Cpu.PadTwo.ControlPad;
     }
-
-    SRAMReader: (RomID: string) => any;
-
-    SRAMWriter: (RomID: string, SRAM: any) => void;
 
     Reset(): void {
         if (this.Cpu  && this.Cart && this.Cart.supported) {
@@ -116,68 +112,26 @@ export class ChiChiMachine {
         this.frameOn = true;
         this.frameJustEnded = false;
 
-        //_cpu.RunFrame();
         do {
             this.Cpu.Step();
         } while (this.frameOn);
 
-        this.totalCPUClocks = this.Cpu.Clock;
-
-        // this.SoundBopper.flushFrame(this.totalCPUClocks);
-        // this.SoundBopper.endFrame(this.totalCPUClocks);
-        //this.SoundBopper.writer.ReadWaves();
-
         this.totalCPUClocks = 0;
         this.Cpu.Clock = 0;
+        
         this.ppu.LastcpuClock = 0;
     }
 
     EjectCart(): void {
         this.Cpu.Cart = null;
         this.ppu.chrRomHandler = null;
-
     }
 
     LoadNSF(rom: any) {
-
     }
 
 
-
-    LoadCart(rom: any): void {
-        this.EjectCart();
-        // var cart = iNESFileHandler.LoadROM(this.Cpu, rom);
-        // if (cart != null) {
-        //     this.Cpu.cheating = false;
-        //     this.Cpu.genieCodes = new Array<GeniePatch>();
-        //     this.Cpu.Cart = cart;// Bridge.cast(this.Cart, ChiChiNES.IClockedMemoryMappedIOElement);
-        //     this.Cart.NMIHandler = () => { this.Cpu.InterruptRequest() };
-        //     this.ppu.ChrRomHandler = this.Cart;
-
-
-
-        // } else {
-        //     throw new Error("Unsupported ROM type - load failed.");
-        // }
-    }
-
-    HasState(index: number): boolean {
-        throw new Error("Method not implemented.");
-    }
-
-    GetState(index: number): void {
-        throw new Error("Method not implemented.");
-    }
-
-    SetState(index: number): void {
-        throw new Error("Method not implemented.");
-    }
-
-    SetupSound(): void {
-        throw new Error("Method not implemented.");
-    }
-
-    FrameFinished(): void {
+    frameFinished(): void {
         this.frameJustEnded = true;
         this.frameOn = false;
         this.Drawscreen();

@@ -23,21 +23,18 @@ export class ThreeJSAudioSettings implements LocalAudioSettings {
 		this._lastVol = this._muted ? this.gainNode.gain.value : 1;
 		this.gainNode.gain.value = this._muted ? 0: this._lastVol;
 	}
+
+	abuffer: Float32Array;
 }
 
 export class ChiChiThreeJSAudio {
 
-	private wavForms: WavSharer;
-
-
-
-    constructor(wishbopper: WavSharer) {
-        this.wavForms = wishbopper;
+    constructor(private wavSharer: WavSharer) {
 	}
 
-	getSound(): ThreeJSAudioSettings {
+	getSound(options? : any): ThreeJSAudioSettings {
 		const bufferBlockSize = 4096;
-		const bufferBlockCountBits = 	2;
+		const bufferBlockCountBits = 2;
 		const chunkSize = 512;
 		const bufferSize: number = bufferBlockSize << bufferBlockCountBits;
 
@@ -64,7 +61,7 @@ export class ChiChiThreeJSAudio {
 
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {
 			
-			const wavForms = this.wavForms;
+			const wavForms = this.wavSharer;
 			
 			let nesBytesAvailable = wavForms.audioBytesWritten;
 			lastReadPos = wavForms.bufferPosition - nesBytesAvailable;
@@ -92,8 +89,11 @@ export class ChiChiThreeJSAudio {
 
 		audioSource.loop = true;
 		audioSource.start();
-		this.wavForms.SharedBuffer = nesAudio;
+		
+		this.wavSharer.SharedBuffer = nesAudio;
+
 		const result = new ThreeJSAudioSettings(gainNode, listener);
+		result.abuffer = nesAudio;
 		result.sampleRate = audioCtx.sampleRate;
 		return result;
 	}

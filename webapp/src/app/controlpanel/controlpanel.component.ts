@@ -31,6 +31,8 @@ export class PowerStatusComponent {
 })
 export class ControlPanelComponent {
     localSettings: LocalAudioSettings;
+    cartSettings: any;
+
     show = true;
     powerstate: string;
     currentFilename: string;
@@ -46,16 +48,15 @@ export class ControlPanelComponent {
         private dialog: MatDialog) {
 
         this.powerstate = 'OFF';
-        this.wishbone = nesService.wishbone;
-        this.localSettings = this.wishbone.SoundBopper.localSettings;
-        this.wishbone.asObservable().subscribe((machine) => {
-            
-            if (machine && machine.SoundBopper) {
-                this.localSettings = this.wishbone.SoundBopper.localSettings;
-            }
+        this.localSettings = this.nesService.audioSettings;
+        
+        this.nesService.cartChanged.subscribe((settings)=>{
+            this.cartSettings = settings;
         });
     }
 
+
+    
     handleFile(e: Event) {
         const files: FileList = (<HTMLInputElement>e.target).files;
         this.romLoader.loadRom(files).subscribe((rom) => {
@@ -76,7 +77,7 @@ export class ControlPanelComponent {
     }
 
     showDebugger(): void {
-        this.nesService.DebugUpdateEvent.emit({eventType: 'showDebugger'});
+        this.nesService.onDebug.emit({eventType: 'showDebugger'});
     }
 
     reset(): void {

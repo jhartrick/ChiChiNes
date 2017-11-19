@@ -30,12 +30,12 @@ export interface IBaseCartState  {
     prgBankStarts: Uint32Array; 
 
     romControlBytes: Uint8Array;
-
-    nesCart: Uint8Array;
-    chrRom: Uint8Array;
 }
 
 export interface IBaseCart extends IBaseCartState {
+
+    nesCart: Uint8Array;
+    chrRom: Uint8Array;
 
     customPalette: number[];
     mapperName: string;
@@ -465,9 +465,11 @@ export class BaseCart implements IBaseCart {
     copyBanks4k(clock: number, dest: number, src: number, numberOf4kBanks: number): void {
         
 
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 2;
+        if (dest >= this.chrRomCount << 1) {
+            dest = this.chrRomCount << 1;
+            dest = dest - 1;
         }
+
 
         var oneKsrc = src << 2;
         var oneKdest = dest << 2;
@@ -481,8 +483,9 @@ export class BaseCart implements IBaseCart {
 
     copyBanks2k(clock: number, dest: number, src: number, numberOf2kBanks: number): void {
 
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 4;
+        if (dest >= this.chrRomCount << 2) {
+            dest = this.chrRomCount << 2;
+            dest = dest - 1;
         }
 
 
@@ -497,14 +500,14 @@ export class BaseCart implements IBaseCart {
     
     copyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
         
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 8;
+        if (dest >= this.chrRomCount << 3) {
+            dest = this.chrRomCount << 3;
+            dest = dest - 1;
         }
 
-        var oneKsrc = src ;
-        var oneKdest = dest ;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
+        let oneKsrc = src ;
+        let oneKdest = dest ;
+
         for (var i = 0; i < numberOf1kBanks ; i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
 
@@ -538,8 +541,7 @@ export class BaseCart implements IBaseCart {
 
             romControlBytes: this.romControlBytes.slice(),
 
-            nesCart: this.nesCart.slice(),
-            chrRom: this.chrRom.slice()
+
         }
     }
 
@@ -550,12 +552,23 @@ export class BaseCart implements IBaseCart {
         this.chrRamStart = value.chrRamStart;
         this.chrRamLength = value.chrRamLength;
 
-        value.prgRomBank6.every((v, i) => { this.prgRomBank6[i] = v; return true; }); 
-        value.ppuBankStarts.every((v, i) => { this.ppuBankStarts[i] = v; return true; }); 
-        value.prgBankStarts.every((v, i) => { this.prgBankStarts[i] = v; return true; }); 
-        value.romControlBytes.every((v, i) => { this.romControlBytes[i] = v; return true; }); 
-        value.nesCart.every((v, i) => { this.nesCart[i] = v; return true; }); 
-        value.chrRom.every((v, i) => { this.chrRom[i] = v; return true; }); 
+        for (let i = 0; i < this.prgRomBank6.length; ++i) {
+            this.prgRomBank6[i] = value.prgRomBank6[i];
+        }
+                            
+        for (let i = 0; i < this.ppuBankStarts.length; ++i) {
+            this.ppuBankStarts[i] = value.ppuBankStarts[i];
+        }
+
+        for (let i = 0; i < this.prgBankStarts.length; ++i) {
+            this.prgBankStarts[i] = value.prgBankStarts[i];
+        }
+
+        for (let i = 0; i < this.romControlBytes.length; ++i) {
+            this.romControlBytes[i] = value.romControlBytes[i];
+        }
+
+
     }
 
 }

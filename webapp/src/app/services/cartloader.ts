@@ -20,7 +20,7 @@ export class RomLoader {
 
     constructor(private nes: Emulator, private http: Http) {
         this.wishbone = this.nes.wishbone;
-        debugger;    
+ 
     }
 
     wishbone: WishboneMachine;
@@ -41,20 +41,22 @@ export class RomLoader {
         const file = files[0];
         return new Observable<BaseCart>(observer => {
             const fileReader: FileReader = new FileReader();
+            let name = file.name;
             fileReader.onload = (e) => {
                 const rom: number[] = Array.from(new Uint8Array(fileReader.result));
                 // zip file
                 JSZip.loadAsync(rom).then((zip: any) => {
                     zip.forEach((relativePath, zipEntry) => {  // 2) print entries
                         zipEntry.async('blob').then((fileData) => {
-                            fileReader.onload = (ze) => {
-                                const rom: number[] = Array.from(new Uint8Array(fileReader.result));
+                            const zipReader: FileReader = new FileReader();
+                            zipReader.onload = (ze) => {
+                                const rom: number[] = Array.from(new Uint8Array(zipReader.result));
                                 RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
                                     this.nes.setupCart(cart, rom);
                                     observer.next(cart);
                                 })
                             };
-                            fileReader.readAsArrayBuffer(fileData);
+                            zipReader.readAsArrayBuffer(fileData);
                         });
                     });
                 });
@@ -75,7 +77,7 @@ export class RomLoader {
                 const fileReader: FileReader = new FileReader();
                 fileReader.onload = (e) => {
                     const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                    RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
+                    RomLoader.doLoadCart(rom, file.name).subscribe((cart)=>{
                         this.nes.setupCart(cart, rom);
                         observer.next(cart);
                     })

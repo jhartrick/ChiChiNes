@@ -1,7 +1,7 @@
-import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Component, Inject, ChangeDetectorRef, ElementRef, AfterContentInit } from '@angular/core';
 import { setTimeout } from 'timers';
+import { ICartSettings } from '../../services/NESService';
 
 @Component({
   selector: 'cartinfo-dialog',
@@ -13,7 +13,7 @@ export class CartInfoDialogComponent implements AfterContentInit {
     board: any;
     game: any;
     cartridge: any;
-    wishbone: WishboneMachine;
+    romInfo: ICartSettings;
     cartInfo: any;
 
     constructor(
@@ -22,12 +22,14 @@ export class CartInfoDialogComponent implements AfterContentInit {
         private cd: ChangeDetectorRef,
         private elementRef: ElementRef
     ) {
-        this.wishbone = data.wishbone;
+        this.romInfo = data.cart;
+
         this.cartInfo = data.info;
         if (this.data.info && this.data.info.cartridge) {
             this.cartridge = this.data.info.cartridge;
             if (this.cartridge.board) {
                 this.board = this.cartridge.board;
+                console.log(JSON.stringify(this.board));
             }
             if (this.cartridge.game) {
                 this.game = this.cartridge.game;

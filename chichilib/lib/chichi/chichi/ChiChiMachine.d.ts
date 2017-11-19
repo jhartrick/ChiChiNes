@@ -23,8 +23,6 @@ export declare class ChiChiMachine {
     IsRunning: boolean;
     readonly PadOne: ChiChiControlPad;
     readonly PadTwo: ChiChiControlPad;
-    SRAMReader: (RomID: string) => any;
-    SRAMWriter: (RomID: string, SRAM: any) => void;
     Reset(): void;
     PowerOn(): void;
     PowerOff(): void;
@@ -33,11 +31,6 @@ export declare class ChiChiMachine {
     RunFrame(): void;
     EjectCart(): void;
     LoadNSF(rom: any): void;
-    LoadCart(rom: any): void;
-    HasState(index: number): boolean;
-    GetState(index: number): void;
-    SetState(index: number): void;
-    SetupSound(): void;
-    FrameFinished(): void;
+    frameFinished(): void;
     dispose(): void;
 }

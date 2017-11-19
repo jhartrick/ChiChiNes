@@ -25,8 +25,7 @@ export class ChiChiComponent implements AfterViewInit {
     private renderer: THREE.WebGLRenderer;
     private dkrom: number[];
     private canvasCtx: CanvasRenderingContext2D;
-    private sharedBuffer: SharedArrayBuffer = new SharedArrayBuffer(256 * 256 * 4);
-    private vbuffer: Uint8Array = new Uint8Array(<any>this.sharedBuffer);
+
     private pal: Uint8Array = new Uint8Array(256 * 4);
 
     private text: THREE.DataTexture;
@@ -68,66 +67,8 @@ export class ChiChiComponent implements AfterViewInit {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
 
-        let fragShader: string = `
-        bool InColorPhase (float color, float phase) { 
-            return modI( (color + phase) , 12.0) < 6.0; 
-            
-        }
-        
-        float NTSCsignal(int color, int level, int emphasis, int phase)
-        {
-            // Voltage levels, relative to synch voltage
-            float black=.518, white=1.962, attenuation=.746;
-            float p = float(phase);
-            // const float levels[8] = float[8](.350, .518, .962, 1.550, 1.094, 1.506, 1.962, 1.962); 
-        
-            // Decode the NES color.
-            if(color > 13) { level = 1;  } // For colors 14..15, level 1 is forced.
-        
-            // The square wave for this color alternates between these two voltages:
-            float low  = levels[0 + level];
-            float high = levels[4 + level];
-            if(color == 0) { low = high; } // For color 0, only high level is emitted
-            if(color > 12) { high = low; } // For colors 13..15, only low level is emitted
-        
-            // Generate the square wave
-            float signal = InColorPhase(float(color), float(phase)) ? high : low;
-        
-            // When de-emphasis bits are set, some parts of the signal are attenuated:
-            if (emphasis == 1 || emphasis == 3 || emphasis == 7)
-            {
-                if (InColorPhase(0.0, p)) {
-                    signal = signal * attenuation;
-                }   
-            }
-        
-            // When de-emphasis bits are set, some parts of the signal are attenuated:
-            if (emphasis == 2 || emphasis == 6 || emphasis == 7)
-            {
-                if (InColorPhase(4.0, p)) {
-                    signal = signal * attenuation;
-                }   
-            }
-            
-            // When de-emphasis bits are set, some parts of the signal are attenuated:
-            if (emphasis == 4 || emphasis == 6 || emphasis == 7)
-            {
-                if (InColorPhase(8.0, p)) {
-                    signal = signal * attenuation;
-                }   
-            }
-        
-            return signal;
-        }
-        `
-
-
-        this.zone.runOutsideAngular(() => {
-            this.nesService.wishbone.SoundBopper.audioHandler = new ChiChiThreeJSAudio(this.nesService.wishbone.WaveForms);
-            const result = this.nesService.wishbone.SoundBopper.setupAudio();
-            this.camera.add( <any>result.listener);
-            this.nesService.wishbone.RequestSync();
-        });
+        const vbuffer = this.nesService.videoBuffer;
+        this.camera.add( <any>this.nesService.audioSettings.listener);
 
         // console.log(scriptNode.bufferSize);
 
@@ -135,7 +76,7 @@ export class ChiChiComponent implements AfterViewInit {
         const h = 1;
         const geometry = new THREE.PlaneGeometry(5, 5);
 
-        this.text = new THREE.DataTexture(this.vbuffer, 256, 256, THREE.RGBAFormat);
+        this.text = new THREE.DataTexture(vbuffer, 256, 256, THREE.RGBAFormat);
 
         for (let i = 0; i < 256; i++) {
             const color = this.pal32[i & 0x3f];
@@ -196,7 +137,6 @@ void main()	{
 
     ngAfterViewInit(): void {
         this.setupScene();
-        this.nesService.SetVideoBuffer(this.vbuffer);
         //this.nesService.SetCallbackFunction(() => this.renderScene());
         this.zone.runOutsideAngular(() => {
           this.drawFrame();

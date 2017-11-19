@@ -1,12 +1,5 @@
 import { BaseCart } from "./BaseCart";
 
-interface PokeMap {
-    id?: number;
-    mask: number;
-    address: number[];
-    func:  (clock: number, address: number, data: number) => void;
-}
-
 export class VRCIrqBase extends BaseCart {
     irqLatch: number = 0;
 
@@ -56,8 +49,11 @@ export class VRCIrqBase extends BaseCart {
 
     set irqControl(val: number) {
         this.irqEnableAfterAck = (val & 0x1) == 0x1;
-        this.irqEnable = (val & 0x2) == 0x2;
+        let enable = (val & 0x2) == 0x2;
         this.irqMode = (val & 0x4) == 0x4;
+        this.irqEnable = enable;
+        
+
     }
 
 }
@@ -398,6 +394,7 @@ export class KonamiVRC022Cart extends VRC2or4Cart {
         
         switch (this.ROMHashFunction) {
             case 'D4645E14':
+            this.vrcmirroring = this.vrc4mirroring;
             break;
         }
     }
@@ -415,6 +412,7 @@ export class Konami021Cart extends VRC2or4Cart {
             0x04,
             0x06,
         ];
+        this.regMask = 0xf0;
         switch (this.ROMHashFunction)
         {
             case '286FCD20': // ganbare goemon gaiden 2

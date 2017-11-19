@@ -267,6 +267,7 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise.FrameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
+        // this.dmc.FrameClock(time, step)
     }
 
     endFrame(time: number): void {

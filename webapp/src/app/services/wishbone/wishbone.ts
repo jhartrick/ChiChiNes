@@ -187,15 +187,24 @@ export class WishboneMachine  {
     readonly NES_CONTROL_PAD_1 = 4;
     readonly NES_AUDIO_AVAILABLE = 3;
 
+    RunState: number;
+    Cpu: WishboneCPPU;
+    ppu: WishbonePPU;
+    Cart: WishboneCart;
+
+    SoundBopper: WishboneAPU;
+    WaveForms: WavSharer;
+
+    FrameCount: number;
+
+
     private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT);
     nesInterop: Int32Array = new Int32Array(<any>this.nesControlBuf);
 
     constructor() {
-        console.log("making wishbonemachine")
         // initialize sound
         this.WaveForms = new WavSharer();
         this.SoundBopper = new WishboneAPU(this.WaveForms);
-
         this.ppu = new WishbonePPU();
         this.Cpu = new WishboneCPPU(this.SoundBopper, this.ppu);
         this.ppu.cpu = this.Cpu;
@@ -204,11 +213,12 @@ export class WishboneMachine  {
         
         this.PadOne = new WishBoneControlPad(this, 'padOne');
         this.PadOne.controlByteChange().subscribe((val:number)=>{
-            this.nesInterop[this.NES_CONTROL_PAD_0] = val & 0xFF;// | (this.nesInterop[2] & 0xFF00);
+            this.nesInterop[this.NES_CONTROL_PAD_0] = val & 0xff;
         })
+
         this.PadTwo = new WishBoneControlPad(this, 'padTwo');
         this.PadTwo.controlByteChange().subscribe((val:number)=>{
-            this.nesInterop[this.NES_CONTROL_PAD_1] = (val & 0xFF);// << 8 | (this.nesInterop[2] & 0x00FF);
+            this.nesInterop[this.NES_CONTROL_PAD_1] = (val & 0xff);
         })
 
         this.keyHandler = new WishboneKeyHandler([this.PadOne, this.PadTwo]);
@@ -240,7 +250,7 @@ export class WishboneMachine  {
         if (d.debug) {
             this.debugSubject.next(d.debug);
         }
-        this.Sync(d);
+        
         this.nesStateSubject.next(this);
     }
 
@@ -253,106 +263,17 @@ export class WishboneMachine  {
     }
 
     Run() {
-        this.postNesMessage({ command: 'run', debug: false });
-        clearInterval(this.interval);
-        this.interval = setInterval(() => {
-            this.fps = this.nesInterop[1];
-        }, 500);
+
     }
 
     RunFrame() {
     }
 
     RequestSync() {
-      //  this.postNesMessage({ command: 'audiosettings', settings:  this.SoundBopper.cloneSettings() });
-    }
-
-
-    Sync(data: any) {
-        if (data.bufferupdate) {
-            if (data.Cpu.Rams) {
-                this.Cpu.Rams = data.Cpu.Rams;
-                this.ppu.spriteRAM = data.Cpu.spriteRAM;
-                for (let i = 0; i < this.ppu.unpackedSprites.length; ++i) {
-                    this.ppu.unpackedSprites[i].Changed = true;
-                }
-                this.ppu.unpackSprites();
-            }
-            if (data.Cart && this.Cart.realCart) {
-
-                this.Cart.realCart.prgRomBank6 = data.Cart.prgRomBank6;
-                this.Cart.realCart.ppuBankStarts = data.Cart.ppuBankStarts;
-                // this.Cart.realCart.bankStartCache = data.Cart.bankStartCache;
-                this.Cart.realCart.chrRom = data.Cart.chrRom;
-            }
-            if (data.sound) {
-                this.WaveForms.controlBuffer = data.sound.waveForms_controlBuffer;//
-            }
-        }
-        if (data.stateupdate) {
-            if (data.Cpu) {
-                this.ppu.backgroundPatternTableIndex = data.Cpu.backgroundPatternTableIndex;
-                this.cpuStatus = data.Cpu.status;
-                this.ppuStatus = data.Cpu.ppuStatus;
-                this.ppu._PPUControlByte0 = data.Cpu._PPUControlByte0;
-                this.ppu._PPUControlByte1 = data.Cpu._PPUControlByte1;
-
-            }
-            if (data.Cart && this.Cart.realCart) {
-
-                // this.Cart.realCart.CurrentBank = data.Cart.CurrentBank;
-                // this.Cart.realCart.current8 = data.Cart.current8;
-                // this.Cart.realCart.currentA = data.Cart.currentA;
-                // this.Cart.realCart.currentC = data.Cart.currentC;
-                // this.Cart.realCart.currentE = data.Cart.currentE;
-
-                // this.Cart.realCart.bank8start = data.Cart.bank8start;
-                // this.Cart.realCart.bankAstart = data.Cart.bankAstart;
-                // this.Cart.realCart.bankCstart = data.Cart.bankCstart;
-                // this.Cart.realCart.bankEstart = data.Cart.bankEstart;
-
-            }
-        }
-        if (data.sound) {
-            this.SoundBopper.updateSettings(data.sound.settings);
-        }
-
-
     }
 
     Drawscreen() {
-        // throw new Error('Method not implemented.');
     }
-    RunState: number;
-    Cpu: WishboneCPPU;
-    ppu: WishbonePPU;
-    Cart: WishboneCart;
-
-    SoundBopper: WishboneAPU;
-    WaveForms: WavSharer;
-
-    private _soundEnabled = false;
-
-    public get EnableSound() {
-        return this.IsRunning && this._soundEnabled;
-    }
-
-    public set EnableSound(value: boolean) {
-        this._soundEnabled = value;
-        if (this._soundEnabled) {
-            this.postNesMessage({ command: 'unmute' });
-        } else {
-            this.postNesMessage({ command: 'mute' });
-        }
-
-    }
-
-    postNesMessage(message: any) {
-        
-    }
-
-
-    FrameCount: number;
     get IsRunning(): boolean {
         return this.nesInterop[this.NES_GAME_LOOP_CONTROL] > 0;
     }
@@ -364,23 +285,18 @@ export class WishboneMachine  {
     SRAMWriter: (RomID: string, SRAM: any) => void;
 
     Reset() {
-        this.postNesMessage({ command: 'reset', debug: false });
     }
 
     PowerOn() {
-        throw new Error('Method not implemented.');
     }
 
     PowerOff() {
-        this.postNesMessage({ command: 'stop' });
     }
 
     Step() {
-        this.postNesMessage({ command: 'step', debug: true });
     }
 
     EjectCart() {
-        this.postNesMessage({ command: 'stop' });
     }
 
     insertCart(cart: BaseCart) {
@@ -393,32 +309,6 @@ export class WishboneMachine  {
         this.ppu.chrRomHandler = this.Cart.realCart;
     }
 
-    // loadCart(rom: number[], name: string, cartInfo: any) {
-        
-    //     this.boneThread.start((threadHandler)=>{
-    //         const createCommand = 'create';
-    //         this.nesInterop = threadHandler.nesInterop;
-    //         threadHandler.postNesMessage({ command: createCommand,
-    //             vbuffer: this.ppu.byteOutBuffer,
-    //             abuffer: this.WaveForms.SharedBuffer,
-    //             audioSettings: this.SoundBopper.cloneSettings(),
-    //             iops: this.nesInterop });
-
-    //         CartLoader.doLoadCart(rom, name, this, cartInfo).subscribe((cart) => {
-    //             this.Cart.realCart = cart;
-                
-    //             this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
-    //             this.Cart.CartName = this.Cart.realCart.CartName = name;
-    //             this.ppu.chrRomHandler = this.Cart.realCart;
-    //             this.tileDoodler = new TileDoodler(this.ppu);
-    //             this.postNesMessage({ command: 'loadrom', rom: rom, name: this.Cart.CartName });
-    
-    //         });                
-    //     });
-    //     this.boneThread.nesMessageData.subscribe((data)=>this.handleMessage(data));
-
-
-    // }
 }
 
 class WishboneCPPU extends ChiChiCPPU {

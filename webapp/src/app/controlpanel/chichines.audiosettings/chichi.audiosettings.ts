@@ -15,19 +15,16 @@ import { LocalAudioSettings } from '../../services/wishbone/wishbone.audio.local
 
 export class AudioSettingsComponent {
     audioSettings: AudioSettings ;
-    localSettings: LocalAudioSettings ;
     wishbone: WishboneMachine;
     muted= false;
 
     constructor(public nesService: Emulator ) {
         this.wishbone = nesService.wishbone;
         this.audioSettings = this.wishbone.SoundBopper.audioSettings;
-        this.localSettings = this.wishbone.SoundBopper.localSettings;
 
         this.wishbone.asObservable().subscribe((machine) => {
             if (machine && machine.SoundBopper) {
                 this.audioSettings = this.wishbone.SoundBopper.audioSettings;
-                this.localSettings = this.wishbone.SoundBopper.localSettings;
             }
         });
     }

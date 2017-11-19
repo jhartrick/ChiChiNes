@@ -49,17 +49,11 @@ export interface IChiChiCPPU extends IChiChiCPPUState {
     Cart: IBaseCart;
     FrameOn: boolean;
 
-    setFlag(Flag: number, value: boolean): void;
-    GetFlag(flag: number): boolean;
-    interruptRequest(): void;
-    nonMaskableInterrupt(): void;
-    RunFast(): void;
     Step(): void;
-    fetchInstructionParameters(): any;
+
     ResetCPU(): void;
     PowerOn(): void;
-    GetState(outStream: any): void;
-    SetState(inStream: any): void;
+
     decodeAddress(): number;
     HandleBadOperation(): void;
     handleBreakpoint(): void;
@@ -106,12 +100,15 @@ export class ChiChiCPPU implements IChiChiCPPU {
         
                 //timing
                 private _clock =0;
+                
                 get clock() : number {
                     return this._clock;
                 }  
+                
                 set clock(value : number ){
                     this._clock = value;
-                }  
+                }
+
                 private advanceClock(value: number) {
                     if (value) {
                         this.ppu.advanceClock(value);
@@ -269,10 +266,8 @@ export class ChiChiCPPU implements IChiChiCPPU {
                 }
         
                 set Clock(value: number) {
+                    this.advanceClock(value);
                     this.clock = value;
-                    if (value === 0) {
-                        this.systemClock = (this.systemClock + this.clock) & 0xFFFFFFFFFF;
-                    }
                 }
         
                 setFlag(Flag: number, value: boolean): void {
@@ -322,12 +317,6 @@ export class ChiChiCPPU implements IChiChiCPPU {
                         //nonOpCodeticks = 7;
                 }
         
-        
-                RunFast(): void {
-                    while (this.clock < 29780) {
-                        this.Step();
-                    }
-                }
         
                 Step(): void {
                     //let tickCount = 0;
@@ -1446,7 +1435,10 @@ export class ChiChiCPPU implements IChiChiCPPU {
                     this.cheating = value.cheating,
                     this.genieCodes = value.genieCodes
 
-                    value.Rams.every((v, i) => { this.Rams[i] = v; return true; }); 
+                    for (let i = 0; i < this.Rams.length; ++i) {
+                        this.Rams[i] = value.Rams[i];
+                    }
+                                
                     
                 }
         

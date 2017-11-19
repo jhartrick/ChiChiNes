@@ -31,10 +31,10 @@ export class TriangleChannel {
     amplitude = 0;
     gain = 0;
     
-    private _linCtr = 0;
+    private linCtr = 0;
     private _phase = 0;
     private _linVal = 0;
-    private _linStart = false;
+    private linStart = false;
 
     constructor(bleeper: Blip, chan: number) {
         this._bleeper = bleeper;
@@ -64,7 +64,7 @@ export class TriangleChannel {
                 if (this.enabled) {
                     this.length = this.lengthCounts[(data >> 3) & 0x1f];
                 }
-                this._linStart = true;
+                this.linStart = true;
                 break;
             case 4:
                 this.enabled = (data !== 0);
@@ -77,7 +77,7 @@ export class TriangleChannel {
 
     run(end_time: number): void {
         var period = this.period + 1;
-        if (this._linCtr === 0 || this.length === 0 || this.period < 4) {
+        if (this.linCtr === 0 || this.length === 0 || this.period < 4) {
             // leave it at it's current phase
             this.time = end_time;
             return;
@@ -102,17 +102,17 @@ export class TriangleChannel {
     frameClock(time: number, step: number): void {
         this.run(time);
 
-        if (this._linStart) {
-            this._linCtr = this._linVal;
+        if (this.linStart) {
+            this.linCtr = this._linVal;
 
         } else {
-            if (this._linCtr > 0) {
-                this._linCtr--;
+            if (this.linCtr > 0) {
+                this.linCtr--;
             }
         }
 
         if (!this.looping) {
-            this._linStart = false;
+            this.linStart = false;
         }
 
         switch (step) {

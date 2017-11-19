@@ -2253,8 +2253,9 @@ var BaseCart = /** @class */ (function () {
         }
     };
     BaseCart.prototype.copyBanks4k = function (clock, dest, src, numberOf4kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 2;
+        if (dest >= this.chrRomCount << 1) {
+            dest = this.chrRomCount << 1;
+            dest = dest - 1;
         }
         var oneKsrc = src << 2;
         var oneKdest = dest << 2;
@@ -2265,8 +2266,9 @@ var BaseCart = /** @class */ (function () {
         }
     };
     BaseCart.prototype.copyBanks2k = function (clock, dest, src, numberOf2kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 4;
+        if (dest >= this.chrRomCount << 2) {
+            dest = this.chrRomCount << 2;
+            dest = dest - 1;
         }
         var oneKsrc = src << 1;
         var oneKdest = dest << 1;
@@ -2277,13 +2279,12 @@ var BaseCart = /** @class */ (function () {
         }
     };
     BaseCart.prototype.copyBanks1k = function (clock, dest, src, numberOf1kBanks) {
-        if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 8;
+        if (dest >= this.chrRomCount << 3) {
+            dest = this.chrRomCount << 3;
+            dest = dest - 1;
         }
         var oneKsrc = src;
         var oneKdest = dest;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
         for (var i = 0; i < numberOf1kBanks; i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
         }
@@ -2307,21 +2308,24 @@ var BaseCart = /** @class */ (function () {
                 // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
                 prgBankStarts: this.prgBankStarts.slice(),
                 romControlBytes: this.romControlBytes.slice(),
-                nesCart: this.nesCart.slice(),
-                chrRom: this.chrRom.slice()
             };
         },
         set: function (value) {
-            var _this = this;
             this.irqRaised = value.irqRaised;
             this.chrRamStart = value.chrRamStart;
             this.chrRamLength = value.chrRamLength;
-            value.prgRomBank6.every(function (v, i) { _this.prgRomBank6[i] = v; return true; });
-            value.ppuBankStarts.every(function (v, i) { _this.ppuBankStarts[i] = v; return true; });
-            value.prgBankStarts.every(function (v, i) { _this.prgBankStarts[i] = v; return true; });
-            value.romControlBytes.every(function (v, i) { _this.romControlBytes[i] = v; return true; });
-            value.nesCart.every(function (v, i) { _this.nesCart[i] = v; return true; });
-            value.chrRom.every(function (v, i) { _this.chrRom[i] = v; return true; });
+            for (var i = 0; i < this.prgRomBank6.length; ++i) {
+                this.prgRomBank6[i] = value.prgRomBank6[i];
+            }
+            for (var i = 0; i < this.ppuBankStarts.length; ++i) {
+                this.ppuBankStarts[i] = value.ppuBankStarts[i];
+            }
+            for (var i = 0; i < this.prgBankStarts.length; ++i) {
+                this.prgBankStarts[i] = value.prgBankStarts[i];
+            }
+            for (var i = 0; i < this.romControlBytes.length; ++i) {
+                this.romControlBytes[i] = value.romControlBytes[i];
+            }
         },
         enumerable: true,
         configurable: true
@@ -2456,8 +2460,9 @@ var VRCIrqBase = /** @class */ (function (_super) {
     Object.defineProperty(VRCIrqBase.prototype, "irqControl", {
         set: function (val) {
             this.irqEnableAfterAck = (val & 0x1) == 0x1;
-            this.irqEnable = (val & 0x2) == 0x2;
+            var enable = (val & 0x2) == 0x2;
             this.irqMode = (val & 0x4) == 0x4;
+            this.irqEnable = enable;
         },
         enumerable: true,
         configurable: true
@@ -2801,6 +2806,7 @@ var KonamiVRC022Cart = /** @class */ (function (_super) {
         this.SetByte = this.setByteVRC2a;
         switch (this.ROMHashFunction) {
             case 'D4645E14':
+                this.vrcmirroring = this.vrc4mirroring;
                 break;
         }
     };
@@ -2822,6 +2828,7 @@ var Konami021Cart = /** @class */ (function (_super) {
             0x04,
             0x06,
         ];
+        this.regMask = 0xf0;
         switch (this.ROMHashFunction) {
             case '286FCD20':// ganbare goemon gaiden 2
                 this.regNums = [
@@ -4862,22 +4869,22 @@ var MMC2Cart = /** @class */ (function (_super) {
     };
     MMC2Cart.prototype.GetPPUByte = function (clock, address) {
         var bank = 0;
-        if (address == 0xFD8) {
+        if (address == 0xfd8) {
             bank = (address >> 11) & 0x2;
             this.latches[0] = bank;
             this.copyBanks4k(clock, 0, this.banks[this.latches[0]], 1);
         }
-        else if (address == 0xFE8) {
+        else if (address == 0xfe8) {
             bank = ((address >> 11) & 0x2) | 0x1;
             this.latches[0] = bank;
             this.copyBanks4k(clock, 0, this.banks[this.latches[0]], 1);
         }
-        else if (address >= 0x1FD8 && address <= 0x1FDF) {
+        else if (address >= 0x1fd8 && address <= 0x1fdf) {
             bank = (address >> 11) & 0x2;
             this.latches[1] = bank;
             this.copyBanks4k(clock, 1, this.banks[this.latches[1]], 1);
         }
-        else if (address >= 0x1FE8 && address <= 0x1FEF) {
+        else if (address >= 0x1fe8 && address <= 0x1fef) {
             bank = ((address >> 11) & 0x2) | 0x1;
             this.latches[1] = bank;
             this.copyBanks4k(clock, 1, this.banks[this.latches[1]], 1);
@@ -4890,9 +4897,7 @@ var MMC2Cart = /** @class */ (function (_super) {
         switch (address >> 12) {
             case 0x6:
             case 0x7:
-                if (this.SRAMEnabled && this.SRAMCanWrite) {
-                    this.prgRomBank6[address & 8191] = val & 255;
-                }
+                this.prgRomBank6[address & 0x1fff] = val & 0xff;
                 break;
             case 0xA:
                 this.SetupBankStarts((val & 0xF), this.currentA, this.currentC, this.currentE);
@@ -4902,7 +4907,7 @@ var MMC2Cart = /** @class */ (function (_super) {
                 this.banks[(address - 0xB000) >> 12] = val & 0x1f;
                 //this.copyBanks4k(clock,0,this.banks[this.selector[0]], 1);
                 this.copyBanks4k(clock, 0, this.banks[this.latches[0]], 1);
-                this.Whizzler.unpackSprites();
+                //this.Whizzler.unpackSprites();
                 break;
             case 0xD:
             case 0xE:

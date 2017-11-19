@@ -1,21 +1,29 @@
 import { BaseCart, IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from "./ChiChiCPU";
-import { ChiChiAPU } from "./ChiChiAudio";
+import { ChiChiAPU, IChiChiAPUState } from "./ChiChiAudio";
 
 export interface IChiChiPPUState {
-    greyScale: boolean;
-    emphasisBits: number;
-    backgroundPatternTableIndex: number;
-    SpritePatternTableIndex: number;
+
     spriteRAM: Uint8Array;
-    byteOutBuffer: Uint8Array;
     _PPUControlByte0: number;
     _PPUControlByte1: number;
 
+    _PPUAddress: number;
+    _PPUStatus: number;
+    _spriteAddress: number;
+    currentXPosition: number;
+    currentYPosition: number;
+    _hScroll: number;
+    _vScroll: number;
+    lockedHScroll: number;
+    lockedVScroll: number;
+
 }
 
-export interface IChiChiPPU extends IChiChiPPUState {
+export interface IChiChiPPU  {
+    byteOutBuffer: Uint8Array;
+    
     LastcpuClock: number;
     
     cpu: ChiChiCPPU;
@@ -46,7 +54,7 @@ export interface IChiChiPPU extends IChiChiPPUState {
     state: IChiChiPPUState;
 }
 
-export class ChiChiPPU implements IChiChiPPU {
+export class ChiChiPPU implements IChiChiPPU, IChiChiPPUState {
     public static pal: Uint32Array = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
     public LastcpuClock: number = 0;
@@ -98,16 +106,17 @@ export class ChiChiPPU implements IChiChiPPU {
 
 
     //PPU implementation
-    private _PPUAddress: number = 0;
-    private _PPUStatus: number = 0;
-    _PPUControlByte0: number = 0; _PPUControlByte1: number = 0;
-    private _spriteAddress: number = 0;
-    private currentXPosition = 0;
-    private currentYPosition = 0;
-    private _hScroll = 0;
-    private _vScroll = 0;
-    private lockedHScroll = 0;
-    private lockedVScroll = 0;
+    _PPUAddress: number = 0;
+    _PPUStatus: number = 0;
+    _PPUControlByte0: number = 0; 
+    _PPUControlByte1: number = 0;
+    _spriteAddress: number = 0;
+    currentXPosition = 0;
+    currentYPosition = 0;
+    _hScroll = 0;
+    _vScroll = 0;
+    lockedHScroll = 0;
+    lockedVScroll = 0;
     //private scanlineNum = 0;
     //private scanlinePos = 0;
 
@@ -613,7 +622,7 @@ export class ChiChiPPU implements IChiChiPPU {
                     if ((this._PPUControlByte1 & 0x18) !== 0) {
                         this.oddFrame = !this.oddFrame;
                         this.isRendering = true;
-                        if (this.oddFrame) this.frameClock++;
+                        
                     }
                     break;
                 case 81840: // ChiChiNES.CPU2A03.frameClockEnd:
@@ -635,7 +644,7 @@ export class ChiChiPPU implements IChiChiPPU {
                         this.spriteChanges = false;
                     }
                     this.frameOn = true;
-                    
+                    if (this.oddFrame) this.frameClock++;
     
                     break;
             }
@@ -743,26 +752,50 @@ export class ChiChiPPU implements IChiChiPPU {
 
     get state(): IChiChiPPUState {
         return {
-            SpritePatternTableIndex: this.SpritePatternTableIndex,
-            greyScale:  this.greyScale,
-            emphasisBits:  this.emphasisBits,
-            backgroundPatternTableIndex: this.backgroundPatternTableIndex,
             _PPUControlByte0:  this._PPUControlByte0,
             _PPUControlByte1:  this._PPUControlByte1,
-            spriteRAM:  this.spriteRAM.slice(),
-            byteOutBuffer:  this.byteOutBuffer.slice(),
+            _PPUAddress: this._PPUAddress,
+            _PPUStatus: this._PPUStatus,
+            _spriteAddress: this._spriteAddress,
+            currentXPosition: this.currentXPosition,
+            currentYPosition: this.currentYPosition,
+            _hScroll: this._hScroll,
+            _vScroll: this._vScroll,
+            lockedHScroll: this.lockedHScroll,
+            lockedVScroll: this.lockedVScroll,           
+            spriteRAM:  this.spriteRAM.slice()
         };
     }
 
     set state(value: IChiChiPPUState) {
-        this.greyScale = value.greyScale;
-        this.emphasisBits = value.emphasisBits;
-        this.backgroundPatternTableIndex = value.backgroundPatternTableIndex;
         this._PPUControlByte0 = value._PPUControlByte0;
         this._PPUControlByte1  = value._PPUControlByte1;
 
-        value.spriteRAM.map((v, i) => { return this.spriteRAM[i] = v; }); 
-        value.byteOutBuffer.map((v, i) => { return this.byteOutBuffer[i] = v; }); 
+        this._PPUAddress = value._PPUAddress;
+        this._PPUStatus = value._PPUStatus;
+        this._spriteAddress = value._spriteAddress;
+        this.currentXPosition = value.currentXPosition;
+        this.currentYPosition = value.currentYPosition;
+        this._hScroll = value._hScroll;
+        this._vScroll = value._vScroll;
+        this.lockedHScroll = value.lockedHScroll;
+        this.lockedVScroll = value.lockedVScroll;
+
+        for (let i = 0; i < this.spriteRAM.length; ++i) {
+            this.spriteRAM[i] = value.spriteRAM[i];
+        }
+
+
+        this.nameTableBits = this._PPUControlByte0 & 3;
+        this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
+
+        this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
+        this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
+        this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
+        this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
+        this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
+        this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
+
     }
 
 } 

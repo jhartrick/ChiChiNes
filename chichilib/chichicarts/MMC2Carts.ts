@@ -24,21 +24,21 @@ export class MMC2Cart extends BaseCart {
     }
 
     GetPPUByte(clock: number, address: number) : number {
-        var bank: number =0;
-        if (address == 0xFD8) {
+        var bank: number = 0;
+        if (address == 0xfd8) {
                 bank = (address >> 11) & 0x2; 
                 this.latches[0] = bank;
                 this.copyBanks4k(clock,0,this.banks[this.latches[0]], 1);
-        } else if (address == 0xFE8) {
+        } else if (address == 0xfe8) {
             
                 bank = ((address >> 11) & 0x2) | 0x1; 
                 this.latches[0] = bank;
                 this.copyBanks4k(clock,0,this.banks[this.latches[0]], 1);
-        } else if (address >= 0x1FD8 && address <= 0x1FDF) {
+        } else if (address >= 0x1fd8 && address <= 0x1fdf) {
                 bank = (address >> 11) & 0x2; 
                 this.latches[1] = bank;
                 this.copyBanks4k(clock,1,this.banks[this.latches[1]], 1);
-        } else if (address >= 0x1FE8 && address <= 0x1FEF) {
+        } else if (address >= 0x1fe8 && address <= 0x1fef) {
             
                 bank = ((address >> 11) & 0x2) | 0x1; 
                 this.latches[1] = bank;
@@ -56,9 +56,7 @@ export class MMC2Cart extends BaseCart {
         switch (address >> 12) {
             case 0x6:
             case 0x7:
-            if (this.SRAMEnabled && this.SRAMCanWrite) {
-                    this.prgRomBank6[address & 8191] = val & 255;
-                }
+                this.prgRomBank6[address & 0x1fff] = val & 0xff;
                 break;
             case 0xA:
                 this.SetupBankStarts((val & 0xF), this.currentA, this.currentC, this.currentE);
@@ -68,7 +66,7 @@ export class MMC2Cart extends BaseCart {
                 this.banks[(address - 0xB000) >> 12] = val & 0x1f;
                 //this.copyBanks4k(clock,0,this.banks[this.selector[0]], 1);
                 this.copyBanks4k(clock,0,this.banks[this.latches[0]], 1);
-                this.Whizzler.unpackSprites();
+                //this.Whizzler.unpackSprites();
                 break;
             case 0xD:
             case 0xE:

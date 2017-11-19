@@ -1,1 +1,1 @@
-<button mat-button (click)="showDialog()">Cart Info</button>
+<button *ngIf='cartSettings ? true : false' mat-button (click)="showDialog()">Cart Info</button>

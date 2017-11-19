@@ -16,7 +16,7 @@
     <mat-button-toggle (change)="powertoggle()" >
       {{ powerstate }}
     </mat-button-toggle>
-    <button mat-button (click)="wishbone.Reset()">Reset</button>
+    <button mat-button (click)="reset()">Reset</button>
   </div>
 
   <div class="fileLoader">
@@ -30,9 +30,7 @@
     </div>
   </div>
 
-  <div *ngIf="wishbone.Cart.mapperID > -1" >
-    <cartinfo-main></cartinfo-main>
-  </div>
+  <cartinfo-main [cartSettings]='cartSettings' ></cartinfo-main>
   
 </mat-expansion-panel>
 
@@ -53,10 +51,12 @@
     </mat-expansion-panel-header>
     <controlpad-config></controlpad-config>
     <button mat-button (click)="showDebugger()">Open Debugger</button>  
+    <button mat-button (click)="nesService.saveState()">Save State</button>
+    <button mat-button (click)="nesService.restoreState()">Load State</button>
     <cheating-gamegenie></cheating-gamegenie>
   </mat-expansion-panel>
   <div style="position:absolute; bottom: 12px">
-    FPS: {{ wishbone.fps }}
+    <!-- FPS: {{ wishbone.fps }} -->
   </div>
 
   

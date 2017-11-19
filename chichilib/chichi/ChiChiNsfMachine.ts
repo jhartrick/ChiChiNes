@@ -12,7 +12,7 @@ export class ChiChiNsfMachine extends ChiChiMachine
         this.ppu = new ChiChiPPU();
         this.Cpu = new ChiChiNsfCPPU(this.SoundBopper, this.ppu);
         this.Cpu.ppu = this.ppu;
-        this.Cpu.frameFinished = () => { this.FrameFinished(); };
+        this.Cpu.frameFinished = () => { this.frameFinished(); };
     }
 
     LoadNsf(rom: number[]) {

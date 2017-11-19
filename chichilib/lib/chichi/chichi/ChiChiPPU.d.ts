@@ -2,16 +2,21 @@ import { IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from "./ChiChiCPU";
 export interface IChiChiPPUState {
-    greyScale: boolean;
-    emphasisBits: number;
-    backgroundPatternTableIndex: number;
-    SpritePatternTableIndex: number;
     spriteRAM: Uint8Array;
-    byteOutBuffer: Uint8Array;
     _PPUControlByte0: number;
     _PPUControlByte1: number;
+    _PPUAddress: number;
+    _PPUStatus: number;
+    _spriteAddress: number;
+    currentXPosition: number;
+    currentYPosition: number;
+    _hScroll: number;
+    _vScroll: number;
+    lockedHScroll: number;
+    lockedVScroll: number;
 }
-export interface IChiChiPPU extends IChiChiPPUState {
+export interface IChiChiPPU {
+    byteOutBuffer: Uint8Array;
     LastcpuClock: number;
     cpu: ChiChiCPPU;
     chrRomHandler: IBaseCart;
@@ -31,7 +36,7 @@ export interface IChiChiPPU extends IChiChiPPUState {
     advanceClock(ticks: number): void;
     state: IChiChiPPUState;
 }
-export declare class ChiChiPPU implements IChiChiPPU {
+export declare class ChiChiPPU implements IChiChiPPU, IChiChiPPUState {
     static pal: Uint32Array;
     LastcpuClock: number;
     NMIHandler: () => void;
@@ -60,17 +65,17 @@ export declare class ChiChiPPU implements IChiChiPPU {
     private _spritesAreVisible;
     private nameTableMemoryStart;
     backgroundPatternTableIndex: number;
-    private _PPUAddress;
-    private _PPUStatus;
+    _PPUAddress: number;
+    _PPUStatus: number;
     _PPUControlByte0: number;
     _PPUControlByte1: number;
-    private _spriteAddress;
-    private currentXPosition;
-    private currentYPosition;
-    private _hScroll;
-    private _vScroll;
-    private lockedHScroll;
-    private lockedVScroll;
+    _spriteAddress: number;
+    currentXPosition: number;
+    currentYPosition: number;
+    _hScroll: number;
+    _vScroll: number;
+    lockedHScroll: number;
+    lockedVScroll: number;
     private shouldRender;
     private _frames;
     private hitSprite;
