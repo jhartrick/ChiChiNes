@@ -127,6 +127,7 @@ export class SquareChannel {
         }
         this._phase &= 7;
     }
+    
     updateAmplitude(new_amp: number): void {
         const delta = new_amp * this.gain - this._amplitude;
 

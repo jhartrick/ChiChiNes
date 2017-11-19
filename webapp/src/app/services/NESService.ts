@@ -2,9 +2,11 @@ import { Injectable, EventEmitter } from '@angular/core';
 import { Observable, Subscriber } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { WishboneMachine } from "./wishbone/wishbone";
-import { ChiChiCPPU, AudioSettings, ChiChiPPU } from 'chichi';
+import { ChiChiCPPU, AudioSettings, ChiChiPPU, BaseCart } from 'chichi';
 import { Http } from '@angular/http';
 import * as crc from 'crc';
+import { WishboneWorker } from './wishbone/wishbone.worker';
+import { IBaseCart } from 'chichi';
 
 class NesInfo {
     stateupdate = true;
@@ -42,41 +44,43 @@ export class EmuState {
 
 @Injectable()
 export class Emulator {
-    public wishbone = new WishboneMachine();
+    public wishbone;
 
     initNes: any;
 
     private callback: () => void;
 
-    public grabRam(start: number, finish: number): number[] {
-
-        return this.wishbone.Cpu.PeekBytes(start, finish);
-    }
-
     public DebugUpdateEvent: EventEmitter<any> = new EventEmitter<any>();
 
     constructor() {
+        console.log("making wishbone")
+        this.wishbone = new WishboneMachine();
+        this.worker = new WishboneWorker(this.wishbone);
+
+        
+    }
+
+
+    setupCart(cart: BaseCart, rom: number[]) {
+
+        this.worker.start((threadHandler)=>{
+            this.wishbone.nesInterop = threadHandler.nesInterop;
+            this.wishbone.insertCart(cart);
+            
+            threadHandler.postNesMessage({ 
+                command: 'create',
+                vbuffer: this.wishbone.ppu.byteOutBuffer,
+                abuffer: this.wishbone.WaveForms.SharedBuffer,
+                audioSettings: this.wishbone.SoundBopper.cloneSettings(),
+                iops: this.wishbone.nesInterop
+            });
+
+            threadHandler.postNesMessage({ command: 'loadrom', rom: rom, name: cart.CartName });
+        });
     }
 
     get isDebugging(): boolean {
         return false;
-    }
-
-    IsRunning(): boolean {
-        return true;
-    }
-
-    public wavBuffer: any;
-    private buffering = false;
-    private bufferPos = 0;
-    private maxBufferLength = 10000;
-
-
-    // platform hooks
-    SetCallbackFunction(callback: () => void) {
-        this.callback = callback;
-        // this.machine.Drawscreen = callback;
-      //  this.ready = true;
     }
 
     vbuffer: Uint8Array;
@@ -95,50 +99,7 @@ export class Emulator {
     SetDebugCallbackFunction(callback: () => void) {
     }
 
-    // control
-    StartEmulator(): void {
-        this.wishbone.Run();
-    }
 
-    Continue(): void {
-        this.wishbone.postNesMessage({ command: 'continue' });
-    }
-
-
-    get canStart(): boolean {
-        return this.wishbone.Cart && this.wishbone.Cart.supported;
-    }
-
-    StopEmulator(): void {
-        this.wishbone.PowerOff();
-    }
-
-    ResetEmulator(): void {
-        this.wishbone.Reset();
-    }
-
-    DebugStepFrame(): void {
-        this.wishbone.postNesMessage({ command: 'runframe', debug: true });
-    }
-
-    DebugStep(): void {
-        this.wishbone.Step();
-
-    }
-
-    private worker: Worker;
-
-    private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array .BYTES_PER_ELEMENT);
-    private nesInterop: Int32Array = new Int32Array (<any>this.nesControlBuf);
-
-    readonly iop_runStatus = 2;
-
-    private nesStateSubject: Subject<any> = new Subject();
-
-    public get nesState(): Observable<any> {
-        return this.nesStateSubject.asObservable();
-    }
-
-    private oldOp = 0;
+    worker: WishboneWorker;
 
 }

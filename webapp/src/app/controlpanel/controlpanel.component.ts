@@ -49,6 +49,7 @@ export class ControlPanelComponent {
         this.wishbone = nesService.wishbone;
         this.localSettings = this.wishbone.SoundBopper.localSettings;
         this.wishbone.asObservable().subscribe((machine) => {
+            
             if (machine && machine.SoundBopper) {
                 this.localSettings = this.wishbone.SoundBopper.localSettings;
             }
@@ -57,7 +58,6 @@ export class ControlPanelComponent {
 
     handleFile(e: Event) {
         const files: FileList = (<HTMLInputElement>e.target).files;
-        this.romLoader.wishbone = this.wishbone;
         this.romLoader.loadRom(files).subscribe((rom) => {
             this.poweroff();
         }, (error) => {
@@ -66,12 +66,12 @@ export class ControlPanelComponent {
     }
 
     poweron() {
-        this.wishbone.Run();
+        this.nesService.wishbone.Run();
         this.powerstate = 'ON';
     }
 
     poweroff() {
-        this.wishbone.PowerOff();
+        this.nesService.wishbone.PowerOff();
         this.powerstate = 'OFF';
     }
 
@@ -80,7 +80,7 @@ export class ControlPanelComponent {
     }
 
     reset(): void {
-        this.wishbone.Reset();
+        this.nesService.wishbone.Reset();
     }
 
     powertoggle() {

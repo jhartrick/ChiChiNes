@@ -20,6 +20,7 @@ export interface IChiChiAPU extends IChiChiAPUState {
 }
 export declare class ChiChiAPU implements IChiChiAPU {
     writer: WavSharer;
+    frameMode: boolean;
     irqHandler(): any;
     lastClock: number;
     throwingIRQs: boolean;
@@ -52,6 +53,8 @@ export declare class ChiChiAPU implements IChiChiAPU {
     rebuildSound(): void;
     GetByte(Clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;
+    sequence4: number[];
+    sequence5: number[];
     advanceClock(ticks: number): void;
     updateFrame(time: number): void;
     runFrameEvents(time: number, step: number): void;

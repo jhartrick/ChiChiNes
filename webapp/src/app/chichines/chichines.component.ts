@@ -197,7 +197,7 @@ void main()	{
     ngAfterViewInit(): void {
         this.setupScene();
         this.nesService.SetVideoBuffer(this.vbuffer);
-        this.nesService.SetCallbackFunction(() => this.renderScene());
+        //this.nesService.SetCallbackFunction(() => this.renderScene());
         this.zone.runOutsideAngular(() => {
           this.drawFrame();
         });

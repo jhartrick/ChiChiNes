@@ -401,9 +401,6 @@ export class KonamiVRC022Cart extends VRC2or4Cart {
             break;
         }
     }
-
-
-
 }
 
 export class Konami021Cart extends VRC2or4Cart {
@@ -443,8 +440,6 @@ export class Konami025Cart extends VRC2or4Cart {
         
         this.mapperName = 'KonamiVRC4';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.copyBanks4k(0, 0, 1, 1);
-        this.copyBanks4k(0, 1, 0, 1);
         this.regNums = [0x000, 0x002, 0x001, 0x003];
         this.regMask = 0xf;
         switch (this.ROMHashFunction)

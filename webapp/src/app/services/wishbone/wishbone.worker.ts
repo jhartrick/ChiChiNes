@@ -1,4 +1,6 @@
 import { Subject } from "rxjs";
+import { WishboneMachine } from "./wishbone";
+import { Observable } from "rxjs/Observable";
 
 export class WishboneWorker {
     ready: boolean = false;
@@ -14,9 +16,20 @@ export class WishboneWorker {
     pendingMessages: Array<any> = new Array<any>();
     
     nesMessageData: Subject<any> = new Subject<any>();
+
+    constructor(private wishbone: WishboneMachine) {
+        console.log("making wishboneworker")
+        wishbone.postNesMessage = (message:any) => { 
+            this.postNesMessage(message); 
+        }
+        this.nesMessageData.subscribe((data ) =>
+            this.wishbone.handleMessage(data)
+        );
+    }
+
     oncreate: (t: WishboneWorker)=>void;
 
-    start (oncreate: (t: WishboneWorker)=>void) {
+    start (oncreate: (t: WishboneWorker)=>void)  {
         this.oncreate = oncreate;
         
         if (this.worker) {
@@ -53,6 +66,7 @@ export class WishboneWorker {
                 this.worker.postMessage(this.pendingMessages.pop());
             }
             return;
+
         }
         this.nesMessageData.next(data);
     }

@@ -1000,6 +1000,7 @@ var CommonAudio_1 = __webpack_require__(1);
 var ChiChiAPU = /** @class */ (function () {
     function ChiChiAPU(writer) {
         this.writer = writer;
+        this.frameMode = false;
         this.throwingIRQs = false;
         this.reg15 = 0;
         this._sampleRate = 44100;
@@ -1014,6 +1015,8 @@ var ChiChiAPU = /** @class */ (function () {
         this.frameClocker = 0;
         //Muted: boolean;
         this.interruptRaised = false;
+        this.sequence4 = [7457, 14913, 22371, 29828, 29829, 29831];
+        this.sequence5 = [7457, 14913, 22371, 37281, 37282, 37283];
         this.rebuildSound();
     }
     ChiChiAPU.prototype.irqHandler = function () {
@@ -1177,6 +1180,7 @@ var ChiChiAPU = /** @class */ (function () {
                 break;
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
+                this.frameMode = ((data & 128) == 128);
                 //this.endFrame(clock);
                 //this.lastFrameHit = 0;
                 break;
@@ -1185,17 +1189,18 @@ var ChiChiAPU = /** @class */ (function () {
     ChiChiAPU.prototype.advanceClock = function (ticks) {
         this.currentClock += ticks;
         this.frameClocker += ticks;
-        if (this.frameClocker > 7445) {
+        var nextStep = this.frameMode ? this.sequence5[this.lastFrameHit] : this.sequence4[this.lastFrameHit];
+        if (this.frameClocker >= nextStep) {
             this.updateFrame(this.currentClock);
-            this.frameClocker -= 7445;
         }
     };
     ChiChiAPU.prototype.updateFrame = function (time) {
         this.runFrameEvents(time, this.lastFrameHit);
-        if (this.lastFrameHit === 3) {
+        if (this.lastFrameHit === (this.frameMode ? 4 : 3)) {
             this.lastFrameHit = 0;
+            this.frameClocker = 0;
             this.endFrame(time);
-            if (this.throwingIRQs) {
+            if (this.throwingIRQs && !this.frameMode) {
                 this.interruptRaised = true;
                 this.irqHandler();
             }

@@ -18,7 +18,10 @@ export class RomFile  {
 @Injectable()
 export class RomLoader {
 
-    constructor(private http: Http) {}
+    constructor(private nes: Emulator, private http: Http) {
+        this.wishbone = this.nes.wishbone;
+        debugger;    
+    }
 
     wishbone: WishboneMachine;
 
@@ -47,7 +50,7 @@ export class RomLoader {
                             fileReader.onload = (ze) => {
                                 const rom: number[] = Array.from(new Uint8Array(fileReader.result));
                                 RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
-                                    this.wishbone.insertCart(cart, rom);
+                                    this.nes.setupCart(cart, rom);
                                     observer.next(cart);
                                 })
                             };
@@ -73,7 +76,7 @@ export class RomLoader {
                 fileReader.onload = (e) => {
                     const rom: number[] = Array.from(new Uint8Array(fileReader.result));
                     RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
-                        this.wishbone.insertCart(cart, rom);
+                        this.nes.setupCart(cart, rom);
                         observer.next(cart);
                     })
 

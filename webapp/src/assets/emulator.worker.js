@@ -480,6 +480,7 @@ exports.QueuedPort = QueuedPort;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiMachine_1 = __webpack_require__(3);
+var ChiChiState_1 = __webpack_require__(12);
 var NesInfo = /** @class */ (function () {
     function NesInfo() {
         this.bufferupdate = false;
@@ -807,6 +808,13 @@ var tendoWrapper = /** @class */ (function () {
             case 'reset':
                 this.reset();
                 break;
+            case 'getstate':
+                var state = new ChiChiState_1.ChiChiStateManager().read(this.machine);
+                postMessage({ state: state });
+                break;
+            case 'setstate':
+                new ChiChiState_1.ChiChiStateManager().write(this.machine, event.data.state);
+                break;
             default:
                 return;
         }
@@ -992,6 +1000,7 @@ var CommonAudio_1 = __webpack_require__(1);
 var ChiChiAPU = /** @class */ (function () {
     function ChiChiAPU(writer) {
         this.writer = writer;
+        this.frameMode = false;
         this.throwingIRQs = false;
         this.reg15 = 0;
         this._sampleRate = 44100;
@@ -1006,6 +1015,8 @@ var ChiChiAPU = /** @class */ (function () {
         this.frameClocker = 0;
         //Muted: boolean;
         this.interruptRaised = false;
+        this.sequence4 = [7457, 14913, 22371, 29828, 29829, 29831];
+        this.sequence5 = [7457, 14913, 22371, 37281, 37282, 37283];
         this.rebuildSound();
     }
     ChiChiAPU.prototype.irqHandler = function () {
@@ -1169,6 +1180,7 @@ var ChiChiAPU = /** @class */ (function () {
                 break;
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
+                this.frameMode = ((data & 128) == 128);
                 //this.endFrame(clock);
                 //this.lastFrameHit = 0;
                 break;
@@ -1177,17 +1189,18 @@ var ChiChiAPU = /** @class */ (function () {
     ChiChiAPU.prototype.advanceClock = function (ticks) {
         this.currentClock += ticks;
         this.frameClocker += ticks;
-        if (this.frameClocker > 7445) {
+        var nextStep = this.frameMode ? this.sequence5[this.lastFrameHit] : this.sequence4[this.lastFrameHit];
+        if (this.frameClocker >= nextStep) {
             this.updateFrame(this.currentClock);
-            this.frameClocker -= 7445;
         }
     };
     ChiChiAPU.prototype.updateFrame = function (time) {
         this.runFrameEvents(time, this.lastFrameHit);
-        if (this.lastFrameHit === 3) {
+        if (this.lastFrameHit === (this.frameMode ? 4 : 3)) {
             this.lastFrameHit = 0;
+            this.frameClocker = 0;
             this.endFrame(time);
-            if (this.throwingIRQs) {
+            if (this.throwingIRQs && !this.frameMode) {
                 this.interruptRaised = true;
                 this.irqHandler();
             }
@@ -2413,20 +2426,21 @@ var ChiChiPPU = /** @class */ (function () {
                 greyScale: this.greyScale,
                 emphasisBits: this.emphasisBits,
                 backgroundPatternTableIndex: this.backgroundPatternTableIndex,
-                spriteRAM: this.spriteRAM,
-                byteOutBuffer: this.byteOutBuffer,
                 _PPUControlByte0: this._PPUControlByte0,
-                _PPUControlByte1: this._PPUControlByte1
+                _PPUControlByte1: this._PPUControlByte1,
+                spriteRAM: this.spriteRAM.slice(),
+                byteOutBuffer: this.byteOutBuffer.slice(),
             };
         },
         set: function (value) {
+            var _this = this;
             this.greyScale = value.greyScale;
             this.emphasisBits = value.emphasisBits;
             this.backgroundPatternTableIndex = value.backgroundPatternTableIndex;
-            this.spriteRAM = value.spriteRAM;
-            this.byteOutBuffer = value.byteOutBuffer;
             this._PPUControlByte0 = value._PPUControlByte0;
             this._PPUControlByte1 = value._PPUControlByte1;
+            value.spriteRAM.map(function (v, i) { return _this.spriteRAM[i] = v; });
+            value.byteOutBuffer.map(function (v, i) { return _this.byteOutBuffer[i] = v; });
         },
         enumerable: true,
         configurable: true
@@ -3731,6 +3745,63 @@ var ChiChiCPPU = /** @class */ (function () {
             SR: this._statusRegister
         };
     };
+    Object.defineProperty(ChiChiCPPU.prototype, "state", {
+        get: function () {
+            return {
+                clock: this.clock,
+                _statusRegister: this._statusRegister,
+                _programCounter: this._programCounter,
+                _handleNMI: this._handleNMI,
+                _handleIRQ: this._handleIRQ,
+                _addressBus: this._addressBus,
+                _dataBus: this._dataBus,
+                _operationCounter: this._operationCounter,
+                _accumulator: this._accumulator,
+                _indexRegisterX: this._indexRegisterX,
+                _indexRegisterY: this._indexRegisterY,
+                _currentInstruction_AddressingMode: this._currentInstruction_AddressingMode,
+                _currentInstruction_Address: this._currentInstruction_Address,
+                _currentInstruction_OpCode: this._currentInstruction_OpCode,
+                _currentInstruction_Parameters0: this._currentInstruction_Parameters0,
+                _currentInstruction_Parameters1: this._currentInstruction_Parameters1,
+                _currentInstruction_ExtraTiming: this._currentInstruction_ExtraTiming,
+                systemClock: this.systemClock,
+                nextEvent: this.nextEvent,
+                Rams: this.Rams.slice(),
+                Debugging: this.Debugging,
+                cheating: this.cheating,
+                genieCodes: this.genieCodes
+            };
+        },
+        set: function (value) {
+            var _this = this;
+            this.clock = value.clock,
+                this._statusRegister = value._statusRegister,
+                this._programCounter = value._programCounter,
+                this._handleNMI = value._handleNMI,
+                this._handleIRQ = value._handleIRQ,
+                this._addressBus = value._addressBus,
+                this._dataBus = value._dataBus,
+                this._operationCounter = value._operationCounter,
+                this._accumulator = value._accumulator,
+                this._indexRegisterX = value._indexRegisterX,
+                this._indexRegisterY = value._indexRegisterY,
+                this._currentInstruction_AddressingMode = value._currentInstruction_AddressingMode,
+                this._currentInstruction_Address = value._currentInstruction_Address,
+                this._currentInstruction_OpCode = value._currentInstruction_OpCode,
+                this._currentInstruction_Parameters0 = value._currentInstruction_Parameters0,
+                this._currentInstruction_Parameters1 = value._currentInstruction_Parameters1,
+                this._currentInstruction_ExtraTiming = value._currentInstruction_ExtraTiming,
+                this.systemClock = value.systemClock,
+                this.nextEvent = value.nextEvent,
+                this.Debugging = value.Debugging,
+                this.cheating = value.cheating,
+                this.genieCodes = value.genieCodes;
+            value.Rams.every(function (v, i) { _this.Rams[i] = v; return true; });
+        },
+        enumerable: true,
+        configurable: true
+    });
     // statics
     ChiChiCPPU.cpuTiming = [7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0];
     ChiChiCPPU.addressModes = [1, 12, 1, 0, 0, 4, 4, 0, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 4, 5, 5, 1, 1, 10, 1, 1, 8, 9, 9, 1, 8, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 9, 9, 9, 1, 1, 12, 1, 1, 1, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 1, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 11, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 15, 9, 9, 1, 7, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 1, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 8, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 9, 9, 10, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1];
@@ -3798,6 +3869,49 @@ var ChiChiControlPad = /** @class */ (function () {
     return ChiChiControlPad;
 }());
 exports.ChiChiControlPad = ChiChiControlPad;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChiChiState = /** @class */ (function () {
+    function ChiChiState() {
+    }
+    return ChiChiState;
+}());
+exports.ChiChiState = ChiChiState;
+var ChiChiStateManager = /** @class */ (function () {
+    function ChiChiStateManager() {
+    }
+    ChiChiStateManager.prototype.read = function (machine) {
+        var state = new ChiChiState();
+        state.apu = machine.SoundBopper.state;
+        state.ppu = machine.ppu.state;
+        state.cart = machine.Cart.state;
+        state.cpu = machine.Cpu.state;
+        return state;
+    };
+    ChiChiStateManager.prototype.write = function (machine, value) {
+        if (value.ppu) {
+            machine.ppu.state = value.ppu;
+        }
+        if (value.apu) {
+            machine.SoundBopper.state = value.apu;
+        }
+        if (value.cart) {
+            machine.Cart.state = value.cart;
+        }
+        if (value.cpu) {
+            machine.Cpu.state = value.cpu;
+        }
+    };
+    return ChiChiStateManager;
+}());
+exports.ChiChiStateManager = ChiChiStateManager;
 
 
 /***/ })

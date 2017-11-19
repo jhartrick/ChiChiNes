@@ -1,7 +1,7 @@
 import { NgZone } from '@angular/core';
 import * as crc from 'crc';
 
-import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, IChiChiAPU,
+import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, IChiChiAPU, IChiChiAPUState,
         WavSharer, ChiChiCPPU, ChiChiMachine, ChiChiPPU, GameGenieCode, ChiChiCheats, IBaseCart  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -182,9 +182,6 @@ export class WishboneMachine  {
     fps = 0;
     nesReady: boolean;
     tileDoodler: TileDoodler;
-    boneThread: WishboneWorker = new WishboneWorker();
-    private worker: Worker;
-
     readonly NES_GAME_LOOP_CONTROL = 0;
     readonly NES_CONTROL_PAD_0 = 2;
     readonly NES_CONTROL_PAD_1 = 4;
@@ -194,6 +191,7 @@ export class WishboneMachine  {
     nesInterop: Int32Array = new Int32Array(<any>this.nesControlBuf);
 
     constructor() {
+        console.log("making wishbonemachine")
         // initialize sound
         this.WaveForms = new WavSharer();
         this.SoundBopper = new WishboneAPU(this.WaveForms);
@@ -234,7 +232,7 @@ export class WishboneMachine  {
         const cc = new ChiChiCheats();
         this.Cpu.genieCodes = cheats.filter((v) => v.active).map((v) => cc.gameGenieCodeToPatch(v.code));
         this.Cpu.cheating =  this.Cpu.genieCodes.length > 0;
-        this.postNesMessage({ command: 'cheats', cheats: this.Cpu.genieCodes });
+        // this.postNesMessage({ command: 'cheats', cheats: this.Cpu.genieCodes });
     }
 
     handleMessage(data: MessageEvent) {
@@ -254,27 +252,19 @@ export class WishboneMachine  {
         return this.nesStateSubject.asObservable();
     }
 
-    pendingMessages: Array<any> = new Array<any>();
-
-    postNesMessage(message: any) {
-        this.boneThread.postNesMessage(message);
-    }
-
     Run() {
         this.postNesMessage({ command: 'run', debug: false });
         clearInterval(this.interval);
         this.interval = setInterval(() => {
             this.fps = this.nesInterop[1];
         }, 500);
-        // (<any>Atomics).store(this.nesInterop, 2, 1);
-
     }
 
     RunFrame() {
     }
 
     RequestSync() {
-        this.postNesMessage({ command: 'audiosettings', settings:  this.SoundBopper.cloneSettings() });
+      //  this.postNesMessage({ command: 'audiosettings', settings:  this.SoundBopper.cloneSettings() });
     }
 
 
@@ -357,6 +347,11 @@ export class WishboneMachine  {
 
     }
 
+    postNesMessage(message: any) {
+        
+    }
+
+
     FrameCount: number;
     get IsRunning(): boolean {
         return this.nesInterop[this.NES_GAME_LOOP_CONTROL] > 0;
@@ -388,28 +383,14 @@ export class WishboneMachine  {
         this.postNesMessage({ command: 'stop' });
     }
 
-    insertCart(cart: BaseCart, rom: number[]) {
-        this.boneThread.start((threadHandler)=>{
-            const createCommand = 'create';
-            this.nesInterop = threadHandler.nesInterop;
-            threadHandler.postNesMessage({ 
-                command: createCommand,
-                vbuffer: this.ppu.byteOutBuffer,
-                abuffer: this.WaveForms.SharedBuffer,
-                audioSettings: this.SoundBopper.cloneSettings(),
-                iops: this.nesInterop
-            });
+    insertCart(cart: BaseCart) {
 
-            cart.installCart(this.ppu, this.Cpu);
-            this.Cpu.Cart = this.ppu.ChrRomHandler = this.Cart.realCart = cart;
-            this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
-            this.Cart.CartName = this.Cart.realCart.CartName;
-            this.ppu.chrRomHandler = this.Cart.realCart;
-            
-            this.tileDoodler = new TileDoodler(this.ppu);
-            threadHandler.postNesMessage({ command: 'loadrom', rom: rom, name: cart.CartName });
-        });
-        this.boneThread.nesMessageData.subscribe((data)=>this.handleMessage(data));
+        this.tileDoodler = new TileDoodler(this.ppu);
+        cart.installCart(this.ppu, this.Cpu);
+        this.Cpu.Cart = this.ppu.ChrRomHandler = this.Cart.realCart = cart;
+        this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
+        this.Cart.CartName = this.Cart.realCart.CartName;
+        this.ppu.chrRomHandler = this.Cart.realCart;
     }
 
     // loadCart(rom: number[], name: string, cartInfo: any) {

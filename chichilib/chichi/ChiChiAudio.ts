@@ -32,6 +32,7 @@ export interface IChiChiAPU extends IChiChiAPUState {
 }
 
 export class ChiChiAPU implements IChiChiAPU {
+    frameMode: boolean = false;
     irqHandler(): any {
     }
 
@@ -222,27 +223,36 @@ export class ChiChiAPU implements IChiChiAPU {
                 break;
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
+                this.frameMode  = ((data & 128) == 128);
                 //this.endFrame(clock);
                 //this.lastFrameHit = 0;
                 break;
         }
     }
 
+    sequence4 = [7457, 14913, 22371, 29828, 29829, 29831];
+    sequence5 = [7457, 14913, 22371, 37281, 37282, 37283];
+    
     advanceClock(ticks: number) {
         this.currentClock += ticks;
         this.frameClocker += ticks;
-        if (this.frameClocker > 7445) {
+
+        const nextStep = this.frameMode ? this.sequence5[this.lastFrameHit] : this.sequence4[this.lastFrameHit];
+        
+        if (this.frameClocker >= nextStep) {
             this.updateFrame(this.currentClock);
-            this.frameClocker -= 7445;
+
         }
     }
 
     updateFrame(time: number): void {
         this.runFrameEvents(time, this.lastFrameHit);
-        if (this.lastFrameHit === 3) {
+        
+        if (this.lastFrameHit === (this.frameMode ? 4 : 3)) {
             this.lastFrameHit = 0;
+            this.frameClocker = 0;
             this.endFrame(time)
-            if (this.throwingIRQs) {
+            if (this.throwingIRQs && !this.frameMode) {
                 this.interruptRaised = true;
                 this.irqHandler();
             }

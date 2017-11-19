@@ -6,8 +6,7 @@ import { Emulator } from './services/NESService'
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'],
-  providers: [Emulator]
+  styleUrls: ['./app.component.css']
 
 })
 export class AppComponent {

@@ -2300,30 +2300,28 @@ var BaseCart = /** @class */ (function () {
                 irqRaised: this.irqRaised,
                 chrRamStart: this.chrRamStart,
                 chrRamLength: this.chrRamLength,
-                iNesHeader: this.iNesHeader,
-                prgRomBank6: this.prgRomBank6,
+                iNesHeader: this.iNesHeader.slice(),
+                prgRomBank6: this.prgRomBank6.slice(),
                 // starting locations of PPU 0x0000-0x3FFF in 1k blocks
-                ppuBankStarts: this.ppuBankStarts,
+                ppuBankStarts: this.ppuBankStarts.slice(),
                 // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
-                prgBankStarts: this.prgBankStarts,
-                romControlBytes: this.romControlBytes,
-                nesCart: this.nesCart,
-                chrRom: this.chrRom
+                prgBankStarts: this.prgBankStarts.slice(),
+                romControlBytes: this.romControlBytes.slice(),
+                nesCart: this.nesCart.slice(),
+                chrRom: this.chrRom.slice()
             };
         },
         set: function (value) {
+            var _this = this;
             this.irqRaised = value.irqRaised;
             this.chrRamStart = value.chrRamStart;
             this.chrRamLength = value.chrRamLength;
-            this.iNesHeader = value.iNesHeader;
-            this.prgRomBank6 = value.prgRomBank6;
-            // starting locations of PPU 0x0000-0x3FFF in 1k blocks
-            this.ppuBankStarts = value.ppuBankStarts;
-            // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
-            this.prgBankStarts = value.prgBankStarts;
-            this.romControlBytes = value.romControlBytes;
-            this.nesCart = value.nesCart;
-            this.chrRom = value.chrRom;
+            value.prgRomBank6.every(function (v, i) { _this.prgRomBank6[i] = v; return true; });
+            value.ppuBankStarts.every(function (v, i) { _this.ppuBankStarts[i] = v; return true; });
+            value.prgBankStarts.every(function (v, i) { _this.prgBankStarts[i] = v; return true; });
+            value.romControlBytes.every(function (v, i) { _this.romControlBytes[i] = v; return true; });
+            value.nesCart.every(function (v, i) { _this.nesCart[i] = v; return true; });
+            value.chrRom.every(function (v, i) { _this.chrRom[i] = v; return true; });
         },
         enumerable: true,
         configurable: true
@@ -2850,8 +2848,6 @@ var Konami025Cart = /** @class */ (function (_super) {
         this.usesSRAM = true;
         this.mapperName = 'KonamiVRC4';
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        this.copyBanks4k(0, 0, 1, 1);
-        this.copyBanks4k(0, 1, 0, 1);
         this.regNums = [0x000, 0x002, 0x001, 0x003];
         this.regMask = 0xf;
         switch (this.ROMHashFunction) {
@@ -4471,10 +4467,10 @@ var BNROMCart = /** @class */ (function (_super) {
         return _this;
     }
     BNROMCart.prototype.InitializeCart = function () {
-        this.usesSRAM = true;
         this.mapperName = 'BNROM';
         this.SetupBankStarts(0, 1, 2, 3);
         if (this.chrRomCount > 1) {
+            this.usesSRAM = true;
             this.mapperName = 'NINA-001';
             this.isNina = true;
             this.SetByte = this.SetByteNina;
@@ -4483,25 +4479,17 @@ var BNROMCart = /** @class */ (function (_super) {
         //this.mirror(0, 0);
     };
     BNROMCart.prototype.SetByte = function (clock, address, val) {
-        if (address < 0x5000)
-            return;
-        if (address >= 24576 && address <= 32767) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 8191] = val & 255;
-            }
-            return;
+        if (address >= 0x8000 && address <= 0xffff) {
+            // val selects which bank to swap, 32k at a time
+            var newbank8 = 0;
+            newbank8 = (val & 15) << 2;
+            this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
         }
-        // val selects which bank to swap, 32k at a time
-        var newbank8 = 0;
-        newbank8 = (val & 15) << 2;
-        this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
         // whizzler.DrawTo(clock);
     };
     BNROMCart.prototype.SetByteNina = function (clock, address, val) {
         if (address >= 0x6000 && address <= 0x7fff) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 0x1ff] = val & 255;
-            }
+            this.prgRomBank6[address & 0x1fff] = val & 255;
             return;
         }
         switch (address) {

@@ -1,5 +1,5 @@
 import { WishboneMachine } from './wishbone';
-import { IChiChiAPU , WavSharer, AudioSettings } from 'chichi';
+import { IChiChiAPU, IChiChiAPUState, WavSharer, AudioSettings } from 'chichi';
 import { LocalAudioSettings } from './wishbone.audio.localsettings';
 
 export interface IAudioHandler {
@@ -107,5 +107,7 @@ export class WishboneAPU  implements IChiChiAPU {
 	constructor(wavSharer: WavSharer) {
 		this.writer = wavSharer;
 	}
+
+	state: IChiChiAPUState;
 }
 
