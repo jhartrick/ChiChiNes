@@ -1898,6 +1898,7 @@ var BaseCart = /** @class */ (function () {
     //ChrRamStart: number;
     function BaseCart() {
         var _this = this;
+        this.batterySRAM = false;
         this.fourScreen = false;
         this.mapperName = 'base';
         this.supported = true;
@@ -2089,6 +2090,7 @@ var BaseCart = /** @class */ (function () {
         this.romControlBytes[0] = this.iNesHeader[6];
         this.romControlBytes[1] = this.iNesHeader[7];
         this.usesSRAM = (this.romControlBytes[0] & 2) === 2;
+        this.batterySRAM = (this.romControlBytes[0] & 2) === 2;
     };
     BaseCart.prototype.installCart = function (ppu, cpu) {
         this.Whizzler = ppu;

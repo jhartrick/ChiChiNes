@@ -746,6 +746,7 @@ var tendoWrapper = /** @class */ (function () {
             _this.updateBuffers();
             delete romloader.loader;
             _this.require.undef('romloader.worker');
+            postMessage({ status: 'loaded' });
         });
     };
     tendoWrapper.prototype.handleMessage = function (event) {
@@ -789,21 +790,26 @@ var tendoWrapper = /** @class */ (function () {
             case 'run':
                 this.Debugging = false;
                 this.run(true);
+                postMessage({ status: 'running' });
                 break;
             case 'runframe':
                 this.Debugging = true;
                 this.runFrame();
+                postMessage({ status: 'stopped' });
                 break;
             case 'step':
                 this.Debugging = true;
                 this.step();
+                postMessage({ status: 'stopped' });
                 break;
             case 'continue':
                 this.run(false);
+                postMessage({ status: 'running' });
                 break;
             case 'stop':
                 this.machine.EnableSound = false;
                 this.stop();
+                postMessage({ status: 'stopped' });
                 break;
             case 'reset':
                 this.reset();

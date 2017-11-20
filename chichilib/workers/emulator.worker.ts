@@ -313,6 +313,7 @@ export class tendoWrapper {
                 this.updateBuffers();
                 delete romloader.loader;
                 this.require.undef('romloader.worker');
+                postMessage({ status: 'loaded' });
             });
 
     }
@@ -341,6 +342,7 @@ export class tendoWrapper {
                 this.machine.EnableSound = false;
                 //this.createMachine();
                 this.loadCart(event.data.rom, event.data.name);
+                
                break;
             case 'loadnsf':
                 this.stop();
@@ -360,22 +362,26 @@ export class tendoWrapper {
             case 'run':
                 this.Debugging = false;
                 this.run(true);
+                postMessage({ status: 'running' });
                 break;
             case 'runframe':
                 this.Debugging = true;
                 this.runFrame();
+                postMessage({ status: 'stopped' });
                 break;
             case 'step':
                 this.Debugging = true;
                 this.step();
+                postMessage({ status: 'stopped' });
                 break;
             case 'continue':
                 this.run(false);
+                postMessage({ status: 'running' });
                 break;
             case 'stop':
                 this.machine.EnableSound = false;
-
                 this.stop();
+                postMessage({ status: 'stopped' });
                 break;
             case 'reset':
                 this.reset();

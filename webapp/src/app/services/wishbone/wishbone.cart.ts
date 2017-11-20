@@ -30,6 +30,16 @@ export class WishboneCart {
         return this.realCart.submapperId > 0 ? this.realCart.submapperId : 0;
     }
 
+    saveWram(): number[] {
+        return Array.from(this.realCart.prgRomBank6.slice());
+    }
+
+    restoreWram(value: number[]) {
+        for(let i = 0; i < value.length; ++i) {
+            this.realCart.prgRomBank6[i] = value[i];
+        }
+    }
+
     CartName: string;
     ROMHashFunction: string;
 

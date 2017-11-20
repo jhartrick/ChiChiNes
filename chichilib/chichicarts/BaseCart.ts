@@ -43,6 +43,8 @@ export interface IBaseCart extends IBaseCartState {
     submapperId: number;
     ROMHashFunction: string;
     usesSRAM: boolean;
+    batterySRAM: boolean;
+    
     cartInfo: any;
     mapsBelow6000: boolean;
     prgRomCount: number;
@@ -72,6 +74,7 @@ export interface IBaseCart extends IBaseCartState {
 }
 
 export class BaseCart implements IBaseCart {
+    batterySRAM: boolean = false;
     cartInfo: any;
     customPalette: number[];
     
@@ -272,7 +275,8 @@ export class BaseCart implements IBaseCart {
         this.romControlBytes[1] = this.iNesHeader[7];
 
         this.usesSRAM = (this.romControlBytes[0] & 2) === 2;
-
+        this.batterySRAM = (this.romControlBytes[0] & 2) === 2;
+        
     }
 
     installCart(ppu: ChiChiPPU, cpu: ChiChiCPPU) {

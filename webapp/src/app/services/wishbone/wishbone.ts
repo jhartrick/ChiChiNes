@@ -13,6 +13,7 @@ import { KeyboardSettings } from '../keyboardsettings';
 import { WishboneCheats } from './wishbone.cheats';
 import { Http } from '@angular/http';
 import { WishboneWorker } from './wishbone.worker';
+import { EventEmitter } from 'selenium-webdriver';
 
 
 export class KeyBindings {
@@ -226,6 +227,8 @@ export class WishboneMachine  {
 
     private debugSubject: Subject<any> = new Subject<any>();
     
+    onCartLoaded: Observable<IBaseCart>;
+
     get debugEvents(): Observable<any> {
         return this.debugSubject.asObservable();
     }

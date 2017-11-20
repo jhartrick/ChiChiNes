@@ -10,6 +10,7 @@ import { IBaseCart } from 'chichi';
 import { ChiChiThreeJSAudio, ThreeJSAudioSettings } from './wishbone/wishbone.audio.threejs';
 import { IBaseCartState } from '../../../../chichilib/lib/chichi/chichicarts/BaseCart';
 import { ICartSettings } from './ICartSettings';
+import { WramManager } from './wishbone/wishbone.wrammanger';
 
 
 export enum RunStatus {
@@ -30,6 +31,7 @@ export class Emulator {
     wishbone : WishboneMachine;
     audioSettings: ThreeJSAudioSettings;
     cartSettings: ICartSettings;
+    wram: WramManager;
     
     cartChanged = new EventEmitter<ICartSettings>(true);
 
@@ -73,6 +75,16 @@ export class Emulator {
     }
 
     setupCart(cart: BaseCart, rom: number[]) {
+        this.cartSettings = {
+            name: cart.CartName,
+            mapperName: cart.mapperName,
+            mapperId: cart.mapperId,
+            submapperId: cart.submapperId,
+            crc: cart.ROMHashFunction,
+            prgRomCount: cart.prgRomCount,
+            chrRomCount: cart.chrRomCount
+        }
+        this.wram = new WramManager(this.cartSettings, this);
 
         this.worker.start((threadHandler)=>{
             this.wishbone.nesInterop = threadHandler.nesInterop;
@@ -86,18 +98,28 @@ export class Emulator {
             });
 
             threadHandler.postNesMessage({ command: 'loadrom', rom: rom, name: cart.CartName });
+            const msgs = threadHandler.nesMessageData
+                .filter( (data)=> data.status ? true : false)
+                .subscribe((data) => {
+                    switch(data.status) {
+                        case 'loaded':
+                            if (cart.batterySRAM) {
+                                this.wram.restoreWram();
+                            }
+                        break;
+                        case 'running':
+                        break;
+                        case 'stopped':
+                            if (cart.batterySRAM) {
+                                this.wram.saveWram();
+                            }
+                        break;
+                    }
+            });
             
             this.wishbone.insertCart(cart);
-            this.cartSettings = {
-                name: cart.CartName,
-                mapperName: cart.mapperName,
-                mapperId: cart.mapperId,
-                submapperId: cart.submapperId,
-                crc: cart.ROMHashFunction,
-                prgRomCount: cart.prgRomCount,
-                chrRomCount: cart.chrRomCount
-            }
 
+            
             this.cartChanged.emit(this.cartSettings);
         });
     }

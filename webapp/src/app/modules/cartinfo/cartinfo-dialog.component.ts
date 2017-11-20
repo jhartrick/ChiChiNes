@@ -1,7 +1,7 @@
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Component, Inject, ChangeDetectorRef, ElementRef, AfterContentInit } from '@angular/core';
 import { setTimeout } from 'timers';
-import { ICartSettings } from '../../services/NESService';
+import { ICartSettings } from '../../services/ICartSettings';
 
 @Component({
   selector: 'cartinfo-dialog',

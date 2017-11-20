@@ -18,6 +18,10 @@ export class WishboneWorker {
     
     nesMessageData: Subject<any> = new Subject<any>();
 
+    beforeClose() {
+
+    }
+
     constructor(private wishbone: WishboneMachine) {
         console.log("making wishboneworker")
 
@@ -29,6 +33,7 @@ export class WishboneWorker {
    
         wishbone.PowerOff = () => {
             this.postNesMessage({ command: 'stop' });
+            this.beforeClose();
         }
     
         wishbone.Step = () => {
@@ -37,6 +42,8 @@ export class WishboneWorker {
     
         wishbone.EjectCart = () =>  {
             this.postNesMessage({ command: 'stop' });
+            this.beforeClose();
+            
         }
 
         wishbone.Run = () => {
@@ -65,6 +72,10 @@ export class WishboneWorker {
     
     }
 
+    stop() {
+        this.beforeClose();
+    }
+
     postNesMessage(message: any) {
         if (this.worker) {
             this.worker.postMessage(message);
@@ -79,7 +90,6 @@ export class WishboneWorker {
 
     private sync(data: any) {
         const wishbone = this.wishbone;
-
         if (data.state) {
             
             // console.log("state "  + JSON.stringify(data.state));
