@@ -1,10 +1,8 @@
 ﻿import { Component, OnInit, ViewChild, ElementRef, ChangeDetectionStrategy, ChangeDetectorRef, Input } from '@angular/core';
 import { MatPaginator } from '@angular/material';
 import { Observable } from 'rxjs/Observable';
-import { Emulator } from '../../../services/NESService';
+import { NESService } from '../../../services/NESService';
 import { Debugger } from '../debug.interface';
-
-
 
 @Component({
   selector: 'app-debugoutput',
@@ -14,13 +12,9 @@ import { Debugger } from '../debug.interface';
 })
 export class DebugOutputComponent {
     selectedTabIndex = 0;
-    @ViewChild(MatPaginator) paginator: MatPaginator;
-
-    public debugger: Debugger;
 
     decodedStatusRegister = '';
 
-    constructor(public nes: Emulator, private cd: ChangeDetectorRef) {
-        this.debugger = new Debugger(this.nes.wishbone);
+    constructor(private cd: ChangeDetectorRef, private dbg: Debugger, public nes: NESService) {
     }
 }

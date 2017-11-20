@@ -11,6 +11,8 @@ import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/observable/fromEvent';
 import { ChiChiInstruction, ChiChiCPPU_AddressingModes, DebugHelpers } from 'chichi';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
+import { NESService } from '../../services/NESService';
+import { Injectable } from '@angular/core';
 
 interface IDecodedInstruction extends ChiChiInstruction {
     asm: string;
@@ -118,7 +120,9 @@ export class DebugInstructionDataSource extends DataSource<any> {
     disconnect() { }
 }
 
+@Injectable()
 export class Debugger {
+    wishbone: WishboneMachine;
     static SRMasks_CarryMask = 0x01;
     static SRMasks_ZeroResultMask = 0x02;
     static SRMasks_InterruptDisableMask = 0x04;
@@ -130,12 +134,11 @@ export class Debugger {
 
 
     currentPPUStatus: any;
-    constructor(private machine: WishboneMachine) {
-        this.machine.debugEvents.subscribe((data) => this.processData(data));
+    constructor(private nes: NESService) {
+        this.nes.onDebug.subscribe((data) => this.processData(data));
     }
 
     private processData(debug: any)  {
-
         if (debug.InstructionHistory) {
             this.setInstructionPage(debug.InstructionHistory);
             if (debug.InstructionHistory.Finish) {

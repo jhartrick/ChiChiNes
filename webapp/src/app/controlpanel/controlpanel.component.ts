@@ -1,5 +1,5 @@
 ﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Emulator, EmuState } from '../services/NESService';
+import { NESService } from '../services/NESService';
 import { MatDialog } from '@angular/material';
 
 import { Observable } from 'rxjs/Observable';
@@ -36,12 +36,11 @@ export class ControlPanelComponent {
     show = true;
     powerstate: string;
     currentFilename: string;
-    state: EmuState;
     framesPerSecond: number;
 
     wishbone: WishboneMachine;
 
-    constructor(public nesService: Emulator,
+    constructor(public nesService: NESService,
         cd: ChangeDetectorRef,
         private romLoader: RomLoader,
         private ngZone: NgZone,
@@ -50,13 +49,13 @@ export class ControlPanelComponent {
         this.powerstate = 'OFF';
         this.localSettings = this.nesService.audioSettings;
         
-        this.nesService.cartChanged.subscribe((settings)=>{
+        this.nesService.cartChanged.subscribe((settings) => {
             this.cartSettings = settings;
         });
     }
 
 
-    
+
     handleFile(e: Event) {
         const files: FileList = (<HTMLInputElement>e.target).files;
         this.romLoader.loadRom(files).subscribe((rom) => {

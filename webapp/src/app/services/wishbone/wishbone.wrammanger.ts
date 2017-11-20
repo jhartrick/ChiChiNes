@@ -1,12 +1,12 @@
 import { ICartSettings } from "../ICartSettings";
-import { Emulator } from "../NESService";
+import { NESService } from "../NESService";
 
 export class WramManager {
     batteryBacked: boolean = false;
     crc: string;
     extension: string = '_wram';
 
-    constructor (private nes: Emulator) {
+    constructor (private nes: NESService) {
         this.nes.runStatusChanged.subscribe((status) => {
             switch(status) {
                 case 'loaded':

@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { Emulator } from '../../services/NESService';
+import { NESService } from '../../services/NESService';
 import { Observable } from 'rxjs/Observable';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { MatDialog } from '@angular/material';
@@ -19,11 +19,11 @@ export class GameGenieComponent {
     ggCodes: GameGenieCode[];
     wishbone: WishboneMachine;
     private cheatCodeLoader: WishboneCheats;
-    constructor(public nesService: Emulator, private dialog: MatDialog, private http: Http) {
+    constructor(public nesService: NESService, private dialog: MatDialog, private http: Http) {
       this.wishbone = nesService.wishbone;
       this.cheatCodeLoader = new WishboneCheats(http);
     }
-    
+
     cheat() {
       this.cheatCodeLoader.getCheatsForGame(this.wishbone.Cart.ROMHashFunction).subscribe((cheats)=>{
         this.ggCodes = cheats;

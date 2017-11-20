@@ -12,35 +12,25 @@ import { IBaseCartState } from '../../../../chichilib/lib/chichi/chichicarts/Bas
 import { ICartSettings } from './ICartSettings';
 import { WramManager } from './wishbone/wishbone.wrammanger';
 
-
-export enum RunStatus {
-    Off,
-    Running,
-    Paused,
-    DebugRunning,
-    Stepping
-}
-
-export class EmuState {
-    constructor(public romLoaded: string, public powerState: boolean, public paused: boolean, public debugging: boolean) {
-    }
-}
-
 @Injectable()
-export class Emulator {
-    wishbone : WishboneMachine;
+export class NESService {
     audioSettings: ThreeJSAudioSettings;
+
+    // events
     cartChanged = new EventEmitter<ICartSettings>(true);
     runStatusChanged = new EventEmitter<string>(true);
+    onDebug: EventEmitter<any> = new EventEmitter<any>();
+    
+    private vbuffer: Uint8Array = new Uint8Array(<any>new SharedArrayBuffer(256 * 256 * 4));
+    get videoBuffer(): Uint8Array {
+        return this.vbuffer;
+    }
 
     worker: WishboneWorker;
     
     private audioHandler: ChiChiThreeJSAudio;
-    
-    public onDebug: EventEmitter<any> = new EventEmitter<any>();
 
-    constructor() {
-        this.wishbone = new WishboneMachine();
+    constructor(public wishbone: WishboneMachine) {
         this.worker = new WishboneWorker(this.wishbone);
         this.audioHandler = new ChiChiThreeJSAudio(this.wishbone.WaveForms);
         this.audioSettings = this.audioHandler.getSound();
@@ -49,6 +39,12 @@ export class Emulator {
             .filter( (data)=> data.status ? true : false)
             .subscribe((data) => {
                 this.runStatusChanged.emit(data.status);
+        });
+
+        const debugMsgs = this.worker.nesMessageData
+            .filter( (data)=> data.debug ? true : false)
+            .subscribe((data) => {
+                this.onDebug.emit(data.debug);
         });
     }
 
@@ -113,15 +109,20 @@ export class Emulator {
         return false;
     }
 
-    private vbuffer: Uint8Array = new Uint8Array(<any>new SharedArrayBuffer(256 * 256 * 4));
-
-    get videoBuffer(): Uint8Array {
-        return this.vbuffer;
+    debugStep() {
+        this.worker.postNesMessage({ command: 'step', debug: true });
     }
+
+    debugStepFrame() {
+        this.worker.postNesMessage({ command: 'runframe', debug: true });
+    }
+            
+    continue() {
+        this.worker.postNesMessage({ command: 'continue', debug: false });
+    }
+ 
 
     SetDebugCallbackFunction(callback: () => void) {
     }
-
-
  
 }

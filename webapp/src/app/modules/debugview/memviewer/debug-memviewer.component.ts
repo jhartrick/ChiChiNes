@@ -1,6 +1,6 @@
 ﻿import { Component, OnInit, Input } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
-import { Emulator } from '../../../services/NESService';
+import { NESService } from '../../../services/NESService';
 
 @Pipe({ name: 'ascii' })
 export class AsciiPipe implements PipeTransform {
@@ -67,7 +67,7 @@ export class MemViewerComponent implements OnInit {
         this.look();
     }
     pageSize = 16;
-    constructor(private nes: Emulator) {
+    constructor(private nes: NESService) {
     }
 
     public look(): void {

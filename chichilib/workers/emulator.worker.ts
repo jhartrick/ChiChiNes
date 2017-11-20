@@ -189,27 +189,6 @@ export class tendoWrapper {
         this.machine.PowerOff();
         this.runStatus = this.machine.RunState;
     }
-    audioBytesWritten : number = 0;
-
-    private flushAudio() {
-    //  debugger;
-        const len = this.machine.WaveForms.SharedBufferLength;
-
-        for (let i = 0; i < len; ++i) {
-            this.sharedAudioBufferPos++;
-            if (this.sharedAudioBufferPos >= this.sharedAudioBuffer.length) {
-                this.sharedAudioBufferPos = 0;
-            }
-            this.sharedAudioBuffer[this.sharedAudioBufferPos ] = this.machine.WaveForms.SharedBuffer[i];
-            this.audioBytesWritten++;
-        }
-        while (this.audioBytesWritten >= this.sharedAudioBuffer.length >> 2) {
-            <any>Atomics.store(this.iops, 3, this.audioBytesWritten);
-            <any>Atomics.wait(this.iops, 3, this.audioBytesWritten);
-            this.audioBytesWritten = <any>Atomics.load(this.iops, 3);
-        }
-
-    }
 
     private runInnerLoop() {
         this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
@@ -218,24 +197,12 @@ export class tendoWrapper {
         this.machine.RunFrame();
         this.framesPerSecond = 0;
 
-        //this.flushAudio();
         if ((this.framesRendered++) === 60) {
-            // this.updateState();
-
             this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
             this.framesRendered = 0; this.startTime = new Date().getTime();
             this.iops[1] = this.framesPerSecond;
 
-            // if (this.framesPerSecond < 60 && this.runTimeout > 0) {
-            //     this.runTimeout--;
-            // } else if (this.runTimeout < 50) {
-            //     this.runTimeout++;
-            // }
         }
-
-        //this.runInnerLoop();
-        //setTimeout(() => { this.runInnerLoop(); }, this.runTimeout); 
-
     }
 
     run(reset: boolean) {
@@ -254,7 +221,7 @@ export class tendoWrapper {
             while(this.iops[0]==1) {  
                 this.runInnerLoop();
             }
-          },1);
+          },0);
 
           this.runStatus = machine.RunState;// runStatuses.Running;
       }

@@ -8,7 +8,7 @@ import { MatButtonToggleModule, MatExpansionModule, MatDialogModule } from '@ang
 import { MatProgressSpinnerModule } from '@angular/material';
 import * as JSZip from 'jszip';
 
-import { Emulator } from '../../services/NESService';
+import { NESService } from '../../services/NESService';
 
 import { DebugOutputComponent } from './debugoutput/debugoutput.component';
 import { PpuStatusComponent } from './debugoutput/debugoutput-ppustatus.component';
@@ -19,6 +19,7 @@ import { InstructionHistoryComponent } from './instructionhistory/debug-instruct
 import { NameTableViewerComponent } from './nametableviewer/debug-nametableviewer.component';
 import { SpriteViewerComponent } from './spriteviewer/debug-spriteviewer.component';
 import { PatternViewerComponent } from './patternviewer/debug-patternviewer.component';
+import { Debugger } from './debug.interface';
 
 @NgModule({
   declarations: [
@@ -48,10 +49,10 @@ import { PatternViewerComponent } from './patternviewer/debug-patternviewer.comp
     MatGridListModule,
     MatTabsModule,
 ],
-
   exports: [
     DebugOutputComponent
-  ]
+  ],
+  providers: [ Debugger ]
 })
 
 export class DebugOutputModule { }

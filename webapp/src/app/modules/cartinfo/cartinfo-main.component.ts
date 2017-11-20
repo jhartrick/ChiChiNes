@@ -15,7 +15,6 @@ export class CartInfoComponent {
     @Input('cartSettings') cartSettings: ICartSettings;
 
     constructor(private loader: RomLoader, private dialog: MatDialog, private http: Http) {
-        
     }
 
     showDialog () {

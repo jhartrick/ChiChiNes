@@ -1,6 +1,5 @@
 import { ChiChiCPPU } from '../chichi/ChiChiCPU';
 import { ChiChiPPU, IChiChiPPU, IChiChiPPUState } from '../chichi/ChiChiPPU';
-import { CartridgeInfo } from './CartridgeInfo';
 
 import * as crc from 'crc';
 
@@ -25,7 +24,6 @@ export interface IBaseCartState  {
 
     // starting locations of PPU 0x0000-0x3FFF in 1k blocks
     ppuBankStarts: Uint32Array;
-     
     // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
     prgBankStarts: Uint32Array; 
 
@@ -45,7 +43,6 @@ export interface IBaseCart extends IBaseCartState {
     usesSRAM: boolean;
     batterySRAM: boolean;
     
-    cartInfo: any;
     mapsBelow6000: boolean;
     prgRomCount: number;
     chrRomOffset: number;
@@ -75,7 +72,6 @@ export interface IBaseCart extends IBaseCartState {
 
 export class BaseCart implements IBaseCart {
     batterySRAM: boolean = false;
-    cartInfo: any;
     customPalette: number[];
     ramMask = 0x1fff;
     
@@ -214,8 +210,8 @@ export class BaseCart implements IBaseCart {
         //this.DebugEvents.clear();
     }
 
-    LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: Uint8Array, chrRomData: Uint8Array, chrRomOffset: number, cartInfo?: CartridgeInfo): void {
-        this.cartInfo = cartInfo;
+    LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: Uint8Array, chrRomData: Uint8Array, chrRomOffset: number): void {
+        
         this.romControlBytes[0] = header[6];
         this.romControlBytes[1] = header[7];
 

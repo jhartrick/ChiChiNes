@@ -1,4 +1,4 @@
-import { Emulator } from '../../services/NESService';
+import { NESService } from '../../services/NESService';
 import { Component, Inject, HostListener, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { WishboneMachine, KeyBindings, WishBoneControlPad } from '../../services/wishbone/wishbone';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';

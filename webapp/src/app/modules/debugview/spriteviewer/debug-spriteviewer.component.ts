@@ -1,4 +1,4 @@
-﻿import { Emulator } from '../../../services/NESService'
+﻿import { NESService } from '../../../services/NESService'
 import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { ChiChiPPU } from 'chichi';
 
@@ -12,7 +12,7 @@ export class SpriteViewerComponent {
 
     @ViewChild('spriteDoodle') tileDoodle: ElementRef;
 
-    constructor(private nes: Emulator) {
+    constructor(private nes: NESService) {
     }
 
     private doDoodle(ctx: CanvasRenderingContext2D, spriteNumber: number, x: number, y: number): void {

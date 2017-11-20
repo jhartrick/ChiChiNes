@@ -1,5 +1,5 @@
 ﻿import { Component, ElementRef, Input, ViewChild } from '@angular/core';
-import { Emulator } from '../../../services/NESService';
+import { NESService } from '../../../services/NESService';
 import { ChiChiPPU } from 'chichi';
 
 @Component({
@@ -12,7 +12,7 @@ export class NameTableViewerComponent {
 
     @ViewChild('tileDoodle') tileDoodle: ElementRef;
 
-    constructor(private nes: Emulator) {
+    constructor(private nes: NESService) {
     }
 
     doodleNameTable(nametable: number, outbuf:  Uint8ClampedArray ): void

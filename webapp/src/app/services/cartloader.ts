@@ -6,7 +6,7 @@ import { Http } from '@angular/http';
 import * as JSZip from 'jszip';
 import * as crc from 'crc';
 import { Subscriber } from 'rxjs';
-import { Emulator } from './NESService';
+import { NESService } from './NESService';
 import { WishboneMachine } from './wishbone/wishbone';
 export class RomFile  {
     name?: string;
@@ -18,7 +18,7 @@ export class RomFile  {
 @Injectable()
 export class RomLoader {
 
-    constructor(private nes: Emulator, private http: Http) {
+    constructor(private nes: NESService, private http: Http) {
         this.wishbone = this.nes.wishbone;
  
     }

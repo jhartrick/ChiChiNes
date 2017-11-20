@@ -1,7 +1,7 @@
 ﻿import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { MatPaginator } from '@angular/material';
 import { DebugInstructionDataSource, Debugger } from '../debug.interface';
-import { Emulator } from '../../../services/NESService';
+import { NESService } from '../../../services/NESService';
 
 @Component({
     selector: 'debug-instructionhistory',
@@ -12,17 +12,19 @@ import { Emulator } from '../../../services/NESService';
 export class InstructionHistoryComponent implements OnInit {
 
     @ViewChild(MatPaginator) paginator: MatPaginator;
-    @Input('debugger') debugger: Debugger;
+    constructor(private dbg: Debugger) {
+
+    }
 
     get dataLength(): number {
-        return this.debugger.lastInstructions.length | 0;
+        return this.dbg.lastInstructions.length | 0;
     }
 
     public dbgDataSource: DebugInstructionDataSource;
 
     ngOnInit(): void {
         // debugger
-        this.dbgDataSource = new DebugInstructionDataSource(this.debugger.lastInstructions, this.paginator);
+        this.dbgDataSource = new DebugInstructionDataSource(this.dbg.lastInstructions, this.paginator);
     }
 
 }

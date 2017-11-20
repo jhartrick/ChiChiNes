@@ -2041,8 +2041,7 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.ClearDebugEvents = function () {
         //this.DebugEvents.clear();
     };
-    BaseCart.prototype.LoadiNESCart = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset, cartInfo) {
-        this.cartInfo = cartInfo;
+    BaseCart.prototype.LoadiNESCart = function (header, prgRoms, chrRoms, prgRomData, chrRomData, chrRomOffset) {
         this.romControlBytes[0] = header[6];
         this.romControlBytes[1] = header[7];
         this.mapperId = (this.romControlBytes[0] & 240) >> 4;

@@ -1,4 +1,4 @@
-import { Emulator } from '../../services/NESService';
+import { NESService } from '../../services/NESService';
 import { Component, Inject, HostListener, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';

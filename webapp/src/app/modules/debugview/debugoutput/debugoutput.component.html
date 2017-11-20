@@ -1,7 +1,7 @@
 ﻿<div class="stepper">
-  <button mat-button (click)="nes.DebugStep()">Step</button>
-  <button mat-button (click)="nes.DebugStepFrame()">StepFrame</button>
-  <button mat-button (click)="nes.Continue()">Continue</button>
+  <button mat-button (click)="nes.debugStep()">Step</button>
+  <button mat-button (click)="nes.debugStepFrame()">StepFrame</button>
+  <button mat-button (click)="nes.continue()">Continue</button>
 </div>
 <debug-cpustatus [cpuStatus]="nes.wishbone.cpuStatus"></debug-cpustatus> 
 <debug-ppustatus [ppuStatus]="nes.wishbone.ppuStatus"></debug-ppustatus> 
@@ -15,7 +15,7 @@
           Instruction History
         </mat-panel-title>
       </mat-expansion-panel-header>
-      <debug-instructionhistory [debugger]="debugger" ></debug-instructionhistory>
+      <debug-instructionhistory></debug-instructionhistory>
     </mat-expansion-panel>
   </mat-tab>
   <mat-tab label="Memory">

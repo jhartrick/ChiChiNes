@@ -1,4 +1,4 @@
-﻿import { Emulator } from '../../services/NESService';
+﻿import { NESService } from '../../services/NESService';
 import { Component } from '@angular/core';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { ControlDialogComponent } from './controlpad.dialog.component';
@@ -11,7 +11,7 @@ import { MatDialog } from '@angular/material';
 })
 export class ControlConfigComponent {
     wishbone: WishboneMachine;
-    constructor(private nesService: Emulator, private dialog: MatDialog) {
+    constructor(private nesService: NESService, private dialog: MatDialog) {
         this.wishbone = nesService.wishbone;
     }
 

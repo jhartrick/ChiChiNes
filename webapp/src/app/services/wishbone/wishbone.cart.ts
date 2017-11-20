@@ -7,7 +7,7 @@ export class WishboneCart {
     }
 
     get cartInfo() : any {
-        return this.realCart ? this.realCart.cartInfo : {};
+        return null;
     }
 
     get prgRomCount(): number {

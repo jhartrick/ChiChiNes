@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Emulator } from '../services/NESService';
+import { NESService } from '../services/NESService';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 import * as THREE from 'three';
@@ -44,7 +44,7 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasLeft = '0px';
     public canvasTop = '0px';
 
-    constructor(private nesService: Emulator, private cd: ChangeDetectorRef, private zone: NgZone) {
+    constructor(private nesService: NESService, private cd: ChangeDetectorRef, private zone: NgZone) {
     }
 
     @HostListener('window:resize', ['$event'])

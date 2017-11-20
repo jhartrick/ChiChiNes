@@ -146,7 +146,6 @@ export class WishboneWorker {
 
     }
 
-
     private handleMessage(data: MessageEvent) {
         const d = data.data;
         if (d === 'ready') {

@@ -1,6 +1,6 @@
 ﻿import * as crc from 'crc';
 
-import { ChiChiCPPU } from '../chichi/ChiChiCpu';
+import { ChiChiCPPU } from '../chichi/ChiChiCPU';
 import { ChiChiPPU } from '../chichi/ChiChiPPU';
 
 import { BaseCart, UnsupportedCart, NameTableMirroring, IBaseCart } from './BaseCart';
