@@ -64,12 +64,14 @@ export class ChiChiThreeJSAudio {
 			const wavForms = this.wavSharer;
 			
 			let nesBytesAvailable = wavForms.audioBytesWritten;
+
 			lastReadPos = wavForms.bufferPosition - nesBytesAvailable;
+
 			if (lastReadPos < 0) {
 				lastReadPos += nesAudio.length;
 			}
-			const outputBuffer = audioProcessingEvent.outputBuffer;
 
+			const outputBuffer = audioProcessingEvent.outputBuffer;
 			const outputData = outputBuffer.getChannelData(0);
 
 			for (let sample = 0; sample < outputData.length; sample++) {

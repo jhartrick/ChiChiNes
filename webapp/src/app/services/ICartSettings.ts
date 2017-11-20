@@ -1,3 +1,5 @@
+import { WramManager } from "./wishbone/wishbone.wrammanger";
+
 export interface ICartSettings {
     name: string;
     mapperName: string;
@@ -6,4 +8,5 @@ export interface ICartSettings {
     chrRomCount: number;
     mapperId: number;
     submapperId: number;
+    wram: WramManager
 }

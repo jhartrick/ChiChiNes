@@ -1899,6 +1899,7 @@ var BaseCart = /** @class */ (function () {
     function BaseCart() {
         var _this = this;
         this.batterySRAM = false;
+        this.ramMask = 0x1fff;
         this.fourScreen = false;
         this.mapperName = 'base';
         this.supported = true;
@@ -1935,7 +1936,6 @@ var BaseCart = /** @class */ (function () {
         this.irqRaised = false;
         this.DebugEvents = null;
         this.usesSRAM = false;
-        this.ramMask = 0x1fff;
         this.prgRomBank6.fill(0);
         for (var i = 0; i < 16; i++) {
             this.ppuBankStarts[i] = i * 0x400;
@@ -2117,10 +2117,10 @@ var BaseCart = /** @class */ (function () {
                 return this.prgRomBank6[address & this.ramMask];
             }
             else {
-                return address >> 8;
+                return (address >> 8) & 0xff;
             }
         }
-        return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
+        return this.nesCart[this.prgBankStarts[bank] + (address & 0xfff)];
     };
     BaseCart.prototype.peekByte = function (address) {
         return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
@@ -4712,6 +4712,7 @@ var MMC1Cart = /** @class */ (function (_super) {
     MMC1Cart.prototype.InitializeCart = function () {
         this.mapperName = 'MMC1';
         this.usesSRAM = true;
+        this.ramMask = 0x1fff;
         if (this.chrRomCount > 0) {
             this.copyBanks(0, 0, 0, 2);
         }
@@ -4726,14 +4727,12 @@ var MMC1Cart = /** @class */ (function (_super) {
     MMC1Cart.prototype.SetByte = function (clock, address, val) {
         // if write is to a different register, reset
         this.lastClock = clock;
-        switch (address & 0xe000) {
+        switch (address & 0xf000) {
             case 0x6000:
-                this.prgRomBank6[address & 8191] = val & 255;
+            case 0x7000:
+                this.prgRomBank6[address & 0x1fff] = val & 0xff;
                 break;
-            case 0x8000:
-            case 0xa000:
-            case 0xc000:
-            case 0xe000:
+            default:
                 this.lastwriteAddress = address;
                 if ((val & 128) === 128) {
                     this._registers[0] = this._registers[0] | 12;

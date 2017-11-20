@@ -77,8 +77,8 @@ export class BaseCart implements IBaseCart {
     batterySRAM: boolean = false;
     cartInfo: any;
     customPalette: number[];
+    ramMask = 0x1fff;
     
-
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
         if (!dest) {
             throw new Error("dest Value cannot be null");
@@ -299,18 +299,18 @@ export class BaseCart implements IBaseCart {
         // initialize
         this.InitializeCart();
     }
-    ramMask = 0x1fff;
+
     GetByte(clock: number, address: number): number {
         let bank = (address >> 12) - 0x6;
-        if ( bank < 2) {
+        if (bank < 2) {
             if (this.usesSRAM) {
                 return this.prgRomBank6[address & this.ramMask];
             }else {
-                return address >> 8;
+                return (address >> 8) & 0xff;
             }
         }
 
-        return this.nesCart[this.prgBankStarts[(address >> 12) - 0x6] + (address & 0xFFF)];
+        return this.nesCart[this.prgBankStarts[bank] + (address & 0xfff)];
     }
 
     peekByte(address: number) {

@@ -1,21 +1,21 @@
 ﻿<p> Freq: {{ audioSettings.sampleRate }} </p>
 
 <div>
-  <mat-button-toggle class="audio_button" [checked]="audioSettings.synced" (change)="audioSettings.synced = $event.source.checked; wishbone.RequestSync();" >
+  <mat-button-toggle class="audio_button" [checked]="audioSettings.synced" (change)="audioSettings.synced = $event.source.checked;" >
     Sync
   </mat-button-toggle>
-  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableSquare0" (change)="audioSettings.enableSquare0 = $event.source.checked; wishbone.RequestSync();" >
+  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableSquare0" (change)="audioSettings.enableSquare0 = $event.source.checked;" >
     Square 0
   </mat-button-toggle>
-  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableSquare1" (change)="audioSettings.enableSquare1 = $event.source.checked; wishbone.RequestSync();" >
+  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableSquare1" (change)="audioSettings.enableSquare1 = $event.source.checked;" >
     Square 1
   </mat-button-toggle>
 </div>
 <div>
-  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableTriangle" (change)="audioSettings.enableTriangle = $event.source.checked; wishbone.RequestSync();" >
+  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableTriangle" (change)="audioSettings.enableTriangle = $event.source.checked;" >
     Triangle
   </mat-button-toggle>
-  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableNoise" (change)="audioSettings.enableNoise = $event.source.checked; wishbone.RequestSync();" >
+  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableNoise" (change)="audioSettings.enableNoise = $event.source.checked;" >
     Noise
   </mat-button-toggle>
 </div>

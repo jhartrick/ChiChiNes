@@ -16,6 +16,7 @@ export class MMC1Cart extends BaseCart  {
     InitializeCart() {
         this.mapperName = 'MMC1';
         this.usesSRAM = true;
+        this.ramMask = 0x1fff;
         if (this.chrRomCount > 0) {
             this.copyBanks(0,0, 0, 2);
         }
@@ -33,14 +34,12 @@ export class MMC1Cart extends BaseCart  {
     SetByte(clock: number, address: number, val: number) {
         // if write is to a different register, reset
         this.lastClock = clock;
-        switch (address & 0xe000) {
+        switch (address & 0xf000) {
             case 0x6000:
-                this.prgRomBank6[address & 8191] = val & 255;
+            case 0x7000:
+            this.prgRomBank6[address & 0x1fff] = val & 0xff;
                 break;
-            case 0x8000:
-            case 0xa000:
-            case 0xc000:
-            case 0xe000:
+            default:
                 this.lastwriteAddress = address;
                 if ((val & 128) === 128) {
                     this._registers[0] = this._registers[0] | 12;

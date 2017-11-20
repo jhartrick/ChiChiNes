@@ -37,6 +37,22 @@ export class RomLoader {
         });
     }
 
+    private doRead(filedata: File, name: string) : Observable<BaseCart> {
+
+        const obs = new Observable<BaseCart>((observer) => {
+            const reader: FileReader = new FileReader();
+            reader.onload = (ze) => {
+                const rom: number[] = Array.from(new Uint8Array(reader.result));
+                RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
+                    this.nes.setupCart(cart, rom);
+                    observer.next(cart);
+                })
+            };
+            reader.readAsArrayBuffer(filedata);
+        });
+        return obs;
+    }
+
     private loadZipRom(files: FileList): Observable<BaseCart> {
         const file = files[0];
         return new Observable<BaseCart>(observer => {
@@ -47,17 +63,11 @@ export class RomLoader {
                 // zip file
                 JSZip.loadAsync(rom).then((zip: any) => {
                     zip.forEach((relativePath, zipEntry) => {  // 2) print entries
-                        zipEntry.async('blob').then((fileData) => {
-                            const zipReader: FileReader = new FileReader();
-                            zipReader.onload = (ze) => {
-                                const rom: number[] = Array.from(new Uint8Array(zipReader.result));
-                                RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
-                                    this.nes.setupCart(cart, rom);
-                                    observer.next(cart);
-                                })
-                            };
-                            zipReader.readAsArrayBuffer(fileData);
-                        });
+                        if (zipEntry.name.endsWith('.nes')) {
+                            zipEntry.async('blob').then((fileData) => {
+                                this.doRead(fileData, zipEntry.name).subscribe((cart) => observer.next(cart));
+                            });
+                        }
                     });
                 });
 
@@ -74,19 +84,9 @@ export class RomLoader {
                      observer.next(cart);
                  });
             } else if (file.name.endsWith('.nes')) {
-                const fileReader: FileReader = new FileReader();
-                fileReader.onload = (e) => {
-                    const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-                    RomLoader.doLoadCart(rom, file.name).subscribe((cart)=>{
-                        this.nes.setupCart(cart, rom);
-                        observer.next(cart);
-                    })
-
-                };
-                fileReader.readAsArrayBuffer(file);
-                
+                this.doRead(file, file.name).subscribe((cart) => observer.next(cart));
             } else {
-                observer.next(null);
+                observer.error('invalid file type')
             }
         }); 
 

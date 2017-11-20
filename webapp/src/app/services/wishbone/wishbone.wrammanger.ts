@@ -2,21 +2,41 @@ import { ICartSettings } from "../ICartSettings";
 import { Emulator } from "../NESService";
 
 export class WramManager {
-    constructor (private cartSettings: ICartSettings, private nes: Emulator) {
+    batteryBacked: boolean = false;
+    crc: string;
+    extension: string = '_wram';
 
-    }
-    clearWram() {
-        localStorage.setItem(this.cartSettings.crc + '_wram', undefined);
+    constructor (private nes: Emulator) {
+        this.nes.runStatusChanged.subscribe((status) => {
+            switch(status) {
+                case 'loaded':
+                    if (this.batteryBacked) {
+                        this.restore();
+                    }
+                break;
+                case 'stopped':
+                    if (this.batteryBacked) {
+                        this.save();
+                    }
+                break;
+            }
+        })
+        this.crc = this.nes.wishbone.Cart.ROMHashFunction;
+        this.batteryBacked = this.nes.wishbone.Cart.realCart.batterySRAM;
     }
 
-    saveWram() {
+    clear() {
+        localStorage.setItem(this.crc + this.extension, undefined);
+    }
+
+    save() {
         const wishbone = this.nes.wishbone;
         let item = wishbone.Cart.saveWram();
-        localStorage.setItem(this.cartSettings.crc + '_wram', JSON.stringify(item));
+        localStorage.setItem(this.crc + this.extension, JSON.stringify(item));
     }        
 
-    restoreWram() {
-        let item = localStorage.getItem(this.cartSettings.crc + '_wram');
+    restore() {
+        let item = localStorage.getItem(this.crc + this.extension);
         const wishbone = this.nes.wishbone;
         if (item) {
             const wram = JSON.parse(item) 

@@ -30,10 +30,8 @@ export class EmuState {
 export class Emulator {
     wishbone : WishboneMachine;
     audioSettings: ThreeJSAudioSettings;
-    cartSettings: ICartSettings;
-    wram: WramManager;
-    
     cartChanged = new EventEmitter<ICartSettings>(true);
+    runStatusChanged = new EventEmitter<string>(true);
 
     worker: WishboneWorker;
     
@@ -46,6 +44,12 @@ export class Emulator {
         this.worker = new WishboneWorker(this.wishbone);
         this.audioHandler = new ChiChiThreeJSAudio(this.wishbone.WaveForms);
         this.audioSettings = this.audioHandler.getSound();
+
+        const statusMsgs = this.worker.nesMessageData
+            .filter( (data)=> data.status ? true : false)
+            .subscribe((data) => {
+                this.runStatusChanged.emit(data.status);
+        });
     }
 
     saveState(){
@@ -53,7 +57,7 @@ export class Emulator {
         if (r)
         {
             let obs = this.worker.nesMessageData.filter((d)=>d.state ? true: false).subscribe((d) => {
-                localStorage.setItem(this.cartSettings.crc + '_state', JSON.stringify(d.state));
+                localStorage.setItem(r.ROMHashFunction + '_state', JSON.stringify(d.state));
                 obs.unsubscribe();
             });
 
@@ -65,7 +69,7 @@ export class Emulator {
         const r = this.wishbone.Cart.realCart ;
         if (r)
         {
-            let item = localStorage.getItem(this.cartSettings.crc + '_state');
+            let item = localStorage.getItem(r.ROMHashFunction + '_state');
             if (item) {
                 this.worker.postNesMessage({ command: 'setstate', state: JSON.parse(item) })
             }
@@ -75,16 +79,6 @@ export class Emulator {
     }
 
     setupCart(cart: BaseCart, rom: number[]) {
-        this.cartSettings = {
-            name: cart.CartName,
-            mapperName: cart.mapperName,
-            mapperId: cart.mapperId,
-            submapperId: cart.submapperId,
-            crc: cart.ROMHashFunction,
-            prgRomCount: cart.prgRomCount,
-            chrRomCount: cart.chrRomCount
-        }
-        this.wram = new WramManager(this.cartSettings, this);
 
         this.worker.start((threadHandler)=>{
             this.wishbone.nesInterop = threadHandler.nesInterop;
@@ -98,29 +92,20 @@ export class Emulator {
             });
 
             threadHandler.postNesMessage({ command: 'loadrom', rom: rom, name: cart.CartName });
-            const msgs = threadHandler.nesMessageData
-                .filter( (data)=> data.status ? true : false)
-                .subscribe((data) => {
-                    switch(data.status) {
-                        case 'loaded':
-                            if (cart.batterySRAM) {
-                                this.wram.restoreWram();
-                            }
-                        break;
-                        case 'running':
-                        break;
-                        case 'stopped':
-                            if (cart.batterySRAM) {
-                                this.wram.saveWram();
-                            }
-                        break;
-                    }
-            });
-            
-            this.wishbone.insertCart(cart);
 
-            
-            this.cartChanged.emit(this.cartSettings);
+
+            this.wishbone.insertCart(cart);
+            const cartSettings = {
+                name: cart.CartName,
+                mapperName: cart.mapperName,
+                mapperId: cart.mapperId,
+                submapperId: cart.submapperId,
+                crc: cart.ROMHashFunction,
+                prgRomCount: cart.prgRomCount,
+                chrRomCount: cart.chrRomCount,
+                wram: new WramManager(this)
+            }
+            this.cartChanged.emit(cartSettings);
         });
     }
 

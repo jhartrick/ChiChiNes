@@ -1,6 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { WishboneMachine } from '../../services/wishbone/wishbone';
-import { Emulator } from '../../services/NESService';
 import { MatDialog } from '@angular/material';
 import { CartInfoDialogComponent } from './cartinfo-dialog.component';
 import { Http } from '@angular/http';
