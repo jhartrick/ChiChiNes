@@ -7,6 +7,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatTableModule, MatPaginatorModule, MatGridListModule, MatTabsModule } from '@angular/material';
 import { MatButtonModule, MatCheckboxModule, MatSidenavModule, MatSliderModule } from '@angular/material';
 import { MatButtonToggleModule, MatExpansionModule, MatDialogModule } from '@angular/material';
+import { MatIconRegistry, MatIconModule } from '@angular/material';
 
 import * as JSZip from 'jszip';
 
@@ -55,10 +56,19 @@ import { ControlPadModule } from './modules/controlpad/controlpad.module';
       CartInfoModule,
       CheatingModule,
       ControlPadModule,
+      MatIconModule,
       DebugOutputModule
   ],
-  providers: [HttpModule, WishboneMachine, NESService, RomLoader],
+  providers: [HttpModule, MatIconRegistry, WishboneMachine, NESService, RomLoader],
   bootstrap: [AppComponent]
 })
 
-export class AppModule { }
+export class AppModule {
+  constructor(public matIconRegistry: MatIconRegistry) {
+    matIconRegistry.registerFontClassAlias('fontawesome', 'fa')
+    .addSvgIcon('gamepad', '/assets/icons/gamepad.svg')
+    .addSvgIcon('chip', '/assets/icons/chip.svg')
+    .addSvgIcon('upload', '/assets/icons/upload.svg');
+  }
+
+}

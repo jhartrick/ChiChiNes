@@ -48,12 +48,12 @@ export class ControlPanelComponent {
 
         this.powerstate = 'OFF';
         this.localSettings = this.nesService.audioSettings;
-        
+
         this.nesService.cartChanged.subscribe((settings) => {
             this.cartSettings = settings;
         });
-    }
 
+    }
 
 
     handleFile(e: Event) {

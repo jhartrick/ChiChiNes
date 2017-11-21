@@ -1,1 +1,3 @@
-<button *ngIf='cartSettings ? true : false' mat-button (click)="showDialog()">Cart Info</button>
+<button mat-icon-button (click)="showDialog()" *ngIf='cartSettings ? true : false' >
+    <mat-icon svgIcon='chip'></mat-icon>
+</button>

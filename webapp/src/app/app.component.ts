@@ -1,5 +1,5 @@
 ﻿import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
-import {  MatSidenavModule, MatDrawer } from '@angular/material';
+import {  MatSidenavModule, MatDrawer, MatIconRegistry } from '@angular/material';
 
 import { NESService } from './services/NESService';
 
@@ -12,10 +12,9 @@ import { NESService } from './services/NESService';
 export class AppComponent {
   @ViewChild('debugNav') public debugNav: MatDrawer;
   constructor(private nesService: NESService) {
-    this.nesService.onDebug.filter((data) => data.eventType == 'showDebugger').subscribe((data) => {
+    this.nesService.onDebug.filter((data) => data.eventType === 'showDebugger').subscribe((data) => {
       this.debugNav.open();
     });
   }
-
   title = 'ChiChiNES';
 }
