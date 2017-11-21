@@ -41,56 +41,66 @@
                     <td>Type</td>
                     <td>Pcb</td>
                     <td>Mapper</td>
+                    <td></td>
                 </tr>
                 <tr>
                     <td></td>
                     <td>{{ b.attributes?.type }}</td>
                     <td>{{ b.attributes?.pcb }}</td>
                     <td>{{ b.attributes?.mapper }}</td>
+                    <td></td>
                 </tr>
                 <tr class='header'>
                     <td>ROM</td>
+                    <td></td>
                     <td>Name</td>
                     <td>Size</td>
                     <td>CRC</td>
                 </tr>
                 <tr *ngFor='let r of b.prg'>
+                    <td></td>
                     <td>prg</td>
                     <td>{{ r.attributes?.name }}</td>
                     <td>{{ r.attributes?.size }}</td>
                     <td>{{ r.attributes?.crc }}</td>
                 </tr>
                 <tr *ngFor='let r of b.chr'>
+                    <td></td>
                     <td>chr</td>
                     <td>{{ r.attributes?.name }}</td>
                     <td>{{ r.attributes?.size }}</td>
                     <td>{{ r.attributes?.crc }}</td>
                 </tr>
                 <tr class='header' *ngIf='b.vram || b.wram'>
-                        <td>RAM</td>
-                        <td>Battery</td>
-                        <td>Size</td>
-                        <td></td>
+                    <td>RAM</td>
+                    <td></td>
+                    <td>Battery</td>
+                    <td>Size</td>
+                    <td></td>
                 </tr>                
                 <tr *ngFor='let r of b.vram'>
+                    <td></td>
                     <td>vram</td>
                     <td></td>
                     <td>{{ r.attributes?.size }}</td>
                     <td></td>
                 </tr>
                 <tr *ngFor='let r of b.wram'>
-                        <td>wram</td>
-                        <td>{{ r.attributes?.battery }}</td>
-                        <td>{{ r.attributes?.size }}</td>
-                        <td></td>
-                    </tr>
+                    <td></td>
+                    <td>wram</td>
+                    <td>{{ r.attributes?.battery }}</td>
+                    <td>{{ r.attributes?.size }}</td>
+                    <td></td>
+                </tr>
                 <tr *ngIf='b.pad' class='header'>
                     <td>PAD</td>
+                    <td></td>
                     <td>Vert</td>
                     <td>Horiz</td>
                     <td></td>
                 </tr>                
                 <tr *ngFor='let r of b.pad'>
+                    <td></td>
                     <td></td>
                     <td>{{ r.attributes?.v }}</td>
                     <td>{{ r.attributes?.h }}</td>
@@ -98,7 +108,8 @@
                 </tr>                
                 <tr *ngIf='b.chip' class='header'>
                     <td>CHIPS</td>
-                    <td>Type</td>
+                    <td></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                 </tr>                
@@ -107,10 +118,12 @@
                     <td>{{ r.attributes?.type }}</td>
                     <td></td>
                     <td></td>
+                    <td></td>
                 </tr>
                 <tr *ngIf='b.cic' class='header'>
                         <td>CIC</td>
-                        <td>Type</td>
+                        <td></td>
+                        <td></td>
                         <td></td>
                         <td></td>
                     </tr>      
@@ -119,15 +132,18 @@
                     <td>{{ r.attributes?.type }}</td>
                     <td></td>
                     <td></td>
+                    <td></td>
                 </tr>   
                 <tr class='header'>
                     <td>DUMP</td>
+                    <td></td>
                     <td>System</td>
                     <td>By</td>
                     <td>On</td>
                 </tr>
                 <tr *ngIf='cartridge'>
-                    <td></td>
+                        <td></td>
+                        <td></td>
                     <td>{{ cartridge.attributes?.system }}</td>
                     <td>{{ cartridge.attributes?.dumper }}</td>
                     <td>{{ cartridge.attributes?.dumpeddate }}</td>

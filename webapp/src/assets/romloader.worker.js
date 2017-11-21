@@ -1914,7 +1914,7 @@ var BaseCart = /** @class */ (function () {
         this.chrRamStart = 0;
         this.chrRamLength = 0;
         this.mapperId = 0;
-        this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
+        this.prgRomBank6 = new Uint8Array(new SharedArrayBuffer(0x2000 * Uint8Array.BYTES_PER_ELEMENT));
         // starting locations of PPU 0x0000-0x3FFF in 1k blocks
         this.ppuBankStarts = new Uint32Array(new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
         // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
@@ -2079,10 +2079,10 @@ var BaseCart = /** @class */ (function () {
             chrRomData = new Uint8Array(32768); //System.Array.init(32768, 0, System.Byte);
             chrRomData.fill(0);
         }
-        var chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 4096) * Uint8Array.BYTES_PER_ELEMENT);
+        var chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 0x1000) * Uint8Array.BYTES_PER_ELEMENT);
         this.chrRom = new Uint8Array(chrRomBuffer); //     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
         this.chrRamStart = chrRomData.length;
-        this.chrRamLength = 4096;
+        this.chrRamLength = 0x1000;
         BaseCart.arrayCopy(chrRomData, 0, this.chrRom, 0, chrRomData.length);
         this.prgRomCount = this.iNesHeader[4];
         this.chrRomCount = this.iNesHeader[5];
@@ -4725,7 +4725,6 @@ var MMC1Cart = /** @class */ (function (_super) {
     };
     MMC1Cart.prototype.SetByte = function (clock, address, val) {
         // if write is to a different register, reset
-        this.lastClock = clock;
         switch (address & 0xf000) {
             case 0x6000:
             case 0x7000:
@@ -4742,11 +4741,11 @@ var MMC1Cart = /** @class */ (function (_super) {
                     if ((val & 1) === 1) {
                         this.accumulator = this.accumulator | (1 << this.sequence);
                     }
-                    this.sequence = (this.sequence + 1) | 0;
+                    this.sequence++;
                 }
                 if (this.sequence === 5) {
-                    var regnum = (address & 32767) >> 13;
-                    this._registers[(address & 32767) >> 13] = this.accumulator;
+                    var regnum = (address & 0x7fff) >> 13;
+                    this._registers[regnum] = this.accumulator;
                     this.sequence = 0;
                     this.accumulator = 0;
                     switch (regnum) {
@@ -4768,15 +4767,13 @@ var MMC1Cart = /** @class */ (function (_super) {
         }
     };
     MMC1Cart.prototype.setMMC1ChrBanking = function (clock) {
-        if (this.chrRomCount > 0) {
-            if (this.chrRomBankMode === 1) {
-                this.copyBanks4k(clock, 0, this._registers[1], 1);
-                this.copyBanks4k(clock, 1, this._registers[2], 1);
-            }
-            else {
-                this.copyBanks4k(clock, 0, this._registers[1], 1);
-                this.copyBanks4k(clock, 1, this._registers[1] + 1, 1);
-            }
+        if (this.chrRomBankMode === 1) {
+            this.copyBanks4k(clock, 0, this._registers[1], 1);
+            this.copyBanks4k(clock, 1, this._registers[2], 1);
+        }
+        else {
+            this.copyBanks4k(clock, 0, this._registers[1], 1);
+            this.copyBanks4k(clock, 1, this._registers[1] + 1, 1);
         }
         this.bankSwitchesChanged = true;
     };
@@ -5870,6 +5867,7 @@ var Mapper093Cart = /** @class */ (function (_super) {
         // if (this.chrRomCount > 0) {
         //     this.copyBanks(0, 0, 0, 1);
         // }
+        this.mirror(0, 3);
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     };
     Mapper093Cart.prototype.SetByte = function (clock, address, val) {
@@ -5894,11 +5892,11 @@ var Mapper089Cart = /** @class */ (function (_super) {
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     };
     Mapper089Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000 && address <= 0xFFFF) {
+        if (address >= 0x8000 && address <= 0xffff) {
             var lobank = val & 0x7;
             lobank |= ((val >> 4) & 8);
             var prgbank = ((val >> 4) & 0x7) << 1;
-            var mirror = (val & 8) ? 1024 : 0;
+            var mirror = ((val >> 3) & 1) ? 1024 : 0;
             this.oneScreenOffset = mirror;
             this.mirror(clock, 0);
             this.SetupBankStarts(prgbank, prgbank + 1, this.currentC, this.currentE);
@@ -5922,8 +5920,8 @@ var Mapper184Cart = /** @class */ (function (_super) {
     };
     Mapper184Cart.prototype.SetByte = function (clock, address, val) {
         if (address >= 0x6000 && address <= 0x7FFF) {
-            var lobank = val & 0xf;
-            var hibank = (val >> 4);
+            var lobank = (val | 4) & 0xf;
+            var hibank = ((val >> 4) & 7);
             this.copyBanks4k(clock, 0, lobank, 1);
             this.copyBanks4k(clock, 1, hibank, 1);
         }

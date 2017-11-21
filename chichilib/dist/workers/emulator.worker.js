@@ -516,7 +516,6 @@ var tendoWrapper = /** @class */ (function () {
         this.iops = new Int32Array(16);
         this.cartName = 'unk';
         this.sharedAudioBufferPos = 0;
-        this.audioBytesWritten = 0;
         this.buffers = {};
         // attach require.js "require" fn here in bootstrapper
         this.require = {};
@@ -533,7 +532,7 @@ var tendoWrapper = /** @class */ (function () {
             // globals.postMessage({ frame: true, fps: framesPerSecond });
         };
         this.ready = true;
-        this.machine.Cpu.addDebugEvent(function () {
+        this.machine.Cpu.FireDebugEvent = function () {
             var info = new NesInfo();
             info.debug = {
                 currentCpuStatus: _this.machine.Cpu.GetStatus ? _this.machine.Cpu.GetStatus() : {
@@ -553,7 +552,7 @@ var tendoWrapper = /** @class */ (function () {
             };
             postMessage(info);
             //this.updateState();
-        });
+        };
         this.machine.Cpu.Debugging = false;
     };
     tendoWrapper.prototype.updateBuffers = function () {
@@ -649,43 +648,17 @@ var tendoWrapper = /** @class */ (function () {
         this.machine.PowerOff();
         this.runStatus = this.machine.RunState;
     };
-    tendoWrapper.prototype.flushAudio = function () {
-        //  debugger;
-        var len = this.machine.WaveForms.SharedBufferLength;
-        for (var i = 0; i < len; ++i) {
-            this.sharedAudioBufferPos++;
-            if (this.sharedAudioBufferPos >= this.sharedAudioBuffer.length) {
-                this.sharedAudioBufferPos = 0;
-            }
-            this.sharedAudioBuffer[this.sharedAudioBufferPos] = this.machine.WaveForms.SharedBuffer[i];
-            this.audioBytesWritten++;
-        }
-        while (this.audioBytesWritten >= this.sharedAudioBuffer.length >> 2) {
-            Atomics.store(this.iops, 3, this.audioBytesWritten);
-            Atomics.wait(this.iops, 3, this.audioBytesWritten);
-            this.audioBytesWritten = Atomics.load(this.iops, 3);
-        }
-    };
     tendoWrapper.prototype.runInnerLoop = function () {
         this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
         this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
         this.machine.RunFrame();
         this.framesPerSecond = 0;
-        //this.flushAudio();
         if ((this.framesRendered++) === 60) {
-            // this.updateState();
             this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
             this.framesRendered = 0;
             this.startTime = new Date().getTime();
             this.iops[1] = this.framesPerSecond;
-            // if (this.framesPerSecond < 60 && this.runTimeout > 0) {
-            //     this.runTimeout--;
-            // } else if (this.runTimeout < 50) {
-            //     this.runTimeout++;
-            // }
         }
-        //this.runInnerLoop();
-        //setTimeout(() => { this.runInnerLoop(); }, this.runTimeout); 
     };
     tendoWrapper.prototype.run = function (reset) {
         var _this = this;
@@ -703,7 +676,7 @@ var tendoWrapper = /** @class */ (function () {
             while (_this.iops[0] == 1) {
                 _this.runInnerLoop();
             }
-        }, 1);
+        }, 0);
         this.runStatus = machine.RunState; // runStatuses.Running;
     };
     tendoWrapper.prototype.runFrame = function () {
@@ -2508,7 +2481,6 @@ var ChiChiCPPU = /** @class */ (function () {
         // #endregion cheats
         this.instructionHistoryPointer = 255;
         this._instructionHistory = new Array(256); //System.Array.init(256, null, ChiChiInstruction);
-        this.debugEvents = new Array();
         this.SoundBopper = bopper;
         // init PPU
         this.ppu = ppu;
@@ -2596,12 +2568,6 @@ var ChiChiCPPU = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    ChiChiCPPU.prototype.addDebugEvent = function (value) {
-        this.debugEvents.push(value);
-    };
-    ChiChiCPPU.prototype.removeDebugEvent = function (value) {
-        // throw new Error('Method not implemented.');
-    };
     Object.defineProperty(ChiChiCPPU.prototype, "Clock", {
         get: function () {
             return this.clock;
@@ -3716,13 +3682,6 @@ var ChiChiCPPU = /** @class */ (function () {
         }
     };
     ChiChiCPPU.prototype.FireDebugEvent = function (s) {
-        for (var i = 0; i < this.debugEvents.length; ++i) {
-            this.debugEvents[i].call(this, s);
-        }
-        //throw new Error('Method not implemented.');
-    };
-    ChiChiCPPU.prototype.PeekInstruction = function (address) {
-        throw new Error('Method not implemented.');
     };
     ChiChiCPPU.prototype.GetStatus = function () {
         return {

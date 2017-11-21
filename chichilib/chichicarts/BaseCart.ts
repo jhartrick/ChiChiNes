@@ -122,7 +122,7 @@ export class BaseCart implements IBaseCart {
 
     mapperId = 0;
 
-    prgRomBank6 = new Uint8Array(<any>new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
+    prgRomBank6 = new Uint8Array(<any>new SharedArrayBuffer(0x2000 * Uint8Array.BYTES_PER_ELEMENT));
 
     // starting locations of PPU 0x0000-0x3FFF in 1k blocks
     ppuBankStarts: Uint32Array = new Uint32Array(<any>new SharedArrayBuffer(16 * Uint32Array.BYTES_PER_ELEMENT));
@@ -255,11 +255,11 @@ export class BaseCart implements IBaseCart {
             chrRomData.fill(0);
         }
 
-        const chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 4096) * Uint8Array.BYTES_PER_ELEMENT)
+        const chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 0x1000) * Uint8Array.BYTES_PER_ELEMENT)
         this.chrRom = new Uint8Array(<any>chrRomBuffer);//     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
 
         this.chrRamStart = chrRomData.length;
-        this.chrRamLength  = 4096;
+        this.chrRamLength  =  0x1000;
 
         BaseCart.arrayCopy(chrRomData, 0, this.chrRom, 0, chrRomData.length);
 

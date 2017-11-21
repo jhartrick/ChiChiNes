@@ -38,7 +38,7 @@ export class RomLoader {
     }
 
     private doRead(filedata: File, name: string) : Observable<BaseCart> {
-
+        console.log('loading file ' + name);
         const obs = new Observable<BaseCart>((observer) => {
             const reader: FileReader = new FileReader();
             reader.onload = (ze) => {
@@ -53,8 +53,7 @@ export class RomLoader {
         return obs;
     }
 
-    private loadZipRom(files: FileList): Observable<BaseCart> {
-        const file = files[0];
+    private loadZipRom(file: File): Observable<BaseCart> {
         return new Observable<BaseCart>(observer => {
             const fileReader: FileReader = new FileReader();
             let name = file.name;
@@ -80,7 +79,7 @@ export class RomLoader {
         return new Observable<BaseCart>(observer => {
             const file = files[0];
             if (file.name.endsWith('.zip')) {
-                 this.loadZipRom(files).subscribe((cart) => {
+                 this.loadZipRom(file).subscribe((cart) => {
                      observer.next(cart);
                  });
             } else if (file.name.endsWith('.nes')) {
@@ -97,6 +96,7 @@ export class RomLoader {
             (require as any).ensure(['../../assets/romloader.worker.js'], (require) => {
                 const romLoader = require('../../assets/romloader.worker.js');
                 const cart = romLoader.loader.loadRom(rom, name);
+                cart.CartName = name;
                 subj.next(cart);
                 delete romLoader.loader;
                 delete require.cache[require.resolve('../../assets/romloader.worker.js')];

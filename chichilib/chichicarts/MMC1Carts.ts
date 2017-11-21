@@ -19,7 +19,7 @@ export class MMC1Cart extends BaseCart  {
         this.ramMask = 0x1fff;
         if (this.chrRomCount > 0) {
             this.copyBanks(0,0, 0, 2);
-        }
+        } 
         this._registers[0] = 12;
         this._registers[1] = 0;
         this._registers[2] = 0;
@@ -33,13 +33,13 @@ export class MMC1Cart extends BaseCart  {
 
     SetByte(clock: number, address: number, val: number) {
         // if write is to a different register, reset
-        this.lastClock = clock;
         switch (address & 0xf000) {
             case 0x6000:
             case 0x7000:
-            this.prgRomBank6[address & 0x1fff] = val & 0xff;
+                this.prgRomBank6[address & 0x1fff] = val & 0xff;
                 break;
-            default:
+   
+                default:
                 this.lastwriteAddress = address;
                 if ((val & 128) === 128) {
                     this._registers[0] = this._registers[0] | 12;
@@ -49,19 +49,19 @@ export class MMC1Cart extends BaseCart  {
                     if ((val & 1) === 1) {
                         this.accumulator = this.accumulator | (1 << this.sequence);
                     }
-                    this.sequence = (this.sequence + 1) | 0;
+                    this.sequence++;
                 }
                 if (this.sequence === 5) {
-                    var regnum = (address & 32767) >> 13;
-                    this._registers[(address & 32767) >> 13] = this.accumulator;
+                    const regnum = (address & 0x7fff) >> 13;
+                    this._registers[regnum] = this.accumulator;
                     this.sequence = 0;
                     this.accumulator = 0;
 
                     switch (regnum) {
                         case 0:
                             this.setMMC1Mirroring(clock);
-                            this.prgRomBankMode = (this._registers[0] >> 2 ) & 0x3;
-                            this.chrRomBankMode = (this._registers[0] >> 4 ) & 0x1;
+                            this.prgRomBankMode = (this._registers[0] >> 2) & 0x3;
+                            this.chrRomBankMode = (this._registers[0] >> 4) & 0x1;
                             
                             break;
                         case 1:
@@ -72,7 +72,6 @@ export class MMC1Cart extends BaseCart  {
                             this.setMMC1PrgBanking();
                             break;
                     }
-
                 }
                 break;
         }
@@ -80,15 +79,12 @@ export class MMC1Cart extends BaseCart  {
     }
 
     setMMC1ChrBanking(clock: number) {
-        if (this.chrRomCount > 0) {
-            if (this.chrRomBankMode === 1) {
-                
-                this.copyBanks4k(clock, 0, this._registers[1], 1);
-                this.copyBanks4k(clock, 1, this._registers[2], 1);
-            } else {
-                this.copyBanks4k(clock, 0, this._registers[1], 1);
-                this.copyBanks4k(clock, 1, this._registers[1] + 1, 1);
-            }
+        if (this.chrRomBankMode === 1) {
+            this.copyBanks4k(clock, 0, this._registers[1], 1);
+            this.copyBanks4k(clock, 1, this._registers[2], 1);
+        } else {
+            this.copyBanks4k(clock, 0, this._registers[1], 1);
+            this.copyBanks4k(clock, 1, this._registers[1] + 1, 1);
         }
         this.bankSwitchesChanged = true;
     }
@@ -137,7 +133,7 @@ export class MMC1Cart extends BaseCart  {
                 break;
             case 3:
                 this.mirror(clock, 2);
-                                break;
+                break;
         }
         this.bankSwitchesChanged = true;
     }

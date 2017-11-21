@@ -57,7 +57,7 @@ export class tendoWrapper {
             // globals.postMessage({ frame: true, fps: framesPerSecond });
         };
         this.ready = true;
-        this.machine.Cpu.addDebugEvent(() => {
+        this.machine.Cpu.FireDebugEvent = () => {
             var info = new NesInfo(); 
             info.debug = {
                 currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
@@ -78,7 +78,7 @@ export class tendoWrapper {
             };
             postMessage(info);
             //this.updateState();
-        });
+        };
         this.machine.Cpu.Debugging = false;
     }
 
