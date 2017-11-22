@@ -28,6 +28,7 @@ import { CartInfoModule } from './modules/cartinfo/cartinfo.module';
 import { DebugOutputModule } from './modules/debugview/debug.module';
 import { CheatingModule } from './modules/cheating/cheating.module';
 import { ControlPadModule } from './modules/controlpad/controlpad.module';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @NgModule({
   declarations: [
@@ -59,16 +60,10 @@ import { ControlPadModule } from './modules/controlpad/controlpad.module';
       MatIconModule,
       DebugOutputModule
   ],
-  providers: [HttpModule, MatIconRegistry, WishboneMachine, NESService, RomLoader],
+  providers: [HttpModule, WishboneMachine, NESService, RomLoader],
   bootstrap: [AppComponent]
 })
 
 export class AppModule {
-  constructor(public matIconRegistry: MatIconRegistry) {
-    matIconRegistry.registerFontClassAlias('fontawesome', 'fa')
-    .addSvgIcon('gamepad', '/assets/icons/gamepad.svg')
-    .addSvgIcon('chip', '/assets/icons/chip.svg')
-    .addSvgIcon('upload', '/assets/icons/upload.svg');
-  }
 
 }
