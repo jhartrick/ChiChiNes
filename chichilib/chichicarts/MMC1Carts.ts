@@ -16,6 +16,7 @@ export class MMC1Cart extends BaseCart  {
     InitializeCart() {
         this.mapperName = 'MMC1';
         this.usesSRAM = true;
+        this.mapsBelow6000 = false;
         this.ramMask = 0x1fff;
         if (this.chrRomCount > 0) {
             this.copyBanks(0,0, 0, 2);
@@ -32,6 +33,7 @@ export class MMC1Cart extends BaseCart  {
     }
 
     SetByte(clock: number, address: number, val: number) {
+
         // if write is to a different register, reset
         switch (address & 0xf000) {
             case 0x6000:
@@ -39,41 +41,41 @@ export class MMC1Cart extends BaseCart  {
                 this.prgRomBank6[address & 0x1fff] = val & 0xff;
                 break;
    
-                default:
-                this.lastwriteAddress = address;
-                if ((val & 128) === 128) {
-                    this._registers[0] = this._registers[0] | 12;
-                    this.accumulator = 0;
-                    this.sequence = 0;
-                } else {
-                    if ((val & 1) === 1) {
-                        this.accumulator = this.accumulator | (1 << this.sequence);
-                    }
-                    this.sequence++;
+            default:
+            this.lastwriteAddress = address;
+            if ((val & 128) === 128) {
+                this._registers[0] = this._registers[0] | 12;
+                this.accumulator = 0;
+                this.sequence = 0;
+            } else {
+                if ((val & 1) === 1) {
+                    this.accumulator = this.accumulator | (1 << this.sequence);
                 }
-                if (this.sequence === 5) {
-                    const regnum = (address & 0x7fff) >> 13;
-                    this._registers[regnum] = this.accumulator;
-                    this.sequence = 0;
-                    this.accumulator = 0;
+                this.sequence++;
+            }
+            if (this.sequence === 5) {
+                const regnum = (address & 0x7fff) >> 13;
+                this._registers[regnum] = this.accumulator;
+                this.sequence = 0;
+                this.accumulator = 0;
 
-                    switch (regnum) {
-                        case 0:
-                            this.setMMC1Mirroring(clock);
-                            this.prgRomBankMode = (this._registers[0] >> 2) & 0x3;
-                            this.chrRomBankMode = (this._registers[0] >> 4) & 0x1;
-                            
-                            break;
-                        case 1:
-                        case 2:
-                            this.setMMC1ChrBanking(clock);
-                            break;
-                        case 3:
-                            this.setMMC1PrgBanking();
-                            break;
-                    }
+                switch (regnum) {
+                    case 0:
+                        this.setMMC1Mirroring(clock);
+                        this.prgRomBankMode = (this._registers[0] >> 2) & 0x3;
+                        this.chrRomBankMode = (this._registers[0] >> 4) & 0x1;
+                        
+                        break;
+                    case 1:
+                    case 2:
+                        this.setMMC1ChrBanking(clock);
+                        break;
+                    case 3:
+                        this.setMMC1PrgBanking();
+                        break;
                 }
-                break;
+            }
+            break;
         }
 
     }
@@ -100,21 +102,18 @@ export class MMC1Cart extends BaseCart  {
             this.bank_select = 0;
         }
 
-        switch (this.prgRomBankMode){
-            case 0:
-            case 1:
-                reg = (((this._registers[3] >> 1) & 0xf) << 2) + this.bank_select;
-                this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
-                break;
-            case 2:
-                reg = (this._registers[3] << 1) + this.bank_select;
-                this.SetupBankStarts(0, 1, reg, reg + 1);
-                break;
-            case 3:
-                reg = (this._registers[3] << 1) + this.bank_select;
+        if ((this._registers[0] & 8) === 0) {
+            reg = (4 * ((this._registers[3] >> 1) & 15) + this.bank_select);
+            this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
+        } else {
+            reg = (2 * (this._registers[3]) + this.bank_select);
+            if ((this._registers[0] & 4) === 4) {
                 this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
-            break;
+            } else {
+                this.SetupBankStarts(0, 1, reg, reg + 1);
+            }
         }
+
 
     }
 
