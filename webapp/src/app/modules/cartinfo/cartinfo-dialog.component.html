@@ -10,7 +10,7 @@
         </mat-tab>
         <mat-tab *ngIf="game" label="Game Info">
             <table >
-                <thead>
+                <tr class='header'>
                     <td>Class</td>
                     <td>Subclass</td>
                     <td>Catalog</td>
@@ -19,19 +19,17 @@
                     <td>Region</td>
                     <td>Players</td>
                     <td>Date</td>            
-                </thead>
-                <tbody>
-                    <tr *ngFor="let g of game; let i = index">
-                        <td>{{ g.attributes?.class }} </td>
-                        <td>{{ g.attributes?.subclass }} </td>
-                        <td>{{ g.attributes?.catalog }} </td>
-                        <td>{{ g.attributes?.publisher }} </td>
-                        <td>{{ g.attributes?.developer }} </td>
-                        <td>{{ g.attributes?.region }} </td>
-                        <td>{{ g.attributes?.players }} </td>
-                        <td>{{ g.attributes?.date }} </td>
-                    </tr>
-                </tbody>
+                </tr>
+                <tr *ngFor="let g of game; let i = index">
+                    <td>{{ g.attributes?.class }} </td>
+                    <td>{{ g.attributes?.subclass }} </td>
+                    <td>{{ g.attributes?.catalog }} </td>
+                    <td>{{ g.attributes?.publisher }} </td>
+                    <td>{{ g.attributes?.developer }} </td>
+                    <td>{{ g.attributes?.region }} </td>
+                    <td>{{ g.attributes?.players }} </td>
+                    <td>{{ g.attributes?.date }} </td>
+                </tr>
             </table>
         </mat-tab>
         <mat-tab *ngIf="board" label="Board">

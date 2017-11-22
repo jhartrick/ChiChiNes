@@ -2297,7 +2297,7 @@ var ChiChiPPU = /** @class */ (function () {
                         this.frameClock++;
                     break;
             }
-            if (this.shouldRender) {
+            if (this.frameOn) {
                 if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
                     /* update x position */
                     this.xPosition = (this.currentXPosition + this.lockedHScroll);

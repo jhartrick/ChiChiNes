@@ -20,8 +20,12 @@ mat-sidenav {
   border-left: 3px solid rgba(41, 141, 39, 1);
 }
 
-.sideMenu_Small {
-  position: absolute;
-  left: 5px;
-  top: 5px;
+
+.flexcontainer {
+  position:absolute;
+  height: 100%; 
+  width: 50%; 
+  display:flex; 
+  flex-direction:column; 
+  justify-content:flex-start;
 }

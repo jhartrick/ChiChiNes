@@ -4787,38 +4787,18 @@ var MMC1Cart = /** @class */ (function (_super) {
             this.bank_select = 0;
         }
         if ((this._registers[0] & 8) === 0) {
-            reg = (4 * ((this._registers[3] >> 1) & 15) + this.bank_select) | 0;
-            this.SetupBankStarts(reg, ((reg + 1) | 0), ((reg + 2) | 0), ((reg + 3) | 0));
+            reg = (4 * ((this._registers[3] >> 1) & 15) + this.bank_select);
+            this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
         }
         else {
-            reg = (2 * (this._registers[3]) + this.bank_select) | 0;
-            //bit 2 - toggles between low PRGROM area switching and high
-            //PRGROM area switching
-            //0 = high PRGROM switching, 1 = low PRGROM switching
+            reg = (2 * (this._registers[3]) + this.bank_select);
             if ((this._registers[0] & 4) === 4) {
-                // select 16k bank in register 3 (setupbankstarts switches 8k banks)
-                this.SetupBankStarts(reg, ((reg + 1) | 0), (((this.prgRomCount << 1) - 2) | 0), (((this.prgRomCount << 1) - 1) | 0));
-                //SetupBanks(reg8, reg8 + 1, 0xFE, 0xFF);
+                this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
             }
             else {
-                this.SetupBankStarts(0, 1, reg, ((reg + 1) | 0));
+                this.SetupBankStarts(0, 1, reg, reg + 1);
             }
         }
-        // switch (this.prgRomBankMode){
-        //     case 0:
-        //     case 1:
-        //         reg = (((this._registers[3] >> 1) & 0xf) << 2) + this.bank_select;
-        //         this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
-        //         break;
-        //     case 2:
-        //         reg = (this._registers[3] << 1) + this.bank_select;
-        //         this.SetupBankStarts(0, 1, reg, reg + 1);
-        //         break;
-        //     case 3:
-        //         reg = (this._registers[3] << 1) + this.bank_select;
-        //         this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
-        //     break;
-        // }
     };
     MMC1Cart.prototype.setMMC1Mirroring = function (clock) {
         switch (this._registers[0] & 3) {

@@ -14,10 +14,21 @@
     </mat-sidenav>
 
     <chichi></chichi>
-    
-    <button mat-mini-fab class="sideMenu_Small" (click)="sideNav.toggle()">
-        <mat-icon svgIcon='gamepad'></mat-icon>
-    </button>
-    </mat-sidenav-container>
+    <div class="flexcontainer">
+        <div style='order:1'>
+            <button mat-fab class="sideMenu_Small" (click)="sideNav.toggle()">
+                <mat-icon svgIcon='gamepad'></mat-icon>
+            </button>
+        </div>
+        <div style='order:2'>
+            <div style="display: block">            
+                <button mat-fab class="sideMenu_Small" (click)="showVolume = !showVolume">
+                    <mat-icon svgIcon='amp'></mat-icon>
+                </button>
+                <controlpanel-volume *ngIf='showVolume'></controlpanel-volume>
+            </div>
+        </div>
+    </div>
+</mat-sidenav-container>
   
 </div>

@@ -649,7 +649,7 @@ export class ChiChiPPU implements IChiChiPPU {
                     break;
             }
 
-            if (this.shouldRender) {
+            if (this.frameOn) {
 
                 if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
                     /* update x position */

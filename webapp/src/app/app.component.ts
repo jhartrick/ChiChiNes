@@ -1,4 +1,4 @@
-﻿import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+﻿import { Component, ViewChild, ChangeDetectionStrategy, ComponentFactoryResolver } from '@angular/core';
 import {  MatSidenavModule, MatDrawer, MatIconRegistry } from '@angular/material';
 
 import { NESService } from './services/NESService';
@@ -21,7 +21,10 @@ export class AppComponent {
     matIconRegistry
       .addSvgIcon('gamepad', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/gamepad.svg'))
       .addSvgIcon('chip', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/chip.svg'))
-      .addSvgIcon('upload',  sanitizer.bypassSecurityTrustResourceUrl('assets/icons/upload.svg'));
+      .addSvgIcon('amp',  sanitizer.bypassSecurityTrustResourceUrl('assets/icons/amplifier.svg'));
   }
   title = 'ChiChiNES';
+
+  showVolume = false;
+
 }

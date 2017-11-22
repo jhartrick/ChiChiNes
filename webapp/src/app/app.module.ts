@@ -15,6 +15,7 @@ import { AppComponent } from './app.component';
 import { ChiChiComponent } from './chichines/chichines.component';
 
 import { ControlPanelComponent, PowerStatusComponent } from './controlpanel/controlpanel.component';
+import { VolumeComponent } from './controlpanel/volume.component';
 import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/chichi.audiosettings';
 
 import { NESService  } from './services/NESService';
@@ -28,6 +29,7 @@ import { CartInfoModule } from './modules/cartinfo/cartinfo.module';
 import { DebugOutputModule } from './modules/debugview/debug.module';
 import { CheatingModule } from './modules/cheating/cheating.module';
 import { ControlPadModule } from './modules/controlpad/controlpad.module';
+
 import { DomSanitizer } from '@angular/platform-browser';
 
 @NgModule({
@@ -37,6 +39,7 @@ import { DomSanitizer } from '@angular/platform-browser';
       ControlPanelComponent,
       PowerStatusComponent,
       AudioSettingsComponent,
+      VolumeComponent
   ],
   entryComponents: [
 ],
