@@ -33,6 +33,7 @@ import { ControlPadModule } from './modules/controlpad/controlpad.module';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CartLoaderComponent } from './controlpanel/cartloader.component';
 import { PowerButtonComponent } from './controlpanel/powerbutton.component';
+import { ButtonChainComponent } from './buttonchain/buttonchain.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,8 @@ import { PowerButtonComponent } from './controlpanel/powerbutton.component';
       AudioSettingsComponent,
       VolumeComponent,
       CartLoaderComponent,
-      PowerButtonComponent
+      PowerButtonComponent,
+      ButtonChainComponent
   ],
   entryComponents: [
 ],

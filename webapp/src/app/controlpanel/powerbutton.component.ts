@@ -7,6 +7,23 @@ import { NESService } from "../services/NESService";
     templateUrl: './powerbutton.component.html',
     })
     export class PowerButtonComponent {
+
+        powerButtons: any =
+        [
+            {
+                icon: 'chip',
+                click: () => {
+                    this.reset();
+            }
+        },
+            {
+                icon: 'power',
+                click: () => {
+                    this.powertoggle();
+                }
+            },
+        ];
+
         powerstate: boolean = false;
         powertoggle() {
             if (this.powerstate === false) {
@@ -23,6 +40,10 @@ import { NESService } from "../services/NESService";
         poweroff() {
             this.nesService.wishbone.PowerOff();
             this.powerstate = false;
+        }
+
+        reset() {
+            this.nesService.wishbone.Reset();
         }
         constructor(private nesService: NESService) {
             
