@@ -1,0 +1,6 @@
+<button *ngIf="powerstate" mat-fab mat-warn (click)="powertoggle()">
+    <mat-icon svgIcon='power'></mat-icon>
+</button>
+<button *ngIf="!powerstate" mat-fab  (click)="powertoggle()">
+    <mat-icon svgIcon='power'></mat-icon>
+</button>

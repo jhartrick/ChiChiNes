@@ -5,6 +5,7 @@ import { Http } from '@angular/http';
 import { RomLoader } from '../../services/cartloader';
 import { ICartSettings } from '../../services/ICartSettings';
 import { DomSanitizer } from '@angular/platform-browser';
+import { NESService } from '../../services/NESService';
 
 
 @Component({
@@ -15,8 +16,10 @@ import { DomSanitizer } from '@angular/platform-browser';
 export class CartInfoComponent {
     @Input('cartSettings') cartSettings: ICartSettings;
 
-    constructor(private loader: RomLoader, private dialog: MatDialog, private http: Http, public matIconRegistry: MatIconRegistry) {
-
+    constructor(private nesService: NESService, private loader: RomLoader, private dialog: MatDialog, private http: Http, public matIconRegistry: MatIconRegistry) {
+        this.nesService.cartChanged.subscribe((settings) => {
+            this.cartSettings = settings;
+        });
     }
     
     showDialog () {

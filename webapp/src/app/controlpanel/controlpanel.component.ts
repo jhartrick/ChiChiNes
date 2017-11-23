@@ -64,7 +64,13 @@ export class ControlPanelComponent {
             console.log('handleFile error %s', error);
         });
     }
-
+    powertoggle() {
+        if (this.powerstate === 'OFF') {
+            this.poweron();
+        } else {
+            this.poweroff();
+        }
+    }
     poweron() {
         this.nesService.wishbone.Run();
         this.powerstate = 'ON';
@@ -75,19 +81,13 @@ export class ControlPanelComponent {
         this.powerstate = 'OFF';
     }
 
-    showDebugger(): void {
-        this.nesService.onDebug.emit({eventType: 'showDebugger'});
-    }
-
     reset(): void {
         this.nesService.wishbone.Reset();
     }
 
-    powertoggle() {
-        if (this.powerstate === 'OFF') {
-            this.poweron();
-        } else {
-            this.poweroff();
-        }
+
+    showDebugger(): void {
+        this.nesService.onDebug.emit({eventType: 'showDebugger'});
     }
+
 }

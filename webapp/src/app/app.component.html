@@ -15,20 +15,20 @@
 
     <chichi></chichi>
     <div class="flexcontainer">
-        <div style='order:1'>
-            <button mat-fab class="sideMenu_Small" (click)="sideNav.toggle()">
-                <mat-icon svgIcon='gamepad'></mat-icon>
-            </button>
-        </div>
-        <div style='order:2'>
-            <div style="display: block">            
-                <button mat-fab class="sideMenu_Small" (click)="showVolume = !showVolume">
-                    <mat-icon svgIcon='amp'></mat-icon>
-                </button>
-                <controlpanel-volume *ngIf='showVolume'></controlpanel-volume>
-            </div>
-        </div>
+        <controlpanel-cartloader></controlpanel-cartloader>
+        <controlpanel-powerbutton></controlpanel-powerbutton>
+        <button mat-fab (click)="sideNav.toggle()">
+        <mat-icon svgIcon='gamepad'></mat-icon>
+        </button>
+        <cartinfo-main></cartinfo-main>
+        
+        <button mat-fab (click)="showVolume = !showVolume">
+            <mat-icon svgIcon='amp'></mat-icon>
+        </button>
+        <controlpanel-volume *ngIf='showVolume'></controlpanel-volume>
+        
     </div>
+    <div>Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 </mat-sidenav-container>
   
 </div>

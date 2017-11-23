@@ -31,6 +31,8 @@ import { CheatingModule } from './modules/cheating/cheating.module';
 import { ControlPadModule } from './modules/controlpad/controlpad.module';
 
 import { DomSanitizer } from '@angular/platform-browser';
+import { CartLoaderComponent } from './controlpanel/cartloader.component';
+import { PowerButtonComponent } from './controlpanel/powerbutton.component';
 
 @NgModule({
   declarations: [
@@ -39,7 +41,9 @@ import { DomSanitizer } from '@angular/platform-browser';
       ControlPanelComponent,
       PowerStatusComponent,
       AudioSettingsComponent,
-      VolumeComponent
+      VolumeComponent,
+      CartLoaderComponent,
+      PowerButtonComponent
   ],
   entryComponents: [
 ],
