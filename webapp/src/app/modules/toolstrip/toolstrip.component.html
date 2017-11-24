@@ -1,0 +1,16 @@
+    <div class="flexcontainer">
+
+        <chichi-popover [button]='fileHandlerButton()' [icon]='upload'>
+            <controlpanel-powerbutton></controlpanel-powerbutton>
+            <cartinfo-main></cartinfo-main>
+            <cheating-gamegenie></cheating-gamegenie>
+        </chichi-popover>
+
+        <chichi-popover [icon]='nesService.audioSettings.muted ? "volume-off" : "volume-high"' (buttonclick)="muteToggle()" >
+             <controlpanel-volume></controlpanel-volume>
+        </chichi-popover>
+        <controlpad-config></controlpad-config>
+        <button mat-fab (click)="sideNav.toggle()">
+            <mat-icon svgIcon='settings'></mat-icon>
+        </button>
+    </div>

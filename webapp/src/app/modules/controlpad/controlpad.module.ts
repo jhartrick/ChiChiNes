@@ -1,4 +1,4 @@
-import { MatDialogModule, MatButtonModule, MatButtonToggleModule } from '@angular/material';
+import { MatDialogModule, MatButtonModule, MatButtonToggleModule, MatIconModule } from '@angular/material';
 
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
@@ -20,6 +20,7 @@ import { ControlConfigComponent } from './controlpad.component';
       BrowserAnimationsModule,
       MatButtonModule,
       MatButtonToggleModule,
+      MatIconModule
 
   ],
   exports: [

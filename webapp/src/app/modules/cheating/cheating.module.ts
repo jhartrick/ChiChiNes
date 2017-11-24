@@ -1,4 +1,4 @@
-import { MatDialogModule, MatButtonModule, MatButtonToggleModule } from '@angular/material';
+import { MatDialogModule, MatButtonModule, MatButtonToggleModule, MatIconModule } from '@angular/material';
 
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
@@ -19,7 +19,8 @@ import { GameGenieDialogComponent } from './gamegenie.dialog.component';
       MatDialogModule,
       BrowserAnimationsModule,
       MatButtonModule,
-      MatButtonToggleModule
+      MatButtonToggleModule,
+      MatIconModule
   ],
   exports: [
     GameGenieComponent

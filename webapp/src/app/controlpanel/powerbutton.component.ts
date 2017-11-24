@@ -9,8 +9,8 @@ import { ICartSettings } from "../services/ICartSettings";
     })
     export class PowerButtonComponent {
         cartSettings: ICartSettings;
-        
-        powerButtons: any =
+
+        buttons: any =
         [
             {
                 icon: 'power',
@@ -39,7 +39,7 @@ import { ICartSettings } from "../services/ICartSettings";
             this.nesService.wishbone.Run();
             this.powerstate = true;
         }
-    
+
         poweroff() {
             this.nesService.wishbone.PowerOff();
             this.powerstate = false;

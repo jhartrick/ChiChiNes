@@ -5,6 +5,9 @@
 }
 .popcontent {
     overflow: hidden;
+    display:flex;
+    flex-direction: row;
+    width: max-content;
 }
 .hidden {
     width: 0px;

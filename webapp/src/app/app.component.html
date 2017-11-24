@@ -1,32 +1,20 @@
 ﻿<div id="chichiNesApp" >
 
-<mat-sidenav-container >
-      <mat-sidenav #sideNav  class="leftSideNav" position="start" mode="over" opened="true">
-      <!-- sidenav content -->
-      <controlpanel></controlpanel>
-  
+    <mat-sidenav-container >
+        <mat-sidenav #sideNav  class="leftSideNav" position="start" mode="over" opened="true">
+        <!-- sidenav content -->
+        <controlpanel></controlpanel>
+    
 
-    </mat-sidenav>
-  <mat-sidenav #debugNav class="rightSideNav" position="end" mode="over" opened="false">
-      <!-- sidenav content -->
-      <app-debugoutput></app-debugoutput>
+        </mat-sidenav>
+    <mat-sidenav #debugNav class="rightSideNav" position="end" mode="over" opened="false">
+        <!-- sidenav content -->
+        <app-debugoutput></app-debugoutput>
 
-    </mat-sidenav>
+        </mat-sidenav>
 
-    <chichi></chichi>
-    <div class="flexcontainer">
-        <controlpanel-cartloader></controlpanel-cartloader>
-        <controlpanel-powerbutton></controlpanel-powerbutton>
-        <cartinfo-main></cartinfo-main>
-
-        <chichi-popover [popover]='volumePopover' 
-        [icon]='nesService.audioSettings.muted ? "volume-off" : "volume-high"' 
-         ></chichi-popover>
-
-        <button mat-fab (click)="sideNav.toggle()">
-            <mat-icon svgIcon='settings'></mat-icon>
-        </button>
-    </div>
-</mat-sidenav-container>
+        <chichi></chichi>
+        <chichi-toolstrip></chichi-toolstrip>
+    </mat-sidenav-container>
   
 </div>

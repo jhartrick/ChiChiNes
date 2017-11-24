@@ -36,7 +36,7 @@ import { PowerButtonComponent } from './controlpanel/powerbutton.component';
 import { ButtonChainComponent } from './buttonchain/buttonchain.component';
 import { PopoverComponent } from './popover/popover.component';
 import { PopoverDirective } from './popover/popover.directive';
-
+import { ToolStripComponent } from './modules/toolstrip/toolstrip.component';
 @NgModule({
   declarations: [
       AppComponent,
@@ -49,10 +49,12 @@ import { PopoverDirective } from './popover/popover.directive';
       PowerButtonComponent,
       ButtonChainComponent,
       PopoverComponent,
-      PopoverDirective
+      PopoverDirective,
+      ToolStripComponent
   ],
   entryComponents: [
-    VolumeComponent
+    VolumeComponent,
+    CartLoaderComponent
 ],
   imports: [
       BrowserModule,

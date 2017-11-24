@@ -1,7 +1,6 @@
-import { ComponentFactoryResolver, AfterViewInit,  Input, ViewChild, Component, ComponentRef } from "@angular/core";
+import { ComponentFactoryResolver, AfterViewInit,  Input, ViewChild, Component, ComponentRef, EventEmitter, Output, ChangeDetectorRef } from "@angular/core";
 import { PopoverDirective } from "./popover.directive";
 import { PopoverContent } from "./popover.content";
-import { EILSEQ } from "constants";
 
 
 @Component({
@@ -12,40 +11,44 @@ import { EILSEQ } from "constants";
 export class PopoverComponent implements AfterViewInit {
     componentRef: ComponentRef<any>;
     show = false;
-
-    @Input() popover: PopoverContent;
+    @Input('button') button: PopoverContent;
     @Input() icon: string;
+
+    @Output()
+    buttonclick = new EventEmitter(true);
+
     @ViewChild(PopoverDirective) popSpot: PopoverDirective;
     loaded = false;
-  
-    constructor(private componentFactoryResolver: ComponentFactoryResolver) { 
+
+
+    constructor(private componentFactoryResolver: ComponentFactoryResolver, private cd: ChangeDetectorRef) {
 
     }
 
     floatClass = 'hidden';
-    ngAfterViewInit() {
-       //this.loadComponent();
-    }
 
-    clickHandler(event: any) {
-        if (this.componentRef.instance.onclick) {
-            this.componentRef.instance.onclick();
-        } else if (this.popover.data.onclick) {
-            this.popover.data.onclick();
+    ngAfterViewInit() {
+        if (this.button) {
+            this.loadComponent();
+            this.cd.detectChanges();
         }
     }
 
+    clickHandler(event: any) {
+        this.buttonclick.emit(event);
+
+    }
+
     loadComponent() {
-        if (!this.loaded) {
-            let viewContainerRef = this.popSpot.viewContainerRef;
+        if (!this.loaded && this.button) {
+            const viewContainerRef = this.popSpot.viewContainerRef;
             viewContainerRef.clear();
-            let popover = this.popover;
-            let componentFactory = this.componentFactoryResolver.resolveComponentFactory(popover.component);
+            const popover = this.button;
+            const componentFactory = this.componentFactoryResolver.resolveComponentFactory(popover.component);
             this.componentRef = viewContainerRef.createComponent(componentFactory);
             (this.componentRef.instance).data = popover.data;
             this.loaded = true;
         }
     }
-  
 
-  }
+}

@@ -1,8 +1,9 @@
-<div class='popover' (mouseenter)="loadComponent(); floatClass='floater'" (mouseleave)="floatClass='hidden'">
-    <button mat-fab (click)="clickHandler($event)">
+<div class='popover' (mouseenter)="floatClass='floater'" (mouseleave)="floatClass='hidden'">
+    <ng-template chichi-popover></ng-template>
+    <button *ngIf='!button' mat-fab (click)="clickHandler($event)">
         <mat-icon svgIcon='{{ icon }}'></mat-icon>
     </button>
     <div class='popcontent' [ngClass]='floatClass'>
-        <ng-template chichi-popover></ng-template>
+        <ng-content></ng-content>
     </div>
 </div>

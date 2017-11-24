@@ -30,17 +30,16 @@ export class AppComponent {
       .addSvgIcon('reset', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/reset.svg'))
       .addSvgIcon('volume-high', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/volume-high.svg'))
       .addSvgIcon('volume-off', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/volume-off.svg'))
+      .addSvgIcon('baby-buggy', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/baby-buggy.svg'))
       .addSvgIcon('amp',  sanitizer.bypassSecurityTrustResourceUrl('assets/icons/amplifier.svg'));
   }
   title = 'ChiChiNES';
 
   showVolume = false;
 
-  
   get volumePopover(): PopoverContent {
     return new PopoverContent(VolumeComponent,
       {
-
     });
   }
 

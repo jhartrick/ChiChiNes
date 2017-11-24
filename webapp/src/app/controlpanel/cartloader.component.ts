@@ -1,14 +1,13 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 import { RomLoader } from "../services/cartloader";
 
 @Component({
     selector: 'controlpanel-cartloader',
     templateUrl: './cartloader.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush
     })
     export class CartLoaderComponent {
-        
         constructor(private romloader: RomLoader) {
-            
         }
 
         handleFile(e: Event) {
