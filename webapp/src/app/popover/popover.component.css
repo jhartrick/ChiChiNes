@@ -1,0 +1,17 @@
+.popover{
+    display: flex;
+    flex-direction: row;
+    width: max-content;
+}
+.popcontent {
+    overflow: hidden;
+}
+.hidden {
+    width: 0px;
+    transition: width 0.5s;
+}
+
+.floater {
+    width: 100%;
+    transition: width 0.75s;
+}

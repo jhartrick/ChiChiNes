@@ -1,27 +1,30 @@
 import { Component } from "@angular/core";
 import { RomLoader } from "../services/cartloader";
 import { NESService } from "../services/NESService";
+import { ICartSettings } from "../services/ICartSettings";
 
 @Component({
     selector: 'controlpanel-powerbutton',
     templateUrl: './powerbutton.component.html',
     })
     export class PowerButtonComponent {
-
+        cartSettings: ICartSettings;
+        
         powerButtons: any =
         [
-            {
-                icon: 'chip',
-                click: () => {
-                    this.reset();
-            }
-        },
             {
                 icon: 'power',
                 click: () => {
                     this.powertoggle();
                 }
             },
+            {
+                icon: 'reset',
+                click: () => {
+                    this.reset();
+            }
+        },
+
         ];
 
         powerstate: boolean = false;
@@ -46,7 +49,9 @@ import { NESService } from "../services/NESService";
             this.nesService.wishbone.Reset();
         }
         constructor(private nesService: NESService) {
-            
+            this.nesService.cartChanged.subscribe((settings) => {
+                this.cartSettings = settings;
+            });
         }
 
     }

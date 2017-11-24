@@ -3,6 +3,9 @@ import {  MatSidenavModule, MatDrawer, MatIconRegistry } from '@angular/material
 
 import { NESService } from './services/NESService';
 import { DomSanitizer } from '@angular/platform-browser';
+import { PopoverComponent } from './popover/popover.component';
+import { PopoverContent } from './popover/popover.content';
+import { VolumeComponent } from './controlpanel/volume.component';
 
 @Component({
   selector: 'app-root',
@@ -24,10 +27,21 @@ export class AppComponent {
       .addSvgIcon('upload', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/upload.svg'))
       .addSvgIcon('power', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/power.svg'))
       .addSvgIcon('settings', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/settings.svg'))
+      .addSvgIcon('reset', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/reset.svg'))
+      .addSvgIcon('volume-high', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/volume-high.svg'))
+      .addSvgIcon('volume-off', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/volume-off.svg'))
       .addSvgIcon('amp',  sanitizer.bypassSecurityTrustResourceUrl('assets/icons/amplifier.svg'));
   }
   title = 'ChiChiNES';
 
   showVolume = false;
+
+  
+  get volumePopover(): PopoverContent {
+    return new PopoverContent(VolumeComponent,
+      {
+
+    });
+  }
 
 }

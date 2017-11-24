@@ -1,1 +1,1 @@
-<buttonchain [buttons]='powerButtons'></buttonchain>
+<buttonchain *ngIf='cartSettings ? true : false' [buttons]='powerButtons'></buttonchain>

@@ -34,6 +34,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { CartLoaderComponent } from './controlpanel/cartloader.component';
 import { PowerButtonComponent } from './controlpanel/powerbutton.component';
 import { ButtonChainComponent } from './buttonchain/buttonchain.component';
+import { PopoverComponent } from './popover/popover.component';
+import { PopoverDirective } from './popover/popover.directive';
 
 @NgModule({
   declarations: [
@@ -45,9 +47,12 @@ import { ButtonChainComponent } from './buttonchain/buttonchain.component';
       VolumeComponent,
       CartLoaderComponent,
       PowerButtonComponent,
-      ButtonChainComponent
+      ButtonChainComponent,
+      PopoverComponent,
+      PopoverDirective
   ],
   entryComponents: [
+    VolumeComponent
 ],
   imports: [
       BrowserModule,

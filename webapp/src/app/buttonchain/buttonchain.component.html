@@ -1,5 +1,7 @@
 <div (mouseenter)="floatClass='floater'" (mouseleave)="floatClass='hidden'" >
-    <button (click)='onClickButton(i)' *ngFor='let b of buttons; let i = index' mat-fab [ngClass]='floatClass' [style.left]='floatClass === "floater" ? (i * 64).toString() + "px" : "0px"' >
+    <button (click)='onClickButton(i)' *ngFor='let b of buttons; let i = index' mat-fab [ngClass]='floatClass' 
+    [ngStyle]='{ left: (floatClass === "floater" ? (i * 64).toString() + "px" : "0px"),  "z-index" : 999 - i}'
+    >
         <mat-icon svgIcon='{{ b.icon }}'></mat-icon>
     </button>
 </div>

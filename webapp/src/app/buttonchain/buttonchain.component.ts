@@ -13,7 +13,7 @@ class ButtonDef {
   templateUrl: './buttonchain.component.html',
   styleUrls: ['./buttonchain.component.css']
 })
-export class ButtonChainComponent {
+export class ButtonChainComponent  {
     @Input('buttons')
     buttons: ButtonDef[] = new Array<ButtonDef>();
 
