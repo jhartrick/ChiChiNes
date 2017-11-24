@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { NESService } from '../../services/NESService';
-import { PopoverContent } from '../../popover/popover.content';
-import { CartLoaderComponent } from '../../controlpanel/cartloader.component';
+import { PopoverContent } from './popover/popover.content';
+import { CartLoaderComponent } from '../controlpanel/cartloader.component';
 
 @Component({
     selector: 'chichi-toolstrip',

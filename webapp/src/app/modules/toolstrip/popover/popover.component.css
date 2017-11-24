@@ -12,9 +12,13 @@
 .hidden {
     width: 0px;
     transition: width 0.5s;
+    transition-delay: 1.25s;
+    transition-timing-function: ease-in;
 }
 
 .floater {
     width: 100%;
-    transition: width 0.75s;
+    transition: width 0.5s;
+    transition-delay: 0.125s;
+    transition-timing-function: ease-out;
 }

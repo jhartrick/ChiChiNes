@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy } from "@angular/core";
-import { RomLoader } from "../services/cartloader";
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { RomLoader } from '../../services/cartloader';
+
 
 @Component({
     selector: 'controlpanel-cartloader',

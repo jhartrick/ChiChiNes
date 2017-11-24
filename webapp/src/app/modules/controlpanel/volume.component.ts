@@ -1,6 +1,6 @@
-import { Component, Input } from "@angular/core";
-import { LocalAudioSettings } from "../services/wishbone/wishbone.audio.localsettings";
-import { NESService } from "../services/NESService";
+import { Component, Input } from '@angular/core';
+import { LocalAudioSettings } from '../../services/wishbone/wishbone.audio.localsettings';
+import { NESService } from '../../services/NESService';
 
 @Component({
     selector: 'controlpanel-volume',

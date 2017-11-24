@@ -1,5 +1,5 @@
 ﻿import { Component, ChangeDetectionStrategy, Input, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
-import { NESService } from '../services/NESService';
+import { NESService } from '../../services/NESService';
 import { MatDialog } from '@angular/material';
 
 import { Observable } from 'rxjs/Observable';
@@ -9,9 +9,9 @@ import * as crc from 'crc';
 
 import { AudioSettings } from 'chichi';
 
-import { WishboneMachine } from '../services/wishbone/wishbone';
-import { LocalAudioSettings } from '../services/wishbone/wishbone.audio.localsettings';
-import { RomLoader } from '../services/cartloader';
+import { WishboneMachine } from '../../services/wishbone/wishbone';
+import { LocalAudioSettings } from '../../services/wishbone/wishbone.audio.localsettings';
+import { RomLoader } from '../../services/cartloader';
 
 @Component({
     selector: 'chichi-status',

@@ -1,0 +1,18 @@
+﻿<div id="chichiNesApp" >
+
+    <mat-sidenav-container >
+        <mat-sidenav #sideNav  class="leftSideNav" position="start" mode="over" opened="true">
+        <!-- sidenav content -->
+        <controlpanel></controlpanel>
+        <a routerLink='/play' routerLinkActive="active">Play</a>
+        </mat-sidenav>
+    <mat-sidenav #debugNav class="rightSideNav" position="end" mode="over" opened="false">
+        <!-- sidenav content -->
+        <app-debugoutput></app-debugoutput>
+
+        </mat-sidenav>
+
+        <chichi></chichi>
+    </mat-sidenav-container>
+  
+</div>

@@ -14,10 +14,6 @@ import * as JSZip from 'jszip';
 import { AppComponent } from './app.component';
 import { ChiChiComponent } from './chichines/chichines.component';
 
-import { ControlPanelComponent, PowerStatusComponent } from './controlpanel/controlpanel.component';
-import { VolumeComponent } from './controlpanel/volume.component';
-import { AudioSettingsComponent } from './controlpanel/chichines.audiosettings/chichi.audiosettings';
-
 import { NESService  } from './services/NESService';
 
 import { WishboneCheats } from './services/wishbone/wishbone.cheats';
@@ -29,34 +25,26 @@ import { CartInfoModule } from './modules/cartinfo/cartinfo.module';
 import { DebugOutputModule } from './modules/debugview/debug.module';
 import { CheatingModule } from './modules/cheating/cheating.module';
 import { ControlPadModule } from './modules/controlpad/controlpad.module';
-
+import { ToolStripModule } from './modules/toolstrip/toolstrip.module';
+import { ControlPanelModule } from './modules/controlpanel/controlpanel.module';
+import { RoutingModule } from './modules/routing.module';
+import { DebugLayoutComponent } from './layouts/debuglayout.component';
+import { PlayLayoutComponent } from './layouts/playlayout.component';
 import { DomSanitizer } from '@angular/platform-browser';
-import { CartLoaderComponent } from './controlpanel/cartloader.component';
-import { PowerButtonComponent } from './controlpanel/powerbutton.component';
-import { ButtonChainComponent } from './buttonchain/buttonchain.component';
-import { PopoverComponent } from './popover/popover.component';
-import { PopoverDirective } from './popover/popover.directive';
-import { ToolStripComponent } from './modules/toolstrip/toolstrip.component';
+
+
 @NgModule({
   declarations: [
       AppComponent,
       ChiChiComponent,
-      ControlPanelComponent,
-      PowerStatusComponent,
-      AudioSettingsComponent,
-      VolumeComponent,
-      CartLoaderComponent,
-      PowerButtonComponent,
-      ButtonChainComponent,
-      PopoverComponent,
-      PopoverDirective,
-      ToolStripComponent
+      DebugLayoutComponent,
+      PlayLayoutComponent
+
   ],
   entryComponents: [
-    VolumeComponent,
-    CartLoaderComponent
 ],
   imports: [
+    RoutingModule,
       BrowserModule,
       HttpModule,
       MatSidenavModule,
@@ -74,12 +62,27 @@ import { ToolStripComponent } from './modules/toolstrip/toolstrip.component';
       CheatingModule,
       ControlPadModule,
       MatIconModule,
-      DebugOutputModule
+      DebugOutputModule,
+      ToolStripModule,
+      ControlPanelModule
   ],
-  providers: [HttpModule, WishboneMachine, NESService, RomLoader],
+  providers: [HttpModule, WishboneMachine, NESService, RomLoader, MatIconRegistry],
   bootstrap: [AppComponent]
 })
 
 export class AppModule {
+  constructor(public matIconRegistry: MatIconRegistry, private sanitizer: DomSanitizer) {
 
+    matIconRegistry
+      .addSvgIcon('gamepad', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/gamepad.svg'))
+      .addSvgIcon('chip', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/chip.svg'))
+      .addSvgIcon('upload', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/upload.svg'))
+      .addSvgIcon('power', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/power.svg'))
+      .addSvgIcon('settings', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/settings.svg'))
+      .addSvgIcon('reset', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/reset.svg'))
+      .addSvgIcon('volume-high', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/volume-high.svg'))
+      .addSvgIcon('volume-off', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/volume-off.svg'))
+      .addSvgIcon('baby-buggy', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/baby-buggy.svg'))
+      .addSvgIcon('amp',  sanitizer.bypassSecurityTrustResourceUrl('assets/icons/amplifier.svg'));
+  }
 }

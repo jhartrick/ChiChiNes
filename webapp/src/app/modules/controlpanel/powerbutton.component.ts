@@ -1,7 +1,7 @@
-import { Component } from "@angular/core";
-import { RomLoader } from "../services/cartloader";
-import { NESService } from "../services/NESService";
-import { ICartSettings } from "../services/ICartSettings";
+import { Component } from '@angular/core';
+import { RomLoader } from '../../services/cartloader';
+import { NESService } from '../../services/NESService';
+import { ICartSettings } from '../../services/ICartSettings';
 
 @Component({
     selector: 'controlpanel-powerbutton',
@@ -27,7 +27,7 @@ import { ICartSettings } from "../services/ICartSettings";
 
         ];
 
-        powerstate: boolean = false;
+        powerstate = false;
         powertoggle() {
             if (this.powerstate === false) {
                 this.poweron();
