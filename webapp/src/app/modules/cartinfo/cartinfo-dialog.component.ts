@@ -39,7 +39,7 @@ export class CartInfoDialogComponent implements AfterContentInit {
 
     ngAfterContentInit(): void {
         setTimeout(()=> {
-        this.cd.detectChanges();
+            this.cd.detectChanges();
         },0);
     }
 

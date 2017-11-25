@@ -15,7 +15,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
       CartInfoDialogComponent
   ],
   entryComponents: [
-    CartInfoDialogComponent
+    CartInfoDialogComponent,
+    CartInfoComponent
 ],
   imports: [
       BrowserModule,

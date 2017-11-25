@@ -164,7 +164,7 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise.gain = this.noiseGain; this.noise.period = 0;
 
         this.dmc = new DMCChannel(this.myBlipper, 4, null);
-      //  this.dmc.Gain = 873; this.dmc.Period = 10;
+        
     }
 
     GetByte(Clock: number, address: number): number {
@@ -212,7 +212,7 @@ export class ChiChiAPU implements IChiChiAPU {
             case 0x4011:
             case 0x4012:
             case 0x4013:
-                // dmc.WriteRegister(address - 0x40010, data, Clock);
+                this.dmc.WriteRegister(address - 0x40010, data, clock);
                 break;
             case 0x4015:
                 this.reg15 = data;
@@ -267,7 +267,7 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise.FrameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
-        // this.dmc.FrameClock(time, step)
+         this.dmc.FrameClock(time, step)
     }
 
     endFrame(time: number): void {

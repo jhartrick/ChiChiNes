@@ -2,7 +2,9 @@ import { Subject } from "rxjs";
 import { WishboneMachine } from "./wishbone";
 import { Observable } from "rxjs/Observable";
 import { Local } from "protractor/built/driverProviders";
+import { Injectable } from "@angular/core";
 
+@Injectable()
 export class WishboneWorker {
     ready: boolean = false;
 
@@ -86,6 +88,10 @@ export class WishboneWorker {
         }
     }
     
+    updateAudioSettings() {
+        this.postNesMessage({ command: 'audiosettings', settings : this.wishbone.SoundBopper.audioSettings });
+    }
+
     messageNumber = 0;
 
     private sync(data: any) {

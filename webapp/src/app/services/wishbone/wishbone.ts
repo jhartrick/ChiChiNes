@@ -1,4 +1,4 @@
-import { NgZone } from '@angular/core';
+import { NgZone, Injectable } from '@angular/core';
 import * as crc from 'crc';
 
 import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, IChiChiAPU, IChiChiAPUState,
@@ -10,7 +10,6 @@ import { TileDoodler } from './wishbone.tiledoodler';
 import { WishboneCart } from './wishbone.cart';
 import { WishboneAPU } from './wishbone.audio';
 import { KeyboardSettings } from '../keyboardsettings';
-import { WishboneCheats } from './wishbone.cheats';
 import { Http } from '@angular/http';
 import { WishboneWorker } from './wishbone.worker';
 import { EventEmitter } from 'selenium-webdriver';
@@ -175,6 +174,7 @@ export class WishBoneControlPad {
 export class WishbonePPU extends ChiChiPPU {
 }
 
+@Injectable()
 export class WishboneMachine  {
     interval: NodeJS.Timer;
     keyHandler: WishboneKeyHandler;
@@ -226,27 +226,11 @@ export class WishboneMachine  {
     }
 
     private debugSubject: Subject<any> = new Subject<any>();
-    
-    onCartLoaded: Observable<IBaseCart>;
 
     get debugEvents(): Observable<any> {
         return this.debugSubject.asObservable();
     }
 
-    private _cheats: GameGenieCode[];
-
-    get cheats(): GameGenieCode[] {
-        //let ggCodes = new ChiChiCheats().getCheatsForGame(this.Cart.realCart.ROMHashFunction);
-        return this._cheats;
-    }
-
-    applyCheats(cheats: GameGenieCode[]) {
-        this._cheats = cheats;
-        const cc = new ChiChiCheats();
-        this.Cpu.genieCodes = cheats.filter((v) => v.active).map((v) => cc.gameGenieCodeToPatch(v.code));
-        this.Cpu.cheating =  this.Cpu.genieCodes.length > 0;
-        // this.postNesMessage({ command: 'cheats', cheats: this.Cpu.genieCodes });
-    }
 
     handleMessage(data: MessageEvent) {
         const d = data.data;

@@ -219,53 +219,38 @@ export class BaseCart implements IBaseCart {
         this.mapperId = (this.mapperId + (this.romControlBytes[1] & 240)) | 0;
 
         this.chrRomOffset = chrRomOffset;
-        /* 
-        .NES file format
-        ---------------------------------------------------------------------------
-        0-3      String "NES^Z" used to recognize .NES files.
-        4        Number of 16kB ROM banks.
-        5        Number of 8kB VROM banks.
-        6        bit 0     1 for vertical mirroring, 0 for horizontal mirroring
-                bit 1     1 for battery-backed RAM at $6000-$7FFF
-                bit 2     1 for a 512-byte trainer at $7000-$71FF
-                bit 3     1 for a four-screen VRAM layout 
-                bit 4-7   Four lower bits of ROM Mapper Type.
-        7        bit 0-3   Reserved, must be zeroes!
-                bit 4-7   Four higher bits of ROM Mapper Type.
-        8-15     Reserved, must be zeroes!
-        16-...   ROM banks, in ascending order. If a trainer i6s present, its
-                512 bytes precede the ROM bank contents.
-        ...-EOF  VROM banks, in ascending order.
-        ---------------------------------------------------------------------------
-        */
+
         this.iNesHeader = new Uint8Array(header.slice(0, 16));
-        //System.Array.copy(header, 0, this.iNesHeader, 0, header.length);
+
         this.prgRomCount = prgRoms;
         this.chrRomCount = chrRoms;
-
-        //  this.nesCart = System.Array.init(prgRomData.length, 0, System.Byte);
-        // System.Array.copy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
 
         this.nesCart = new Uint8Array(prgRomData.length);
         BaseCart.arrayCopy(prgRomData, 0, this.nesCart, 0, prgRomData.length);
 
         if (this.chrRomCount === 0) {
             // chrRom is going to be RAM
-            chrRomData = new Uint8Array(32768); //System.Array.init(32768, 0, System.Byte);
+            chrRomData = new Uint8Array(32768); 
             chrRomData.fill(0);
         }
 
-        const chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 0x1000) * Uint8Array.BYTES_PER_ELEMENT)
-        this.chrRom = new Uint8Array(<any>chrRomBuffer);//     System.Array.init(((chrRomData.length + 4096) | 0), 0, System.Int32);
+        const chrRomBuffer = new SharedArrayBuffer((chrRomData.length + 0x2000) * Uint8Array.BYTES_PER_ELEMENT)
+        this.chrRom = new Uint8Array(<any>chrRomBuffer);
 
         this.chrRamStart = chrRomData.length;
-        this.chrRamLength  =  0x1000;
+        this.chrRamLength  =  0x2000;
 
         BaseCart.arrayCopy(chrRomData, 0, this.chrRom, 0, chrRomData.length);
 
         this.prgRomCount = this.iNesHeader[4];
         this.chrRomCount = this.iNesHeader[5];
 
+        for (var i = 0; i < 8; i++) {
+            this.ppuBankStarts[i] = i * 0x400;
+        }
+        for (var i = 0; i < 8; i++) {
+            this.prgBankStarts[i] = i * 0x1000;
+        }
 
         this.romControlBytes[0] = this.iNesHeader[6];
         this.romControlBytes[1] = this.iNesHeader[7];
@@ -395,23 +380,6 @@ export class BaseCart implements IBaseCart {
         }
     }
 
-    WriteState(state: any): void {
-        // throw new Error('Method not implemented.');
-    }
-
-    ReadState(state: any): void {
-        // throw new Error('Method not implemented.');
-    }
-
-    HandleEvent(Clock: number): void {
-        //  throw new Error('Method not implemented.');
-    }
-
-    ResetClock(Clock: number): void {
-        // throw new Error('Method not implemented.');
-    }
-
-
     // 0 - onescreen, 1 -v, 2- h, 3 - fourscreen
     mirror(clockNum: number, mirroring: number): void {
         this.mirroring = mirroring;
@@ -454,8 +422,7 @@ export class BaseCart implements IBaseCart {
 
         var oneKsrc = src << 3;
         var oneKdest = dest << 3;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
+
         for (var i = 0; i < (numberOf8kBanks << 3); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
 
@@ -470,14 +437,10 @@ export class BaseCart implements IBaseCart {
             dest = dest - 1;
         }
 
-
-        var oneKsrc = src << 2;
-        var oneKdest = dest << 2;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
+        const oneKsrc = src << 2;
+        const oneKdest = dest << 2;
         for (var i = 0; i < (numberOf4kBanks << 2); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
-
         }
     }
 
@@ -491,8 +454,7 @@ export class BaseCart implements IBaseCart {
 
         var oneKsrc = src << 1;
         var oneKdest = dest << 1;
-        //TODO: get whizzler reading ram from INesCart.GetPPUByte then be calling this
-        //  setup ppuBankStarts in 0x400 block chunks 
+
         for (var i = 0; i < (numberOf2kBanks << 1); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
         }

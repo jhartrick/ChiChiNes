@@ -12,7 +12,8 @@ import { ControlConfigComponent } from './controlpad.component';
     ControlConfigComponent
   ],
   entryComponents: [
-    ControlDialogComponent
+    ControlDialogComponent,
+    ControlConfigComponent
 ],
   imports: [
       BrowserModule,

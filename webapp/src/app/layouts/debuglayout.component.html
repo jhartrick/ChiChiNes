@@ -1,7 +1,7 @@
-﻿<div id="chichiNesApp" >
+﻿<div id="chichiNesApp" (click)='sideNav.open()' >
 
     <mat-sidenav-container >
-        <mat-sidenav #sideNav  class="leftSideNav" position="start" mode="over" opened="true">
+        <mat-sidenav #sideNav  class="leftSideNav" position="start" mode="side" opened="true">
         <!-- sidenav content -->
         <controlpanel></controlpanel>
         <a routerLink='/play' routerLinkActive="active">Play</a>

@@ -14,6 +14,7 @@ import { WramManager } from './wishbone/wishbone.wrammanger';
 
 @Injectable()
 export class NESService {
+    cartSettings: ICartSettings;
     audioSettings: ThreeJSAudioSettings;
 
     // events
@@ -25,13 +26,10 @@ export class NESService {
     get videoBuffer(): Uint8Array {
         return this.vbuffer;
     }
-
-    worker: WishboneWorker;
     
     private audioHandler: ChiChiThreeJSAudio;
 
-    constructor(public wishbone: WishboneMachine) {
-        this.worker = new WishboneWorker(this.wishbone);
+    constructor(public wishbone: WishboneMachine, private worker: WishboneWorker) {
         this.audioHandler = new ChiChiThreeJSAudio(this.wishbone.WaveForms);
         this.audioSettings = this.audioHandler.getSound();
 
@@ -101,6 +99,7 @@ export class NESService {
                 chrRomCount: cart.chrRomCount,
                 wram: new WramManager(this)
             }
+            this.cartSettings = cartSettings;
             this.cartChanged.emit(cartSettings);
         });
     }

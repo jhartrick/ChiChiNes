@@ -17,6 +17,7 @@ export class CartInfoComponent {
     @Input('cartSettings') cartSettings: ICartSettings;
 
     constructor(private nesService: NESService, private loader: RomLoader, private dialog: MatDialog, private http: Http, public matIconRegistry: MatIconRegistry) {
+        this.cartSettings = nesService.cartSettings;
         this.nesService.cartChanged.subscribe((settings) => {
             this.cartSettings = settings;
         });

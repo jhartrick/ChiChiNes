@@ -2,14 +2,17 @@
 
     <chichi-popover [button]='fileHandlerButton()' [icon]='upload'>
         <controlpanel-powerbutton></controlpanel-powerbutton>
-        <cartinfo-main></cartinfo-main>
-        <cheating-gamegenie></cheating-gamegenie>
     </chichi-popover>
 
     <chichi-popover [icon]='nesService.audioSettings.muted ? "volume-off" : "volume-high"' (buttonclick)="muteToggle()" >
         <controlpanel-volume></controlpanel-volume>
     </chichi-popover>
     <controlpad-config></controlpad-config>
+    
+    <chichi-popover *ngIf='cartSettings ? true : false' [button]='cartInfoButton()'  [icon]='chip'>
+        <cheating-gamegenie></cheating-gamegenie>
+    </chichi-popover>
+
     <a mat-fab routerLink="/debug" routerLinkActive="active">
         <mat-icon svgIcon='settings'></mat-icon>
     </a>

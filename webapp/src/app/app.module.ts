@@ -16,7 +16,6 @@ import { ChiChiComponent } from './chichines/chichines.component';
 
 import { NESService  } from './services/NESService';
 
-import { WishboneCheats } from './services/wishbone/wishbone.cheats';
 import { WishboneMachine } from './services/wishbone/wishbone';
 
 import { RomLoader } from './services/cartloader';
@@ -28,9 +27,12 @@ import { ControlPadModule } from './modules/controlpad/controlpad.module';
 import { ToolStripModule } from './modules/toolstrip/toolstrip.module';
 import { ControlPanelModule } from './modules/controlpanel/controlpanel.module';
 import { RoutingModule } from './modules/routing.module';
+
+import { DomSanitizer } from '@angular/platform-browser';
+import { WishboneWorker } from './services/wishbone/wishbone.worker';
+
 import { DebugLayoutComponent } from './layouts/debuglayout.component';
 import { PlayLayoutComponent } from './layouts/playlayout.component';
-import { DomSanitizer } from '@angular/platform-browser';
 
 
 @NgModule({
@@ -66,7 +68,7 @@ import { DomSanitizer } from '@angular/platform-browser';
       ToolStripModule,
       ControlPanelModule
   ],
-  providers: [HttpModule, WishboneMachine, NESService, RomLoader, MatIconRegistry],
+  providers: [HttpModule, WishboneMachine, WishboneWorker, NESService, RomLoader, MatIconRegistry],
   bootstrap: [AppComponent]
 })
 

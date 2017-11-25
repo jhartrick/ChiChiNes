@@ -5,6 +5,7 @@ import { AudioSettings } from 'chichi';
 import { WishboneMachine } from '../../../services/wishbone/wishbone';
 import { IAudioHandler } from '../../../services/wishbone/wishbone.audio';
 import { LocalAudioSettings } from '../../../services/wishbone/wishbone.audio.localsettings';
+import { WishboneWorker } from '../../../services/wishbone/wishbone.worker';
 
 @Component({
   selector: 'chichi-audiosettings',
@@ -15,19 +16,8 @@ import { LocalAudioSettings } from '../../../services/wishbone/wishbone.audio.lo
 
 export class AudioSettingsComponent {
     audioSettings: AudioSettings ;
-    muted= false;
 
-    constructor(public nesService: NESService, public wishbone: WishboneMachine ) {
+    constructor(public wishbone: WishboneMachine, private worker: WishboneWorker ) {
         this.audioSettings = this.wishbone.SoundBopper.audioSettings;
-
-        this.wishbone.asObservable().subscribe((machine) => {
-            if (machine && machine.SoundBopper) {
-                this.audioSettings = this.wishbone.SoundBopper.audioSettings;
-            }
-        });
-    }
-
-    syncAudioSettings() {
-        this.wishbone.RequestSync();
     }
 }

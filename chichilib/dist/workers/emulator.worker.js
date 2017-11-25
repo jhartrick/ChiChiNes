@@ -1072,7 +1072,6 @@ var ChiChiAPU = /** @class */ (function () {
         this.noise.gain = this.noiseGain;
         this.noise.period = 0;
         this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, null);
-        //  this.dmc.Gain = 873; this.dmc.Period = 10;
     };
     ChiChiAPU.prototype.GetByte = function (Clock, address) {
         if (address === 0x4000) {
@@ -1118,7 +1117,7 @@ var ChiChiAPU = /** @class */ (function () {
             case 0x4011:
             case 0x4012:
             case 0x4013:
-                // dmc.WriteRegister(address - 0x40010, data, Clock);
+                this.dmc.WriteRegister(address - 0x40010, data, clock);
                 break;
             case 0x4015:
                 this.reg15 = data;
@@ -1163,7 +1162,7 @@ var ChiChiAPU = /** @class */ (function () {
         this.noise.FrameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
-        // this.dmc.FrameClock(time, step)
+        this.dmc.FrameClock(time, step);
     };
     ChiChiAPU.prototype.endFrame = function (time) {
         this.square0.endFrame(time);
@@ -1962,13 +1961,12 @@ var ChiChiPPU = /** @class */ (function () {
             case 1:
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
-                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
                 this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
-                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
-                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
+                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
                 this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
                 this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
-                this.nameTableMemoryStart = this.nameTableBits * 0x400;
+                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
+                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
                 break;
             case 2:
                 this.ppuReadBuffer = data;

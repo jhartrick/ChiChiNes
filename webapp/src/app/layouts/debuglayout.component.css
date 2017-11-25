@@ -16,10 +16,9 @@ mat-sidenav {
 
 .rightSideNav {
   width: 70%;
-  background-color: rgba(41, 141, 39, 0.44) !important;
+  background-color: rgba(41, 141, 39, 0.7) !important;
   border-left: 3px solid rgba(41, 141, 39, 1);
 }
-
 
 .flexcontainer {
   position:absolute;

@@ -5,6 +5,7 @@ import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { GameGenieComponent } from './gamegenie.component';
 import { GameGenieDialogComponent } from './gamegenie.dialog.component';
+import { WishboneCheats } from './wishbone.cheats';
 
 @NgModule({
   declarations: [
@@ -22,6 +23,7 @@ import { GameGenieDialogComponent } from './gamegenie.dialog.component';
       MatButtonToggleModule,
       MatIconModule
   ],
+  providers: [WishboneCheats],
   exports: [
     GameGenieComponent
   ]

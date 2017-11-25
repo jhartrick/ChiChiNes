@@ -259,14 +259,13 @@ export class ChiChiPPU implements IChiChiPPU {
             case 1:
                 this.isRendering = (data & 0x18) !== 0;
                 this._PPUControlByte1 = data;
-                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
                 this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
-                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
-                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
+
+                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
                 this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
                 this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
-
-                this.nameTableMemoryStart = this.nameTableBits * 0x400;
+                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
+                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
                 break;
             case 2:
                 this.ppuReadBuffer = data;
