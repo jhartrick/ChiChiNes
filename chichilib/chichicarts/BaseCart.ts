@@ -431,7 +431,6 @@ export class BaseCart implements IBaseCart {
 
     copyBanks4k(clock: number, dest: number, src: number, numberOf4kBanks: number): void {
         
-
         if (dest >= this.chrRomCount << 1) {
             dest = this.chrRomCount << 1;
             dest = dest - 1;

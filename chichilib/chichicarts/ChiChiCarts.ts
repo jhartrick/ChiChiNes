@@ -17,6 +17,7 @@ import * as VRC from './KonamiVRC1';
 import * as VRC2 from './KonamiVRC2';
 import * as VRC6 from './KonamiVRC6';
 import * as Sunsoft from './Sunsoft';
+import * as Mapper193 from './Mapper193';
 
 class MapperFactory {
     0 = Discrete.NesCart;
@@ -64,6 +65,7 @@ class MapperFactory {
     180 = Discrete.NesCart;
     184 = Sunsoft.Mapper184Cart;
     190 = Discrete.Mapper190Cart;
+    193 = Mapper193.Mapper193Cart;
     202 =  Multi.Mapper202Cart;
     212 = Multi.Mapper212Cart;
 

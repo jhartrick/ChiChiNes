@@ -146,9 +146,11 @@ class VRC2or4Cart extends VRCIrqBase {
     setByteVRC4(clock:number, address:number, data: number) {
         switch(address & 0xf000) {
         case 0x6000:
-        case 0x7000:
             this.prgRomBank6[data & this.ramMask] = data;
+        break;
+            case 0x7000:
             break;
+
         case 0x8000:
             let bank8 = data & 0x1F;
             if (this.swapMode) {
@@ -166,7 +168,7 @@ class VRC2or4Cart extends VRCIrqBase {
             this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
             break;
         case 0xb000:
-        case 0xc000:
+        case 0xc000: 
         case 0xd000:
         case 0xe000:
             const addmask = address & this.regMask;
@@ -355,7 +357,7 @@ export class KonamiVRC2Cart extends VRC2or4Cart {
     }
 
     InitializeCart() {
-        this.mapperName = 'KonamiVRC2';
+        this.mapperName = 'KonamiVRC24';
         this.usesSRAM = true;
         this.ramMask = 0xfff;
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
