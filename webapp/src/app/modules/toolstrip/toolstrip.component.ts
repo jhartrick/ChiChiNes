@@ -5,6 +5,7 @@ import { CartLoaderComponent } from '../controlpanel/cartloader.component';
 import { ControlConfigComponent } from '../controlpad/controlpad.component';
 import { ICartSettings } from '../../services/ICartSettings';
 import { CartInfoComponent } from '../cartinfo/cartinfo-main.component';
+import { MuteButtonComponent } from '../controlpanel/mutebutton.component';
 
 
 @Component({
@@ -32,10 +33,9 @@ import { CartInfoComponent } from '../cartinfo/cartinfo-main.component';
         cartInfoButton(): PopoverContent {
             return new PopoverContent(CartInfoComponent, {});
         }
-
-        
-
-        muteToggle() {
-            this.nesService.audioSettings.muted = !this.nesService.audioSettings.muted;
+     
+        muteButton(): PopoverContent {
+            return new PopoverContent(MuteButtonComponent, {});
         }
+
     }

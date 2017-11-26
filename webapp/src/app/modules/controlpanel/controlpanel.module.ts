@@ -13,6 +13,8 @@ import { VolumeComponent } from './volume.component';
 import { AudioSettingsComponent } from './chichines.audiosettings/chichi.audiosettings';
 import { CartLoaderComponent } from './cartloader.component';
 import { PowerButtonComponent } from './powerbutton.component';
+import { ResetButtonComponent } from './resetbutton.component';
+import { MuteButtonComponent } from './mutebutton.component';
 
 @NgModule({
   declarations: [
@@ -22,10 +24,13 @@ import { PowerButtonComponent } from './powerbutton.component';
       VolumeComponent,
       CartLoaderComponent,
       PowerButtonComponent,
+      ResetButtonComponent,
+      MuteButtonComponent
   ],
   entryComponents: [
     VolumeComponent,
-    CartLoaderComponent
+    CartLoaderComponent,
+    MuteButtonComponent,
 ],
   imports: [
       BrowserModule,
@@ -49,7 +54,9 @@ import { PowerButtonComponent } from './powerbutton.component';
     AudioSettingsComponent,
     VolumeComponent,
     CartLoaderComponent,
-    PowerButtonComponent
+    PowerButtonComponent,
+    ResetButtonComponent,
+    MuteButtonComponent
 ],
   providers: []
 })

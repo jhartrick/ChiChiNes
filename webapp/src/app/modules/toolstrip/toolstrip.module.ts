@@ -13,11 +13,13 @@ import { CheatingModule } from '../cheating/cheating.module';
 import { ControlPadModule } from '../controlpad/controlpad.module';
 import { RouterModule } from '@angular/router';
 import { RoutingModule } from '../routing.module';
+import { PopoverSegmentComponent } from './popover/popover.segment';
 
 @NgModule({
   declarations: [
     ToolStripComponent,
     PopoverComponent,
+    PopoverSegmentComponent,
     PopoverDirective
   ],
   entryComponents: [
@@ -37,7 +39,8 @@ import { RoutingModule } from '../routing.module';
       ControlPadModule
   ],
   exports: [
-    ToolStripComponent
+    ToolStripComponent,
+    PopoverSegmentComponent
   ]
 })
 export class ToolStripModule { }

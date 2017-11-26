@@ -1,8 +1,10 @@
-import { Directive, ViewContainerRef } from '@angular/core';
+import { ViewContainerRef, Component, Directive, Input } from '@angular/core';
 
 @Directive({
-  selector: '[chichi-segment]',
+  selector: 'chichi-ui-segment'
+  
 })
-export class PopoverDirective {
+export class PopoverSegmentComponent {
+  @Input() id: string;
   constructor(public viewContainerRef: ViewContainerRef) { }
 }

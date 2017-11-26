@@ -5,6 +5,7 @@ export class KonamiVRC1Cart extends BaseCart {
         this.mapperName = 'KonamiVRC1';
         if (this.mapperId == 151) {
             this.mapperName = 'KonamiVRC1 (VS)';
+            this.fourScreen = true;
             this.mirror(0,3);
         }
         this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
@@ -33,7 +34,11 @@ export class KonamiVRC1Cart extends BaseCart {
         case 0x9000:
             
             if (!this.fourScreen) {
-                this.mirror(clock, (data & 1)+1);
+                if ((data & 1) == 1) {
+                    this.mirror(clock, 1);
+                } else {
+                    this.mirror(clock, 2);
+                }
             }
             this.chrLatches[0] = ((data >> 1) & 1) << 4;
             this.chrLatches[2] = ((data >> 2) & 1) << 4;

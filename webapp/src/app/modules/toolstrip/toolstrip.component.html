@@ -1,10 +1,15 @@
 <div class="flexcontainer">
 
     <chichi-popover [button]='fileHandlerButton()' [icon]='upload'>
-        <controlpanel-powerbutton></controlpanel-powerbutton>
+        <chichi-ui-segment>
+            <controlpanel-powerbutton></controlpanel-powerbutton>
+        </chichi-ui-segment>
+        <chichi-ui-segment>
+            <controlpanel-resetbutton></controlpanel-resetbutton>
+        </chichi-ui-segment>
     </chichi-popover>
 
-    <chichi-popover [icon]='nesService.audioSettings.muted ? "volume-off" : "volume-high"' (buttonclick)="muteToggle()" >
+    <chichi-popover [button]='muteButton()'>
         <controlpanel-volume></controlpanel-volume>
     </chichi-popover>
     <controlpad-config></controlpad-config>

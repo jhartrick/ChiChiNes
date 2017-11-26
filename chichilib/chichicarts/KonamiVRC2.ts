@@ -207,8 +207,6 @@ class VRC2or4Cart extends VRCIrqBase {
         }
     }
 
-    
-
     setByteVRC2(clock:number, address:number, data: number) {
         switch(address & 0xf000) {
             case 0x6000:
@@ -267,7 +265,6 @@ class VRC2or4Cart extends VRCIrqBase {
         }
 
     }
-
 
     setByteVRC2a(clock:number, address:number, data: number) {
         switch(address & 0xf000) {

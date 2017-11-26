@@ -19,7 +19,8 @@ import * as VRC6 from './KonamiVRC6';
 import * as Sunsoft from './Sunsoft';
 import * as Mapper193 from './Mapper193';
 import * as Mapper133 from './Mapper133';
-import * as Mapper112 from './Mapper133';
+import * as Mapper112 from './Mapper112';
+import * as Mapper228 from './Mapper228';
 
 class MapperFactory {
     0 = Discrete.NesCart;
@@ -72,7 +73,8 @@ class MapperFactory {
     193 = Mapper193.Mapper193Cart;
     202 =  Multi.Mapper202Cart;
     212 = Multi.Mapper212Cart;
-
+    228 = Mapper228.Mapper228Cart;
+    
     createCart(mapper: number) : IBaseCart{
         if (this[mapper]) {
             return new this[mapper]();

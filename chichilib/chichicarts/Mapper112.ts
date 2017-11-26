@@ -7,7 +7,7 @@ export class Mapper112Cart extends BaseCart {
     latch = 0;
 
     InitializeCart() {
-        this.mapperName = 'Mapper 112';
+        this.mapperName = 'asder';
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     }
 

@@ -1,6 +1,8 @@
-import { ComponentFactoryResolver, AfterViewInit,  Input, ViewChild, Component, ComponentRef, EventEmitter, Output, ChangeDetectorRef } from "@angular/core";
+import { ComponentFactoryResolver, AfterViewInit,  Input, ViewChild, Component, ComponentRef, EventEmitter, Output, ChangeDetectorRef, ContentChildren, QueryList, ViewChildren } from "@angular/core";
 import { PopoverDirective } from "./popover.directive";
 import { PopoverContent } from "./popover.content";
+import { ContentChild } from "@angular/core/src/metadata/di";
+import { PopoverSegmentComponent } from "./popover.segment";
 
 
 @Component({
@@ -9,28 +11,34 @@ import { PopoverContent } from "./popover.content";
     styleUrls: ['./popover.component.css']
         })
 export class PopoverComponent implements AfterViewInit {
-    componentRef: ComponentRef<any>;
-    show = false;
     @Input('button') button: PopoverContent;
     @Input() icon: string;
 
     @Output()
-    buttonclick = new EventEmitter(true);
 
     @ViewChild(PopoverDirective) popSpot: PopoverDirective;
+    @ContentChildren(PopoverSegmentComponent) segments: QueryList<PopoverSegmentComponent>;
+    @ViewChildren(PopoverSegmentComponent) viewsegs: QueryList<PopoverSegmentComponent>;
+    
+    componentRef: ComponentRef<any>;
+    show = false;
     loaded = false;
+    floatClass = 'hidden';
+    
 
-
+    buttonclick = new EventEmitter(true);
+    
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private cd: ChangeDetectorRef) {
-
+        
     }
 
-    floatClass = 'hidden';
 
     ngAfterViewInit() {
         if (this.button) {
             this.loadComponent();
             this.cd.detectChanges();
+            console.log("segments " + this.segments.length)
+            console.log("vsegments " + this.viewsegs.length)
         }
     }
 
