@@ -349,15 +349,7 @@ export class BaseCart implements IBaseCart {
 
     setupBanks4k(start: number, banks: number[]) {
         banks = banks.map((bank)=> {
-            if (bank >= this.prgRomCount * 4) {
-                let i = 0xFFFF;
-                while ((bank & i) >= this.prgRomCount * 4) {
-                    i = i >> 1;
-                }
-                return (bank & i);
-            } else {
-                return bank;
-            }
+            return bank % (this.prgRomCount << 1);
         });
         for (let i = 0; i < banks.length; ++i ) {
             if (i >= this.prgBankStarts.length) {
@@ -369,15 +361,7 @@ export class BaseCart implements IBaseCart {
 
 
     MaskBankAddress(bank: number): number {
-        if (bank >= this.prgRomCount * 2) {
-            var i = 255;
-            while ((bank & i) >= this.prgRomCount * 2) {
-                i = i >> 1;
-            }
-            return (bank & i);
-        } else {
-            return bank;
-        }
+        return bank % (this.prgRomCount * 2);
     }
 
     // 0 - onescreen, 1 -v, 2- h, 3 - fourscreen

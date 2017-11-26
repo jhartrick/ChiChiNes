@@ -30,7 +30,6 @@ export class Mapper132Cart extends BaseCart {
             const prgBank = this.registers[2] << 2;
             this.SetupBankStarts(prgBank, prgBank + 1, prgBank + 2, prgBank + 3);
             this.copyBanks(clock, 0, this.registers[2], 1);
-            console.log('swapped ' + this.registers[2])
         }
 
     }

@@ -17,10 +17,11 @@ import * as VRC from './KonamiVRC1';
 import * as VRC2 from './KonamiVRC2';
 import * as VRC6 from './KonamiVRC6';
 import * as Sunsoft from './Sunsoft';
-import * as Mapper193 from './Mapper193';
-import * as Mapper133 from './Mapper133';
-import * as Mapper132 from './Mapper132';
+import * as Mapper034 from './Mapper034';
 import * as Mapper112 from './Mapper112';
+import * as Mapper132 from './Mapper132';
+import * as Mapper133 from './Mapper133';
+import * as Mapper193 from './Mapper193';
 import * as Mapper228 from './Mapper228';
 
 class MapperFactory {
@@ -42,7 +43,7 @@ class MapperFactory {
     26 = VRC6.Konami026Cart;
     30 = Discrete.Mapper030Cart;
     31 = Nsf.Mapper031Cart;
-    34 = Discrete.BNROMCart;
+    34 = Mapper034.BNROMCart;
     38 = Discrete.BitCorp038Cart;
     40 = Smb2j.Smb2jCart;
     51 = Multi.Mapper051Cart;

@@ -354,16 +354,7 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.setupBanks4k = function (start, banks) {
         var _this = this;
         banks = banks.map(function (bank) {
-            if (bank >= _this.prgRomCount * 4) {
-                var i = 0xFFFF;
-                while ((bank & i) >= _this.prgRomCount * 4) {
-                    i = i >> 1;
-                }
-                return (bank & i);
-            }
-            else {
-                return bank;
-            }
+            return bank % (_this.prgRomCount << 1);
         });
         for (var i = 0; i < banks.length; ++i) {
             if (i >= this.prgBankStarts.length) {
@@ -373,16 +364,7 @@ var BaseCart = /** @class */ (function () {
         }
     };
     BaseCart.prototype.MaskBankAddress = function (bank) {
-        if (bank >= this.prgRomCount * 2) {
-            var i = 255;
-            while ((bank & i) >= this.prgRomCount * 2) {
-                i = i >> 1;
-            }
-            return (bank & i);
-        }
-        else {
-            return bank;
-        }
+        return bank % (this.prgRomCount * 2);
     };
     // 0 - onescreen, 1 -v, 2- h, 3 - fourscreen
     BaseCart.prototype.mirror = function (clockNum, mirroring) {
@@ -2894,11 +2876,12 @@ var VRC = __webpack_require__(32);
 var VRC2 = __webpack_require__(4);
 var VRC6 = __webpack_require__(33);
 var Sunsoft = __webpack_require__(34);
-var Mapper193 = __webpack_require__(35);
-var Mapper133 = __webpack_require__(36);
+var Mapper034 = __webpack_require__(35);
+var Mapper112 = __webpack_require__(36);
 var Mapper132 = __webpack_require__(37);
-var Mapper112 = __webpack_require__(38);
-var Mapper228 = __webpack_require__(39);
+var Mapper133 = __webpack_require__(38);
+var Mapper193 = __webpack_require__(39);
+var Mapper228 = __webpack_require__(40);
 var MapperFactory = /** @class */ (function () {
     function MapperFactory() {
         this[0] = Discrete.NesCart;
@@ -2919,7 +2902,7 @@ var MapperFactory = /** @class */ (function () {
         this[26] = VRC6.Konami026Cart;
         this[30] = Discrete.Mapper030Cart;
         this[31] = Nsf.Mapper031Cart;
-        this[34] = Discrete.BNROMCart;
+        this[34] = Mapper034.BNROMCart;
         this[38] = Discrete.BitCorp038Cart;
         this[40] = Smb2j.Smb2jCart;
         this[51] = Multi.Mapper051Cart;
@@ -4455,60 +4438,6 @@ var AxROMCart = /** @class */ (function (_super) {
     return AxROMCart;
 }(BaseCart_1.BaseCart));
 exports.AxROMCart = AxROMCart;
-// BNROM (34)
-var BNROMCart = /** @class */ (function (_super) {
-    __extends(BNROMCart, _super);
-    function BNROMCart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.isNina = false;
-        return _this;
-    }
-    BNROMCart.prototype.InitializeCart = function () {
-        this.mapperName = 'BNROM';
-        this.SetupBankStarts(0, 1, 2, 3);
-        if (this.chrRomCount > 1) {
-            this.usesSRAM = true;
-            this.mapperName = 'NINA-001';
-            this.isNina = true;
-            this.SetByte = this.SetByteNina;
-            this.SetupBankStarts(0, 1, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
-        }
-        //this.mirror(0, 0);
-    };
-    BNROMCart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000 && address <= 0xffff) {
-            // val selects which bank to swap, 32k at a time
-            var newbank8 = 0;
-            newbank8 = (val & 15) << 2;
-            this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
-        }
-        // whizzler.DrawTo(clock);
-    };
-    BNROMCart.prototype.SetByteNina = function (clock, address, val) {
-        if (address >= 0x6000 && address <= 0x7fff) {
-            this.prgRomBank6[address & 0x1fff] = val & 255;
-            return;
-        }
-        switch (address) {
-            case 0x7FFD:
-                // val selects which bank to swap, 32k at a time
-                var newbank8 = 0;
-                newbank8 = (val & 1) << 2;
-                this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
-                break;
-            case 0x7FFE:
-                // Select 4 KB CHR ROM bank for PPU $0000-$0FFF
-                this.copyBanks4k(clock, 0, val & 0xf, 1);
-                break;
-            case 0x7FFF:
-                // Select 4 KB CHR ROM bank for PPU $1000-$1FFF
-                this.copyBanks4k(clock, 1, val & 0xf, 1);
-                break;
-        }
-    };
-    return BNROMCart;
-}(AxROMCart));
-exports.BNROMCart = BNROMCart;
 
 
 /***/ }),
@@ -5974,147 +5903,64 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var BaseCart_1 = __webpack_require__(0);
-var Mapper193Cart = /** @class */ (function (_super) {
-    __extends(Mapper193Cart, _super);
-    function Mapper193Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
+// BNROM (34)
+var BNROMCart = /** @class */ (function (_super) {
+    __extends(BNROMCart, _super);
+    function BNROMCart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.isNina = false;
+        return _this;
     }
-    Mapper193Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'NTDEC TC-112';
-        this.usesSRAM = false;
-        this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.copyBanks(0, 0, this.chrRomCount - 1, 1);
-        this.mirror(0, 1);
+    BNROMCart.prototype.InitializeCart = function () {
+        this.mapperName = 'BNROM';
+        this.SetupBankStarts(0, 1, 2, 3);
+        if (this.chrRomCount > 1) {
+            this.usesSRAM = true;
+            this.mapperName = 'NINA-001';
+            this.isNina = true;
+            this.SetByte = this.SetByteNina;
+            this.SetupBankStarts(0, 1, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        }
+        //this.mirror(0, 0);
     };
-    Mapper193Cart.prototype.SetByte = function (clock, address, data) {
-        console.log('set: 0x' + address.toString(16) + '( 0x' + data.toString(16) + ')');
+    BNROMCart.prototype.SetByte = function (clock, address, val) {
+        if (address >= 0x8000 && address <= 0xffff) {
+            // val selects which bank to swap, 32k at a time
+            var newbank8 = 0;
+            newbank8 = (val & 15) << 2;
+            this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
+        }
+        // whizzler.DrawTo(clock);
+    };
+    BNROMCart.prototype.SetByteNina = function (clock, address, val) {
         if (address >= 0x6000 && address <= 0x7fff) {
-            switch (address & 0x3) {
-                case 0x0:
-                    this.copyBanks4k(clock, 0, (data >> 2) & 63, 1);
-                    break;
-                case 0x1:
-                    this.copyBanks2k(clock, 2, data >> 1, 1);
-                    break;
-                case 0x2:
-                    this.copyBanks2k(clock, 3, data >> 1, 1);
-                    break;
-                case 0x3:
-                    this.SetupBankStarts(data, this.currentA, this.currentC, this.currentE);
-                    break;
-            }
+            this.prgRomBank6[address & 0x1fff] = val & 255;
+            return;
+        }
+        switch (address) {
+            case 0x7FFD:
+                // val selects which bank to swap, 32k at a time
+                var newbank8 = 0;
+                newbank8 = (val & 1) << 2;
+                this.SetupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
+                break;
+            case 0x7FFE:
+                // Select 4 KB CHR ROM bank for PPU $0000-$0FFF
+                this.copyBanks4k(clock, 0, val & 0xf, 1);
+                break;
+            case 0x7FFF:
+                // Select 4 KB CHR ROM bank for PPU $1000-$1FFF
+                this.copyBanks4k(clock, 1, val & 0xf, 1);
+                break;
         }
     };
-    return Mapper193Cart;
+    return BNROMCart;
 }(BaseCart_1.BaseCart));
-exports.Mapper193Cart = Mapper193Cart;
+exports.BNROMCart = BNROMCart;
 
 
 /***/ }),
 /* 36 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-// 
-var BaseCart_1 = __webpack_require__(0);
-var Mapper133Cart = /** @class */ (function (_super) {
-    __extends(Mapper133Cart, _super);
-    function Mapper133Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Mapper133Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'UNL-SA-72008';
-        this.usesSRAM = false;
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.copyBanks(0, 0, this.chrRomCount - 1, 1);
-        this.mirror(0, 1);
-    };
-    Mapper133Cart.prototype.SetByte = function (clock, address, data) {
-        switch (address & 0x6100) {
-            case 0x4100:
-                var chrbank = data & 3;
-                this.copyBanks(clock, 0, chrbank, 1);
-                var prgbank = ((data >> 2) & 1) << 2;
-                this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
-                break;
-        }
-    };
-    return Mapper133Cart;
-}(BaseCart_1.BaseCart));
-exports.Mapper133Cart = Mapper133Cart;
-
-
-/***/ }),
-/* 37 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-// 
-var BaseCart_1 = __webpack_require__(0);
-var Mapper132Cart = /** @class */ (function (_super) {
-    __extends(Mapper132Cart, _super);
-    function Mapper132Cart() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.registers = [0, 0, 0, 0];
-        return _this;
-    }
-    Mapper132Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'Mapper 132';
-        this.mapsBelow6000 = true;
-        this.usesSRAM = false;
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.copyBanks(0, 0, this.chrRomCount - 1, 1);
-        this.mirror(0, 1);
-    };
-    Mapper132Cart.prototype.GetByte = function (clock, address) {
-        var bank = (address >> 12) - 0x6;
-        if (address >= 0x4100 && address <= 0x4103) {
-            return (this.registers[1] ^ this.registers[2]) | (0x40);
-        }
-        return this.nesCart[this.prgBankStarts[bank] + (address & 0xfff)];
-    };
-    Mapper132Cart.prototype.SetByte = function (clock, address, data) {
-        if (address >= 0x4100 && address <= 0x4103) {
-            this.registers[address & 0x3] = data;
-        }
-        else if (address >= 0x8000 && address <= 0xffff) {
-            var prgBank = this.registers[2] << 2;
-            this.SetupBankStarts(prgBank, prgBank + 1, prgBank + 2, prgBank + 3);
-            this.copyBanks(clock, 0, this.registers[2], 1);
-            console.log('swapped ' + this.registers[2]);
-        }
-    };
-    return Mapper132Cart;
-}(BaseCart_1.BaseCart));
-exports.Mapper132Cart = Mapper132Cart;
-
-
-/***/ }),
-/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6174,7 +6020,163 @@ exports.Mapper112Cart = Mapper112Cart;
 
 
 /***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+// 
+var BaseCart_1 = __webpack_require__(0);
+var Mapper132Cart = /** @class */ (function (_super) {
+    __extends(Mapper132Cart, _super);
+    function Mapper132Cart() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.registers = [0, 0, 0, 0];
+        return _this;
+    }
+    Mapper132Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Mapper 132';
+        this.mapsBelow6000 = true;
+        this.usesSRAM = false;
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.copyBanks(0, 0, this.chrRomCount - 1, 1);
+        this.mirror(0, 1);
+    };
+    Mapper132Cart.prototype.GetByte = function (clock, address) {
+        var bank = (address >> 12) - 0x6;
+        if (address >= 0x4100 && address <= 0x4103) {
+            return (this.registers[1] ^ this.registers[2]) | (0x40);
+        }
+        return this.nesCart[this.prgBankStarts[bank] + (address & 0xfff)];
+    };
+    Mapper132Cart.prototype.SetByte = function (clock, address, data) {
+        if (address >= 0x4100 && address <= 0x4103) {
+            this.registers[address & 0x3] = data;
+        }
+        else if (address >= 0x8000 && address <= 0xffff) {
+            var prgBank = this.registers[2] << 2;
+            this.SetupBankStarts(prgBank, prgBank + 1, prgBank + 2, prgBank + 3);
+            this.copyBanks(clock, 0, this.registers[2], 1);
+        }
+    };
+    return Mapper132Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper132Cart = Mapper132Cart;
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+// 
+var BaseCart_1 = __webpack_require__(0);
+var Mapper133Cart = /** @class */ (function (_super) {
+    __extends(Mapper133Cart, _super);
+    function Mapper133Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper133Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Jovial Race (Sachen)';
+        this.usesSRAM = false;
+        this.mapsBelow6000 = true;
+        this.SetupBankStarts((this.prgRomCount << 1) - 4, (this.prgRomCount << 1) - 3, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
+        this.copyBanks(0, 0, 0, 1);
+        this.mirror(0, 1);
+    };
+    Mapper133Cart.prototype.SetByte = function (clock, address, data) {
+        if (address >= 0x4100 && address <= 0x6000) {
+            var chrbank = data & 3;
+            this.copyBanks(clock, 0, chrbank, 1);
+            var prgbank = ((data >> 2) & 1) << 2;
+            this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            console.log('prgbank: ' + prgbank);
+        }
+    };
+    return Mapper133Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper133Cart = Mapper133Cart;
+
+
+/***/ }),
 /* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var BaseCart_1 = __webpack_require__(0);
+var Mapper193Cart = /** @class */ (function (_super) {
+    __extends(Mapper193Cart, _super);
+    function Mapper193Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper193Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'NTDEC TC-112';
+        this.usesSRAM = false;
+        this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.copyBanks(0, 0, this.chrRomCount - 1, 1);
+        this.mirror(0, 1);
+    };
+    Mapper193Cart.prototype.SetByte = function (clock, address, data) {
+        console.log('set: 0x' + address.toString(16) + '( 0x' + data.toString(16) + ')');
+        if (address >= 0x6000 && address <= 0x7fff) {
+            switch (address & 0x3) {
+                case 0x0:
+                    this.copyBanks4k(clock, 0, (data >> 2) & 63, 1);
+                    break;
+                case 0x1:
+                    this.copyBanks2k(clock, 2, data >> 1, 1);
+                    break;
+                case 0x2:
+                    this.copyBanks2k(clock, 3, data >> 1, 1);
+                    break;
+                case 0x3:
+                    this.SetupBankStarts(data, this.currentA, this.currentC, this.currentE);
+                    break;
+            }
+        }
+    };
+    return Mapper193Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper193Cart = Mapper193Cart;
+
+
+/***/ }),
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6201,24 +6203,34 @@ var Mapper228Cart = /** @class */ (function (_super) {
         this.mapperName = 'Cheetahmen II/Action 52';
         this.usesSRAM = false;
         this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
-        this.copyBanks(0, 0, this.chrRomCount - 1, 1);
+        this.copyBanks(0, 0, 0, 1);
         this.mirror(0, 1);
+        this.SetByte(0, 0x8000, 0);
     };
     Mapper228Cart.prototype.SetByte = function (clock, address, data) {
         if (address > 0x8000 && address < 0xffff) {
+            var size = (address >> 5) & 1;
             var chr = (data & 0x3) | ((address & 0xf) << 4);
             var mode = (address >> 5) & 1;
-            var page = (address >> 6) & 0x1f;
             var chip = (address >> 11) & 0x3;
             var mirror = (address >> 13) & 0x1;
+            var page = (address >> 6) & 0x1f;
             this.copyBanks(clock, 0, chr, 1);
             if (mode) {
                 page = page << 2;
                 this.SetupBankStarts(page, page + 1, page + 2, page + 3);
             }
             else {
-                page = page << 1;
-                this.SetupBankStarts(page, page + 1, page, page + 1);
+                switch (size) {
+                    case 1:
+                        page = page << 1;
+                        this.SetupBankStarts(page, page + 1, page, page + 1);
+                    case 0:
+                        var page0 = (page & 0xfe) << 1;
+                        var page1 = (page & 0xff) << 1;
+                        this.SetupBankStarts(page0, page0 + 1, page1, page1 + 1);
+                        break;
+                }
             }
             this.mirror(clock, 2 - mirror);
         }
