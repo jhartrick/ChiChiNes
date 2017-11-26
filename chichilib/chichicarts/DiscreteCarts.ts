@@ -430,9 +430,9 @@ export class Mapper145Cart extends BaseCart {
     SetByte(clock: number, address: number, val: number): void {
         if ((address >> 13) == 2 && (address & 0x100))
         {
-            const chrbank = (val & 0x7);
             const prgbank = ((val >> 3) & 0x1) << 2;
             this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            const chrbank = (val & 0x7);
             this.copyBanks(clock, 0, chrbank, 1);
         }
 

@@ -21,7 +21,7 @@ export class WramManager {
                 break;
             }
         })
-        this.crc = this.nes.wishbone.Cart.ROMHashFunction;
+        this.crc = this.nes.wishbone.Cart.realCart.ROMHashFunction;
         this.batteryBacked = this.nes.wishbone.Cart.realCart.batterySRAM;
     }
 

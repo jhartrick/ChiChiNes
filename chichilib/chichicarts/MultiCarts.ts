@@ -3,32 +3,62 @@ import { BaseCart } from "./BaseCart";
 // simple discrete logic multi-carts, various pirate xxxxx-in-1s
 
  export class Mapper051Cart extends BaseCart {
+     bank: number = 0;
+     mode: number = 0;
      InitializeCart() {
-         this.mapperName = 'Charlie Multi-Cart';
+         this.usesSRAM = true;
+         this.mapperName = 'Ball Games 11 in 1';
          if (this.chrRomCount > 0) {
              this.copyBanks(0, 0, 0, 1);
          }
          this.SetupBankStarts(0, 1,  2, 3);
         }
  
-     SetByte(clock: number, address: number, val: number): void {
-         if (address >= 0x8000) {
-             let mode = (val >> 6) & 0x01;
- 
-             if (mode)  {
-                 // 16k banks 
-                 let newbank81 = (val ) << 1;
-                 this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
-                     
+        updateBanks(): any {
+            let offset = 0;
+            
+            if (this.mode & 0x1)
+            {
+                //prg.SwapBank<SIZE_32K,0x0000>( bank );
+                let b = this.bank << 2;
+                this.SetupBankStarts(b, b + 1, b + 2, b + 3);
+                offset = 0x23;
+            }
+            else
+            {
+                let b = this.bank << 1;
+                this.SetupBankStarts(b, b + 1, this.currentC, this.currentE);
+                offset = 0x2F;
+            }
+
+            //wrk.SwapBank<SIZE_8K,0x0000>( offset | (bank << 2) );
+             //ppu.SetMirroring( (mode == 0x3) ? Ppu::NMT_H : Ppu::NMT_V );
+             if (this.mode == 3) {
+                 this.mirror(0,1);
              } else {
-                 // 32k banks 
-                 let newbank81 = 0;
-                 newbank81 = (val ) << 2;
-                 this.SetupBankStarts(newbank81, newbank81 + 1 ,  newbank81 + 2,  newbank81 + 3);
+                this.mirror(0,2);
+                
              }
-             this.mirror(clock, (( val >> 7) & 0x1) + 1 );
-             this.copyBanks(clock, 0,(val >> 3) & 7, 1);
-         }
+        }
+   
+        SetByte(clock: number, address: number, val: number): void {
+        switch (address & 0xe000) {
+            case 0x6000:
+                this.mode = ((val >> 3) & 0x2) | ((val >> 1) & 0x1);
+                this.updateBanks();
+                break;
+            case 0x8000:
+                this.bank = val & 0xf;
+                this.updateBanks();            
+                break;
+            case 0xc000:
+                this.bank = val & 0xf;
+                this.mode = ((val >> 3) & 0x2) | (this.mode & 0x1);
+                break;
+            case 0xe000:
+            
+        }
+
      }
      
  }

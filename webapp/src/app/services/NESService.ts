@@ -89,7 +89,7 @@ export class NESService {
 
 
             this.wishbone.insertCart(cart);
-            const cartSettings = {
+            this.cartSettings =   {
                 name: cart.CartName,
                 mapperName: cart.mapperName,
                 mapperId: cart.mapperId,
@@ -99,8 +99,8 @@ export class NESService {
                 chrRomCount: cart.chrRomCount,
                 wram: new WramManager(this)
             }
-            this.cartSettings = cartSettings;
-            this.cartChanged.emit(cartSettings);
+            
+            this.cartChanged.emit(this.cartSettings);
         });
     }
 

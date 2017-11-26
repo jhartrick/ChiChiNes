@@ -741,6 +741,7 @@ export class ChiChiPPU implements IChiChiPPU {
             
             if (this.frameClock >= 89342) {
                 this.frameClock = 0;
+                
             }
         }
     }

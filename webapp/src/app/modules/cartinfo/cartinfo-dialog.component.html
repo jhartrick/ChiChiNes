@@ -2,7 +2,7 @@
         <mat-tab label="File Information">
             <p>Filename: {{ romInfo.name }}</p>
             <!--<chichi-status [emuState]="nesService.emuState"></chichi-status>-->
-            <p>Mapper: {{ romInfo.mapperName }} ({{ romInfo.mapperID }}<span *ngIf='romInfo.submapperId'>, {{ romInfo.submapperId }}</span>)</p>
+            <p>Mapper: {{ romInfo.mapperName }} ({{ romInfo.mapperId }}<span *ngIf='romInfo.submapperId'>, {{ romInfo.submapperId }}</span>)</p>
             <p>CRC: {{ romInfo.crc }} </p>
             <p>Prg Roms: {{ romInfo.prgRomCount }}</p>
             <p>Chr Roms: {{ romInfo.chrRomCount }}</p>

@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -536,9 +536,9 @@ exports.UnsupportedCart = UnsupportedCart;
 
 
 
-var base64 = __webpack_require__(8)
-var ieee754 = __webpack_require__(9)
-var isArray = __webpack_require__(10)
+var base64 = __webpack_require__(9)
+var ieee754 = __webpack_require__(10)
+var isArray = __webpack_require__(11)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -2316,7 +2316,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
 
 /***/ }),
 /* 2 */
@@ -2845,8 +2845,54 @@ exports.Konami025Cart = Konami025Cart;
 
 "use strict";
 
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiCarts_1 = __webpack_require__(6);
+// 
+var BaseCart_1 = __webpack_require__(0);
+var Mapper133Cart = /** @class */ (function (_super) {
+    __extends(Mapper133Cart, _super);
+    function Mapper133Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper133Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'UNL-SA-72008';
+        this.usesSRAM = false;
+        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.copyBanks(0, 0, this.chrRomCount - 1, 1);
+        this.mirror(0, 1);
+    };
+    Mapper133Cart.prototype.SetByte = function (clock, address, data) {
+        switch (address & 0x6100) {
+            case 0x4100:
+                var chrbank = data & 3;
+                this.copyBanks(clock, 0, chrbank, 1);
+                var prgbank = ((data >> 2) & 1) << 2;
+                this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+                break;
+        }
+    };
+    return Mapper133Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper133Cart = Mapper133Cart;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChiChiCarts_1 = __webpack_require__(7);
 var romLoader = /** @class */ (function () {
     function romLoader() {
     }
@@ -2861,28 +2907,30 @@ exports.loader = new romLoader();
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(Buffer) {
 Object.defineProperty(exports, "__esModule", { value: true });
-var crc = __webpack_require__(11);
+var crc = __webpack_require__(12);
 var BaseCart_1 = __webpack_require__(0);
-var Discrete = __webpack_require__(23);
-var Multi = __webpack_require__(24);
-var MMC1 = __webpack_require__(25);
-var MMC2 = __webpack_require__(26);
-var MMC3 = __webpack_require__(27);
-var M068 = __webpack_require__(28);
-var Nsf = __webpack_require__(29);
-var Smb2j = __webpack_require__(30);
-var VS = __webpack_require__(31);
-var VRC = __webpack_require__(32);
+var Discrete = __webpack_require__(24);
+var Multi = __webpack_require__(25);
+var MMC1 = __webpack_require__(26);
+var MMC2 = __webpack_require__(27);
+var MMC3 = __webpack_require__(28);
+var M068 = __webpack_require__(29);
+var Nsf = __webpack_require__(30);
+var Smb2j = __webpack_require__(31);
+var VS = __webpack_require__(32);
+var VRC = __webpack_require__(33);
 var VRC2 = __webpack_require__(4);
-var VRC6 = __webpack_require__(33);
-var Sunsoft = __webpack_require__(34);
-var Mapper193 = __webpack_require__(35);
+var VRC6 = __webpack_require__(34);
+var Sunsoft = __webpack_require__(35);
+var Mapper193 = __webpack_require__(36);
+var Mapper133 = __webpack_require__(5);
+var Mapper112 = __webpack_require__(5);
 var MapperFactory = /** @class */ (function () {
     function MapperFactory() {
         this[0] = Discrete.NesCart;
@@ -2923,6 +2971,8 @@ var MapperFactory = /** @class */ (function () {
         this[94] = Discrete.Mapper094Cart;
         this[97] = Discrete.Irem097Cart;
         this[99] = VS.VSCart;
+        this[112] = Mapper112.Mapper112Cart;
+        this[133] = Mapper133.Mapper133Cart;
         this[140] = Discrete.JF1xCart;
         this[145] = Discrete.Mapper145Cart;
         this[151] = VRC.KonamiVRC1Cart;
@@ -3105,7 +3155,7 @@ exports.iNESFileHandler = iNESFileHandler;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1).Buffer))
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports) {
 
 var g;
@@ -3132,7 +3182,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3253,7 +3303,7 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -3343,7 +3393,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -3354,28 +3404,28 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 module.exports = {
-  crc1: __webpack_require__(12),
-  crc8: __webpack_require__(13),
-  crc81wire: __webpack_require__(14),
-  crc16: __webpack_require__(15),
-  crc16ccitt: __webpack_require__(16),
-  crc16modbus: __webpack_require__(17),
-  crc16xmodem: __webpack_require__(18),
-  crc16kermit: __webpack_require__(19),
-  crc24: __webpack_require__(20),
-  crc32: __webpack_require__(21),
-  crcjam: __webpack_require__(22)
+  crc1: __webpack_require__(13),
+  crc8: __webpack_require__(14),
+  crc81wire: __webpack_require__(15),
+  crc16: __webpack_require__(16),
+  crc16ccitt: __webpack_require__(17),
+  crc16modbus: __webpack_require__(18),
+  crc16xmodem: __webpack_require__(19),
+  crc16kermit: __webpack_require__(20),
+  crc24: __webpack_require__(21),
+  crc32: __webpack_require__(22),
+  crcjam: __webpack_require__(23)
 };
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3409,7 +3459,7 @@ module.exports = (0, _define_crc2.default)('crc1', function (buf, previous) {
 });
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3446,7 +3496,7 @@ module.exports = (0, _define_crc2.default)('crc-8', function (buf, previous) {
 });
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3483,7 +3533,7 @@ module.exports = (0, _define_crc2.default)('dallas-1-wire', function (buf, previ
 });
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3520,7 +3570,7 @@ module.exports = (0, _define_crc2.default)('crc-16', function (buf, previous) {
 });
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3557,7 +3607,7 @@ module.exports = (0, _define_crc2.default)('ccitt', function (buf, previous) {
 });
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3594,7 +3644,7 @@ module.exports = (0, _define_crc2.default)('crc-16-modbus', function (buf, previ
 });
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3635,7 +3685,7 @@ module.exports = (0, _define_crc2.default)('xmodem', function (buf, previous) {
 });
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3672,7 +3722,7 @@ module.exports = (0, _define_crc2.default)('kermit', function (buf, previous) {
 });
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3709,7 +3759,7 @@ module.exports = (0, _define_crc2.default)('crc-24', function (buf, previous) {
 });
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3746,7 +3796,7 @@ module.exports = (0, _define_crc2.default)('crc-32', function (buf, previous) {
 });
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3785,7 +3835,7 @@ module.exports = (0, _define_crc2.default)('jam', function (buf) {
 });
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4221,9 +4271,9 @@ var Mapper079Cart = /** @class */ (function (_super) {
     };
     Mapper079Cart.prototype.SetByte = function (clock, address, val) {
         if ((address >> 13) == 2 && (address & 0x100)) {
-            var chrbank = (val & 0x7);
             var prgbank = ((val >> 3) & 0x1) << 2;
             this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
+            var chrbank = (val & 0x7);
             this.copyBanks(clock, 0, chrbank, 1);
         }
     };
@@ -4492,7 +4542,7 @@ exports.BNROMCart = BNROMCart;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4513,31 +4563,56 @@ var BaseCart_1 = __webpack_require__(0);
 var Mapper051Cart = /** @class */ (function (_super) {
     __extends(Mapper051Cart, _super);
     function Mapper051Cart() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.bank = 0;
+        _this.mode = 0;
+        return _this;
     }
     Mapper051Cart.prototype.InitializeCart = function () {
-        this.mapperName = 'Charlie Multi-Cart';
+        this.usesSRAM = true;
+        this.mapperName = 'Ball Games 11 in 1';
         if (this.chrRomCount > 0) {
             this.copyBanks(0, 0, 0, 1);
         }
         this.SetupBankStarts(0, 1, 2, 3);
     };
+    Mapper051Cart.prototype.updateBanks = function () {
+        var offset = 0;
+        if (this.mode & 0x1) {
+            //prg.SwapBank<SIZE_32K,0x0000>( bank );
+            var b = this.bank << 2;
+            this.SetupBankStarts(b, b + 1, b + 2, b + 3);
+            offset = 0x23;
+        }
+        else {
+            var b = this.bank << 1;
+            this.SetupBankStarts(b, b + 1, this.currentC, this.currentE);
+            offset = 0x2F;
+        }
+        //wrk.SwapBank<SIZE_8K,0x0000>( offset | (bank << 2) );
+        //ppu.SetMirroring( (mode == 0x3) ? Ppu::NMT_H : Ppu::NMT_V );
+        if (this.mode == 3) {
+            this.mirror(0, 1);
+        }
+        else {
+            this.mirror(0, 2);
+        }
+    };
     Mapper051Cart.prototype.SetByte = function (clock, address, val) {
-        if (address >= 0x8000) {
-            var mode = (val >> 6) & 0x01;
-            if (mode) {
-                // 16k banks 
-                var newbank81 = (val) << 1;
-                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81, newbank81 + 1);
-            }
-            else {
-                // 32k banks 
-                var newbank81 = 0;
-                newbank81 = (val) << 2;
-                this.SetupBankStarts(newbank81, newbank81 + 1, newbank81 + 2, newbank81 + 3);
-            }
-            this.mirror(clock, ((val >> 7) & 0x1) + 1);
-            this.copyBanks(clock, 0, (val >> 3) & 7, 1);
+        switch (address & 0xe000) {
+            case 0x6000:
+                this.mode = ((val >> 3) & 0x2) | ((val >> 1) & 0x1);
+                this.updateBanks();
+                break;
+            case 0x8000:
+                this.bank = val & 0xf;
+                this.updateBanks();
+                break;
+            case 0xc000:
+                this.bank = val & 0xf;
+                this.mode = ((val >> 3) & 0x2) | (this.mode & 0x1);
+                break;
+            case 0xe000:
         }
     };
     return Mapper051Cart;
@@ -4645,7 +4720,7 @@ exports.Mapper212Cart = Mapper212Cart;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4794,7 +4869,7 @@ exports.MMC1Cart = MMC1Cart;
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4971,7 +5046,7 @@ exports.MMC4Cart = MMC4Cart;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5227,7 +5302,7 @@ exports.MMC3Cart = MMC3Cart;
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5319,7 +5394,7 @@ exports.Mapper068Cart = Mapper068Cart;
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5364,7 +5439,7 @@ exports.Mapper031Cart = Mapper031Cart;
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5430,7 +5505,7 @@ exports.Smb2jCart = Smb2jCart;
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5470,6 +5545,14 @@ var VSCart = /** @class */ (function (_super) {
         this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
         this.mirror(0, 3);
     };
+    VSCart.prototype.GetByte = function (clock, address) {
+        if (address == 0x4020) {
+            return this.coin;
+        }
+        if (address >= 0x8000) {
+            return this.peekByte(address);
+        }
+    };
     VSCart.prototype.SetByte = function (clock, address, val) {
         this.setPrgRam(address, val);
         if (address == 0x4016) {
@@ -5480,6 +5563,9 @@ var VSCart = /** @class */ (function (_super) {
             }
             this.copyBanks(clock, 0, chrbank, 1);
         }
+        if (address === 0x4020) {
+            this.coin = val;
+        }
     };
     return VSCart;
 }(BaseCart_1.BaseCart));
@@ -5487,7 +5573,7 @@ exports.VSCart = VSCart;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5567,7 +5653,7 @@ exports.KonamiVRC1Cart = KonamiVRC1Cart;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5807,7 +5893,7 @@ exports.Konami026Cart = Konami026Cart;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5895,7 +5981,7 @@ exports.Mapper184Cart = Mapper184Cart;
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
