@@ -2877,11 +2877,12 @@ var VRC2 = __webpack_require__(4);
 var VRC6 = __webpack_require__(33);
 var Sunsoft = __webpack_require__(34);
 var Mapper034 = __webpack_require__(35);
-var Mapper112 = __webpack_require__(36);
-var Mapper132 = __webpack_require__(37);
-var Mapper133 = __webpack_require__(38);
-var Mapper193 = __webpack_require__(39);
-var Mapper228 = __webpack_require__(40);
+var Mapper015 = __webpack_require__(36);
+var Mapper112 = __webpack_require__(37);
+var Mapper132 = __webpack_require__(38);
+var Mapper133 = __webpack_require__(39);
+var Mapper193 = __webpack_require__(40);
+var Mapper228 = __webpack_require__(41);
 var MapperFactory = /** @class */ (function () {
     function MapperFactory() {
         this[0] = Discrete.NesCart;
@@ -2894,6 +2895,7 @@ var MapperFactory = /** @class */ (function () {
         this[10] = MMC2.MMC4Cart;
         this[11] = Discrete.ColorDreams;
         this[13] = Discrete.Mapper013Cart;
+        this[15] = Mapper015.Mapper015Cart;
         this[21] = VRC2.Konami021Cart;
         this[22] = VRC2.KonamiVRC022Cart;
         this[23] = VRC2.KonamiVRC2Cart;
@@ -5978,6 +5980,69 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 // 
 var BaseCart_1 = __webpack_require__(0);
+var Mapper015Cart = /** @class */ (function (_super) {
+    __extends(Mapper015Cart, _super);
+    function Mapper015Cart() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Mapper015Cart.prototype.InitializeCart = function () {
+        this.mapperName = 'Contra 100-in-1';
+        this.usesSRAM = true;
+        this.SetupBankStarts(0, 1, 2, 3);
+        this.mirror(0, 1);
+    };
+    Mapper015Cart.prototype.SetByte = function (clock, address, data) {
+        if (address >= 0x6000 && address <= 0xffff) {
+            this.prgRomBank6[address & 0x1fff] = data;
+        }
+        else if (address >= 0x8000 && address <= 0xffff) {
+            var bankmode = address & 3;
+            var bank = data & 0x3f;
+            var subbank = (data >> 7) & 1;
+            var mirror = (data >> 6) & 1;
+            this.mirror(clock, 2 - mirror);
+            switch (bankmode) {
+                case 0:
+                    bank = bank << 2;
+                    this.SetupBankStarts(bank ^ subbank, (bank + 1) ^ subbank, (bank + 2) ^ subbank, (bank + 3) ^ subbank);
+                    break;
+                case 2:
+                    bank = (bank | subbank);
+                    this.SetupBankStarts(bank, bank, bank, bank);
+                    break;
+                case 1:
+                case 3:
+                    bank = (bank << 1);
+                    bank |= subbank;
+                    this.SetupBankStarts(bank, bank + 1, (~address >> 1 & 1), (bank) + 1);
+                    break;
+            }
+        }
+    };
+    return Mapper015Cart;
+}(BaseCart_1.BaseCart));
+exports.Mapper015Cart = Mapper015Cart;
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+// 
+var BaseCart_1 = __webpack_require__(0);
 var Mapper112Cart = /** @class */ (function (_super) {
     __extends(Mapper112Cart, _super);
     function Mapper112Cart() {
@@ -6020,7 +6085,7 @@ exports.Mapper112Cart = Mapper112Cart;
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6076,7 +6141,7 @@ exports.Mapper132Cart = Mapper132Cart;
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6113,7 +6178,6 @@ var Mapper133Cart = /** @class */ (function (_super) {
             this.copyBanks(clock, 0, chrbank, 1);
             var prgbank = ((data >> 2) & 1) << 2;
             this.SetupBankStarts(prgbank, prgbank + 1, prgbank + 2, prgbank + 3);
-            console.log('prgbank: ' + prgbank);
         }
     };
     return Mapper133Cart;
@@ -6122,7 +6186,7 @@ exports.Mapper133Cart = Mapper133Cart;
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6176,7 +6240,7 @@ exports.Mapper193Cart = Mapper193Cart;
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

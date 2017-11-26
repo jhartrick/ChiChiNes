@@ -40,11 +40,7 @@ export class NesCart extends BaseCart {
              return;
          }
  
-         if (this.mapperId === 3 && address >= 0x8000) {
- 
-             this.copyBanks(clock, 0, val, 1);
-         }
- 
+
          if (this.mapperId === 180 && address >= 32768) {
              let newbankC1 = 0;
  

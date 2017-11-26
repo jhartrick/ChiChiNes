@@ -18,6 +18,7 @@ import * as VRC2 from './KonamiVRC2';
 import * as VRC6 from './KonamiVRC6';
 import * as Sunsoft from './Sunsoft';
 import * as Mapper034 from './Mapper034';
+import * as Mapper015 from './Mapper015';
 import * as Mapper112 from './Mapper112';
 import * as Mapper132 from './Mapper132';
 import * as Mapper133 from './Mapper133';
@@ -35,6 +36,7 @@ class MapperFactory {
     10 = MMC2.MMC4Cart;
     11 = Discrete.ColorDreams;
     13 = Discrete.Mapper013Cart;
+    15 = Mapper015.Mapper015Cart;
     21 = VRC2.Konami021Cart;
     22 = VRC2.KonamiVRC022Cart;
     23 = VRC2.KonamiVRC2Cart;
