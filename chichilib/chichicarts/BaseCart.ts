@@ -417,11 +417,13 @@ export class BaseCart implements IBaseCart {
     copyBanks(clock: number, dest: number, src: number, numberOf8kBanks: number): void {
 
         if (dest >= this.chrRomCount) {
-            dest = this.chrRomCount - 1;
+            dest = dest % this.chrRomCount;
         }
-
-        var oneKsrc = src << 3;
-        var oneKdest = dest << 3;
+        if (src >= this.chrRomCount) {
+            src = src % this.chrRomCount;
+        }
+        const oneKsrc = src << 3;
+        const oneKdest = dest << 3;
 
         for (var i = 0; i < (numberOf8kBanks << 3); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
@@ -430,10 +432,12 @@ export class BaseCart implements IBaseCart {
     }
 
     copyBanks4k(clock: number, dest: number, src: number, numberOf4kBanks: number): void {
-        
-        if (dest >= this.chrRomCount << 1) {
-            dest = this.chrRomCount << 1;
-            dest = dest - 1;
+        const chrCount = this.chrRomCount << 1;
+        if (dest >= chrCount) {
+            dest = dest % chrCount;
+        }
+        if (src >= chrCount) {
+            src = src % chrCount;
         }
 
         const oneKsrc = src << 2;
@@ -445,11 +449,14 @@ export class BaseCart implements IBaseCart {
 
     copyBanks2k(clock: number, dest: number, src: number, numberOf2kBanks: number): void {
 
-        if (dest >= this.chrRomCount << 2) {
-            dest = this.chrRomCount << 2;
-            dest = dest - 1;
+        const chrCount = this.chrRomCount << 2;
+        if (dest >= chrCount) {
+            dest = dest % chrCount;
         }
-
+        if (src >= chrCount) {
+            src = src % chrCount;
+        }
+        
 
         var oneKsrc = src << 1;
         var oneKdest = dest << 1;
@@ -461,10 +468,14 @@ export class BaseCart implements IBaseCart {
     
     copyBanks1k(clock: number, dest: number, src: number, numberOf1kBanks: number): void {
         
-        if (dest >= this.chrRomCount << 3) {
-            dest = this.chrRomCount << 3;
-            dest = dest - 1;
+        const chrCount = this.chrRomCount << 3;
+        if (dest >= chrCount) {
+            dest = dest % chrCount;
         }
+        if (src >= chrCount) {
+            src = src % chrCount;
+        }
+        
 
         let oneKsrc = src ;
         let oneKdest = dest ;

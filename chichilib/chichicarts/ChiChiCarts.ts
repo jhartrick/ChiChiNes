@@ -19,6 +19,7 @@ import * as VRC6 from './KonamiVRC6';
 import * as Sunsoft from './Sunsoft';
 import * as Mapper193 from './Mapper193';
 import * as Mapper133 from './Mapper133';
+import * as Mapper132 from './Mapper132';
 import * as Mapper112 from './Mapper112';
 import * as Mapper228 from './Mapper228';
 
@@ -62,6 +63,7 @@ class MapperFactory {
     97 = Discrete.Irem097Cart;
     99 = VS.VSCart;
     112 = Mapper112.Mapper112Cart;
+    132 = Mapper132.Mapper132Cart;
     133 = Mapper133.Mapper133Cart;
     140 = Discrete.JF1xCart;
     145 = Discrete.Mapper145Cart;
