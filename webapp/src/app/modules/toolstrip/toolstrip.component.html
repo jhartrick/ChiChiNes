@@ -1,16 +1,18 @@
 <div class="flexcontainer">
 
     <chichi-popover [button]='fileHandlerButton()' [icon]='upload'>
-        <chichi-ui-segment>
+        <chichi-ui-segment width='max-content' left='0px'>
             <controlpanel-powerbutton></controlpanel-powerbutton>
         </chichi-ui-segment>
-        <chichi-ui-segment>
+        <chichi-ui-segment width='max-content' left='69px'>
             <controlpanel-resetbutton></controlpanel-resetbutton>
         </chichi-ui-segment>
     </chichi-popover>
 
     <chichi-popover [button]='muteButton()'>
-        <controlpanel-volume></controlpanel-volume>
+        <chichi-ui-segment width='max-content' left='0px'>
+            <controlpanel-volume></controlpanel-volume>
+        </chichi-ui-segment>
     </chichi-popover>
     <controlpad-config></controlpad-config>
     

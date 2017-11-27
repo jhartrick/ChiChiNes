@@ -1,18 +1,16 @@
 .popover{
-    display: flex;
-    flex-direction: row;
+    display: inline-block;
     width: max-content;
 }
 .popcontent {
     overflow: hidden;
-    display:flex;
-    flex-direction: row;
+    display:inline-block;
     width: max-content;
 }
 .hidden {
-    width: 0px;
+    width: 0%;
     transition: width 0.5s;
-    transition-delay: 1.25s;
+    transition-delay: 0.25s;
     transition-timing-function: ease-in;
 }
 

@@ -23,8 +23,9 @@ export class PopoverComponent implements AfterViewInit {
     componentRef: ComponentRef<any>;
     show = false;
     loaded = false;
-    floatClass = 'hidden';
+    floatClass = 'floater';
     
+    floaters: PopoverSegmentComponent[];
 
     buttonclick = new EventEmitter(true);
     
@@ -32,13 +33,14 @@ export class PopoverComponent implements AfterViewInit {
         
     }
 
-
     ngAfterViewInit() {
+        this.floaters = new Array<PopoverSegmentComponent>();
+        this.segments.forEach((seg, index)=>{
+            this.floaters.push(seg);
+        });
         if (this.button) {
             this.loadComponent();
             this.cd.detectChanges();
-            console.log("segments " + this.segments.length)
-            console.log("vsegments " + this.viewsegs.length)
         }
     }
 
@@ -46,6 +48,13 @@ export class PopoverComponent implements AfterViewInit {
         this.buttonclick.emit(event);
 
     }
+
+    float(floating:boolean) {
+            this.floaters.forEach((v,i)=>{
+                v.cssClass= floating ? 'floater' : 'hidden';
+                v.left = floating ? ((i + 1 ) * 64).toString() + 'px' : '0px';  
+            });
+    } 
 
     loadComponent() {
         if (!this.loaded && this.button) {

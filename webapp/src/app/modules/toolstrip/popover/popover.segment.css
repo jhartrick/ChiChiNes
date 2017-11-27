@@ -1,0 +1,16 @@
+div {
+    display: absolute;
+}
+.hidden {
+    /* visibility: hidden; */
+    transition: left 0.5s;
+    transition-delay: 1.25s;
+    transition-timing-function: ease-in;
+}
+
+.floater {
+    transition: left 0.5s;
+    transition-delay: 0.125s;
+    transition-timing-function: ease-out;
+}
+
