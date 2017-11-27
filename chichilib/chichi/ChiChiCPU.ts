@@ -1106,9 +1106,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
     }
 
     GetByte(address: number): number {
-        if (!this.memoryMap) {
-            return 0;
-        }
+        if (!this.memoryMap) { return 0; }
         let result = this.memoryMap.getByte(this.clock, address);
 
         if (this.cheating)
