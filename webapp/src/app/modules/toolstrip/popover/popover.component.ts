@@ -54,15 +54,17 @@ export class PopoverComponent implements AfterViewInit {
 
     float(floating: boolean) {
         this.floatClass = floating ? 'floater' : 'hidden';
-            this.floaters.forEach((v, i) => {
-                if (i > 0) {
+        this.floaters.forEach((v, i) => {
+            if (i > 0) {
+                setTimeout(() => {
                     v.cssClass = floating ? 'floater' : 'hidden';
                     v.left = floating ? ((i + 1 ) * 64).toString() + 'px' : '0px';
-                } else {
-                    v.cssClass = 'floater';
-                    v.left = '0px';
-                }
-            });
+                }, i * 200);
+            } else {
+                v.cssClass = 'floater';
+                v.left = '0px';
+            }
+        });
     }
 
     loadComponent() {

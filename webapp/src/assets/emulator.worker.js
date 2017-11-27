@@ -711,8 +711,7 @@ var tendoWrapper = /** @class */ (function () {
         }, ['romloader.worker'], function (romloader) {
             var machine = _this.machine;
             var cart = romloader.loader.loadRom(rom, name);
-            cart.installCart(_this.machine.Cpu, _this.machine.ppu);
-            machine.ppu.chrRomHandler = machine.Cpu.Cart = cart;
+            cart.installCart(_this.machine.ppu, _this.machine.Cpu);
             machine.Cart.NMIHandler = function () { _this.machine.Cpu._handleIRQ = true; };
             _this.machine.Cpu.cheating = false;
             _this.machine.Cpu.genieCodes = new Array();
@@ -3440,61 +3439,10 @@ var ChiChiCPPU = /** @class */ (function () {
         return this.Rams[this._stackPointer + 256];
     };
     ChiChiCPPU.prototype.GetByte = function (address) {
-        var result = 0;
-        // check high byte, find appropriate handler
-        switch (address & 0xF000) {
-            case 0:
-            case 0x1000:
-                if (address < 2048) {
-                    result = this.Rams[address];
-                }
-                else {
-                    result = address >> 8;
-                }
-                break;
-            case 0x2000:
-            case 0x3000:
-                result = this.ppu.GetByte(this.clock, address);
-                break;
-            case 0x4000:
-                switch (address) {
-                    case 0x4015:
-                        result = this.SoundBopper.GetByte(this.clock, address);
-                        break;
-                    case 0x4016:
-                        result = this._padOne.GetByte(this.clock, address);
-                        break;
-                    case 0x4017:
-                        result = this._padTwo.GetByte(this.clock, address);
-                        break;
-                    default:
-                        if (this.Cart.mapsBelow6000)
-                            result = this.Cart.GetByte(this.clock, address);
-                        else
-                            result = address >> 8;
-                        break;
-                }
-                break;
-            case 20480:
-                // ??
-                result = address >> 8;
-                break;
-            case 24576:
-            case 28672:
-            case 32768:
-            case 36864:
-            case 40960:
-            case 45056:
-            case 49152:
-            case 53248:
-            case 57344:
-            case 61440:
-                // cart 
-                result = this.Cart.GetByte(this.clock, address);
-                break;
-            default:
-                throw new Error("Bullshit!");
+        if (!this.memoryMap) {
+            return 0;
         }
+        var result = this.memoryMap.getByte(this.clock, address);
         if (this.cheating) {
             var patch = this.genieCodes.find(function (v) { return v.address == address; });
             if (patch && patch.active && patch.address == address) {
@@ -3507,6 +3455,12 @@ var ChiChiCPPU = /** @class */ (function () {
             }
         }
         return result & 255;
+    };
+    ChiChiCPPU.prototype.SetByte = function (address, data) {
+        if (!this.memoryMap) {
+            return;
+        }
+        this.memoryMap.setByte(this.clock, address, data);
     };
     ChiChiCPPU.prototype.PeekByte = function (address) {
         var result = 0;
@@ -3577,78 +3531,6 @@ var ChiChiCPPU = /** @class */ (function () {
                 array.push(this.Rams[i]);
         }
         return array;
-    };
-    ChiChiCPPU.prototype.SetByte = function (address, data) {
-        // check high byte, find appropriate handler
-        if (address < 2048) {
-            this.Rams[address & 2047] = data;
-            return;
-        }
-        switch (address & 61440) {
-            case 0:
-            case 4096:
-                // nes sram
-                this.Rams[address & 2047] = data;
-                break;
-            case 20480:
-                this.Cart.SetByte(this.clock, address, data);
-                break;
-            case 24576:
-            case 28672:
-            case 32768:
-            case 36864:
-            case 40960:
-            case 45056:
-            case 49152:
-            case 53248:
-            case 57344:
-            case 61440:
-                // cart rom banks
-                this.Cart.SetByte(this.clock, address, data);
-                break;
-            case 8192:
-            case 12288:
-                this.ppu.SetByte(this.clock, address, data);
-                break;
-            case 16384:
-                switch (address) {
-                    case 16384:
-                    case 16385:
-                    case 16386:
-                    case 16387:
-                    case 16388:
-                    case 16389:
-                    case 16390:
-                    case 16391:
-                    case 16392:
-                    case 16393:
-                    case 16394:
-                    case 16395:
-                    case 16396:
-                    case 16397:
-                    case 16398:
-                    case 16399:
-                    case 16405:
-                    case 16407:
-                        this.SoundBopper.SetByte(this.clock, address, data);
-                        break;
-                    case 16404:
-                        this.ppu.copySprites(data * 256);
-                        this._currentInstruction_ExtraTiming = this._currentInstruction_ExtraTiming + 513;
-                        if (this.clock & 1) {
-                            this._currentInstruction_ExtraTiming++;
-                        }
-                        break;
-                    case 16406:
-                        this._padOne.SetByte(this.clock, address, data & 1);
-                        this._padTwo.SetByte(this.clock, address, data & 1);
-                        break;
-                    default:
-                        if (this.Cart.mapsBelow6000)
-                            this.Cart.SetByte(this.clock, address, data);
-                }
-                break;
-        }
     };
     ChiChiCPPU.prototype.HandleNextEvent = function () {
         // this.ppu.HandleEvent(this.clock);

@@ -2,6 +2,7 @@ import { ChiChiCPPU } from '../chichi/ChiChiCPU';
 import { ChiChiPPU, IChiChiPPU, IChiChiPPUState } from '../chichi/ChiChiPPU';
 
 import * as crc from 'crc';
+import { MemoryMap } from '../chichi/ChiChiMemoryMap';
 
 
 export enum NameTableMirroring {
@@ -263,6 +264,10 @@ export class BaseCart implements IBaseCart {
     installCart(ppu: ChiChiPPU, cpu: ChiChiCPPU) {
         this.Whizzler = ppu;
         this.CPU = cpu;
+        this.CPU.memoryMap = new MemoryMap(this.CPU, this.Whizzler, this.CPU.SoundBopper, this.CPU.PadOne, this.CPU.PadTwo, this);
+
+        ppu.chrRomHandler = this;
+        this.CPU.Cart = this;
 
         //setup mirroring 
         this.mirror(0, 0);
@@ -279,6 +284,7 @@ export class BaseCart implements IBaseCart {
         }
         // initialize
         this.InitializeCart();
+
     }
 
     GetByte(clock: number, address: number): number {
@@ -324,7 +330,7 @@ export class BaseCart implements IBaseCart {
     }
 
     Setup6BankStarts(reg6: number, reg8: number, regA: number, regC: number, regE: number): void {
-        reg6 = this.MaskBankAddress(reg6);
+        reg6 = reg6 % (this.prgRomCount * 2);
         this.prgBankStarts[0] = reg6 * 8192;
         this.prgBankStarts[1] = (this.prgBankStarts[0] + 4096);
         this.SetupBankStarts(reg8, regA, regC, regE);
@@ -332,10 +338,10 @@ export class BaseCart implements IBaseCart {
     }
 
     SetupBankStarts(reg8: number, regA: number, regC: number, regE: number): void {
-        reg8 = this.MaskBankAddress(reg8);
-        regA = this.MaskBankAddress(regA);
-        regC = this.MaskBankAddress(regC);
-        regE = this.MaskBankAddress(regE);
+        reg8 = reg8 % (this.prgRomCount * 2);
+        regA = regA % (this.prgRomCount * 2);
+        regC = regC % (this.prgRomCount * 2);
+        regE = regE % (this.prgRomCount * 2);
         this.prgBankStarts[2] = reg8 * 8192;
         this.prgBankStarts[3] = (this.prgBankStarts[2] + 4096);
         this.prgBankStarts[4] = regA * 8192;
@@ -349,7 +355,7 @@ export class BaseCart implements IBaseCart {
 
     setupBanks4k(start: number, banks: number[]) {
         banks = banks.map((bank)=> {
-            return bank % (this.prgRomCount << 1);
+            return bank % (this.prgRomCount << 2);
         });
         for (let i = 0; i < banks.length; ++i ) {
             if (i >= this.prgBankStarts.length) {

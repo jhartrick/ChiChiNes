@@ -90,6 +90,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var ChiChiMemoryMap_1 = __webpack_require__(23);
 var NameTableMirroring;
 (function (NameTableMirroring) {
     NameTableMirroring[NameTableMirroring["OneScreen"] = 0] = "OneScreen";
@@ -281,6 +282,9 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.installCart = function (ppu, cpu) {
         this.Whizzler = ppu;
         this.CPU = cpu;
+        this.CPU.memoryMap = new ChiChiMemoryMap_1.MemoryMap(this.CPU, this.Whizzler, this.CPU.SoundBopper, this.CPU.PadOne, this.CPU.PadTwo, this);
+        ppu.chrRomHandler = this;
+        this.CPU.Cart = this;
         //setup mirroring 
         this.mirror(0, 0);
         if ((this.romControlBytes[0] & 1) === 1) {
@@ -332,16 +336,16 @@ var BaseCart = /** @class */ (function () {
         this.chrRom[newAddress] = data;
     };
     BaseCart.prototype.Setup6BankStarts = function (reg6, reg8, regA, regC, regE) {
-        reg6 = this.MaskBankAddress(reg6);
+        reg6 = reg6 % (this.prgRomCount * 2);
         this.prgBankStarts[0] = reg6 * 8192;
         this.prgBankStarts[1] = (this.prgBankStarts[0] + 4096);
         this.SetupBankStarts(reg8, regA, regC, regE);
     };
     BaseCart.prototype.SetupBankStarts = function (reg8, regA, regC, regE) {
-        reg8 = this.MaskBankAddress(reg8);
-        regA = this.MaskBankAddress(regA);
-        regC = this.MaskBankAddress(regC);
-        regE = this.MaskBankAddress(regE);
+        reg8 = reg8 % (this.prgRomCount * 2);
+        regA = regA % (this.prgRomCount * 2);
+        regC = regC % (this.prgRomCount * 2);
+        regE = regE % (this.prgRomCount * 2);
         this.prgBankStarts[2] = reg8 * 8192;
         this.prgBankStarts[3] = (this.prgBankStarts[2] + 4096);
         this.prgBankStarts[4] = regA * 8192;
@@ -354,7 +358,7 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.setupBanks4k = function (start, banks) {
         var _this = this;
         banks = banks.map(function (bank) {
-            return bank % (_this.prgRomCount << 1);
+            return bank % (_this.prgRomCount << 2);
         });
         for (var i = 0; i < banks.length; ++i) {
             if (i >= this.prgBankStarts.length) {
@@ -2863,26 +2867,26 @@ exports.loader = new romLoader();
 Object.defineProperty(exports, "__esModule", { value: true });
 var crc = __webpack_require__(11);
 var BaseCart_1 = __webpack_require__(0);
-var Discrete = __webpack_require__(23);
-var Multi = __webpack_require__(24);
-var MMC1 = __webpack_require__(25);
-var MMC2 = __webpack_require__(26);
-var MMC3 = __webpack_require__(27);
-var M068 = __webpack_require__(28);
-var Nsf = __webpack_require__(29);
-var Smb2j = __webpack_require__(30);
-var VS = __webpack_require__(31);
-var VRC = __webpack_require__(32);
+var Discrete = __webpack_require__(24);
+var Multi = __webpack_require__(25);
+var MMC1 = __webpack_require__(26);
+var MMC2 = __webpack_require__(27);
+var MMC3 = __webpack_require__(28);
+var M068 = __webpack_require__(29);
+var Nsf = __webpack_require__(30);
+var Smb2j = __webpack_require__(31);
+var VS = __webpack_require__(32);
+var VRC = __webpack_require__(33);
 var VRC2 = __webpack_require__(4);
-var VRC6 = __webpack_require__(33);
-var Sunsoft = __webpack_require__(34);
-var Mapper034 = __webpack_require__(35);
-var Mapper015 = __webpack_require__(36);
-var Mapper112 = __webpack_require__(37);
-var Mapper132 = __webpack_require__(38);
-var Mapper133 = __webpack_require__(39);
-var Mapper193 = __webpack_require__(40);
-var Mapper228 = __webpack_require__(41);
+var VRC6 = __webpack_require__(34);
+var Sunsoft = __webpack_require__(35);
+var Mapper034 = __webpack_require__(36);
+var Mapper015 = __webpack_require__(37);
+var Mapper112 = __webpack_require__(38);
+var Mapper132 = __webpack_require__(39);
+var Mapper133 = __webpack_require__(40);
+var Mapper193 = __webpack_require__(41);
+var Mapper228 = __webpack_require__(42);
 var MapperFactory = /** @class */ (function () {
     function MapperFactory() {
         this[0] = Discrete.NesCart;
@@ -3795,6 +3799,157 @@ module.exports = (0, _define_crc2.default)('jam', function (buf) {
 
 "use strict";
 
+Object.defineProperty(exports, "__esModule", { value: true });
+var MemoryMap = /** @class */ (function () {
+    function MemoryMap(cpu, ppu, apu, pad1, pad2, cart) {
+        this.cpu = cpu;
+        this.ppu = ppu;
+        this.apu = apu;
+        this.pad1 = pad1;
+        this.pad2 = pad2;
+        this.cart = cart;
+    }
+    MemoryMap.prototype.getByte = function (clock, address) {
+        var result = 0;
+        // check high byte, find appropriate handler
+        switch (address & 0xF000) {
+            case 0:
+            case 0x1000:
+                if (address < 2048) {
+                    result = this.cpu.Rams[address];
+                }
+                else {
+                    result = address >> 8;
+                }
+                break;
+            case 0x2000:
+            case 0x3000:
+                result = this.ppu.GetByte(clock, address);
+                break;
+            case 0x4000:
+                switch (address) {
+                    case 0x4015:
+                        result = this.apu.GetByte(clock, address);
+                        break;
+                    case 0x4016:
+                        result = this.pad1.GetByte(clock, address);
+                        break;
+                    case 0x4017:
+                        result = this.pad2.GetByte(clock, address);
+                        break;
+                    default:
+                        if (this.cart.mapsBelow6000)
+                            result = this.cart.GetByte(clock, address);
+                        else
+                            result = address >> 8;
+                        break;
+                }
+                break;
+            case 20480:
+                // ??
+                result = address >> 8;
+                break;
+            case 24576:
+            case 28672:
+            case 32768:
+            case 36864:
+            case 40960:
+            case 45056:
+            case 49152:
+            case 53248:
+            case 57344:
+            case 61440:
+                // cart 
+                result = this.cart.GetByte(clock, address);
+                break;
+            default:
+                throw new Error("Bullshit!");
+        }
+        return result & 255;
+    };
+    MemoryMap.prototype.setByte = function (clock, address, data) {
+        // check high byte, find appropriate handler
+        if (address < 2048) {
+            this.cpu.Rams[address & 2047] = data;
+            return;
+        }
+        switch (address & 61440) {
+            case 0:
+            case 4096:
+                // nes sram
+                this.cpu.Rams[address & 2047] = data;
+                break;
+            case 20480:
+                this.cart.SetByte(clock, address, data);
+                break;
+            case 24576:
+            case 28672:
+            case 32768:
+            case 36864:
+            case 40960:
+            case 45056:
+            case 49152:
+            case 53248:
+            case 57344:
+            case 61440:
+                // cart rom banks
+                this.cart.SetByte(clock, address, data);
+                break;
+            case 8192:
+            case 12288:
+                this.ppu.SetByte(clock, address, data);
+                break;
+            case 16384:
+                switch (address) {
+                    case 16384:
+                    case 16385:
+                    case 16386:
+                    case 16387:
+                    case 16388:
+                    case 16389:
+                    case 16390:
+                    case 16391:
+                    case 16392:
+                    case 16393:
+                    case 16394:
+                    case 16395:
+                    case 16396:
+                    case 16397:
+                    case 16398:
+                    case 16399:
+                    case 16405:
+                    case 16407:
+                        this.apu.SetByte(clock, address, data);
+                        break;
+                    case 16404:
+                        this.ppu.copySprites(data * 256);
+                        this.cpu._currentInstruction_ExtraTiming = this.cpu._currentInstruction_ExtraTiming + 513;
+                        if (clock & 1) {
+                            this.cpu._currentInstruction_ExtraTiming++;
+                        }
+                        break;
+                    case 16406:
+                        this.pad1.SetByte(clock, address, data & 1);
+                        this.pad2.SetByte(clock, address, data & 1);
+                        break;
+                    default:
+                        if (this.cart.mapsBelow6000)
+                            this.cart.SetByte(clock, address, data);
+                }
+                break;
+        }
+    };
+    return MemoryMap;
+}());
+exports.MemoryMap = MemoryMap;
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -4440,7 +4595,7 @@ exports.AxROMCart = AxROMCart;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4618,7 +4773,7 @@ exports.Mapper212Cart = Mapper212Cart;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4767,7 +4922,7 @@ exports.MMC1Cart = MMC1Cart;
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4944,7 +5099,7 @@ exports.MMC4Cart = MMC4Cart;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5200,7 +5355,7 @@ exports.MMC3Cart = MMC3Cart;
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5292,7 +5447,7 @@ exports.Mapper068Cart = Mapper068Cart;
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5314,11 +5469,11 @@ var Mapper031Cart = /** @class */ (function (_super) {
     __extends(Mapper031Cart, _super);
     function Mapper031Cart() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.registers = [0, 0, 0, 0, 0, 0, 0, 0xFF];
+        _this.mapsBelow6000 = true;
+        _this.registers = [0, 0, 0, 0, 0, 0, 0, 0xff];
         return _this;
     }
     Mapper031Cart.prototype.InitializeCart = function () {
-        this.mapsBelow6000 = true;
         this.mapperName = 'NSF Compilation';
         if (this.chrRomCount > 0) {
             this.copyBanks(0, 0, 0, 1);
@@ -5337,7 +5492,7 @@ exports.Mapper031Cart = Mapper031Cart;
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5403,7 +5558,7 @@ exports.Smb2jCart = Smb2jCart;
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5471,7 +5626,7 @@ exports.VSCart = VSCart;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5557,7 +5712,7 @@ exports.KonamiVRC1Cart = KonamiVRC1Cart;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5797,7 +5952,7 @@ exports.Konami026Cart = Konami026Cart;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5885,7 +6040,7 @@ exports.Mapper184Cart = Mapper184Cart;
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5959,7 +6114,7 @@ exports.BNROMCart = BNROMCart;
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6022,7 +6177,7 @@ exports.Mapper015Cart = Mapper015Cart;
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6082,7 +6237,7 @@ exports.Mapper112Cart = Mapper112Cart;
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6138,7 +6293,7 @@ exports.Mapper132Cart = Mapper132Cart;
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6183,7 +6338,7 @@ exports.Mapper133Cart = Mapper133Cart;
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6237,7 +6392,7 @@ exports.Mapper193Cart = Mapper193Cart;
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

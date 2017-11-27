@@ -268,8 +268,7 @@ export class tendoWrapper {
             (romloader: any) => {
                 const machine = this.machine;
                 const cart = romloader.loader.loadRom(rom, name);
-                cart.installCart(this.machine.Cpu, this.machine.ppu);
-                machine.ppu.chrRomHandler = machine.Cpu.Cart = cart;
+                cart.installCart(this.machine.ppu, this.machine.Cpu);
         
                 machine.Cart.NMIHandler = () => { this.machine.Cpu._handleIRQ = true; };
                         
