@@ -1,16 +1,7 @@
-div {
-    display: absolute;
+div.segment {
+    float:left;
+    top: 0px;
+    left: 0px;
+    width: max-content;
+    height: max-content;
 }
-.hidden {
-    /* visibility: hidden; */
-    transition: left 0.5s;
-    transition-delay: 1.25s;
-    transition-timing-function: ease-in;
-}
-
-.floater {
-    transition: left 0.5s;
-    transition-delay: 0.125s;
-    transition-timing-function: ease-out;
-}
-

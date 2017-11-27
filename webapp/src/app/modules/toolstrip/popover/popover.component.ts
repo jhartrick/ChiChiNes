@@ -1,15 +1,14 @@
-import { ComponentFactoryResolver, AfterViewInit,  Input, ViewChild, Component, ComponentRef, EventEmitter, Output, ChangeDetectorRef, ContentChildren, QueryList, ViewChildren } from "@angular/core";
-import { PopoverDirective } from "./popover.directive";
-import { PopoverContent } from "./popover.content";
-import { ContentChild } from "@angular/core/src/metadata/di";
-import { PopoverSegmentComponent } from "./popover.segment";
-
+import { ComponentFactoryResolver, AfterViewInit,  Input, ViewChild, Component, ComponentRef, EventEmitter, Output, ChangeDetectorRef, ContentChildren, QueryList, ViewChildren } from '@angular/core';
+import { PopoverDirective } from './popover.directive';
+import { PopoverContent } from './popover.content';
+import { ContentChild } from '@angular/core/src/metadata/di';
+import { PopoverSegmentComponent } from './popover.segment';
 
 @Component({
     selector: 'chichi-popover',
     templateUrl: './popover.component.html',
     styleUrls: ['./popover.component.css']
-        })
+})
 export class PopoverComponent implements AfterViewInit {
     @Input('button') button: PopoverContent;
     @Input() icon: string;
@@ -19,23 +18,27 @@ export class PopoverComponent implements AfterViewInit {
     @ViewChild(PopoverDirective) popSpot: PopoverDirective;
     @ContentChildren(PopoverSegmentComponent) segments: QueryList<PopoverSegmentComponent>;
     @ViewChildren(PopoverSegmentComponent) viewsegs: QueryList<PopoverSegmentComponent>;
-    
+
     componentRef: ComponentRef<any>;
     show = false;
     loaded = false;
     floatClass = 'floater';
-    
+
     floaters: PopoverSegmentComponent[];
 
     buttonclick = new EventEmitter(true);
-    
+
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private cd: ChangeDetectorRef) {
-        
+
     }
 
     ngAfterViewInit() {
         this.floaters = new Array<PopoverSegmentComponent>();
-        this.segments.forEach((seg, index)=>{
+        this.viewsegs.forEach((seg, index) => {
+            this.floaters.push(seg);
+        });
+
+        this.segments.forEach((seg, index) => {
             this.floaters.push(seg);
         });
         if (this.button) {
@@ -49,12 +52,18 @@ export class PopoverComponent implements AfterViewInit {
 
     }
 
-    float(floating:boolean) {
-            this.floaters.forEach((v,i)=>{
-                v.cssClass= floating ? 'floater' : 'hidden';
-                v.left = floating ? ((i + 1 ) * 64).toString() + 'px' : '0px';  
+    float(floating: boolean) {
+        this.floatClass = floating ? 'floater' : 'hidden';
+            this.floaters.forEach((v, i) => {
+                if (i > 0) {
+                    v.cssClass = floating ? 'floater' : 'hidden';
+                    v.left = floating ? ((i + 1 ) * 64).toString() + 'px' : '0px';
+                } else {
+                    v.cssClass = 'floater';
+                    v.left = '0px';
+                }
             });
-    } 
+    }
 
     loadComponent() {
         if (!this.loaded && this.button) {

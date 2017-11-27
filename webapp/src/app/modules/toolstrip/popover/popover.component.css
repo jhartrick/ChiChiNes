@@ -1,22 +1,10 @@
 .popover{
     display: inline-block;
-    width: max-content;
-}
-.popcontent {
-    overflow: hidden;
-    display:inline-block;
-    width: max-content;
-}
-.hidden {
-    width: 0%;
-    transition: width 0.5s;
-    transition-delay: 0.25s;
-    transition-timing-function: ease-in;
+    width: 100%;
 }
 
-.floater {
-    width: 100%;
-    transition: width 0.5s;
-    transition-delay: 0.125s;
-    transition-timing-function: ease-out;
+chichi-ui-segment {
+    position: relative;
+    float: left;
+    top: 0px;
 }

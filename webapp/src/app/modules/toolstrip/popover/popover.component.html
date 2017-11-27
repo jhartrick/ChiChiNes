@@ -1,8 +1,8 @@
 <div class='popover' (mouseenter)="float(true)" (mouseleave)="float(false)">
-    <chichi-ui-segment width='64px' left='0px'>
+    <chichi-ui-segment style='z-index: 9999' cssClass='floater' width='64px' left='0px'>
         <ng-template chichi-popover></ng-template>
     </chichi-ui-segment>
-    <chichi-ui-segment width='64px' left='0px'>
+    <chichi-ui-segment style='z-index: 9999' cssClass='floater' width='64px' left='0px'>
         <button *ngIf='!button' mat-fab (click)="clickHandler($event)">
             <mat-icon svgIcon='{{ icon }}'></mat-icon>
         </button>
