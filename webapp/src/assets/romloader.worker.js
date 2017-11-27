@@ -3839,9 +3839,6 @@ var NesCart = /** @class */ (function (_super) {
             }
             return;
         }
-        if (this.mapperId === 3 && address >= 0x8000) {
-            this.copyBanks(clock, 0, val, 1);
-        }
         if (this.mapperId === 180 && address >= 32768) {
             var newbankC1 = 0;
             newbankC1 = val * 2;
@@ -5528,10 +5525,10 @@ var KonamiVRC1Cart = /** @class */ (function (_super) {
             case 0x9000:
                 if (!this.fourScreen) {
                     if ((data & 1) == 1) {
-                        this.mirror(clock, 1);
+                        this.mirror(clock, 2);
                     }
                     else {
-                        this.mirror(clock, 2);
+                        this.mirror(clock, 1);
                     }
                 }
                 this.chrLatches[0] = ((data >> 1) & 1) << 4;
@@ -5989,7 +5986,7 @@ var Mapper015Cart = /** @class */ (function (_super) {
         this.mapperName = 'Contra 100-in-1';
         this.usesSRAM = true;
         this.SetupBankStarts(0, 1, 2, 3);
-        this.mirror(0, 1);
+        this.mirror(0, 2);
     };
     Mapper015Cart.prototype.SetByte = function (clock, address, data) {
         if (address >= 0x6000 && address <= 0xffff) {

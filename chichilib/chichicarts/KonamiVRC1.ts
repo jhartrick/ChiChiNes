@@ -35,9 +35,9 @@ export class KonamiVRC1Cart extends BaseCart {
             
             if (!this.fourScreen) {
                 if ((data & 1) == 1) {
-                    this.mirror(clock, 1);
-                } else {
                     this.mirror(clock, 2);
+                } else {
+                    this.mirror(clock, 1);
                 }
             }
             this.chrLatches[0] = ((data >> 1) & 1) << 4;
