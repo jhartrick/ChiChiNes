@@ -3,6 +3,7 @@ import { PopoverDirective } from './popover.directive';
 import { PopoverContent } from './popover.content';
 import { ContentChild } from '@angular/core/src/metadata/di';
 import { PopoverSegmentComponent } from './popover.segment';
+import { Observable } from 'rxjs/Observable';
 
 @Component({
     selector: 'chichi-popover',
@@ -28,11 +29,17 @@ export class PopoverComponent implements AfterViewInit {
 
     buttonclick = new EventEmitter(true);
 
+    private mouseEnter = new EventEmitter<boolean>(true);
+
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private cd: ChangeDetectorRef) {
 
     }
 
     ngAfterViewInit() {
+        this.mouseEnter.debounceTime(500).subscribe((f)=>{
+            this.float(f);
+        });
+
         this.floaters = new Array<PopoverSegmentComponent>();
         this.viewsegs.forEach((seg, index) => {
             this.floaters.push(seg);
@@ -41,6 +48,7 @@ export class PopoverComponent implements AfterViewInit {
         this.segments.forEach((seg, index) => {
             this.floaters.push(seg);
         });
+
         if (this.button) {
             this.loadComponent();
             this.cd.detectChanges();
@@ -49,17 +57,21 @@ export class PopoverComponent implements AfterViewInit {
 
     clickHandler(event: any) {
         this.buttonclick.emit(event);
-
     }
 
-    float(floating: boolean) {
+    handleMouseEnter(floating: boolean) {
+        this.mouseEnter.next(floating);
+    }
+
+    private float(floating: boolean) {
+        
         this.floatClass = floating ? 'floater' : 'hidden';
         this.floaters.forEach((v, i) => {
             if (i > 0) {
                 setTimeout(() => {
                     v.cssClass = floating ? 'floater' : 'hidden';
                     v.left = floating ? ((i + 1 ) * 64).toString() + 'px' : '0px';
-                }, i * 200);
+                }, i * 150);
             } else {
                 v.cssClass = 'floater';
                 v.left = '0px';
