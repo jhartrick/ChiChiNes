@@ -1,34 +1,12 @@
 ﻿<div>
-    <mat-button-toggle (change)="powertoggle()" >
-      {{ powerstate }}
-    </mat-button-toggle>
-    <button mat-button (click)="reset()">Reset</button>
-  </div>
+  <controlpanel-powerbutton></controlpanel-powerbutton>
+  <controlpanel-resetbutton></controlpanel-resetbutton>
+  <controlpanel-cartloader></controlpanel-cartloader>
+</div>
+
+
+<button mat-button (click)="showDebugger()">Open Debugger</button>  
   
-  <div class="fileLoader">
-    <input type="file" id="input-file-id" class="ng-hide" style="display:none" (change)="handleFile($event)">
-    <div class="loader-button mat-button-toggle mat-button-toggle-checked mat-button-toggle-standalone">
-      <label for="input-file-id" class="mat-button-toggle-label">
-        <div class="mat-button-toggle-label-content">
-          Choose File
-        </div></label>
-      <div class="mat-button-toggle-focus-overlay"></div>
-    </div>
-  </div>
-  <button mat-button (click)="showDebugger()">Open Debugger</button>  
-  
-
-<!-- <mat-expansion-panel>
-  <mat-expansion-panel-header>
-    <mat-panel-title>
-      System
-    </mat-panel-title>
-  </mat-expansion-panel-header>
-
-
-
-</mat-expansion-panel> -->
-
 <mat-expansion-panel>
   <mat-expansion-panel-header>
     <mat-panel-title>
@@ -38,16 +16,3 @@
     <controlpanel-volume></controlpanel-volume>
     <chichi-audiosettings></chichi-audiosettings>
   </mat-expansion-panel>
-  <mat-expansion-panel>
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        Extra
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-    <!-- <controlpad-config></controlpad-config> -->
-    <!-- <button mat-button (click)="nesService.saveState()">Save State</button>
-    <button mat-button (click)="nesService.restoreState()">Load State</button> -->
-
-  </mat-expansion-panel>
-
-  

@@ -243,48 +243,17 @@ export class WishboneMachine  {
 
     private nesStateSubject: Subject<WishboneMachine> = new Subject<WishboneMachine>();
 
-    readonly iop_runStatus = 2;
 
     asObservable() {
         return this.nesStateSubject.asObservable();
     }
 
-    Run() {
-
-    }
-
-    RunFrame() {
-    }
-
-    RequestSync() {
-    }
-
-    Drawscreen() {
-    }
-    get IsRunning(): boolean {
+    get isRunning(): boolean {
         return this.nesInterop[this.NES_GAME_LOOP_CONTROL] > 0;
     }
 
     PadOne: WishBoneControlPad;
     PadTwo: WishBoneControlPad;
-
-    SRAMReader: (RomID: string) => any;
-    SRAMWriter: (RomID: string, SRAM: any) => void;
-
-    Reset() {
-    }
-
-    PowerOn() {
-    }
-
-    PowerOff() {
-    }
-
-    Step() {
-    }
-
-    EjectCart() {
-    }
 
     insertCart(cart: BaseCart) {
 

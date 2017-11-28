@@ -3,7 +3,7 @@ import { ChiChiInputHandler } from "./ChiChiControl";
 import { IChiChiPPU } from "./ChiChiPPU";
 import { IChiChiAPU, IChiChiAPUState } from "./ChiChiAudio";
 import { IBaseCart } from '../chichicarts/BaseCart'
-import { GeniePatch } from "./ChiChiCheats";
+import { MemoryPatch } from "./ChiChiCheats";
 import { MemoryMap } from "./ChiChiMemoryMap";
 
 export interface IChiChiCPPUState {
@@ -31,7 +31,7 @@ export interface IChiChiCPPUState {
 
     Debugging: boolean;
     cheating: boolean;
-    genieCodes: GeniePatch[];
+    genieCodes: MemoryPatch[];
 }
 
 export interface IChiChiCPPU extends IChiChiCPPUState {
@@ -174,7 +174,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
     // #region Cheats
     cheating = false;
     
-    genieCodes: GeniePatch[] = new Array<GeniePatch>();
+    genieCodes: MemoryPatch[] = new Array<MemoryPatch>();
 
     cheat(address: number, result: number) : number 
     {

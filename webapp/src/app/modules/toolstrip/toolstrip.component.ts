@@ -14,12 +14,14 @@ import { MuteButtonComponent } from '../controlpanel/mutebutton.component';
     styleUrls: ['toolstrip.component.css']
     })
     export class ToolStripComponent {
-    cartSettings: ICartSettings;
+        cartSettings: ICartSettings;
+        
         constructor(private nesService: NESService) {
             this.cartSettings = nesService.cartSettings;
-            nesService.cartChanged.subscribe((cart: ICartSettings)=> {
+            nesService.cartChanged.subscribe((cart: ICartSettings) => {
                 this.cartSettings = cart;
-            })
+                console.log('cart changed: ' + cart.name);
+            });
         }
 
         fileHandlerButton(): PopoverContent {

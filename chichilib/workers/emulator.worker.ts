@@ -1,7 +1,9 @@
-﻿declare var Atomics: any;
+﻿
+declare var Atomics: any;
+import { WorkerInterop } from './worker.interop';
 import {  RunningStatuses } from '../chichi/ChiChiTypes';
 import { ChiChiMachine } from '../chichi/ChiChiMachine';
-import { GeniePatch } from '../chichi/ChiChiCheats';
+import { MemoryPatch } from '../chichi/ChiChiCheats';
 import { ChiChiStateManager, ChiChiState } from '../chichi/ChiChiState'; 
 
 class NesInfo {
@@ -26,6 +28,7 @@ class NesInfo {
 }
 
 export class tendoWrapper {
+    interop: WorkerInterop;
     framesRendered: number = 0;
     startTime: number = 0;
     runTimeout: number = 0;
@@ -35,7 +38,6 @@ export class tendoWrapper {
     framesPerSecond: number = 0;
     interval: any;
     runStatus: RunningStatuses;
-    iops = new Int32Array(16);
     machine: ChiChiMachine;
     cartName: string = 'unk';
 
@@ -44,6 +46,7 @@ export class tendoWrapper {
 
     constructor() {
         this.machine = new ChiChiMachine();
+        this.interop = new WorkerInterop(new Int32Array(<any>(new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
     }
 
     createMachine() {
@@ -191,8 +194,8 @@ export class tendoWrapper {
     }
 
     private runInnerLoop() {
-        this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
-        this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
+        this.machine.PadOne.padOneState = this.interop.controlPad0; // [this.interop.NES_CONTROL_PAD_0] & 0xFF;
+        this.machine.PadOne.padOneState = this.interop.controlPad1; // [this.interop.NES_CONTROL_PAD_1] & 0xFF;
 
         this.machine.RunFrame();
         this.framesPerSecond = 0;
@@ -200,13 +203,12 @@ export class tendoWrapper {
         if ((this.framesRendered++) === 60) {
             this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
             this.framesRendered = 0; this.startTime = new Date().getTime();
-            this.iops[1] = this.framesPerSecond;
+            this.interop.fps = this.framesPerSecond;
 
         }
     }
 
     run(reset: boolean) {
-        this.iops[3] = 12312312;
           var framesRendered = 0;
           const machine = this.machine;
 
@@ -215,13 +217,14 @@ export class tendoWrapper {
           }
           machine.Cpu.Debugging = false;
           this.startTime = new Date().getTime();
+
           clearInterval(this.interval);
           this.interval = setInterval(() => {
-            this.iops[0]=1;
-            while(this.iops[0]==1) {  
+            this.interop.loop();
+            while(this.interop.looping) {  
                 this.runInnerLoop();
             }
-          },0);
+            },0);
 
           this.runStatus = machine.RunState;// runStatuses.Running;
       }
@@ -273,7 +276,7 @@ export class tendoWrapper {
                 machine.Cart.NMIHandler = () => { this.machine.Cpu._handleIRQ = true; };
                         
                 this.machine.Cpu.cheating = false;
-                this.machine.Cpu.genieCodes = new Array<GeniePatch>();
+                this.machine.Cpu.genieCodes = new Array<MemoryPatch>();
             
 
                 this.updateBuffers();
@@ -292,7 +295,9 @@ export class tendoWrapper {
                 this.buffers = event.data;
                 this.createMachine();
 //                this.sharedAudioBufferPos = 0;
-                this.iops = event.data.iops;
+                // this.iops = event.data.iops;
+                this.interop = new WorkerInterop(event.data.iops);
+
                 if (event.data.rom) {
                     this.loadCart(event.data.rom, event.data.name);
                 }

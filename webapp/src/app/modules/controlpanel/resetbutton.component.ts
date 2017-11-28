@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
+import { WishboneWorker } from '../../services/wishbone/wishbone.worker';
 
 @Component({
     selector: 'controlpanel-resetbutton',
@@ -8,10 +9,10 @@ import { WishboneMachine } from '../../services/wishbone/wishbone';
     export class ResetButtonComponent {
 
         reset() {
-            this.wishbone.Reset();
+            this.worker.reset();
         }
 
-        constructor(private wishbone: WishboneMachine) {
+        constructor(private worker: WishboneWorker) {
         }
 
     }

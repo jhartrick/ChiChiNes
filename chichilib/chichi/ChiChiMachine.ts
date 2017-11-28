@@ -3,7 +3,7 @@ import { ChiChiAPU, IChiChiAPU } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
 import { ChiChiPPU, IChiChiPPU } from "./ChiChiPPU";
-import { GameGenieCode, GeniePatch } from './ChiChiCheats';
+import { GameGenieCode, MemoryPatch } from './ChiChiCheats';
 import { WavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
 

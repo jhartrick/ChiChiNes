@@ -44,6 +44,9 @@ export class ChiChiComponent implements AfterViewInit {
     }
 
     private setupScene(): void {
+        this.renderer = new THREE.WebGLRenderer();
+        this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
+        this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
 
         this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
 
@@ -58,10 +61,6 @@ export class ChiChiComponent implements AfterViewInit {
         };
 
         this.camera.position.z = 5.8;
-        this.renderer = new THREE.WebGLRenderer();
-
-        this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
-        this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
 
         setTimeout(() => {
           this.onResize();

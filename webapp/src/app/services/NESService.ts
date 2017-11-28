@@ -19,6 +19,7 @@ export class NESService {
 
     // events
     cartChanged = new EventEmitter<ICartSettings>(true);
+
     runStatusChanged = new EventEmitter<string>(true);
     onDebug: EventEmitter<any> = new EventEmitter<any>();
     
@@ -48,49 +49,13 @@ export class NESService {
         });
     }
 
-    saveState(){
-        const r = this.wishbone.Cart.realCart ;
-        if (r)
-        {
-            let obs = this.worker.nesMessageData.filter((d)=>d.state ? true: false).subscribe((d) => {
-                localStorage.setItem(r.ROMHashFunction + '_state', JSON.stringify(d.state));
-                obs.unsubscribe();
-            });
-
-            this.worker.postNesMessage({ command: 'getstate' })
-        }
-    }
-
-    restoreState() {
-        const r = this.wishbone.Cart.realCart ;
-        if (r)
-        {
-            let item = localStorage.getItem(r.ROMHashFunction + '_state');
-            if (item) {
-                this.worker.postNesMessage({ command: 'setstate', state: JSON.parse(item) })
-            }
-
-        }
-        
-    }
 
     setupCart(cart: BaseCart, rom: number[]) {
 
-        this.worker.start((threadHandler)=>{
-            this.wishbone.nesInterop = threadHandler.nesInterop;
-
-            threadHandler.postNesMessage({ 
-                command: 'create',
-                vbuffer: this.vbuffer,
-                abuffer: this.audioSettings.abuffer,
-                audioSettings: this.wishbone.SoundBopper.cloneSettings(),
-                iops: this.wishbone.nesInterop
-            });
-
-            threadHandler.postNesMessage({ command: 'loadrom', rom: rom, name: cart.CartName });
-
-
-            this.wishbone.insertCart(cart);
+        this.worker.createAndLoadRom(cart, rom, { 
+            vbuffer: this.vbuffer,
+            abuffer: this.audioSettings.abuffer            
+        }).subscribe(()=>{
             this.cartSettings =   {
                 name: cart.CartName,
                 mapperName: cart.mapperName,
@@ -103,25 +68,12 @@ export class NESService {
             }
             
             this.cartChanged.emit(this.cartSettings);
-        });
+        }) 
     }
 
     get isDebugging(): boolean {
         return false;
     }
-
-    debugStep() {
-        this.worker.postNesMessage({ command: 'step', debug: true });
-    }
-
-    debugStepFrame() {
-        this.worker.postNesMessage({ command: 'runframe', debug: true });
-    }
-            
-    continue() {
-        this.worker.postNesMessage({ command: 'continue', debug: false });
-    }
- 
 
     SetDebugCallbackFunction(callback: () => void) {
     }

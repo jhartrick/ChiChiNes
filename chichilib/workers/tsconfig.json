@@ -16,8 +16,8 @@
       "node_modules/@types"
     ],
     "lib": [
-      "webworker",
-      "es2017"
+      "es2017",
+      "webworker"
     ]
   }
 }

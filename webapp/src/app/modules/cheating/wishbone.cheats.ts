@@ -9,13 +9,11 @@ import { WishboneWorker } from '../../services/wishbone/wishbone.worker';
 @Injectable()
 export class WishboneCheats {
     constructor(private http: Http, private wishbone: WishboneMachine, private worker: WishboneWorker) {
-        
     }
 
     private _cheats: GameGenieCode[] = new Array<GameGenieCode>();
-    
+
     get cheats(): GameGenieCode[] {
-        //let ggCodes = new ChiChiCheats().getCheatsForGame(this.Cart.realCart.ROMHashFunction);
         return this._cheats;
     }
 
@@ -25,10 +23,10 @@ export class WishboneCheats {
         const cpu = this.wishbone.Cpu;
         cpu.genieCodes = cheats.filter((v) => v.active).map((v) => cc.gameGenieCodeToPatch(v.code));
         cpu.cheating =  cpu.genieCodes.length > 0;
-        this.worker.postNesMessage({ command: 'cheats', cheats: cpu.genieCodes })
+        this.worker.setCheats(cpu.genieCodes);
         // this.postNesMessage({ command: 'cheats', cheats: this.Cpu.genieCodes });
     }
-    
+
 
     fetchCheats(): Observable<Array<GameGenieCode>> {
         const crc = this.wishbone.Cart.ROMHashFunction;
@@ -48,7 +46,7 @@ export class WishboneCheats {
                 ggCodes.push(ggCode);
                 result = nodes.iterateNext();
             }
-            
+
             const lastcheats = this.cheats;
             if (lastcheats) {
                ggCodes = ggCodes.map((ggCode) => {

@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
+import { WishboneWorker } from '../../services/wishbone/wishbone.worker';
 
 @Component({
-    selector: 'controlpanel-powerbutton',
-    templateUrl: './powerbutton.component.html',
+        selector: 'controlpanel-powerbutton',
+        templateUrl: './powerbutton.component.html',
     })
     export class PowerButtonComponent {
 
@@ -16,16 +17,16 @@ import { WishboneMachine } from '../../services/wishbone/wishbone';
             }
         }
         poweron() {
-            this.wishbone.Run();
+            this.worker.run();
             this.powerstate = true;
         }
 
         poweroff() {
-            this.wishbone.PowerOff();
+            this.worker.powerOff();
             this.powerstate = false;
         }
 
-        constructor(private wishbone: WishboneMachine) {
+        constructor(private worker: WishboneWorker) {
         }
 
     }

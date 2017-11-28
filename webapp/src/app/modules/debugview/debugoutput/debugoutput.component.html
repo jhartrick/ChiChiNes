@@ -1,10 +1,10 @@
 ﻿<div class="stepper">
-  <button mat-button (click)="nes.debugStep()">Step</button>
-  <button mat-button (click)="nes.debugStepFrame()">StepFrame</button>
-  <button mat-button (click)="nes.continue()">Continue</button>
+  <button mat-button (click)="worker.debugStep()">Step</button>
+  <button mat-button (click)="worker.debugStepFrame()">StepFrame</button>
+  <button mat-button (click)="worker.continue()">Continue</button>
 </div>
-<debug-cpustatus [cpuStatus]="nes.wishbone.cpuStatus"></debug-cpustatus> 
-<debug-ppustatus [ppuStatus]="nes.wishbone.ppuStatus"></debug-ppustatus> 
+<debug-cpustatus [cpuStatus]="wishbone.cpuStatus"></debug-cpustatus> 
+<debug-ppustatus [ppuStatus]="wishbone.ppuStatus"></debug-ppustatus> 
 
 <mat-tab-group dynamicHeight="true" [(selectedIndex)]="selectedTabIndex">
   <mat-tab label="CPU">

@@ -3,12 +3,12 @@ export declare class GameGenieCode {
     description: string;
     active: boolean;
 }
-export declare class GeniePatch {
+export declare class MemoryPatch {
     address: number;
     data: number;
     compare: number;
     active: boolean;
 }
 export declare class ChiChiCheats {
-    gameGenieCodeToPatch(code: string): GeniePatch;
+    gameGenieCodeToPatch(code: string): MemoryPatch;
 }

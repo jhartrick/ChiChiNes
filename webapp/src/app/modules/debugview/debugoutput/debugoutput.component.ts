@@ -3,6 +3,8 @@ import { MatPaginator } from '@angular/material';
 import { Observable } from 'rxjs/Observable';
 import { NESService } from '../../../services/NESService';
 import { Debugger } from '../debug.interface';
+import { WishboneWorker } from '../../../services/wishbone/wishbone.worker';
+import { WishboneMachine } from '../../../services/wishbone/wishbone';
 
 @Component({
   selector: 'app-debugoutput',
@@ -15,6 +17,6 @@ export class DebugOutputComponent {
 
     decodedStatusRegister = '';
 
-    constructor(private cd: ChangeDetectorRef, private dbg: Debugger, public nes: NESService) {
+    constructor(private cd: ChangeDetectorRef, private dbg: Debugger, public wishbone: WishboneMachine, private worker: WishboneWorker) {
     }
 }

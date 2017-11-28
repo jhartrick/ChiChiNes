@@ -12,6 +12,7 @@ import { AudioSettings } from 'chichi';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { LocalAudioSettings } from '../../services/wishbone/wishbone.audio.localsettings';
 import { RomLoader } from '../../services/cartloader';
+import { WishboneWorker } from '../../services/wishbone/wishbone.worker';
 
 @Component({
     selector: 'chichi-status',
@@ -38,51 +39,19 @@ export class ControlPanelComponent {
     currentFilename: string;
     framesPerSecond: number;
 
-    wishbone: WishboneMachine;
+
 
     constructor(public nesService: NESService,
         cd: ChangeDetectorRef,
-        private romLoader: RomLoader,
         private ngZone: NgZone,
         private dialog: MatDialog) {
 
-        this.powerstate = 'OFF';
         this.localSettings = this.nesService.audioSettings;
 
         this.nesService.cartChanged.subscribe((settings) => {
             this.cartSettings = settings;
         });
 
-    }
-
-
-    handleFile(e: Event) {
-        const files: FileList = (<HTMLInputElement>e.target).files;
-        this.romLoader.loadRom(files).subscribe((rom) => {
-            this.poweroff();
-        }, (error) => {
-            console.log('handleFile error %s', error);
-        });
-    }
-    powertoggle() {
-        if (this.powerstate === 'OFF') {
-            this.poweron();
-        } else {
-            this.poweroff();
-        }
-    }
-    poweron() {
-        this.nesService.wishbone.Run();
-        this.powerstate = 'ON';
-    }
-
-    poweroff() {
-        this.nesService.wishbone.PowerOff();
-        this.powerstate = 'OFF';
-    }
-
-    reset(): void {
-        this.nesService.wishbone.Reset();
     }
 
 

@@ -479,8 +479,9 @@ exports.QueuedPort = QueuedPort;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiMachine_1 = __webpack_require__(3);
-var ChiChiState_1 = __webpack_require__(12);
+var worker_interop_1 = __webpack_require__(3);
+var ChiChiMachine_1 = __webpack_require__(4);
+var ChiChiState_1 = __webpack_require__(13);
 var NesInfo = /** @class */ (function () {
     function NesInfo() {
         this.bufferupdate = false;
@@ -513,13 +514,13 @@ var tendoWrapper = /** @class */ (function () {
         this.frameFinished = false;
         this.ready = false;
         this.framesPerSecond = 0;
-        this.iops = new Int32Array(16);
         this.cartName = 'unk';
         this.sharedAudioBufferPos = 0;
         this.buffers = {};
         // attach require.js "require" fn here in bootstrapper
         this.require = {};
         this.machine = new ChiChiMachine_1.ChiChiMachine();
+        this.interop = new worker_interop_1.WorkerInterop(new Int32Array((new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
     }
     tendoWrapper.prototype.createMachine = function () {
         var _this = this;
@@ -649,20 +650,19 @@ var tendoWrapper = /** @class */ (function () {
         this.runStatus = this.machine.RunState;
     };
     tendoWrapper.prototype.runInnerLoop = function () {
-        this.machine.PadOne.padOneState = this.iops[2] & 0xFF;
-        this.machine.PadTwo.padOneState = (this.iops[2] >> 8) & 0xFF;
+        this.machine.PadOne.padOneState = this.interop.controlPad0; // [this.interop.NES_CONTROL_PAD_0] & 0xFF;
+        this.machine.PadOne.padOneState = this.interop.controlPad1; // [this.interop.NES_CONTROL_PAD_1] & 0xFF;
         this.machine.RunFrame();
         this.framesPerSecond = 0;
         if ((this.framesRendered++) === 60) {
             this.framesPerSecond = ((this.framesRendered / (new Date().getTime() - this.startTime)) * 1000);
             this.framesRendered = 0;
             this.startTime = new Date().getTime();
-            this.iops[1] = this.framesPerSecond;
+            this.interop.fps = this.framesPerSecond;
         }
     };
     tendoWrapper.prototype.run = function (reset) {
         var _this = this;
-        this.iops[3] = 12312312;
         var framesRendered = 0;
         var machine = this.machine;
         if (reset) {
@@ -672,8 +672,8 @@ var tendoWrapper = /** @class */ (function () {
         this.startTime = new Date().getTime();
         clearInterval(this.interval);
         this.interval = setInterval(function () {
-            _this.iops[0] = 1;
-            while (_this.iops[0] == 1) {
+            _this.interop.loop();
+            while (_this.interop.looping) {
                 _this.runInnerLoop();
             }
         }, 0);
@@ -728,7 +728,8 @@ var tendoWrapper = /** @class */ (function () {
                 this.buffers = event.data;
                 this.createMachine();
                 //                this.sharedAudioBufferPos = 0;
-                this.iops = event.data.iops;
+                // this.iops = event.data.iops;
+                this.interop = new worker_interop_1.WorkerInterop(event.data.iops);
                 if (event.data.rom) {
                     this.loadCart(event.data.rom, event.data.name);
                 }
@@ -810,11 +811,85 @@ exports.tendoWrapper = tendoWrapper;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiAudio_1 = __webpack_require__(4);
+var WorkerInterop = /** @class */ (function () {
+    function WorkerInterop(nesInterop) {
+        this.nesInterop = nesInterop;
+        this.NES_GAME_LOOP_CONTROL = 0;
+        this.NES_FPS = 1;
+        this.NES_CONTROL_PAD_0 = 2;
+        this.NES_AUDIO_AVAILABLE = 3;
+        this.NES_CONTROL_PAD_1 = 4;
+    }
+    WorkerInterop.prototype.loop = function () {
+        Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 1);
+    };
+    WorkerInterop.prototype.unloop = function () {
+        Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 0);
+    };
+    Object.defineProperty(WorkerInterop.prototype, "looping", {
+        get: function () {
+            return this.nesInterop[this.NES_GAME_LOOP_CONTROL] > 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WorkerInterop.prototype, "fps", {
+        get: function () {
+            return this.nesInterop[this.NES_FPS] & 0xff;
+        },
+        set: function (val) {
+            this.nesInterop[this.NES_FPS] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WorkerInterop.prototype, "controlPad0", {
+        get: function () {
+            return this.nesInterop[this.NES_CONTROL_PAD_0] & 0xff;
+        },
+        set: function (val) {
+            this.nesInterop[this.NES_CONTROL_PAD_0] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WorkerInterop.prototype, "controlPad1", {
+        get: function () {
+            return this.nesInterop[this.NES_CONTROL_PAD_0] & 0xff;
+        },
+        set: function (val) {
+            this.nesInterop[this.NES_CONTROL_PAD_0] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WorkerInterop.prototype, "audioAvailable", {
+        get: function () {
+            return this.nesInterop[this.NES_AUDIO_AVAILABLE];
+        },
+        set: function (val) {
+            this.nesInterop[this.NES_AUDIO_AVAILABLE] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return WorkerInterop;
+}());
+exports.WorkerInterop = WorkerInterop;
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChiChiAudio_1 = __webpack_require__(5);
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiPPU_1 = __webpack_require__(9);
+var ChiChiPPU_1 = __webpack_require__(10);
 var CommonAudio_1 = __webpack_require__(1);
-var ChiChiCPU_1 = __webpack_require__(10);
+var ChiChiCPU_1 = __webpack_require__(11);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -934,16 +1009,16 @@ exports.ChiChiMachine = ChiChiMachine;
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var DMCChannel_1 = __webpack_require__(5);
-var SquareChannel_1 = __webpack_require__(6);
-var TriangleChannel_1 = __webpack_require__(7);
-var NoiseChannel_1 = __webpack_require__(8);
+var DMCChannel_1 = __webpack_require__(6);
+var SquareChannel_1 = __webpack_require__(7);
+var TriangleChannel_1 = __webpack_require__(8);
+var NoiseChannel_1 = __webpack_require__(9);
 var CommonAudio_1 = __webpack_require__(1);
 var ChiChiAPU = /** @class */ (function () {
     function ChiChiAPU(writer) {
@@ -1203,7 +1278,7 @@ exports.ChiChiAPU = ChiChiAPU;
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1341,7 +1416,7 @@ exports.DMCChannel = DMCChannel;
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1526,7 +1601,7 @@ exports.SquareChannel = SquareChannel;
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1647,7 +1722,7 @@ exports.TriangleChannel = TriangleChannel;
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1774,7 +1849,7 @@ exports.NoiseChannel = NoiseChannel;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2418,14 +2493,14 @@ exports.ChiChiPPU = ChiChiPPU;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiControl_1 = __webpack_require__(11);
+var ChiChiControl_1 = __webpack_require__(12);
 //chichipig
 var ChiChiCPPU = /** @class */ (function () {
     function ChiChiCPPU(bopper, ppu) {
@@ -3640,7 +3715,7 @@ exports.ChiChiCPPU = ChiChiCPPU;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3701,7 +3776,7 @@ exports.ChiChiControlPad = ChiChiControlPad;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

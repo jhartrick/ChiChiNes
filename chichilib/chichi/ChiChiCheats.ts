@@ -4,7 +4,7 @@ export class GameGenieCode {
     active = false;
 }
 
-export class GeniePatch {
+export class MemoryPatch {
     address: number = -1;
     data: number = -1;
     compare: number = -1;
@@ -14,11 +14,11 @@ export class GeniePatch {
 export class ChiChiCheats {
 
 
-    gameGenieCodeToPatch(code: string) : GeniePatch
+    gameGenieCodeToPatch(code: string) : MemoryPatch
     {
         const hexCode = new Uint8Array(code.length);
         let i = 0;
-        let patch: GeniePatch = null;
+        let patch: MemoryPatch = null;
 
         for (let j=0;j<code.length;++j)
         {
@@ -96,7 +96,7 @@ export class ChiChiCheats {
                  ((hexCode[1] & 7) << 4) | ((hexCode[0] & 8) << 4)
                 | (hexCode[0] & 7) | (hexCode[5] & 8);
 
-            patch = new GeniePatch();
+            patch = new MemoryPatch();
             patch.address = address;
             patch.data = data;
         }
@@ -109,7 +109,7 @@ export class ChiChiCheats {
                  ((hexCode[7] & 7) << 4) | ((hexCode[6] & 8) << 4)
                 | (hexCode[6] & 7) | (hexCode[5] & 8);
 
-            patch = new GeniePatch();
+            patch = new MemoryPatch();
             patch.address = address;
             patch.data = data;
             patch.compare = compare;

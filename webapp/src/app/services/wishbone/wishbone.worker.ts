@@ -1,8 +1,15 @@
-import { Subject } from "rxjs";
-import { WishboneMachine } from "./wishbone";
-import { Observable } from "rxjs/Observable";
-import { Local } from "protractor/built/driverProviders";
-import { Injectable } from "@angular/core";
+import { Subject } from 'rxjs';
+import { WishboneMachine } from './wishbone';
+import { Observable } from 'rxjs/Observable';
+import { Local } from 'protractor/built/driverProviders';
+import { Injectable } from '@angular/core';
+import { MemoryPatch, IBaseCart } from 'chichi';
+import { BaseCart } from 'chichi';
+
+export class Buffers{
+    vbuffer: Uint8Array;
+    abuffer: Float32Array;
+}
 
 @Injectable()
 export class WishboneWorker {
@@ -13,9 +20,8 @@ export class WishboneWorker {
     readonly NES_CONTROL_PAD_0 = 2;
     readonly NES_CONTROL_PAD_1 = 4;
     readonly NES_AUDIO_AVAILABLE = 3;
-
-    private nesControlBuf: SharedArrayBuffer = new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT);
-    nesInterop: Int32Array = new Int32Array(<any>this.nesControlBuf);
+    nesInterop: Int32Array = new Int32Array(<any>new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT));
+    
     pendingMessages: Array<any> = new Array<any>();
     
     nesMessageData: Subject<any> = new Subject<any>();
@@ -25,71 +31,51 @@ export class WishboneWorker {
     }
 
     constructor(private wishbone: WishboneMachine) {
-        console.log("making wishboneworker")
-
         wishbone.nesInterop = this.nesInterop;
+    }
 
-        wishbone.Reset = () => {
-            this.postNesMessage({ command: 'reset', debug: false });
-        }
-   
-        wishbone.PowerOff = () => {
-            this.postNesMessage({ command: 'stop' });
-            this.beforeClose();
-        }
-    
-        wishbone.Step = () => {
-            this.postNesMessage({ command: 'step', debug: true });
-        }
-    
-        wishbone.EjectCart = () =>  {
-            this.postNesMessage({ command: 'stop' });
-            this.beforeClose();
-            
-        }
-
-        wishbone.Run = () => {
-            this.postNesMessage({ command: 'run', debug: false });
-        }
+    private onready() {
 
     }
 
-    oncreate: (t: WishboneWorker)=>void;
-
-    start (oncreate: (t: WishboneWorker)=>void)  {
-        this.oncreate = oncreate;
-
-        if (this.worker) {
-            this.worker.terminate();
-            this.worker = undefined;
-            this.ready = false;
-        }        
-        const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../../assets/emulator.worker.bootstrap.js');
-
-        this.worker = new Worker(nesWorker);
-
-        this.worker.onmessage = (data: MessageEvent) => {
-            this.handleMessage(data);
-        };
+    createAndLoadRom(cart: BaseCart, rom: number[], buffers: Buffers) : Observable<any> {
+        return new Observable((subj)=>{
+            if (this.worker) {
+                this.worker.terminate();
+                this.worker = undefined;
+                this.ready = false;
+            }        
+            const nesWorker = require('file-loader?name=worker.[hash:20].[ext]!../../../assets/emulator.worker.bootstrap.js');
     
+            this.worker = new Worker(nesWorker);
+
+            this.onready = () => {
+                this.wishbone.nesInterop = this.nesInterop;
+                
+                this.postNesMessage({ 
+                    command: 'create',
+                    vbuffer: buffers.vbuffer,
+                    abuffer: buffers.abuffer,
+                    audioSettings: this.wishbone.SoundBopper.cloneSettings(),
+                    iops: this.wishbone.nesInterop
+                });
+
+                this.postNesMessage({ command: 'loadrom', rom: rom, name: '' });
+
+                this.wishbone.insertCart(cart);
+                subj.next();
+                
+            }
+
+            this.worker.onmessage = (data: MessageEvent) => {
+                this.handleMessage(data);
+            };
+
+        });
     }
 
     stop() {
         this.beforeClose();
-    }
-
-    postNesMessage(message: any) {
-        if (this.worker) {
-            this.worker.postMessage(message);
-            <any>Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL , 0);
-            <any>Atomics.wake(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 9999);
-        } else {
-            this.pendingMessages.push(message);
-        }
-    }
-    
-    updateAudioSettings() {
-        this.postNesMessage({ command: 'audiosettings', settings : this.wishbone.SoundBopper.audioSettings });
     }
 
     messageNumber = 0;
@@ -132,17 +118,6 @@ export class WishboneWorker {
             }
             if (data.Cart && wishbone.Cart.realCart) {
 
-                // this.Cart.realCart.CurrentBank = data.Cart.CurrentBank;
-                // this.Cart.realCart.current8 = data.Cart.current8;
-                // this.Cart.realCart.currentA = data.Cart.currentA;
-                // this.Cart.realCart.currentC = data.Cart.currentC;
-                // this.Cart.realCart.currentE = data.Cart.currentE;
-
-                // this.Cart.realCart.bank8start = data.Cart.bank8start;
-                // this.Cart.realCart.bankAstart = data.Cart.bankAstart;
-                // this.Cart.realCart.bankCstart = data.Cart.bankCstart;
-                // this.Cart.realCart.bankEstart = data.Cart.bankEstart;
-
             }
         }
         if (data.sound) {
@@ -155,7 +130,7 @@ export class WishboneWorker {
     private handleMessage(data: MessageEvent) {
         const d = data.data;
         if (d === 'ready') {
-            this.oncreate(this);
+            this.onready();
 
             while (this.pendingMessages.length > 0) {
                 this.worker.postMessage(this.pendingMessages.pop());
@@ -166,4 +141,80 @@ export class WishboneWorker {
         this.sync(d);
         this.nesMessageData.next(d);
     }
+
+    private postNesMessage(message: any) {
+        if (this.worker) {
+            this.worker.postMessage(message);
+            <any>Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL , 0);
+            <any>Atomics.wake(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 9999);
+        } else {
+            this.pendingMessages.push(message);
+        }
+    }
+    
+    updateAudioSettings() {
+        this.postNesMessage({ command: 'audiosettings', settings : this.wishbone.SoundBopper.audioSettings });
+    }
+
+    reset() {
+        this.postNesMessage({ command: 'reset', debug: false });
+    }
+
+    powerOff() {
+        this.postNesMessage({ command: 'stop' });
+        this.beforeClose();
+    }
+
+    ejectCart() {
+        this.postNesMessage({ command: 'stop' });
+        this.beforeClose();
+    }
+
+    run() {
+        this.postNesMessage({ command: 'run', debug: false });
+    }
+
+    debugStep() {
+        this.postNesMessage({ command: 'step', debug: true });
+    }
+
+    debugStepFrame() {
+        this.postNesMessage({ command: 'runframe', debug: true });
+    }
+            
+    continue() {
+        this.postNesMessage({ command: 'continue', debug: false });
+    }
+
+    saveState(){
+        const r = this.wishbone.Cart.realCart ;
+        if (r)
+        {
+            let obs = this.nesMessageData.filter((d) => d.state ? true: false).subscribe((d) => {
+                localStorage.setItem(r.ROMHashFunction + '_state', JSON.stringify(d.state));
+                obs.unsubscribe();
+            });
+
+            this.postNesMessage({ command: 'getstate' })
+        }
+    }
+
+    restoreState() {
+        const r = this.wishbone.Cart.realCart ;
+        if (r)
+        {
+            let item = localStorage.getItem(r.ROMHashFunction + '_state');
+            if (item) {
+                this.postNesMessage({ command: 'setstate', state: JSON.parse(item) })
+            }
+
+        }
+        
+    }
+
+
+    setCheats(cheats: Array<MemoryPatch>) {
+        this.postNesMessage({ command: 'cheats', cheats: cheats });
+    }
+
 }
