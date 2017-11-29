@@ -3,7 +3,7 @@ import { WishboneMachine } from './wishbone';
 import { Observable } from 'rxjs/Observable';
 import { Local } from 'protractor/built/driverProviders';
 import { Injectable } from '@angular/core';
-import { MemoryPatch, IBaseCart, BaseCart } from 'chichi';
+import { MemoryPatch, IBaseCart, BaseCart, ChiChiMessages, RunningStatuses, DebugStepTypes } from 'chichi';
 import { WishboneWorkerInterop } from './wishbone.worker.interop';
 
 class Buffers{
@@ -41,20 +41,13 @@ export class WishboneWorker {
             this.worker = new Worker(nesWorker);
 
             this.onready = () => {
-                
-                this.postNesMessage({ 
-                    command: 'create',
-                    vbuffer: buffers.vbuffer,
-                    abuffer: buffers.abuffer,
-                    audioSettings: this.wishbone.SoundBopper.cloneSettings(),
-                    iops: this.interop.iops
-                });
-
-                this.postNesMessage({ command: 'loadrom', rom: rom, name: '' });
-
-                this.wishbone.insertCart(cart);
-                subj.next();
-                
+                let msg = new ChiChiMessages.CreateCommand(buffers.vbuffer, buffers.abuffer, this.wishbone.SoundBopper.cloneSettings(), this.interop.iops);
+                this.postMessageAndWait(msg).subscribe((resp)=> {
+                    this.postMessageAndWait(new ChiChiMessages.LoadRomCommand(rom, cart.CartName)).subscribe(res=>{
+                        this.wishbone.insertCart(cart);
+                        subj.next();
+                    });
+                })
             }
 
             this.worker.onmessage = (data: MessageEvent) => {
@@ -132,6 +125,24 @@ export class WishboneWorker {
         this.nesMessageData.next(d);
     }
 
+    private postMessageAndWait(message: ChiChiMessages.WorkerMessage) : Observable<ChiChiMessages.WorkerResponse> {
+        let sub = new Observable<ChiChiMessages.WorkerResponse>((subject)=> {
+            this.nesMessageData.filter((p) => 
+            {   
+                return p.messageId === message.messageId ;
+            }
+            )
+            .subscribe((resp) => {
+                subject.next(resp);
+            }, err => {
+                subject.error(err);
+            } );
+            this.worker.postMessage(message);
+        });
+        return sub;
+
+    }
+
     private postNesMessage(message: any) {
         if (this.worker) {
             this.worker.postMessage(message);
@@ -142,37 +153,48 @@ export class WishboneWorker {
     }
     
     updateAudioSettings() {
-        this.postNesMessage({ command: 'audiosettings', settings : this.wishbone.SoundBopper.audioSettings });
+        const msg = new ChiChiMessages.AudioCommand(this.wishbone.SoundBopper.audioSettings)
+        this.postNesMessage(msg);
+    }
+
+    private setRunStatus(status: RunningStatuses) {
+        this.postMessageAndWait(new ChiChiMessages.RunStatusCommand(status))
+        
+        .subscribe(() => {
+            this.wishbone.runningStatus = status;
+        });
     }
 
     reset() {
-        this.postNesMessage({ command: 'reset', debug: false });
+        this.setRunStatus(RunningStatuses.Running);
     }
 
     powerOff() {
-        this.postNesMessage({ command: 'stop' });
-        this.beforeClose();
+        this.setRunStatus(RunningStatuses.Off);
     }
 
     ejectCart() {
-        this.postNesMessage({ command: 'stop' });
-        this.beforeClose();
+        this.setRunStatus(RunningStatuses.Off);
     }
 
     run() {
-        this.postNesMessage({ command: 'run', debug: false });
+        this.setRunStatus(RunningStatuses.Running);
+    }
+
+    pause() {
+        this.setRunStatus(RunningStatuses.Paused);
     }
 
     debugStep() {
-        this.postNesMessage({ command: 'step', debug: true });
+        this.postNesMessage(new ChiChiMessages.DebugCommand(DebugStepTypes.Instruction));
     }
 
     debugStepFrame() {
-        this.postNesMessage({ command: 'runframe', debug: true });
+        this.postNesMessage(new ChiChiMessages.DebugCommand(DebugStepTypes.Frame));
     }
             
     continue() {
-        this.postNesMessage({ command: 'continue', debug: false });
+        this.setRunStatus(RunningStatuses.Running);
     }
 
     saveState(){
@@ -203,7 +225,7 @@ export class WishboneWorker {
 
 
     setCheats(cheats: Array<MemoryPatch>) {
-        this.postNesMessage({ command: 'cheats', cheats: cheats });
+        this.postNesMessage(new ChiChiMessages.CheatCommand(cheats));
     }
 
 }

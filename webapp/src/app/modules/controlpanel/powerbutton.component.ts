@@ -1,32 +1,37 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { WishboneWorker } from '../../services/wishbone/wishbone.worker';
+import { RunningStatuses } from 'chichi';
 
 @Component({
         selector: 'controlpanel-powerbutton',
         templateUrl: './powerbutton.component.html',
+
     })
     export class PowerButtonComponent {
-
-        powerstate = false;
+        status: RunningStatuses = RunningStatuses.Off;
         powertoggle() {
-            if (this.powerstate === false) {
-                this.poweron();
+            debugger;
+            if (this.status === RunningStatuses.Running ) {
+                this.worker.pause();
             } else {
-                this.poweroff();
+                this.worker.run();
             }
         }
-        poweron() {
-            this.worker.run();
-            this.powerstate = true;
+
+        get icon(): string {
+            if (this.status === RunningStatuses.Running ) {
+                return 'pause';
+            } else {
+                return 'play';
+            }
         }
 
-        poweroff() {
-            this.worker.powerOff();
-            this.powerstate = false;
-        }
-
-        constructor(private worker: WishboneWorker) {
+        constructor(private worker: WishboneWorker, private wishbone: WishboneMachine, private cd: ChangeDetectorRef) {
+            this.wishbone.statusChanged.subscribe(() => {
+                this.status = wishbone.runningStatus;
+                cd.detectChanges();
+            });
         }
 
     }

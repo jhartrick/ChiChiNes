@@ -1,11 +1,13 @@
 ﻿
 declare var Atomics: any;
 import { WorkerInterop } from '../chichi/worker/worker.interop';
-import {  RunningStatuses } from '../chichi/ChiChiTypes';
+import {  RunningStatuses, DebugStepTypes } from '../chichi/ChiChiTypes';
 import { ChiChiMachine } from '../chichi/ChiChiMachine';
 import { MemoryPatch } from '../chichi/ChiChiCheats';
 import { ChiChiStateManager, ChiChiState } from '../chichi/ChiChiState'; 
+
 import * as CCMessage from '../chichi/worker/worker.message';
+
 
 class NesInfo {
     bufferupdate = false;
@@ -28,6 +30,24 @@ class NesInfo {
     };
 }
 
+class CommandHandler<T extends CCMessage.WorkerMessage> {
+    constructor(public command: string, private handler: (val:T) => any) {
+
+    }
+    process(command: T): CCMessage.WorkerResponse {   
+        try {
+            const cmdResp = this.handler(command);
+            if (cmdResp) {
+                return cmdResp;
+            }
+            return new CCMessage.WorkerResponse(command, true)            ;
+            
+        } catch (e) {
+            return new CCMessage.WorkerResponse(command, false, e.toString());
+        }
+    }
+}
+
 export class tendoWrapper {
     interop: WorkerInterop;
     framesRendered: number = 0;
@@ -45,19 +65,71 @@ export class tendoWrapper {
     sharedAudioBuffer: any; 
     sharedAudioBufferPos: number = 0;
 
+    commands = new Array<CommandHandler<any>>();
+
     constructor() {
         this.machine = new ChiChiMachine();
         this.interop = new WorkerInterop(new Int32Array(<any>(new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
+        this.commands.push(
+            new CommandHandler<CCMessage.CreateCommand>(
+                CCMessage.CMD_CREATE, 
+                (val) => { 
+                    return this.createMachine(val); 
+                })
+            );
+        this.commands.push(
+            new CommandHandler<CCMessage.LoadRomCommand>(
+                CCMessage.CMD_LOADROM, 
+                (val) => { 
+                    return this.loadCart(val); 
+                }) 
+            );
+        this.commands.push(
+            new CommandHandler<CCMessage.CheatCommand>(
+                CCMessage.CMD_CHEAT, 
+                (val) => { 
+                    return this.cheat(val); 
+                })
+            );        
+        this.commands.push(
+            new CommandHandler<CCMessage.AudioCommand>(
+                CCMessage.CMD_AUDIOSETTINGS, 
+                (val) => { 
+                    this.applyAudioSettings(val); 
+                })
+            );
+        this.commands.push(
+            new CommandHandler<CCMessage.RunStatusCommand>(
+                CCMessage.CMD_RUNSTATUS, 
+                (val) => { 
+                    this.changeRunStatus(val); 
+                })
+            );
+        this.commands.push(
+            new CommandHandler<CCMessage.DebugCommand>(
+                CCMessage.CMD_DEBUGSTEP, 
+                (val) => { 
+                    this.Debugging = true;
+                    switch (val.stepType)
+                    {
+                        case DebugStepTypes.Frame:
+                            this.debugRunFrame();
+
+                        break;
+                        case DebugStepTypes.Instruction:
+                            this.debugRunStep();
+                        break;
+                    }
+                })
+            );            
     }
 
-    createMachine(message?: CCMessage.CreateWorkerMessage) {
+    createMachine(message: CCMessage.CreateCommand): CCMessage.WorkerResponse {
         this.machine = new ChiChiMachine();
 
-        if (message) {
-            this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer = message.vbuffer;
-            this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer = message.abuffer;
-            this.interop = new WorkerInterop(message.iops);            
-        }
+        this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer = message.vbuffer;
+        this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer = message.abuffer;
+        this.interop = new WorkerInterop(message.iops);            
 
         this.machine.SoundBopper.audioSettings = message.audioSettings;
 
@@ -89,6 +161,8 @@ export class tendoWrapper {
             //this.updateState();
         };
         this.machine.Cpu.Debugging = false;
+
+        return new CCMessage.WorkerResponse(message, true);
     }
 
     updateBuffers() {
@@ -199,6 +273,31 @@ export class tendoWrapper {
         this.runStatus = this.machine.RunState;
     }
 
+    changeRunStatus(data: CCMessage.RunStatusCommand) {
+        this.runStatus = data.status;
+        switch (data.status) {
+            case RunningStatuses.Off:
+                this.stop();
+                break;
+            case RunningStatuses.Running:
+                if (this.runStatus == RunningStatuses.Paused) {
+                    this.run(false);
+                } else {
+                    this.run(true);
+                }
+                break;
+            case RunningStatuses.Paused:
+                this.interop.unloop();
+                clearInterval(this.interval);
+                break;
+            case RunningStatuses.Unloaded:
+                this.interop.unloop();
+                clearInterval(this.interval);
+                this.stop();
+            break;
+        }
+    }
+
     private runInnerLoop() {
         this.machine.PadOne.padOneState = this.interop.controlPad0; // [this.interop.NES_CONTROL_PAD_0] & 0xFF;
         this.machine.PadTwo.padOneState = this.interop.controlPad1; // [this.interop.NES_CONTROL_PAD_1] & 0xFF;
@@ -235,7 +334,7 @@ export class tendoWrapper {
           this.runStatus = machine.RunState;// runStatuses.Running;
       }
 
-    runFrame() {
+    debugRunFrame() {
         clearInterval(this.interval);
         this.frameFinished = false;
         const machine = this.machine;
@@ -255,7 +354,7 @@ export class tendoWrapper {
         this.runStatus = this.machine.RunState;
     }
 
-    step() {
+    debugRunStep() {
         clearInterval(this.interval);
         const machine = this.machine;
         machine.Cpu.Debugging = this.Debugging;
@@ -270,7 +369,7 @@ export class tendoWrapper {
     // attach require.js "require" fn here in bootstrapper
     require: any = {};
 
-    loadCart(rom: number[], name: string) {
+    loadCart(cmd: CCMessage.LoadRomCommand): CCMessage.WorkerResponse {
         var loader: any;
         this.require(
             { 
@@ -278,92 +377,44 @@ export class tendoWrapper {
             },['romloader.worker'], 
             (romloader: any) => {
                 const machine = this.machine;
-                const cart = romloader.loader.loadRom(rom, name);
+                const cart = romloader.loader.loadRom(cmd.rom, cmd.name);
                 cart.installCart(this.machine.ppu, this.machine.Cpu);
         
                 machine.Cart.NMIHandler = () => { this.machine.Cpu._handleIRQ = true; };
                         
                 this.machine.Cpu.cheating = false;
                 this.machine.Cpu.genieCodes = new Array<MemoryPatch>();
-            
 
                 this.updateBuffers();
                 delete romloader.loader;
                 this.require.undef('romloader.worker');
-                postMessage({ status: 'loaded' });
             });
+        return new CCMessage.WorkerResponse(cmd, true);
+    }
 
+    cheat(data: CCMessage.CheatCommand): CCMessage.WorkerResponse {
+        this.machine.Cpu.cheating = data.cheats.length > 0;
+        this.machine.Cpu.genieCodes = data.cheats;
+        return new CCMessage.WorkerResponse(data, true);
+    }
+
+    applyAudioSettings(data: CCMessage.AudioCommand) {
+        this.machine.SoundBopper.audioSettings = data.audioSettings;
     }
 
     handleMessage(event: MessageEvent) {
+        const handler = this.commands.find(c => c.command == event.data.command);
+        if (handler) {
+            const resp = handler.process(event.data);
+            postMessage(resp);
+            return;
+        }
+            
+
         let machine = this.machine;
 
         switch (event.data.command) {
-            case 'create':
 
-                // this.buffers = event.data;
-
-                this.createMachine(<CCMessage.CreateWorkerMessage>event.data);
-//                this.sharedAudioBufferPos = 0;
-                // this.iops = event.data.iops;
-                
-
-                // if (event.data.rom) {
-                //     this.loadCart(event.data.rom, event.data.name);
-                // }
-                break;
-            case 'cheats':
-                this.machine.Cpu.cheating = event.data.cheats.length > 0;
-                this.machine.Cpu.genieCodes = event.data.cheats;
-                break;                
-            case 'loadrom':
-                this.stop();
-                this.machine = undefined;
-                this.createMachine();
-                this.machine.EnableSound = false;
-                //this.createMachine();
-                this.loadCart(event.data.rom, event.data.name);
-                
-               break;
-            case 'loadnsf':
-                this.stop();
-                //this.createNsfMachine();
-                this.updateBuffers();
-
-                break;
-            case 'audiosettings':
-                this.machine.SoundBopper.audioSettings = event.data.settings;
-                break;
-            case 'mute':
-                this.machine.EnableSound = false;
-                break;
-            case 'unmute':
-                this.machine.EnableSound = true;
-                break;
-            case 'run':
-                this.Debugging = false;
-                this.run(true);
-                postMessage({ status: 'running' });
-                break;
-            case 'runframe':
-                this.Debugging = true;
-                this.runFrame();
-                postMessage({ status: 'stopped' });
-                break;
-            case 'step':
-                this.Debugging = true;
-                this.step();
-                postMessage({ status: 'stopped' });
-                break;
-            case 'continue':
-                this.run(false);
-                postMessage({ status: 'running' });
-                break;
-            case 'stop':
-                this.machine.EnableSound = false;
-                this.stop();
-                postMessage({ status: 'stopped' });
-                break;
             case 'reset':
                 this.reset();
                 break;

@@ -101,6 +101,11 @@ var RunningStatuses;
     RunningStatuses[RunningStatuses["Frozen"] = 3] = "Frozen";
     RunningStatuses[RunningStatuses["Paused"] = 4] = "Paused";
 })(RunningStatuses = exports.RunningStatuses || (exports.RunningStatuses = {}));
+var DebugStepTypes;
+(function (DebugStepTypes) {
+    DebugStepTypes[DebugStepTypes["Instruction"] = 0] = "Instruction";
+    DebugStepTypes[DebugStepTypes["Frame"] = 1] = "Frame";
+})(DebugStepTypes = exports.DebugStepTypes || (exports.DebugStepTypes = {}));
 var ChiChiCPPU_AddressingModes;
 (function (ChiChiCPPU_AddressingModes) {
     ChiChiCPPU_AddressingModes[ChiChiCPPU_AddressingModes["Bullshit"] = 0] = "Bullshit";
@@ -480,8 +485,10 @@ exports.QueuedPort = QueuedPort;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_interop_1 = __webpack_require__(3);
+var ChiChiTypes_1 = __webpack_require__(0);
 var ChiChiMachine_1 = __webpack_require__(4);
 var ChiChiState_1 = __webpack_require__(13);
+var CCMessage = __webpack_require__(14);
 var NesInfo = /** @class */ (function () {
     function NesInfo() {
         this.bufferupdate = false;
@@ -505,8 +512,28 @@ var NesInfo = /** @class */ (function () {
     }
     return NesInfo;
 }());
+var CommandHandler = /** @class */ (function () {
+    function CommandHandler(command, handler) {
+        this.command = command;
+        this.handler = handler;
+    }
+    CommandHandler.prototype.process = function (command) {
+        try {
+            var cmdResp = this.handler(command);
+            if (cmdResp) {
+                return cmdResp;
+            }
+            return new CCMessage.WorkerResponse(command, true);
+        }
+        catch (e) {
+            return new CCMessage.WorkerResponse(command, false, e.toString());
+        }
+    };
+    return CommandHandler;
+}());
 var tendoWrapper = /** @class */ (function () {
     function tendoWrapper() {
+        var _this = this;
         this.framesRendered = 0;
         this.startTime = 0;
         this.runTimeout = 0;
@@ -516,6 +543,7 @@ var tendoWrapper = /** @class */ (function () {
         this.framesPerSecond = 0;
         this.cartName = 'unk';
         this.sharedAudioBufferPos = 0;
+        this.commands = new Array();
         this.buffers = { vbuffer: [],
             abuffer: []
         };
@@ -523,15 +551,39 @@ var tendoWrapper = /** @class */ (function () {
         this.require = {};
         this.machine = new ChiChiMachine_1.ChiChiMachine();
         this.interop = new worker_interop_1.WorkerInterop(new Int32Array((new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
+        this.commands.push(new CommandHandler(CCMessage.CMD_CREATE, function (val) {
+            return _this.createMachine(val);
+        }));
+        this.commands.push(new CommandHandler(CCMessage.CMD_LOADROM, function (val) {
+            return _this.loadCart(val);
+        }));
+        this.commands.push(new CommandHandler(CCMessage.CMD_CHEAT, function (val) {
+            return _this.cheat(val);
+        }));
+        this.commands.push(new CommandHandler(CCMessage.CMD_AUDIOSETTINGS, function (val) {
+            _this.applyAudioSettings(val);
+        }));
+        this.commands.push(new CommandHandler(CCMessage.CMD_RUNSTATUS, function (val) {
+            _this.changeRunStatus(val);
+        }));
+        this.commands.push(new CommandHandler(CCMessage.CMD_DEBUGSTEP, function (val) {
+            _this.Debugging = true;
+            switch (val.stepType) {
+                case ChiChiTypes_1.DebugStepTypes.Frame:
+                    _this.debugRunFrame();
+                    break;
+                case ChiChiTypes_1.DebugStepTypes.Instruction:
+                    _this.debugRunStep();
+                    break;
+            }
+        }));
     }
     tendoWrapper.prototype.createMachine = function (message) {
         var _this = this;
         this.machine = new ChiChiMachine_1.ChiChiMachine();
-        if (message) {
-            this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer = message.vbuffer;
-            this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer = message.abuffer;
-            this.interop = new worker_interop_1.WorkerInterop(message.iops);
-        }
+        this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer = message.vbuffer;
+        this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer = message.abuffer;
+        this.interop = new worker_interop_1.WorkerInterop(message.iops);
         this.machine.SoundBopper.audioSettings = message.audioSettings;
         this.machine.Drawscreen = function () {
             // flush audio
@@ -560,6 +612,7 @@ var tendoWrapper = /** @class */ (function () {
             //this.updateState();
         };
         this.machine.Cpu.Debugging = false;
+        return new CCMessage.WorkerResponse(message, true);
     };
     tendoWrapper.prototype.updateBuffers = function () {
         var machine = this.machine;
@@ -654,6 +707,31 @@ var tendoWrapper = /** @class */ (function () {
         this.machine.PowerOff();
         this.runStatus = this.machine.RunState;
     };
+    tendoWrapper.prototype.changeRunStatus = function (data) {
+        this.runStatus = data.status;
+        switch (data.status) {
+            case ChiChiTypes_1.RunningStatuses.Off:
+                this.stop();
+                break;
+            case ChiChiTypes_1.RunningStatuses.Running:
+                if (this.runStatus == ChiChiTypes_1.RunningStatuses.Paused) {
+                    this.run(false);
+                }
+                else {
+                    this.run(true);
+                }
+                break;
+            case ChiChiTypes_1.RunningStatuses.Paused:
+                this.interop.unloop();
+                clearInterval(this.interval);
+                break;
+            case ChiChiTypes_1.RunningStatuses.Unloaded:
+                this.interop.unloop();
+                clearInterval(this.interval);
+                this.stop();
+                break;
+        }
+    };
     tendoWrapper.prototype.runInnerLoop = function () {
         this.machine.PadOne.padOneState = this.interop.controlPad0; // [this.interop.NES_CONTROL_PAD_0] & 0xFF;
         this.machine.PadTwo.padOneState = this.interop.controlPad1; // [this.interop.NES_CONTROL_PAD_1] & 0xFF;
@@ -684,7 +762,7 @@ var tendoWrapper = /** @class */ (function () {
         }, 0);
         this.runStatus = machine.RunState; // runStatuses.Running;
     };
-    tendoWrapper.prototype.runFrame = function () {
+    tendoWrapper.prototype.debugRunFrame = function () {
         clearInterval(this.interval);
         this.frameFinished = false;
         var machine = this.machine;
@@ -701,21 +779,21 @@ var tendoWrapper = /** @class */ (function () {
         //},16);
         this.runStatus = this.machine.RunState;
     };
-    tendoWrapper.prototype.step = function () {
+    tendoWrapper.prototype.debugRunStep = function () {
         clearInterval(this.interval);
         var machine = this.machine;
         machine.Cpu.Debugging = this.Debugging;
         machine.Step();
         this.runStatus = this.machine.RunState;
     };
-    tendoWrapper.prototype.loadCart = function (rom, name) {
+    tendoWrapper.prototype.loadCart = function (cmd) {
         var _this = this;
         var loader;
         this.require({
             baseUrl: "./assets"
         }, ['romloader.worker'], function (romloader) {
             var machine = _this.machine;
-            var cart = romloader.loader.loadRom(rom, name);
+            var cart = romloader.loader.loadRom(cmd.rom, cmd.name);
             cart.installCart(_this.machine.ppu, _this.machine.Cpu);
             machine.Cart.NMIHandler = function () { _this.machine.Cpu._handleIRQ = true; };
             _this.machine.Cpu.cheating = false;
@@ -723,71 +801,26 @@ var tendoWrapper = /** @class */ (function () {
             _this.updateBuffers();
             delete romloader.loader;
             _this.require.undef('romloader.worker');
-            postMessage({ status: 'loaded' });
         });
+        return new CCMessage.WorkerResponse(cmd, true);
+    };
+    tendoWrapper.prototype.cheat = function (data) {
+        this.machine.Cpu.cheating = data.cheats.length > 0;
+        this.machine.Cpu.genieCodes = data.cheats;
+        return new CCMessage.WorkerResponse(data, true);
+    };
+    tendoWrapper.prototype.applyAudioSettings = function (data) {
+        this.machine.SoundBopper.audioSettings = data.audioSettings;
     };
     tendoWrapper.prototype.handleMessage = function (event) {
+        var handler = this.commands.find(function (c) { return c.command == event.data.command; });
+        if (handler) {
+            var resp = handler.process(event.data);
+            postMessage(resp);
+            return;
+        }
         var machine = this.machine;
         switch (event.data.command) {
-            case 'create':
-                // this.buffers = event.data;
-                this.createMachine(event.data);
-                //                this.sharedAudioBufferPos = 0;
-                // this.iops = event.data.iops;
-                // if (event.data.rom) {
-                //     this.loadCart(event.data.rom, event.data.name);
-                // }
-                break;
-            case 'cheats':
-                this.machine.Cpu.cheating = event.data.cheats.length > 0;
-                this.machine.Cpu.genieCodes = event.data.cheats;
-                break;
-            case 'loadrom':
-                this.stop();
-                this.machine = undefined;
-                this.createMachine();
-                this.machine.EnableSound = false;
-                //this.createMachine();
-                this.loadCart(event.data.rom, event.data.name);
-                break;
-            case 'loadnsf':
-                this.stop();
-                //this.createNsfMachine();
-                this.updateBuffers();
-                break;
-            case 'audiosettings':
-                this.machine.SoundBopper.audioSettings = event.data.settings;
-                break;
-            case 'mute':
-                this.machine.EnableSound = false;
-                break;
-            case 'unmute':
-                this.machine.EnableSound = true;
-                break;
-            case 'run':
-                this.Debugging = false;
-                this.run(true);
-                postMessage({ status: 'running' });
-                break;
-            case 'runframe':
-                this.Debugging = true;
-                this.runFrame();
-                postMessage({ status: 'stopped' });
-                break;
-            case 'step':
-                this.Debugging = true;
-                this.step();
-                postMessage({ status: 'stopped' });
-                break;
-            case 'continue':
-                this.run(false);
-                postMessage({ status: 'running' });
-                break;
-            case 'stop':
-                this.machine.EnableSound = false;
-                this.stop();
-                postMessage({ status: 'stopped' });
-                break;
             case 'reset':
                 this.reset();
                 break;
@@ -3820,6 +3853,120 @@ var ChiChiStateManager = /** @class */ (function () {
     return ChiChiStateManager;
 }());
 exports.ChiChiStateManager = ChiChiStateManager;
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CMD_CREATE = 'create';
+exports.CMD_LOADROM = 'loadrom';
+exports.CMD_CHEAT = 'cheats';
+exports.CMD_AUDIOSETTINGS = 'audioSettings';
+exports.CMD_RUNSTATUS = 'runstatus';
+exports.CMD_DEBUGSTEP = 'debugstep';
+var lastId = 0;
+var WorkerMessage = /** @class */ (function () {
+    function WorkerMessage() {
+        this.command = 'null';
+        this.messageId = lastId++;
+    }
+    WorkerMessage.prototype.execute = function () { };
+    return WorkerMessage;
+}());
+exports.WorkerMessage = WorkerMessage;
+var CreateCommand = /** @class */ (function (_super) {
+    __extends(CreateCommand, _super);
+    function CreateCommand(vbuffer, abuffer, audioSettings, iops) {
+        var _this = _super.call(this) || this;
+        _this.vbuffer = vbuffer;
+        _this.abuffer = abuffer;
+        _this.audioSettings = audioSettings;
+        _this.iops = iops;
+        _this.command = exports.CMD_CREATE;
+        return _this;
+    }
+    return CreateCommand;
+}(WorkerMessage));
+exports.CreateCommand = CreateCommand;
+var LoadRomCommand = /** @class */ (function (_super) {
+    __extends(LoadRomCommand, _super);
+    function LoadRomCommand(rom, name) {
+        var _this = _super.call(this) || this;
+        _this.rom = rom;
+        _this.name = name;
+        _this.command = exports.CMD_LOADROM;
+        return _this;
+    }
+    return LoadRomCommand;
+}(WorkerMessage));
+exports.LoadRomCommand = LoadRomCommand;
+var RunStatusCommand = /** @class */ (function (_super) {
+    __extends(RunStatusCommand, _super);
+    function RunStatusCommand(status) {
+        var _this = _super.call(this) || this;
+        _this.status = status;
+        _this.command = exports.CMD_RUNSTATUS;
+        return _this;
+    }
+    return RunStatusCommand;
+}(WorkerMessage));
+exports.RunStatusCommand = RunStatusCommand;
+var DebugCommand = /** @class */ (function (_super) {
+    __extends(DebugCommand, _super);
+    function DebugCommand(stepType) {
+        var _this = _super.call(this) || this;
+        _this.stepType = stepType;
+        _this.command = exports.CMD_DEBUGSTEP;
+        return _this;
+    }
+    return DebugCommand;
+}(WorkerMessage));
+exports.DebugCommand = DebugCommand;
+var CheatCommand = /** @class */ (function (_super) {
+    __extends(CheatCommand, _super);
+    function CheatCommand(cheats) {
+        var _this = _super.call(this) || this;
+        _this.cheats = cheats;
+        _this.command = exports.CMD_CHEAT;
+        return _this;
+    }
+    return CheatCommand;
+}(WorkerMessage));
+exports.CheatCommand = CheatCommand;
+var AudioCommand = /** @class */ (function (_super) {
+    __extends(AudioCommand, _super);
+    function AudioCommand(audioSettings) {
+        var _this = _super.call(this) || this;
+        _this.audioSettings = audioSettings;
+        _this.command = exports.CMD_CHEAT;
+        return _this;
+    }
+    return AudioCommand;
+}(WorkerMessage));
+exports.AudioCommand = AudioCommand;
+var WorkerResponse = /** @class */ (function () {
+    function WorkerResponse(msg, success, error) {
+        this.success = success;
+        this.error = error;
+        this.messageId = msg.messageId;
+    }
+    return WorkerResponse;
+}());
+exports.WorkerResponse = WorkerResponse;
 
 
 /***/ })

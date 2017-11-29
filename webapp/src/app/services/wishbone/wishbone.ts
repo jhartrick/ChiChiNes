@@ -1,8 +1,8 @@
-import { NgZone, Injectable } from '@angular/core';
+import { NgZone, Injectable, EventEmitter } from '@angular/core';
 import * as crc from 'crc';
 
 import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, IChiChiAPU, IChiChiAPUState,
-        WavSharer, ChiChiCPPU, ChiChiMachine, ChiChiPPU, GameGenieCode, ChiChiCheats, IBaseCart, WorkerInterop  } from 'chichi';
+        WavSharer, ChiChiCPPU, ChiChiMachine, ChiChiPPU, GameGenieCode, ChiChiCheats, IBaseCart, WorkerInterop, RunningStatuses  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
@@ -12,13 +12,7 @@ import { WishboneAPU } from './wishbone.audio';
 
 import { Http } from '@angular/http';
 import { WishboneWorker } from './wishbone.worker';
-import { EventEmitter } from 'selenium-webdriver';
 import { WishboneWorkerInterop } from './wishbone.worker.interop';
-
-
-
-
-
 
 export class WishbonePPU extends ChiChiPPU {
 }
@@ -31,9 +25,19 @@ export class WishboneMachine  {
     fps = 0;
     nesReady: boolean;
     tileDoodler: TileDoodler;
+    statusChanged = new EventEmitter<RunningStatuses>(true);
 
+    private runStatus: RunningStatuses;
 
-    RunState: number;
+    get runningStatus(): RunningStatuses {
+        return this.runStatus;
+    }
+
+    set runningStatus(run: RunningStatuses) {
+        this.runStatus = run;
+        this.statusChanged.next(this.runStatus);
+    }
+
     Cpu: WishboneCPPU;
     ppu: WishbonePPU;
     Cart: WishboneCart;
@@ -72,7 +76,6 @@ export class WishboneMachine  {
     }
 
     private nesStateSubject: Subject<WishboneMachine> = new Subject<WishboneMachine>();
-
 
     asObservable() {
         return this.nesStateSubject.asObservable();

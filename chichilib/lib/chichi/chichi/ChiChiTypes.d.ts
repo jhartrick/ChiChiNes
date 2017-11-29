@@ -9,6 +9,10 @@ export declare enum RunningStatuses {
     Frozen = 3,
     Paused = 4,
 }
+export declare enum DebugStepTypes {
+    Instruction = 0,
+    Frame = 1,
+}
 export declare enum ChiChiCPPU_AddressingModes {
     Bullshit = 0,
     Implicit = 1,

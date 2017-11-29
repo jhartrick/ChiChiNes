@@ -15,6 +15,7 @@ import { CartLoaderComponent } from './cartloader.component';
 import { PowerButtonComponent } from './powerbutton.component';
 import { ResetButtonComponent } from './resetbutton.component';
 import { MuteButtonComponent } from './mutebutton.component';
+import { StopButtonComponent } from './stopbutton.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { MuteButtonComponent } from './mutebutton.component';
       CartLoaderComponent,
       PowerButtonComponent,
       ResetButtonComponent,
-      MuteButtonComponent
+      MuteButtonComponent,
+      StopButtonComponent
   ],
   entryComponents: [
     VolumeComponent,
@@ -56,7 +58,8 @@ import { MuteButtonComponent } from './mutebutton.component';
     CartLoaderComponent,
     PowerButtonComponent,
     ResetButtonComponent,
-    MuteButtonComponent
+    MuteButtonComponent,
+    StopButtonComponent
 ],
   providers: []
 })

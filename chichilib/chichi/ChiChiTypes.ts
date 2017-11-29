@@ -15,7 +15,12 @@ export enum RunningStatuses {
     Off = 1,
     Running = 2,
     Frozen = 3,
-    Paused = 4
+    Paused = 4,
+}
+
+export enum DebugStepTypes {
+    Instruction,
+    Frame,
 }
 
 export enum ChiChiCPPU_AddressingModes {
