@@ -3,10 +3,10 @@ import { WishboneMachine } from './wishbone';
 import { Observable } from 'rxjs/Observable';
 import { Local } from 'protractor/built/driverProviders';
 import { Injectable } from '@angular/core';
-import { MemoryPatch, IBaseCart } from 'chichi';
-import { BaseCart } from 'chichi';
+import { MemoryPatch, IBaseCart, BaseCart } from 'chichi';
+import { WishboneWorkerInterop } from './wishbone.worker.interop';
 
-export class Buffers{
+class Buffers{
     vbuffer: Uint8Array;
     abuffer: Float32Array;
 }
@@ -14,24 +14,15 @@ export class Buffers{
 @Injectable()
 export class WishboneWorker {
     ready: boolean = false;
-
     worker: Worker;
-    readonly NES_GAME_LOOP_CONTROL = 0;
-    readonly NES_CONTROL_PAD_0 = 2;
-    readonly NES_CONTROL_PAD_1 = 4;
-    readonly NES_AUDIO_AVAILABLE = 3;
-    nesInterop: Int32Array = new Int32Array(<any>new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT));
     
     pendingMessages: Array<any> = new Array<any>();
-    
     nesMessageData: Subject<any> = new Subject<any>();
-
+    
     beforeClose() {
 
     }
-
-    constructor(private wishbone: WishboneMachine) {
-        wishbone.nesInterop = this.nesInterop;
+    constructor(private interop: WishboneWorkerInterop, private wishbone: WishboneMachine) {
     }
 
     private onready() {
@@ -50,14 +41,13 @@ export class WishboneWorker {
             this.worker = new Worker(nesWorker);
 
             this.onready = () => {
-                this.wishbone.nesInterop = this.nesInterop;
                 
                 this.postNesMessage({ 
                     command: 'create',
                     vbuffer: buffers.vbuffer,
                     abuffer: buffers.abuffer,
                     audioSettings: this.wishbone.SoundBopper.cloneSettings(),
-                    iops: this.wishbone.nesInterop
+                    iops: this.interop.iops
                 });
 
                 this.postNesMessage({ command: 'loadrom', rom: rom, name: '' });
@@ -145,8 +135,7 @@ export class WishboneWorker {
     private postNesMessage(message: any) {
         if (this.worker) {
             this.worker.postMessage(message);
-            <any>Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL , 0);
-            <any>Atomics.wake(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 9999);
+            this.interop.unloop();
         } else {
             this.pendingMessages.push(message);
         }

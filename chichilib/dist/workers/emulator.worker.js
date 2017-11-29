@@ -516,18 +516,23 @@ var tendoWrapper = /** @class */ (function () {
         this.framesPerSecond = 0;
         this.cartName = 'unk';
         this.sharedAudioBufferPos = 0;
-        this.buffers = {};
+        this.buffers = { vbuffer: [],
+            abuffer: []
+        };
         // attach require.js "require" fn here in bootstrapper
         this.require = {};
         this.machine = new ChiChiMachine_1.ChiChiMachine();
         this.interop = new worker_interop_1.WorkerInterop(new Int32Array((new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
     }
-    tendoWrapper.prototype.createMachine = function () {
+    tendoWrapper.prototype.createMachine = function (message) {
         var _this = this;
         this.machine = new ChiChiMachine_1.ChiChiMachine();
-        this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer;
-        this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer;
-        this.machine.SoundBopper.audioSettings = this.buffers.audioSettings;
+        if (message) {
+            this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer = message.vbuffer;
+            this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer = message.abuffer;
+            this.interop = new worker_interop_1.WorkerInterop(message.iops);
+        }
+        this.machine.SoundBopper.audioSettings = message.audioSettings;
         this.machine.Drawscreen = function () {
             // flush audio
             // globals.postMessage({ frame: true, fps: framesPerSecond });
@@ -651,7 +656,7 @@ var tendoWrapper = /** @class */ (function () {
     };
     tendoWrapper.prototype.runInnerLoop = function () {
         this.machine.PadOne.padOneState = this.interop.controlPad0; // [this.interop.NES_CONTROL_PAD_0] & 0xFF;
-        this.machine.PadOne.padOneState = this.interop.controlPad1; // [this.interop.NES_CONTROL_PAD_1] & 0xFF;
+        this.machine.PadTwo.padOneState = this.interop.controlPad1; // [this.interop.NES_CONTROL_PAD_1] & 0xFF;
         this.machine.RunFrame();
         this.framesPerSecond = 0;
         if ((this.framesRendered++) === 60) {
@@ -725,14 +730,13 @@ var tendoWrapper = /** @class */ (function () {
         var machine = this.machine;
         switch (event.data.command) {
             case 'create':
-                this.buffers = event.data;
-                this.createMachine();
+                // this.buffers = event.data;
+                this.createMachine(event.data);
                 //                this.sharedAudioBufferPos = 0;
                 // this.iops = event.data.iops;
-                this.interop = new worker_interop_1.WorkerInterop(event.data.iops);
-                if (event.data.rom) {
-                    this.loadCart(event.data.rom, event.data.name);
-                }
+                // if (event.data.rom) {
+                //     this.loadCart(event.data.rom, event.data.name);
+                // }
                 break;
             case 'cheats':
                 this.machine.Cpu.cheating = event.data.cheats.length > 0;
@@ -812,8 +816,8 @@ exports.tendoWrapper = tendoWrapper;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var WorkerInterop = /** @class */ (function () {
-    function WorkerInterop(nesInterop) {
-        this.nesInterop = nesInterop;
+    function WorkerInterop(interopBuffer) {
+        this.interopBuffer = interopBuffer;
         this.NES_GAME_LOOP_CONTROL = 0;
         this.NES_FPS = 1;
         this.NES_CONTROL_PAD_0 = 2;
@@ -821,54 +825,54 @@ var WorkerInterop = /** @class */ (function () {
         this.NES_CONTROL_PAD_1 = 4;
     }
     WorkerInterop.prototype.loop = function () {
-        Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 1);
+        Atomics.store(this.interopBuffer, this.NES_GAME_LOOP_CONTROL, 1);
     };
     WorkerInterop.prototype.unloop = function () {
-        Atomics.store(this.nesInterop, this.NES_GAME_LOOP_CONTROL, 0);
+        Atomics.store(this.interopBuffer, this.NES_GAME_LOOP_CONTROL, 0);
     };
     Object.defineProperty(WorkerInterop.prototype, "looping", {
         get: function () {
-            return this.nesInterop[this.NES_GAME_LOOP_CONTROL] > 0;
+            return this.interopBuffer[this.NES_GAME_LOOP_CONTROL] > 0;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WorkerInterop.prototype, "fps", {
         get: function () {
-            return this.nesInterop[this.NES_FPS] & 0xff;
+            return this.interopBuffer[this.NES_FPS] & 0xff;
         },
         set: function (val) {
-            this.nesInterop[this.NES_FPS] = val;
+            this.interopBuffer[this.NES_FPS] = val;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WorkerInterop.prototype, "controlPad0", {
         get: function () {
-            return this.nesInterop[this.NES_CONTROL_PAD_0] & 0xff;
+            return this.interopBuffer[this.NES_CONTROL_PAD_0] & 0xff;
         },
         set: function (val) {
-            this.nesInterop[this.NES_CONTROL_PAD_0] = val;
+            this.interopBuffer[this.NES_CONTROL_PAD_0] = val;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WorkerInterop.prototype, "controlPad1", {
         get: function () {
-            return this.nesInterop[this.NES_CONTROL_PAD_0] & 0xff;
+            return this.interopBuffer[this.NES_CONTROL_PAD_1] & 0xff;
         },
         set: function (val) {
-            this.nesInterop[this.NES_CONTROL_PAD_0] = val;
+            this.interopBuffer[this.NES_CONTROL_PAD_1] = val;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WorkerInterop.prototype, "audioAvailable", {
         get: function () {
-            return this.nesInterop[this.NES_AUDIO_AVAILABLE];
+            return this.interopBuffer[this.NES_AUDIO_AVAILABLE];
         },
         set: function (val) {
-            this.nesInterop[this.NES_AUDIO_AVAILABLE] = val;
+            this.interopBuffer[this.NES_AUDIO_AVAILABLE] = val;
         },
         enumerable: true,
         configurable: true

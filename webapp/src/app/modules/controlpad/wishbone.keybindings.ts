@@ -1,4 +1,19 @@
-export class KeyboardSettings {
+export class KeyBindings {
+    keyName(keyCode: number): string {
+        let keyName = '';
+        keyName = KeyBindings.keys[keyCode.toString()];
+        return keyName;
+    }
+
+    left = 37;
+    right = 39;
+    up = 38;
+    down = 40;
+    b = 90;
+    a = 88;
+    select = 65;
+    start = 83;
+    
     static keys = {
         '8': 'backspace',
         '9': 'tab',

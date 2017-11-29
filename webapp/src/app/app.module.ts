@@ -29,11 +29,11 @@ import { ControlPanelModule } from './modules/controlpanel/controlpanel.module';
 import { RoutingModule } from './modules/routing.module';
 
 import { DomSanitizer } from '@angular/platform-browser';
-import { WishboneWorker } from './services/wishbone/wishbone.worker';
+import { WishboneWorker  } from './services/wishbone/wishbone.worker';
 
 import { DebugLayoutComponent } from './layouts/debuglayout.component';
 import { PlayLayoutComponent } from './layouts/playlayout.component';
-
+import { WishboneWorkerInterop } from './services/wishbone/wishbone.worker.interop';
 
 @NgModule({
   declarations: [
@@ -68,7 +68,7 @@ import { PlayLayoutComponent } from './layouts/playlayout.component';
       ToolStripModule,
       ControlPanelModule
   ],
-  providers: [HttpModule, WishboneMachine, WishboneWorker, NESService, RomLoader, MatIconRegistry],
+  providers: [HttpModule, WishboneWorkerInterop, WishboneMachine, WishboneWorker, NESService, RomLoader, MatIconRegistry],
   bootstrap: [AppComponent]
 })
 

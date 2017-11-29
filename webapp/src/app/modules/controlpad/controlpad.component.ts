@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { WishboneMachine } from '../../services/wishbone/wishbone';
 import { ControlDialogComponent } from './controlpad.dialog.component';
 import { MatDialog } from '@angular/material';
+import { WishboneKeyboardSettings } from './keyboardsettings';
 
 @Component({
   selector: 'controlpad-config',
@@ -10,20 +11,20 @@ import { MatDialog } from '@angular/material';
   styleUrls: ['./controlpad.component.css']
 })
 export class ControlConfigComponent {
-    wishbone: WishboneMachine;
-    constructor(private nesService: NESService, private dialog: MatDialog) {
-        this.wishbone = nesService.wishbone;
+    
+    constructor(private keysettings: WishboneKeyboardSettings, private dialog: MatDialog) {
+        
     }
 
     showDialog () {
-        this.wishbone.PadOne.enabled = false;
+        this.keysettings.padOne.enabled = this.keysettings.padTwo.enabled = false;
         const dialogRef = this.dialog.open(ControlDialogComponent, {
             height: '80%',
             width: '60%',
-            data: { wishbone:  this.wishbone }
+            data: { }
           });
         dialogRef.afterClosed().subscribe( () => {
-            this.wishbone.PadOne.enabled = true;
+            this.keysettings.padOne.enabled = this.keysettings.padTwo.enabled = true;
         });
     }
 

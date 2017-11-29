@@ -5,7 +5,7 @@ import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ControlDialogComponent } from './controlpad.dialog.component';
 import { ControlConfigComponent } from './controlpad.component';
-
+import { WishboneKeyboardSettings } from './keyboardsettings' 
 @NgModule({
   declarations: [
     ControlDialogComponent,
@@ -26,6 +26,7 @@ import { ControlConfigComponent } from './controlpad.component';
   ],
   exports: [
     ControlConfigComponent
-  ]
+  ],
+  providers: [ WishboneKeyboardSettings ]
 })
 export class ControlPadModule { }

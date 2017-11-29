@@ -1,10 +1,11 @@
 ﻿
 declare var Atomics: any;
-import { WorkerInterop } from './worker.interop';
+import { WorkerInterop } from '../chichi/worker/worker.interop';
 import {  RunningStatuses } from '../chichi/ChiChiTypes';
 import { ChiChiMachine } from '../chichi/ChiChiMachine';
 import { MemoryPatch } from '../chichi/ChiChiCheats';
 import { ChiChiStateManager, ChiChiState } from '../chichi/ChiChiState'; 
+import * as CCMessage from '../chichi/worker/worker.message';
 
 class NesInfo {
     bufferupdate = false;
@@ -49,11 +50,16 @@ export class tendoWrapper {
         this.interop = new WorkerInterop(new Int32Array(<any>(new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
     }
 
-    createMachine() {
+    createMachine(message?: CCMessage.CreateWorkerMessage) {
         this.machine = new ChiChiMachine();
-        this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer;
-        this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer;
-        this.machine.SoundBopper.audioSettings = this.buffers.audioSettings;
+
+        if (message) {
+            this.machine.Cpu.ppu.byteOutBuffer = this.buffers.vbuffer = message.vbuffer;
+            this.machine.SoundBopper.writer.SharedBuffer = this.buffers.abuffer = message.abuffer;
+            this.interop = new WorkerInterop(message.iops);            
+        }
+
+        this.machine.SoundBopper.audioSettings = message.audioSettings;
 
         this.machine.Drawscreen = () => {
             // flush audio
@@ -195,7 +201,7 @@ export class tendoWrapper {
 
     private runInnerLoop() {
         this.machine.PadOne.padOneState = this.interop.controlPad0; // [this.interop.NES_CONTROL_PAD_0] & 0xFF;
-        this.machine.PadOne.padOneState = this.interop.controlPad1; // [this.interop.NES_CONTROL_PAD_1] & 0xFF;
+        this.machine.PadTwo.padOneState = this.interop.controlPad1; // [this.interop.NES_CONTROL_PAD_1] & 0xFF;
 
         this.machine.RunFrame();
         this.framesPerSecond = 0;
@@ -257,7 +263,9 @@ export class tendoWrapper {
         this.runStatus = this.machine.RunState;
     }
 
-    buffers: any = {};
+    buffers: any = { vbuffer: [],
+        abuffer: [] 
+    };
 
     // attach require.js "require" fn here in bootstrapper
     require: any = {};
@@ -292,15 +300,17 @@ export class tendoWrapper {
 
         switch (event.data.command) {
             case 'create':
-                this.buffers = event.data;
-                this.createMachine();
+
+                // this.buffers = event.data;
+
+                this.createMachine(<CCMessage.CreateWorkerMessage>event.data);
 //                this.sharedAudioBufferPos = 0;
                 // this.iops = event.data.iops;
-                this.interop = new WorkerInterop(event.data.iops);
+                
 
-                if (event.data.rom) {
-                    this.loadCart(event.data.rom, event.data.name);
-                }
+                // if (event.data.rom) {
+                //     this.loadCart(event.data.rom, event.data.name);
+                // }
                 break;
             case 'cheats':
                 this.machine.Cpu.cheating = event.data.cheats.length > 0;
