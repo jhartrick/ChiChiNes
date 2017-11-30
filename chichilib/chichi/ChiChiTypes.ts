@@ -16,6 +16,7 @@ export enum RunningStatuses {
     Running = 2,
     Frozen = 3,
     Paused = 4,
+
 }
 
 export enum DebugStepTypes {

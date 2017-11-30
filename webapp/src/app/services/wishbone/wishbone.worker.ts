@@ -57,9 +57,6 @@ export class WishboneWorker {
         });
     }
 
-    stop() {
-        this.beforeClose();
-    }
 
     messageNumber = 0;
 
@@ -69,7 +66,9 @@ export class WishboneWorker {
             
             // console.log("state "  + JSON.stringify(data.state));
         }
-
+        if (data.machine) {
+            this.wishbone.runningStatus = data.machine.runStatus;
+        }
         if (data.bufferupdate) {
             if (data.Cpu.Rams) {
                 wishbone.Cpu.Rams = data.Cpu.Rams;
@@ -127,17 +126,20 @@ export class WishboneWorker {
 
     private postMessageAndWait(message: ChiChiMessages.WorkerMessage) : Observable<ChiChiMessages.WorkerResponse> {
         let sub = new Observable<ChiChiMessages.WorkerResponse>((subject)=> {
-            this.nesMessageData.filter((p) => 
+            const innerSub = this.nesMessageData.filter((p) => 
             {   
                 return p.messageId === message.messageId ;
             }
             )
             .subscribe((resp) => {
                 subject.next(resp);
+                innerSub.unsubscribe();
             }, err => {
                 subject.error(err);
+                innerSub.unsubscribe();
             } );
             this.worker.postMessage(message);
+            this.interop.unloop();
         });
         return sub;
 
@@ -166,7 +168,7 @@ export class WishboneWorker {
     }
 
     reset() {
-        this.setRunStatus(RunningStatuses.Running);
+        this.postNesMessage(new ChiChiMessages.ResetCommand());
     }
 
     powerOff() {

@@ -12,7 +12,7 @@ import * as CCMessage from '../chichi/worker/worker.message';
 class NesInfo {
     bufferupdate = false;
     stateupdate = true;
-    runStatus: any = {};
+    machine: any = {};
     cartInfo: any = {};
     sound: any = {};
     Cpu: any = {};
@@ -120,6 +120,15 @@ export class tendoWrapper {
                             this.debugRunStep();
                         break;
                     }
+                    this.updateState();
+                })
+            );
+            
+        this.commands.push(
+            new CommandHandler<CCMessage.ResetCommand>(
+                CCMessage.CMD_RESET, 
+                (val) => { 
+                    this.machine.Reset();
                 })
             );            
     }
@@ -197,8 +206,9 @@ export class tendoWrapper {
         let info = new NesInfo();
 
         if (this.machine && this.machine.Cart) {
-
-
+            info.machine = {
+                runStatus: this.runStatus
+            }
 
             info.Cpu = {
                 //Rams: this.machine.Cpu.Rams,
@@ -274,28 +284,27 @@ export class tendoWrapper {
     }
 
     changeRunStatus(data: CCMessage.RunStatusCommand) {
-        this.runStatus = data.status;
         switch (data.status) {
             case RunningStatuses.Off:
                 this.stop();
                 break;
             case RunningStatuses.Running:
-                if (this.runStatus == RunningStatuses.Paused) {
+                if (this.runStatus === RunningStatuses.Paused) {
                     this.run(false);
                 } else {
                     this.run(true);
                 }
                 break;
             case RunningStatuses.Paused:
-                this.interop.unloop();
                 clearInterval(this.interval);
                 break;
             case RunningStatuses.Unloaded:
-                this.interop.unloop();
                 clearInterval(this.interval);
                 this.stop();
             break;
         }
+        
+        this.runStatus = data.status;
     }
 
     private runInnerLoop() {
@@ -320,11 +329,14 @@ export class tendoWrapper {
           if (reset) {
               machine.Reset();
           }
-          machine.Cpu.Debugging = false;
-          this.startTime = new Date().getTime();
 
           clearInterval(this.interval);
           this.interval = setInterval(() => {
+            machine.Cpu.Debugging = false;
+            machine.WaveForms.audioBytesWritten = 0;
+            machine.WaveForms.sharedAudioBufferPos = 0;
+            this.startTime = new Date().getTime();
+
             this.interop.loop();
             while(this.interop.looping) {  
                 this.runInnerLoop();
@@ -333,7 +345,7 @@ export class tendoWrapper {
 
           this.runStatus = machine.RunState;// runStatuses.Running;
       }
-
+      
     debugRunFrame() {
         clearInterval(this.interval);
         this.frameFinished = false;
@@ -346,13 +358,6 @@ export class tendoWrapper {
 
     }
 
-    reset() {
-        const machine = this.machine;
-        //setTimeout(()=>{
-        machine.Reset();
-        //},16);
-        this.runStatus = this.machine.RunState;
-    }
 
     debugRunStep() {
         clearInterval(this.interval);
@@ -362,7 +367,8 @@ export class tendoWrapper {
         this.runStatus = this.machine.RunState;
     }
 
-    buffers: any = { vbuffer: [],
+    buffers: any = { 
+        vbuffer: [],
         abuffer: [] 
     };
 
@@ -407,6 +413,7 @@ export class tendoWrapper {
         if (handler) {
             const resp = handler.process(event.data);
             postMessage(resp);
+            this.updateState();
             return;
         }
             
@@ -414,11 +421,6 @@ export class tendoWrapper {
         let machine = this.machine;
 
         switch (event.data.command) {
-
-            case 'reset':
-                this.reset();
-                break;
-
             case 'getstate':
                 const state = new ChiChiStateManager().read(this.machine);
                 postMessage( { state: state } );

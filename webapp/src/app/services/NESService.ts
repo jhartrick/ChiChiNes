@@ -2,7 +2,7 @@ import { Injectable, EventEmitter } from '@angular/core';
 import { Observable, Subscriber } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { WishboneMachine } from "./wishbone/wishbone";
-import { ChiChiCPPU, AudioSettings, ChiChiPPU, BaseCart } from 'chichi';
+import { ChiChiCPPU, AudioSettings, ChiChiPPU, BaseCart, RunningStatuses } from 'chichi';
 import { Http } from '@angular/http';
 import * as crc from 'crc';
 import { WishboneWorker } from './wishbone/wishbone.worker';
@@ -35,6 +35,13 @@ export class NESService {
     constructor(public wishbone: WishboneMachine, private worker: WishboneWorker) {
         this.audioHandler = new ChiChiThreeJSAudio(this.wishbone.WaveForms);
         this.audioSettings = this.audioHandler.getSound();
+
+        wishbone.statusChanged.subscribe((status) => {
+            if (!this.audioSettings.muted || this.audioSettings.volume > 0 ) {
+                this.audioSettings.muted = (status !== RunningStatuses.Running); 
+            }
+        });
+
 
         const statusMsgs = this.worker.nesMessageData
             .filter( (data)=> data.status ? true : false)

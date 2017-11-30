@@ -59,11 +59,12 @@ export class ChiChiThreeJSAudio {
 		audioSource.connect(gainNode);
 		audioSource.connect(scriptNode);
 
+		const result = new ThreeJSAudioSettings(gainNode, listener);
+
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {
-			
 			const wavForms = this.wavSharer;
-			
 			let nesBytesAvailable = wavForms.audioBytesWritten;
+
 
 			lastReadPos = wavForms.bufferPosition - nesBytesAvailable;
 
@@ -83,6 +84,7 @@ export class ChiChiThreeJSAudio {
 			}
 
 			wavForms.audioBytesWritten = nesBytesAvailable;
+		
 			wavForms.wakeSleepers(); // = nesBytesAvailable;
 		}
 
@@ -94,7 +96,7 @@ export class ChiChiThreeJSAudio {
 		
 		this.wavSharer.SharedBuffer = nesAudio;
 
-		const result = new ThreeJSAudioSettings(gainNode, listener);
+		
 		result.abuffer = nesAudio;
 		result.sampleRate = audioCtx.sampleRate;
 		return result;

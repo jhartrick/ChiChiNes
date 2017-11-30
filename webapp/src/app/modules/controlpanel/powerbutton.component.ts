@@ -11,7 +11,6 @@ import { RunningStatuses } from 'chichi';
     export class PowerButtonComponent {
         status: RunningStatuses = RunningStatuses.Off;
         powertoggle() {
-            debugger;
             if (this.status === RunningStatuses.Running ) {
                 this.worker.pause();
             } else {
@@ -30,7 +29,6 @@ import { RunningStatuses } from 'chichi';
         constructor(private worker: WishboneWorker, private wishbone: WishboneMachine, private cd: ChangeDetectorRef) {
             this.wishbone.statusChanged.subscribe(() => {
                 this.status = wishbone.runningStatus;
-                cd.detectChanges();
             });
         }
 

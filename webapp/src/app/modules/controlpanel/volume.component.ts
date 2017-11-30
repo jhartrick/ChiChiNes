@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { LocalAudioSettings } from '../../services/wishbone/wishbone.audio.localsettings';
 import { NESService } from '../../services/NESService';
+import { WishboneMachine } from '../../services/wishbone/wishbone';
+import { RunningStatuses } from '../../../../../chichilib/lib/chichi/chichi/ChiChiTypes';
 
 @Component({
     selector: 'controlpanel-volume',
@@ -15,6 +17,8 @@ import { NESService } from '../../services/NESService';
         localSettings: LocalAudioSettings;
         constructor(private nesService: NESService) {
             this.localSettings = this.nesService.audioSettings;
+            
+
         }
         onclick = () => {
             this.localSettings.muted = !this.localSettings.muted;

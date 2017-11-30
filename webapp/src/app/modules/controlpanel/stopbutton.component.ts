@@ -15,9 +15,9 @@ import { RunningStatuses } from 'chichi';
         show = false;
 
         constructor(private worker: WishboneWorker, private wishbone: WishboneMachine) {
+            this.show = this.wishbone.runningStatus === RunningStatuses.Running;
             this.wishbone.statusChanged.subscribe(() => {
-                this.show = this.wishbone.runningStatus === RunningStatuses.Running ||
-                            this.wishbone.runningStatus === RunningStatuses.Paused;
+                this.show = this.wishbone.runningStatus === RunningStatuses.Running;
             });
         }
 

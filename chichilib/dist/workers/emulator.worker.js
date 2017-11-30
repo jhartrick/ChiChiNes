@@ -493,7 +493,7 @@ var NesInfo = /** @class */ (function () {
     function NesInfo() {
         this.bufferupdate = false;
         this.stateupdate = true;
-        this.runStatus = {};
+        this.machine = {};
         this.cartInfo = {};
         this.sound = {};
         this.Cpu = {};
@@ -544,7 +544,8 @@ var tendoWrapper = /** @class */ (function () {
         this.cartName = 'unk';
         this.sharedAudioBufferPos = 0;
         this.commands = new Array();
-        this.buffers = { vbuffer: [],
+        this.buffers = {
+            vbuffer: [],
             abuffer: []
         };
         // attach require.js "require" fn here in bootstrapper
@@ -576,6 +577,10 @@ var tendoWrapper = /** @class */ (function () {
                     _this.debugRunStep();
                     break;
             }
+            _this.updateState();
+        }));
+        this.commands.push(new CommandHandler(CCMessage.CMD_RESET, function (val) {
+            _this.machine.Reset();
         }));
     }
     tendoWrapper.prototype.createMachine = function (message) {
@@ -641,6 +646,9 @@ var tendoWrapper = /** @class */ (function () {
         var machine = this.machine;
         var info = new NesInfo();
         if (this.machine && this.machine.Cart) {
+            info.machine = {
+                runStatus: this.runStatus
+            };
             info.Cpu = {
                 //Rams: this.machine.Cpu.Rams,
                 status: this.machine.Cpu.GetStatus(),
@@ -708,13 +716,12 @@ var tendoWrapper = /** @class */ (function () {
         this.runStatus = this.machine.RunState;
     };
     tendoWrapper.prototype.changeRunStatus = function (data) {
-        this.runStatus = data.status;
         switch (data.status) {
             case ChiChiTypes_1.RunningStatuses.Off:
                 this.stop();
                 break;
             case ChiChiTypes_1.RunningStatuses.Running:
-                if (this.runStatus == ChiChiTypes_1.RunningStatuses.Paused) {
+                if (this.runStatus === ChiChiTypes_1.RunningStatuses.Paused) {
                     this.run(false);
                 }
                 else {
@@ -722,15 +729,14 @@ var tendoWrapper = /** @class */ (function () {
                 }
                 break;
             case ChiChiTypes_1.RunningStatuses.Paused:
-                this.interop.unloop();
                 clearInterval(this.interval);
                 break;
             case ChiChiTypes_1.RunningStatuses.Unloaded:
-                this.interop.unloop();
                 clearInterval(this.interval);
                 this.stop();
                 break;
         }
+        this.runStatus = data.status;
     };
     tendoWrapper.prototype.runInnerLoop = function () {
         this.machine.PadOne.padOneState = this.interop.controlPad0; // [this.interop.NES_CONTROL_PAD_0] & 0xFF;
@@ -751,10 +757,12 @@ var tendoWrapper = /** @class */ (function () {
         if (reset) {
             machine.Reset();
         }
-        machine.Cpu.Debugging = false;
-        this.startTime = new Date().getTime();
         clearInterval(this.interval);
         this.interval = setInterval(function () {
+            machine.Cpu.Debugging = false;
+            machine.WaveForms.audioBytesWritten = 0;
+            machine.WaveForms.sharedAudioBufferPos = 0;
+            _this.startTime = new Date().getTime();
             _this.interop.loop();
             while (_this.interop.looping) {
                 _this.runInnerLoop();
@@ -771,13 +779,6 @@ var tendoWrapper = /** @class */ (function () {
         machine.RunFrame();
         this.runStatus = this.machine.RunState;
         this.frameFinished = true;
-    };
-    tendoWrapper.prototype.reset = function () {
-        var machine = this.machine;
-        //setTimeout(()=>{
-        machine.Reset();
-        //},16);
-        this.runStatus = this.machine.RunState;
     };
     tendoWrapper.prototype.debugRunStep = function () {
         clearInterval(this.interval);
@@ -817,13 +818,11 @@ var tendoWrapper = /** @class */ (function () {
         if (handler) {
             var resp = handler.process(event.data);
             postMessage(resp);
+            this.updateState();
             return;
         }
         var machine = this.machine;
         switch (event.data.command) {
-            case 'reset':
-                this.reset();
-                break;
             case 'getstate':
                 var state = new ChiChiState_1.ChiChiStateManager().read(this.machine);
                 postMessage({ state: state });
@@ -3877,12 +3876,13 @@ exports.CMD_LOADROM = 'loadrom';
 exports.CMD_CHEAT = 'cheats';
 exports.CMD_AUDIOSETTINGS = 'audioSettings';
 exports.CMD_RUNSTATUS = 'runstatus';
+exports.CMD_RESET = 'reset';
 exports.CMD_DEBUGSTEP = 'debugstep';
 var lastId = 0;
 var WorkerMessage = /** @class */ (function () {
     function WorkerMessage() {
         this.command = 'null';
-        this.messageId = lastId++;
+        this.messageId = Date.now();
     }
     WorkerMessage.prototype.execute = function () { };
     return WorkerMessage;
@@ -3925,6 +3925,16 @@ var RunStatusCommand = /** @class */ (function (_super) {
     return RunStatusCommand;
 }(WorkerMessage));
 exports.RunStatusCommand = RunStatusCommand;
+var ResetCommand = /** @class */ (function (_super) {
+    __extends(ResetCommand, _super);
+    function ResetCommand() {
+        var _this = _super.call(this) || this;
+        _this.command = exports.CMD_RESET;
+        return _this;
+    }
+    return ResetCommand;
+}(WorkerMessage));
+exports.ResetCommand = ResetCommand;
 var DebugCommand = /** @class */ (function (_super) {
     __extends(DebugCommand, _super);
     function DebugCommand(stepType) {

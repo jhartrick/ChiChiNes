@@ -7,6 +7,7 @@ export const CMD_LOADROM = 'loadrom';
 export const CMD_CHEAT = 'cheats'; 
 export const CMD_AUDIOSETTINGS = 'audioSettings'; 
 export const CMD_RUNSTATUS = 'runstatus'; 
+export const CMD_RESET = 'reset'; 
 export const CMD_DEBUGSTEP = 'debugstep'; 
 
 let lastId = 0;
@@ -18,7 +19,7 @@ export interface IWorkerMessage {
 
 export class WorkerMessage implements IWorkerMessage {
     constructor() {
-        this.messageId = lastId++;
+        this.messageId = Date.now();
     }
     command: string = 'null';
     messageId: number;
@@ -49,6 +50,13 @@ export class LoadRomCommand extends WorkerMessage {
 export class RunStatusCommand extends WorkerMessage {
     readonly command: string = CMD_RUNSTATUS;
     constructor(public status: RunningStatuses) {
+        super();
+    }
+}
+
+export class ResetCommand extends WorkerMessage {
+    readonly command: string = CMD_RESET;
+    constructor() {
         super();
     }
 }
