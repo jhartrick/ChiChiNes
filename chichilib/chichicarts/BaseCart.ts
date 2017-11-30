@@ -2,7 +2,7 @@ import { ChiChiCPPU } from '../chichi/ChiChiCPU';
 import { ChiChiPPU, IChiChiPPU, IChiChiPPUState } from '../chichi/ChiChiPPU';
 
 import * as crc from 'crc';
-import { MemoryMap } from '../chichi/ChiChiMemoryMap';
+import { MemoryMap, IMemoryMap } from '../chichi/ChiChiMemoryMap';
 
 
 export enum NameTableMirroring {
@@ -54,6 +54,8 @@ export interface IBaseCart extends IBaseCartState {
     Whizzler: IChiChiPPU;
     CPU: ChiChiCPPU;
 
+    createMemoryMap(cpu: ChiChiCPPU): IMemoryMap;
+
     LoadiNESCart(header: number[], prgRoms: number, chrRoms: number, prgRomData: Uint8Array, chrRomData: Uint8Array, chrRomOffset: number): void;
 
     installCart(ppu:ChiChiPPU, cpu: ChiChiCPPU) : void;
@@ -75,6 +77,7 @@ export class BaseCart implements IBaseCart {
     batterySRAM: boolean = false;
     customPalette: number[];
     ramMask = 0x1fff;
+    
     
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
         if (!dest) {
@@ -264,11 +267,9 @@ export class BaseCart implements IBaseCart {
     installCart(ppu: ChiChiPPU, cpu: ChiChiCPPU) {
         this.Whizzler = ppu;
         this.CPU = cpu;
-        this.CPU.memoryMap = new MemoryMap(this.CPU, this.Whizzler, this.CPU.SoundBopper, this.CPU.PadOne, this.CPU.PadTwo, this);
+        // this.CPU.memoryMap = new MemoryMap(this.CPU, this.Whizzler, this.CPU.SoundBopper, this.CPU.PadOne, this.CPU.PadTwo, this);
 
         ppu.chrRomHandler = this;
-        this.CPU.Cart = this;
-
         //setup mirroring 
         this.mirror(0, 0);
         if ((this.romControlBytes[0] & 1) === 1) {
@@ -285,6 +286,10 @@ export class BaseCart implements IBaseCart {
         // initialize
         this.InitializeCart();
 
+    }
+
+    createMemoryMap(cpu: ChiChiCPPU): IMemoryMap {
+        return new MemoryMap(cpu, this);
     }
 
     GetByte(clock: number, address: number): number {

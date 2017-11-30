@@ -31,6 +31,10 @@ class NesInfo {
 }
 
 class CommandHandler<T extends CCMessage.WorkerMessage> {
+    static bind<X extends CCMessage.WorkerMessage>(command: string, handler: (val:X) => any): CommandHandler<X> {
+        return new CommandHandler<X>(command, handler);
+    }
+
     constructor(public command: string, private handler: (val:T) => any) {
 
     }
@@ -48,7 +52,11 @@ class CommandHandler<T extends CCMessage.WorkerMessage> {
     }
 }
 
+
+
 export class tendoWrapper {
+    
+
     interop: WorkerInterop;
     framesRendered: number = 0;
     startTime: number = 0;
@@ -65,72 +73,67 @@ export class tendoWrapper {
     sharedAudioBuffer: any; 
     sharedAudioBufferPos: number = 0;
 
-    commands = new Array<CommandHandler<any>>();
+    commands: Array<CommandHandler<any>> = [
+        CommandHandler.bind<CCMessage.CreateCommand>(
+        CCMessage.CMD_CREATE, 
+        (val) => { 
+            return this.createMachine(val); 
+        }),
+   
+
+    CommandHandler.bind<CCMessage.LoadRomCommand>(
+        CCMessage.CMD_LOADROM, 
+        (val) => { 
+            return this.loadCart(val); 
+        }) ,
+   
+
+    CommandHandler.bind<CCMessage.CheatCommand>(
+        CCMessage.CMD_CHEAT, 
+        (val) => { 
+            return this.cheat(val); 
+        }),
+           
+
+    CommandHandler.bind<CCMessage.AudioCommand>(
+        CCMessage.CMD_AUDIOSETTINGS, 
+        (val) => { 
+            this.applyAudioSettings(val); 
+        }),
+   
+
+    CommandHandler.bind<CCMessage.RunStatusCommand>(
+        CCMessage.CMD_RUNSTATUS, 
+        (val) => { 
+            this.changeRunStatus(val); 
+        }),
+   
+
+    CommandHandler.bind<CCMessage.DebugCommand>(
+        CCMessage.CMD_DEBUGSTEP, 
+        (val) => { 
+            this.Debugging = true;
+            switch (val.stepType)
+            {
+                case DebugStepTypes.Frame:
+                    this.debugRunFrame();
+
+                break;
+                case DebugStepTypes.Instruction:
+                    this.debugRunStep();
+                break;
+            }
+            this.updateState();
+        }),
+    CommandHandler.bind<CCMessage.ResetCommand>(
+        CCMessage.CMD_RESET, 
+        (val) => { 
+            this.machine.Reset();
+        })];
 
     constructor() {
         this.machine = new ChiChiMachine();
         this.interop = new WorkerInterop(new Int32Array(<any>(new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
-        this.commands.push(
-            new CommandHandler<CCMessage.CreateCommand>(
-                CCMessage.CMD_CREATE, 
-                (val) => { 
-                    return this.createMachine(val); 
-                })
-            );
-        this.commands.push(
-            new CommandHandler<CCMessage.LoadRomCommand>(
-                CCMessage.CMD_LOADROM, 
-                (val) => { 
-                    return this.loadCart(val); 
-                }) 
-            );
-        this.commands.push(
-            new CommandHandler<CCMessage.CheatCommand>(
-                CCMessage.CMD_CHEAT, 
-                (val) => { 
-                    return this.cheat(val); 
-                })
-            );        
-        this.commands.push(
-            new CommandHandler<CCMessage.AudioCommand>(
-                CCMessage.CMD_AUDIOSETTINGS, 
-                (val) => { 
-                    this.applyAudioSettings(val); 
-                })
-            );
-        this.commands.push(
-            new CommandHandler<CCMessage.RunStatusCommand>(
-                CCMessage.CMD_RUNSTATUS, 
-                (val) => { 
-                    this.changeRunStatus(val); 
-                })
-            );
-        this.commands.push(
-            new CommandHandler<CCMessage.DebugCommand>(
-                CCMessage.CMD_DEBUGSTEP, 
-                (val) => { 
-                    this.Debugging = true;
-                    switch (val.stepType)
-                    {
-                        case DebugStepTypes.Frame:
-                            this.debugRunFrame();
-
-                        break;
-                        case DebugStepTypes.Instruction:
-                            this.debugRunStep();
-                        break;
-                    }
-                    this.updateState();
-                })
-            );
-            
-        this.commands.push(
-            new CommandHandler<CCMessage.ResetCommand>(
-                CCMessage.CMD_RESET, 
-                (val) => { 
-                    this.machine.Reset();
-                })
-            );            
     }
 
     createMachine(message: CCMessage.CreateCommand): CCMessage.WorkerResponse {
@@ -284,6 +287,7 @@ export class tendoWrapper {
     }
 
     changeRunStatus(data: CCMessage.RunStatusCommand) {
+        clearInterval(this.interval);
         switch (data.status) {
             case RunningStatuses.Off:
                 this.stop();
@@ -296,12 +300,10 @@ export class tendoWrapper {
                 }
                 break;
             case RunningStatuses.Paused:
-                clearInterval(this.interval);
                 break;
             case RunningStatuses.Unloaded:
-                clearInterval(this.interval);
                 this.stop();
-            break;
+                break;
         }
         
         this.runStatus = data.status;
@@ -384,6 +386,7 @@ export class tendoWrapper {
             (romloader: any) => {
                 const machine = this.machine;
                 const cart = romloader.loader.loadRom(cmd.rom, cmd.name);
+                this.machine.Cpu.setupMemoryMap(cart);
                 cart.installCart(this.machine.ppu, this.machine.Cpu);
         
                 machine.Cart.NMIHandler = () => { this.machine.Cpu._handleIRQ = true; };
@@ -416,7 +419,6 @@ export class tendoWrapper {
             this.updateState();
             return;
         }
-            
 
         let machine = this.machine;
 

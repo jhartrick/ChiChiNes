@@ -282,9 +282,8 @@ var BaseCart = /** @class */ (function () {
     BaseCart.prototype.installCart = function (ppu, cpu) {
         this.Whizzler = ppu;
         this.CPU = cpu;
-        this.CPU.memoryMap = new ChiChiMemoryMap_1.MemoryMap(this.CPU, this.Whizzler, this.CPU.SoundBopper, this.CPU.PadOne, this.CPU.PadTwo, this);
+        // this.CPU.memoryMap = new MemoryMap(this.CPU, this.Whizzler, this.CPU.SoundBopper, this.CPU.PadOne, this.CPU.PadTwo, this);
         ppu.chrRomHandler = this;
-        this.CPU.Cart = this;
         //setup mirroring 
         this.mirror(0, 0);
         if ((this.romControlBytes[0] & 1) === 1) {
@@ -299,6 +298,9 @@ var BaseCart = /** @class */ (function () {
         }
         // initialize
         this.InitializeCart();
+    };
+    BaseCart.prototype.createMemoryMap = function (cpu) {
+        return new ChiChiMemoryMap_1.MemoryMap(cpu, this);
     };
     BaseCart.prototype.GetByte = function (clock, address) {
         var bank = (address >> 12) - 0x6;
@@ -2876,17 +2878,17 @@ var M068 = __webpack_require__(29);
 var Nsf = __webpack_require__(30);
 var Smb2j = __webpack_require__(31);
 var VS = __webpack_require__(32);
-var VRC = __webpack_require__(33);
+var VRC = __webpack_require__(34);
 var VRC2 = __webpack_require__(4);
-var VRC6 = __webpack_require__(34);
-var Sunsoft = __webpack_require__(35);
-var Mapper034 = __webpack_require__(36);
-var Mapper015 = __webpack_require__(37);
-var Mapper112 = __webpack_require__(38);
-var Mapper132 = __webpack_require__(39);
-var Mapper133 = __webpack_require__(40);
-var Mapper193 = __webpack_require__(41);
-var Mapper228 = __webpack_require__(42);
+var VRC6 = __webpack_require__(35);
+var Sunsoft = __webpack_require__(36);
+var Mapper034 = __webpack_require__(37);
+var Mapper015 = __webpack_require__(38);
+var Mapper112 = __webpack_require__(39);
+var Mapper132 = __webpack_require__(40);
+var Mapper133 = __webpack_require__(41);
+var Mapper193 = __webpack_require__(42);
+var Mapper228 = __webpack_require__(43);
 var MapperFactory = /** @class */ (function () {
     function MapperFactory() {
         this[0] = Discrete.NesCart;
@@ -3087,11 +3089,7 @@ var iNESFileHandler = /** @class */ (function () {
         theRom.fill(0);
         var chrRom = new Uint8Array(chrRomLength);
         chrRom.fill(0);
-        // var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-        // chrRom.fill(0);
         var chrOffset = 0;
-        // create cart
-        // bytesRead = zipStream.Read(theRom, 0, theRom.Length);
         BaseCart_1.BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
         chrOffset = (16 + theRom.length) | 0;
         var len = chrRom.length;
@@ -3103,8 +3101,6 @@ var iNESFileHandler = /** @class */ (function () {
         _cart.submapperId = submapperId;
         _cart.ROMHashFunction = crc.crc32(new Buffer(thefile.slice(16, thefile.length))).toString(16).toUpperCase(); //Hashers.HashFunction;
         _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-        // if (_cart != null) {
-        // }
         return _cart;
     };
     return iNESFileHandler;
@@ -3801,12 +3797,13 @@ module.exports = (0, _define_crc2.default)('jam', function (buf) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var MemoryMap = /** @class */ (function () {
-    function MemoryMap(cpu, ppu, apu, pad1, pad2, cart) {
+    function MemoryMap(cpu, cart) {
         this.cpu = cpu;
-        this.ppu = ppu;
-        this.apu = apu;
-        this.pad1 = pad1;
-        this.pad2 = pad2;
+        this.cart = cart;
+        this.apu = cpu.SoundBopper;
+        this.ppu = cpu.ppu;
+        this.pad1 = cpu.PadOne;
+        this.pad2 = cpu.PadTwo;
         this.cart = cart;
     }
     MemoryMap.prototype.getByte = function (clock, address) {
@@ -3938,6 +3935,12 @@ var MemoryMap = /** @class */ (function () {
                 }
                 break;
         }
+    };
+    MemoryMap.prototype.getPPUByte = function (clock, address) {
+        return this.cart.GetPPUByte(clock, address);
+    };
+    MemoryMap.prototype.setPPUByte = function (clock, address, data) {
+        this.cart.SetPPUByte(clock, address, data);
     };
     return MemoryMap;
 }());
@@ -5575,6 +5578,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var BaseCart_1 = __webpack_require__(0);
+var VSMemoryMap_1 = __webpack_require__(33);
 var VSCart = /** @class */ (function (_super) {
     __extends(VSCart, _super);
     function VSCart() {
@@ -5620,6 +5624,9 @@ var VSCart = /** @class */ (function (_super) {
             this.coin = val;
         }
     };
+    VSCart.prototype.createMemoryMap = function (cpu) {
+        return new VSMemoryMap_1.VSMemoryMap(cpu, this);
+    };
     return VSCart;
 }(BaseCart_1.BaseCart));
 exports.VSCart = VSCart;
@@ -5627,6 +5634,163 @@ exports.VSCart = VSCart;
 
 /***/ }),
 /* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var VSMemoryMap = /** @class */ (function () {
+    function VSMemoryMap(cpu, cart) {
+        this.cpu = cpu;
+        this.cart = cart;
+        this.apu = cpu.SoundBopper;
+        this.ppu = cpu.ppu;
+        this.pad1 = cpu.PadOne;
+        this.pad2 = cpu.PadTwo;
+        this.cart = cart;
+    }
+    VSMemoryMap.prototype.getByte = function (clock, address) {
+        var result = 0;
+        // check high byte, find appropriate handler
+        switch (address & 0xF000) {
+            case 0:
+            case 0x1000:
+                if (address < 2048) {
+                    result = this.cpu.Rams[address];
+                }
+                else {
+                    result = address >> 8;
+                }
+                break;
+            case 0x2000:
+            case 0x3000:
+                result = this.ppu.GetByte(clock, address);
+                break;
+            case 0x4000:
+                switch (address) {
+                    case 0x4015:
+                        result = this.apu.GetByte(clock, address);
+                        break;
+                    case 0x4016:
+                        result = this.pad2.GetByte(clock, address) & 1;
+                        result |= this.cart.GetByte(clock, address) & 0xfe;
+                        break;
+                    case 0x4017:
+                        result = this.pad1.GetByte(clock, address) & 1;
+                        result |= this.cart.GetByte(clock, address) & 0xfe;
+                        break;
+                }
+                if (address >= 0x4020 && address <= 0x5fff) {
+                    result = this.cart.GetByte(clock, address) & 0xfe;
+                }
+                break;
+            case 20480:
+                // ??
+                result = address >> 8;
+                break;
+            case 24576:
+            case 28672:
+            case 32768:
+            case 36864:
+            case 40960:
+            case 45056:
+            case 49152:
+            case 53248:
+            case 57344:
+            case 61440:
+                // cart 
+                result = this.cart.GetByte(clock, address);
+                break;
+            default:
+                throw new Error("Bullshit!");
+        }
+        return result & 255;
+    };
+    VSMemoryMap.prototype.setByte = function (clock, address, data) {
+        // check high byte, find appropriate handler
+        if (address < 2048) {
+            this.cpu.Rams[address & 2047] = data;
+            return;
+        }
+        switch (address & 61440) {
+            case 0:
+            case 4096:
+                // nes sram
+                this.cpu.Rams[address & 2047] = data;
+                break;
+            case 20480:
+                this.cart.SetByte(clock, address, data);
+                break;
+            case 24576:
+            case 28672:
+            case 32768:
+            case 36864:
+            case 40960:
+            case 45056:
+            case 49152:
+            case 53248:
+            case 57344:
+            case 61440:
+                // cart rom banks
+                this.cart.SetByte(clock, address, data);
+                break;
+            case 8192:
+            case 12288:
+                this.ppu.SetByte(clock, address, data);
+                break;
+            case 16384:
+                switch (address) {
+                    case 16384:
+                    case 16385:
+                    case 16386:
+                    case 16387:
+                    case 16388:
+                    case 16389:
+                    case 16390:
+                    case 16391:
+                    case 16392:
+                    case 16393:
+                    case 16394:
+                    case 16395:
+                    case 16396:
+                    case 16397:
+                    case 16398:
+                    case 16399:
+                    case 16405:
+                    case 16407:
+                        this.apu.SetByte(clock, address, data);
+                        break;
+                    case 16404:
+                        this.ppu.copySprites(data * 256);
+                        this.cpu._currentInstruction_ExtraTiming = this.cpu._currentInstruction_ExtraTiming + 513;
+                        if (clock & 1) {
+                            this.cpu._currentInstruction_ExtraTiming++;
+                        }
+                        break;
+                    case 16406:
+                        this.pad1.SetByte(clock, address, data & 1);
+                        this.pad2.SetByte(clock, address, data & 1);
+                        break;
+                    default:
+                        if (this.cart.mapsBelow6000)
+                            this.cart.SetByte(clock, address, data);
+                }
+                break;
+        }
+    };
+    VSMemoryMap.prototype.getPPUByte = function (clock, address) {
+        return this.cart.GetPPUByte(clock, address);
+    };
+    VSMemoryMap.prototype.setPPUByte = function (clock, address, data) {
+        this.cart.SetPPUByte(clock, address, data);
+    };
+    return VSMemoryMap;
+}());
+exports.VSMemoryMap = VSMemoryMap;
+
+
+/***/ }),
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5712,7 +5876,7 @@ exports.KonamiVRC1Cart = KonamiVRC1Cart;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5952,7 +6116,7 @@ exports.Konami026Cart = Konami026Cart;
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6040,7 +6204,7 @@ exports.Mapper184Cart = Mapper184Cart;
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6114,7 +6278,7 @@ exports.BNROMCart = BNROMCart;
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6177,7 +6341,7 @@ exports.Mapper015Cart = Mapper015Cart;
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6237,7 +6401,7 @@ exports.Mapper112Cart = Mapper112Cart;
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6293,7 +6457,7 @@ exports.Mapper132Cart = Mapper132Cart;
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6338,7 +6502,7 @@ exports.Mapper133Cart = Mapper133Cart;
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6392,7 +6556,7 @@ exports.Mapper193Cart = Mapper193Cart;
 
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

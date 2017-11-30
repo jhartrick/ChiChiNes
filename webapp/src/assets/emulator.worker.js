@@ -517,6 +517,9 @@ var CommandHandler = /** @class */ (function () {
         this.command = command;
         this.handler = handler;
     }
+    CommandHandler.bind = function (command, handler) {
+        return new CommandHandler(command, handler);
+    };
     CommandHandler.prototype.process = function (command) {
         try {
             var cmdResp = this.handler(command);
@@ -543,7 +546,38 @@ var tendoWrapper = /** @class */ (function () {
         this.framesPerSecond = 0;
         this.cartName = 'unk';
         this.sharedAudioBufferPos = 0;
-        this.commands = new Array();
+        this.commands = [
+            CommandHandler.bind(CCMessage.CMD_CREATE, function (val) {
+                return _this.createMachine(val);
+            }),
+            CommandHandler.bind(CCMessage.CMD_LOADROM, function (val) {
+                return _this.loadCart(val);
+            }),
+            CommandHandler.bind(CCMessage.CMD_CHEAT, function (val) {
+                return _this.cheat(val);
+            }),
+            CommandHandler.bind(CCMessage.CMD_AUDIOSETTINGS, function (val) {
+                _this.applyAudioSettings(val);
+            }),
+            CommandHandler.bind(CCMessage.CMD_RUNSTATUS, function (val) {
+                _this.changeRunStatus(val);
+            }),
+            CommandHandler.bind(CCMessage.CMD_DEBUGSTEP, function (val) {
+                _this.Debugging = true;
+                switch (val.stepType) {
+                    case ChiChiTypes_1.DebugStepTypes.Frame:
+                        _this.debugRunFrame();
+                        break;
+                    case ChiChiTypes_1.DebugStepTypes.Instruction:
+                        _this.debugRunStep();
+                        break;
+                }
+                _this.updateState();
+            }),
+            CommandHandler.bind(CCMessage.CMD_RESET, function (val) {
+                _this.machine.Reset();
+            })
+        ];
         this.buffers = {
             vbuffer: [],
             abuffer: []
@@ -552,36 +586,6 @@ var tendoWrapper = /** @class */ (function () {
         this.require = {};
         this.machine = new ChiChiMachine_1.ChiChiMachine();
         this.interop = new worker_interop_1.WorkerInterop(new Int32Array((new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
-        this.commands.push(new CommandHandler(CCMessage.CMD_CREATE, function (val) {
-            return _this.createMachine(val);
-        }));
-        this.commands.push(new CommandHandler(CCMessage.CMD_LOADROM, function (val) {
-            return _this.loadCart(val);
-        }));
-        this.commands.push(new CommandHandler(CCMessage.CMD_CHEAT, function (val) {
-            return _this.cheat(val);
-        }));
-        this.commands.push(new CommandHandler(CCMessage.CMD_AUDIOSETTINGS, function (val) {
-            _this.applyAudioSettings(val);
-        }));
-        this.commands.push(new CommandHandler(CCMessage.CMD_RUNSTATUS, function (val) {
-            _this.changeRunStatus(val);
-        }));
-        this.commands.push(new CommandHandler(CCMessage.CMD_DEBUGSTEP, function (val) {
-            _this.Debugging = true;
-            switch (val.stepType) {
-                case ChiChiTypes_1.DebugStepTypes.Frame:
-                    _this.debugRunFrame();
-                    break;
-                case ChiChiTypes_1.DebugStepTypes.Instruction:
-                    _this.debugRunStep();
-                    break;
-            }
-            _this.updateState();
-        }));
-        this.commands.push(new CommandHandler(CCMessage.CMD_RESET, function (val) {
-            _this.machine.Reset();
-        }));
     }
     tendoWrapper.prototype.createMachine = function (message) {
         var _this = this;
@@ -716,6 +720,7 @@ var tendoWrapper = /** @class */ (function () {
         this.runStatus = this.machine.RunState;
     };
     tendoWrapper.prototype.changeRunStatus = function (data) {
+        clearInterval(this.interval);
         switch (data.status) {
             case ChiChiTypes_1.RunningStatuses.Off:
                 this.stop();
@@ -729,10 +734,8 @@ var tendoWrapper = /** @class */ (function () {
                 }
                 break;
             case ChiChiTypes_1.RunningStatuses.Paused:
-                clearInterval(this.interval);
                 break;
             case ChiChiTypes_1.RunningStatuses.Unloaded:
-                clearInterval(this.interval);
                 this.stop();
                 break;
         }
@@ -795,6 +798,7 @@ var tendoWrapper = /** @class */ (function () {
         }, ['romloader.worker'], function (romloader) {
             var machine = _this.machine;
             var cart = romloader.loader.loadRom(cmd.rom, cmd.name);
+            _this.machine.Cpu.setupMemoryMap(cart);
             cart.installCart(_this.machine.ppu, _this.machine.Cpu);
             machine.Cart.NMIHandler = function () { _this.machine.Cpu._handleIRQ = true; };
             _this.machine.Cpu.cheating = false;
@@ -2805,12 +2809,6 @@ var ChiChiCPPU = /** @class */ (function () {
         this.Rams[15] = 191;
         this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
     };
-    ChiChiCPPU.prototype.GetState = function (outStream) {
-        //throw new Error('Method not implemented.');
-    };
-    ChiChiCPPU.prototype.SetState = function (inStream) {
-        // throw new Error('Method not implemented.');
-    };
     ChiChiCPPU.prototype.decodeAddress = function () {
         this._currentInstruction_ExtraTiming = 0;
         var result = 0;
@@ -3548,6 +3546,9 @@ var ChiChiCPPU = /** @class */ (function () {
             this._stackPointer = 0;
         }
         return this.Rams[this._stackPointer + 256];
+    };
+    ChiChiCPPU.prototype.setupMemoryMap = function (cart) {
+        this.memoryMap = cart.createMemoryMap(this);
     };
     ChiChiCPPU.prototype.GetByte = function (address) {
         if (!this.memoryMap) {

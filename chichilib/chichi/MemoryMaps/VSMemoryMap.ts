@@ -1,20 +1,11 @@
-import { IChiChiCPPU } from "./ChiChiCPU";
-import { IChiChiPPU } from "./ChiChiPPU";
-import { IChiChiAPU } from "./ChiChiAudio";
-import { IBaseCart } from "../chichicarts/BaseCart";
-import { ChiChiInputHandler } from "./ChiChiControl";
+import { IChiChiCPPU } from "../ChiChiCPU";
+import { IChiChiPPU } from "../ChiChiPPU";
+import { IChiChiAPU } from "../ChiChiAudio";
+import { IBaseCart } from "../../chichicarts/BaseCart";
+import { ChiChiInputHandler } from "../ChiChiControl";
+import { IMemoryMap } from "../ChiChiMemoryMap";
 
-export interface IMemoryMap {
-
-    getByte(clock: number, address: number): number;
-    setByte(clock: number, address: number, data: number): void;
-
-    getPPUByte(clock: number, address: number): number;
-
-    setPPUByte(clock: number, address: number, data: number): void;
-}
-
-export class MemoryMap implements IMemoryMap {
+export class VSMemoryMap implements IMemoryMap {
     private ppu: IChiChiPPU;
     private apu: IChiChiAPU;
     private pad1: ChiChiInputHandler;
@@ -53,18 +44,16 @@ export class MemoryMap implements IMemoryMap {
                         result = this.apu.GetByte(clock, address);
                         break;
                     case 0x4016:
-                        result = this.pad1.GetByte(clock, address);
+                        result = this.pad2.GetByte(clock, address) & 1;
+                        result |= this.cart.GetByte(clock, address) & 0xfe;
                         break;
                     case 0x4017:
-                        result = this.pad2.GetByte(clock, address);
+                        result = this.pad1.GetByte(clock, address) & 1;
+                        result |= this.cart.GetByte(clock, address) & 0xfe;
                         break;
-
-                    default:
-                        if (this.cart.mapsBelow6000)
-                            result = this.cart.GetByte(clock, address);
-                        else
-                            result = address >> 8;
-                        break;
+                }
+                if (address >= 0x4020 && address <= 0x5fff) {
+                    result = this.cart.GetByte(clock, address) & 0xfe;
                 }
                 break;
             case 20480:

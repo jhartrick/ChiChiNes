@@ -1,4 +1,7 @@
 import { BaseCart } from "./BaseCart";
+import { ChiChiCPPU } from "../chichi/ChiChiCPU";
+import { IMemoryMap } from "../chichi/ChiChiMemoryMap";
+import { VSMemoryMap } from "../chichi/MemoryMaps/VSMemoryMap";
 
 export class VSCart extends BaseCart {
     coin: number;
@@ -50,5 +53,9 @@ export class VSCart extends BaseCart {
             }
         }
              
+        createMemoryMap(cpu: ChiChiCPPU): IMemoryMap {
+            return new VSMemoryMap(cpu, this);
+        }
+    
      }
      

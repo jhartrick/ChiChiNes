@@ -243,12 +243,8 @@ export class iNESFileHandler  {
         const chrRom = new Uint8Array(chrRomLength);
         chrRom.fill(0);
 
-        // var chrRom = new Uint8Array(thefile.slice(16 + prgRomLength, 16 + prgRomLength + chrRomLength)); //System.Array.init(Bridge.Int.mul(chrRomCount, 16384), 0, System.Byte);
-        // chrRom.fill(0);
         let chrOffset = 0;
 
-// create cart
-        // bytesRead = zipStream.Read(theRom, 0, theRom.Length);
         BaseCart.arrayCopy(thefile, 16, theRom, 0, theRom.length);
         chrOffset = (16 + theRom.length) | 0;
         let len = chrRom.length;
@@ -261,12 +257,6 @@ export class iNESFileHandler  {
         _cart.submapperId  = submapperId;
         _cart.ROMHashFunction = crc.crc32(new Buffer(thefile.slice(16, thefile.length))).toString(16).toUpperCase(); //Hashers.HashFunction;
         _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
-
-        
-
-        // if (_cart != null) {
-        
-        // }
 
         return _cart;
     }

@@ -4,7 +4,7 @@ import { IChiChiPPU } from "./ChiChiPPU";
 import { IChiChiAPU, IChiChiAPUState } from "./ChiChiAudio";
 import { IBaseCart } from '../chichicarts/BaseCart'
 import { MemoryPatch } from "./ChiChiCheats";
-import { MemoryMap } from "./ChiChiMemoryMap";
+import { MemoryMap, IMemoryMap } from "./ChiChiMemoryMap";
 
 export interface IChiChiCPPUState {
     clock: number;
@@ -68,7 +68,7 @@ export interface IChiChiCPPU extends IChiChiCPPUState {
     GetByte(address: number): number;
     SetByte(address: number, data: number): void;
 
-    memoryMap: MemoryMap;
+    memoryMap: IMemoryMap;
 
     PeekByte(address: number): number;
     PeekBytes(start: number, finish: number): number[];
@@ -248,7 +248,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
         this._padTwo = value;
     }
 
-    memoryMap: MemoryMap;
+    memoryMap: IMemoryMap;
 
     CurrentInstruction: ChiChiInstruction;
 
@@ -408,14 +408,6 @@ export class ChiChiCPPU implements IChiChiCPPU {
         this.Rams[15] = 191;
 
         this._programCounter =  this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
-    }
-
-    GetState(outStream: any): void {
-        //throw new Error('Method not implemented.');
-    }
-
-    SetState(inStream: any): void {
-        // throw new Error('Method not implemented.');
     }
 
     decodeAddress(): number {
@@ -1103,6 +1095,10 @@ export class ChiChiCPPU implements IChiChiCPPU {
             this._stackPointer = 0;
         }
         return this.Rams[this._stackPointer + 256];
+    }
+
+    public setupMemoryMap(cart: IBaseCart) {
+        this.memoryMap = cart.createMemoryMap(this);
     }
 
     GetByte(address: number): number {
