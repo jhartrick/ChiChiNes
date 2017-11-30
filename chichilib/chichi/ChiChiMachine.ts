@@ -22,7 +22,6 @@ export class ChiChiMachine {
         this.Cpu = cpu ? cpu : new ChiChiCPPU(this.SoundBopper, this.ppu);
         this.ppu.cpu = this.Cpu;
         this.ppu.NMIHandler = () => {  this.Cpu.nmiHandler(); }
-        this.SoundBopper.irqHandler = () => { this.Cpu.irqUpdater(); };
         this.ppu.frameFinished = () => { this.frameFinished(); };
     }
 
@@ -34,7 +33,11 @@ export class ChiChiMachine {
     ppu: IChiChiPPU;
     Cpu: ChiChiCPPU;
     get Cart(): BaseCart {
-        return <BaseCart>this.Cpu.Cart;
+        if (this.Cpu && this.Cpu.memoryMap && this.Cpu.memoryMap.cart) {
+            return <BaseCart>this.Cpu.memoryMap.cart;
+        } else {
+            return undefined;
+        }
     }
 
     SoundBopper: ChiChiAPU;
@@ -123,8 +126,7 @@ export class ChiChiMachine {
     }
 
     EjectCart(): void {
-        this.Cpu.Cart = null;
-        this.ppu.chrRomHandler = null;
+        this.Cpu.memoryMap = null;
     }
 
     LoadNSF(rom: any) {

@@ -25,7 +25,7 @@ export class AsciiPipe implements PipeTransform {
 export class MyTrComponent {
     @Input() debugTablerow;
     @Input() myIndex;
-    
+
     lineAddress() {
         return '0x' + ((this.myIndex * 16).toString(16)).padStart(4, '0');
     }
@@ -71,7 +71,7 @@ export class MemViewerComponent implements OnInit {
     }
 
     public look(): void {
-        const ram = new Uint8Array(this.nes.wishbone.Cpu.Rams.slice(0));
+        const ram = new Uint8Array(this.nes.wishbone.Cpu.memoryMap.Rams.slice(0));
         const chunks = 0x7FF / 16;
         const data = new Array<Uint8Array>();
         for (let i = 0; i < chunks ; ++i) {

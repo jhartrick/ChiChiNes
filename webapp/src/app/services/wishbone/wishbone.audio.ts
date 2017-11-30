@@ -1,5 +1,5 @@
 import { WishboneMachine } from './wishbone';
-import { IChiChiAPU, IChiChiAPUState, WavSharer, AudioSettings } from 'chichi';
+import { IMemoryMap, IChiChiAPU, IChiChiAPUState, WavSharer, AudioSettings } from 'chichi';
 import { LocalAudioSettings } from './wishbone.audio.localsettings';
 
 export interface IAudioHandler {
@@ -7,6 +7,7 @@ export interface IAudioHandler {
 }
 
 export class WishboneAPU  implements IChiChiAPU {
+	memoryMap: IMemoryMap;
 	sampleRate: number;
 	interruptRaised: boolean;
 	irqHandler() {};

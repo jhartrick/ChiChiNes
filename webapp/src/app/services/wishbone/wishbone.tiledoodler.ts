@@ -41,11 +41,11 @@ export class TileDoodler {
 
         for (let  i = 0; i < 8; i++) {
             const entryLoc = (PatternTable + (TileIndex << 4))  + i;
-            const patternEntry = this.ppu.ChrRomHandler.GetPPUByte(0, entryLoc);
+            const patternEntry = this.ppu.memoryMap.getPPUByte(0, entryLoc);
 
-            actualAddress[i] = this.ppu.ChrRomHandler.GetPPUByte(0, entryLoc);
+            actualAddress[i] = this.ppu.memoryMap.getPPUByte(0, entryLoc);
 
-            const patternEntryBit2 = this.ppu.ChrRomHandler.GetPPUByte(0, entryLoc + 8);
+            const patternEntryBit2 = this.ppu.memoryMap.getPPUByte(0, entryLoc + 8);
 
             for (let bit = 0; bit < 8; bit = (bit + 1) | 0) {
                 if ((patternEntry & TileDoodler.powersOfTwo[bit]) !== 0) {
@@ -74,11 +74,11 @@ export class TileDoodler {
             let patternEntry = 0;
             let patternEntryBit2 = 0;
             if (sprite.FlipY) {
-                patternEntry = ppu.chrRomHandler.GetPPUByte(0, ((patternTable + (sprite.TileIndex * 16)) + 7) - i );
-                patternEntryBit2 = ppu.chrRomHandler.GetPPUByte(0, (((patternTable + (sprite.TileIndex * 16)) + 7) - i) + 8);
+                patternEntry = ppu.memoryMap.getPPUByte(0, ((patternTable + (sprite.TileIndex * 16)) + 7) - i );
+                patternEntryBit2 = ppu.memoryMap.getPPUByte(0, (((patternTable + (sprite.TileIndex * 16)) + 7) - i) + 8);
             } else {
-                patternEntry = ppu.chrRomHandler.GetPPUByte(0, (patternTable + (sprite.TileIndex * 16)) + i);
-                patternEntryBit2 = ppu.chrRomHandler.GetPPUByte(0, ((patternTable + (sprite.TileIndex * 16)) + i) + 8);
+                patternEntry = ppu.memoryMap.getPPUByte(0, (patternTable + (sprite.TileIndex * 16)) + i);
+                patternEntryBit2 = ppu.memoryMap.getPPUByte(0, ((patternTable + (sprite.TileIndex * 16)) + i) + 8);
             }
             if (sprite.FlipX) {
                 for (let bit = 7; bit >= 0; bit-- ) {
@@ -158,7 +158,7 @@ export class TileDoodler {
             for (let j = 0; j < 30; j = (j + 1) | 0) {
 
                 const address = ((8192 + NameTable)  + i)  + (j * 32) ;
-                const TileIndex = this.ppu.ChrRomHandler.GetPPUByte(0, address);
+                const TileIndex = this.ppu.memoryMap.getPPUByte(0, address);
 
                 const addToCol = this.getAttributeTableEntry(NameTable, i, j);
                 const tile = this.getPatternTableEntry(this.ppu.PatternTableIndex, TileIndex,

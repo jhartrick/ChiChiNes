@@ -5,6 +5,7 @@ import { TriangleChannel } from './Audio/TriangleChannel';
 import { NoiseChannel } from './Audio/NoiseChannel';
 
 import { Blip, WavSharer } from './Audio/CommonAudio';
+import { IMemoryMap } from './ChiChiMemoryMap';
 
 export interface IChiChiAPUState {
     audioSettings: AudioSettings;
@@ -26,6 +27,7 @@ export interface IChiChiAPU extends IChiChiAPUState {
     SetByte(clock: number, address: number, data: number): void;
 
     rebuildSound(): void;
+    memoryMap: IMemoryMap;
     advanceClock(ticks: number): void;
 
     state: IChiChiAPUState;
@@ -60,6 +62,8 @@ export class ChiChiAPU implements IChiChiAPU {
     private muted = false;
     private lastFrameHit = 0;
 
+    memoryMap: IMemoryMap;
+
     currentClock = 0;
     frameClocker = 0;
 
@@ -86,7 +90,7 @@ export class ChiChiAPU implements IChiChiAPU {
             enableSquare1: this.enableSquare1,
             enableTriangle: this.enableTriangle,
             enableNoise: this.enableNoise,
-            enablePCM: false,
+            enablePCM: this.enableDMC,
             synced: this.writer.synced
         };
         return settings;
@@ -136,6 +140,14 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise.gain = value ? this.noiseGain : 0;
     }
 
+    get enableDMC(): boolean {
+        return this.dmc.gain > 0;
+    }
+
+    set enableDMC(value: boolean) {
+        this.dmc.gain = value ? this.triangleGain : 0;
+    }
+
     rebuildSound(): void {
         this.myBlipper = new Blip(this._sampleRate / 5);
         this.myBlipper.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
@@ -163,7 +175,10 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise = new NoiseChannel(this.myBlipper, 3);
         this.noise.gain = this.noiseGain; this.noise.period = 0;
 
-        this.dmc = new DMCChannel(this.myBlipper, 4, null);
+        this.dmc = new DMCChannel(this.myBlipper, 4, (address) => {
+            return this.memoryMap.getByte(0, address);
+        }, () => { this.interruptRaised = true; } 
+    );
         
     }
 
@@ -212,7 +227,7 @@ export class ChiChiAPU implements IChiChiAPU {
             case 0x4011:
             case 0x4012:
             case 0x4013:
-                this.dmc.WriteRegister(address - 0x40010, data, clock);
+                this.dmc.WriteRegister(address - 0x4010, data, clock);
                 break;
             case 0x4015:
                 this.reg15 = data;
@@ -276,6 +291,7 @@ export class ChiChiAPU implements IChiChiAPU {
         this.square1.endFrame(time);
         this.triangle.endFrame(time);
         this.noise.EndFrame(time);
+        this.dmc.EndFrame(time);
 
         this.myBlipper.blip_end_frame(time);
 

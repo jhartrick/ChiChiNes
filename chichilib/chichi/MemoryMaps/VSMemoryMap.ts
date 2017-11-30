@@ -3,23 +3,15 @@ import { IChiChiPPU } from "../ChiChiPPU";
 import { IChiChiAPU } from "../ChiChiAudio";
 import { IBaseCart } from "../../chichicarts/BaseCart";
 import { ChiChiInputHandler } from "../ChiChiControl";
-import { IMemoryMap } from "../ChiChiMemoryMap";
+import { MemoryMap } from "../ChiChiMemoryMap";
 
-export class VSMemoryMap implements IMemoryMap {
-    private ppu: IChiChiPPU;
-    private apu: IChiChiAPU;
-    private pad1: ChiChiInputHandler;
-    private pad2: ChiChiInputHandler;
+export class VSMemoryMap extends MemoryMap {
 
     constructor(
-        private cpu: IChiChiCPPU, 
-        private cart: IBaseCart
+        public cpu: IChiChiCPPU, 
+        public cart: IBaseCart
     ) {
-            this.apu = cpu.SoundBopper;
-            this.ppu = cpu.ppu;
-            this.pad1 = cpu.PadOne;
-            this.pad2 = cpu.PadTwo;
-            this.cart = cart;
+            super(cpu, cart);
     }
 
     getByte(clock: number, address: number): number {
@@ -29,7 +21,7 @@ export class VSMemoryMap implements IMemoryMap {
             case 0:
             case 0x1000:
                 if (address < 2048) {
-                    result = this.cpu.Rams[address];
+                    result = this.Rams[address];
                 } else {
                     result = address >> 8;
                 }
@@ -83,14 +75,14 @@ export class VSMemoryMap implements IMemoryMap {
     setByte(clock: number, address: number, data: number): void {
         // check high byte, find appropriate handler
         if (address < 2048) {
-            this.cpu.Rams[address & 2047] = data;
+            this.Rams[address & 2047] = data;
             return;
         }
         switch (address & 61440) {
             case 0:
             case 4096:
                 // nes sram
-                this.cpu.Rams[address & 2047] = data;
+                this.Rams[address & 2047] = data;
                 break;
             case 20480:
                 this.cart.SetByte(clock, address, data);
@@ -151,14 +143,6 @@ export class VSMemoryMap implements IMemoryMap {
                 }
                 break;
         }
-    }
-
-    getPPUByte(clock: number, address: number): number {
-        return this.cart.GetPPUByte(clock, address);
-    }
-
-    setPPUByte(clock: number, address: number, data: number): void {
-        this.cart.SetPPUByte(clock, address, data);
     }
 
 }

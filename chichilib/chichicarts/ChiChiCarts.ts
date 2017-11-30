@@ -171,7 +171,6 @@ export class iNESFileHandler  {
             _cart.Whizzler = cpu.ppu;
             _cart.CPU = cpu;
             cpu.Cart = _cart;
-            cpu.ppu.chrRomHandler = _cart;
             _cart.LoadiNESCart(iNesHeader, prgRomCount, chrRomCount, theRom, chrRom, chrOffset);
         }
 

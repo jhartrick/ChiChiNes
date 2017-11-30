@@ -2,7 +2,7 @@ import { Blip } from "./CommonAudio";
 import { ChiChiCPPU } from "../ChiChiCPU";
 
 export class DMCChannel  {
-    time: number;
+    time: number = 0;
     internalClock: number = 0;
     fetching: boolean = false;
     buffer: number = 0;
@@ -27,12 +27,26 @@ export class DMCChannel  {
     wavehold: number= 0;
     _chan: number= 0;
     delta = 0;
+    gain = 0;
 
     private _bleeper: Blip = null;
     
-    constructor(bleeper: Blip, chan: number, private cpu: ChiChiCPPU) {
+    constructor(bleeper: Blip, chan: number, doDma: (address: number) => number, setIrq: () => void) {
         this._bleeper = bleeper;
         this._chan = chan;
+        this.handleDma = (address) => {
+            return doDma(address)
+        }
+        this.handleIrq = () => setIrq();
+
+    }
+
+    handleIrq(): void {
+        return;
+    }
+
+    handleDma(address: number): number {
+        return 0;
     }
 
     WriteRegister(register: number, data: number, time: number): void {
@@ -41,7 +55,8 @@ export class DMCChannel  {
         case 0:	this.frequency = data & 0xF;
             this.wavehold = (data >> 6) & 0x1;
             this.doirq = data >> 7;
-            if (!this.doirq) {
+            if (this.doirq) {
+                this.handleIrq();
                 //CPU::WantIRQ &= ~IRQ_DPCM;
             }
             break;
@@ -76,7 +91,8 @@ export class DMCChannel  {
         // this uses pre-decrement due to the lookup table
         for (; this.time < end_time; this.time ++) {
             for(let i =0; i< 8; ++i) {
-                if (!--this.cycles)
+                
+                if (this.cycles-- <= 0)
                 {
                     this.cycles = this.freqTable[this.frequency];
                     if (!this.silenced)
@@ -113,6 +129,7 @@ export class DMCChannel  {
                 if (this.bufempty && !this.fetching && this.lengthCtr && (this.internalClock & 1))
                 {
                     this.fetching = true;
+                    this.fetch();
                     //CPU::EnableDMA |= DMA_PCM;
                     // decrement LengthCtr now, so $4015 reads are updated in time
                     this.lengthCtr--;
@@ -124,7 +141,7 @@ export class DMCChannel  {
 
 
     fetch () : void {
-        this.buffer = this.cpu.GetByte(this.curAddr);
+        this.buffer = this.handleDma(this.curAddr);
         this.bufempty = false;
         this.fetching = false;
         if (++this.curAddr == 0x10000)
@@ -137,14 +154,14 @@ export class DMCChannel  {
                 this.lengthCtr = (this.length << 4) + 1;
             }
             else if (this.doirq) {
-                this.cpu._handleIRQ = true;
+                this.handleIrq();
             }
         }
     }
 
     EndFrame(time: number): void {
         this.Run(time);
-        
+        this.time = 0;
     }
 
     FrameClock(time: number, step: number): void {

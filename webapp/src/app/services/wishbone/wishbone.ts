@@ -84,11 +84,13 @@ export class WishboneMachine  {
     insertCart(cart: BaseCart) {
 
         this.tileDoodler = new TileDoodler(this.ppu);
+        this.Cpu.setupMemoryMap(cart);
         cart.installCart(this.ppu, this.Cpu);
-        this.Cpu.Cart = this.ppu.ChrRomHandler = this.Cart.realCart = cart;
+
+        this.Cart.realCart = cart;
         this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
         this.Cart.CartName = this.Cart.realCart.CartName;
-        this.ppu.chrRomHandler = this.Cart.realCart;
+
     }
 
 }

@@ -27,7 +27,6 @@ export interface IChiChiCPPUState {
     _currentInstruction_ExtraTiming: number;
     systemClock: number;
     nextEvent: number;
-    Rams: Uint8Array;
 
     Debugging: boolean;
     cheating: boolean;
@@ -46,7 +45,6 @@ export interface IChiChiCPPU extends IChiChiCPPUState {
 
     CurrentInstruction: ChiChiInstruction;
     SoundBopper: IChiChiAPU;
-    Cart: IBaseCart;
     FrameOn: boolean;
 
     Step(): void;
@@ -63,15 +61,11 @@ export interface IChiChiCPPU extends IChiChiCPPUState {
     compare(data: number): void;
     branch(): void;
     nmiHandler(): void;
-    irqUpdater(): void;
 
     GetByte(address: number): number;
     SetByte(address: number, data: number): void;
 
     memoryMap: IMemoryMap;
-
-    PeekByte(address: number): number;
-    PeekBytes(start: number, finish: number): number[];
 
     HandleNextEvent(): void;
     ResetInstructionHistory(): void;
@@ -115,9 +109,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
 
     private advanceClock(value: number) {
         if (value) {
-            this.ppu.advanceClock(value);
-            this.SoundBopper.advanceClock(value);
-            this.Cart.advanceClock(value);
+            this.memoryMap.advanceClock(value);
             this._clock += value;
         }
     }
@@ -155,8 +147,6 @@ export class ChiChiCPPU implements IChiChiCPPU {
     private __frameFinished = true;
 
     // system ram
-    private _ramsBuffer = new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT);
-    Rams = new Uint8Array(<any>this._ramsBuffer);// System.Array.init(vv, 0, System.Int32);
     private _stackPointer = 255;
 
     // debug helpers
@@ -320,14 +310,12 @@ export class ChiChiCPPU implements IChiChiCPPU {
     Step(): void {
         //let tickCount = 0;
         this._currentInstruction_ExtraTiming = 0;
-        //this.FindNextEvent();
-        
 
         if (this._handleNMI) {
             this.advanceClock(7);
             this._handleNMI = false;
             this.nonMaskableInterrupt();
-        } else if (this.Cart.irqRaised || this.SoundBopper.interruptRaised ) {
+        } else if (this.memoryMap.irqRaised) {
             this.interruptRequest();
         }
 
@@ -397,15 +385,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
         this._stackPointer = 253;
         this._operationCounter = 0;
         this.advanceClock(4);
-        // wram initialized to 0xFF, with some exceptions
-        // probably doesn't affect games, but why not?
-        for (var i = 0; i < 2048; ++i) {
-            this.Rams[i] = 255;
-        }
-        this.Rams[8] = 247;
-        this.Rams[9] = 239;
-        this.Rams[10] = 223;
-        this.Rams[15] = 191;
+
 
         this._programCounter =  this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
     }
@@ -1077,12 +1057,8 @@ export class ChiChiCPPU implements IChiChiCPPU {
         this._handleNMI = true;
     }
 
-    irqUpdater(): void {
-        this._handleIRQ = this.SoundBopper.interruptRaised || this.Cart.irqRaised;
-    }
-
     private pushStack(data: number): void {
-        this.Rams[this._stackPointer + 256] = data;
+        this.memoryMap.Rams[this._stackPointer + 256] = data;
         this._stackPointer--;
         if (this._stackPointer < 0) {
             this._stackPointer = 255;
@@ -1094,10 +1070,11 @@ export class ChiChiCPPU implements IChiChiCPPU {
         if (this._stackPointer > 255) {
             this._stackPointer = 0;
         }
-        return this.Rams[this._stackPointer + 256];
+        return this.memoryMap.Rams[this._stackPointer + 256];
     }
 
     public setupMemoryMap(cart: IBaseCart) {
+        
         this.memoryMap = cart.createMemoryMap(this);
     }
 
@@ -1124,79 +1101,6 @@ export class ChiChiCPPU implements IChiChiCPPU {
         if (!this.memoryMap) { return; }
         this.memoryMap.setByte(this.clock, address, data);
     }
-
-    PeekByte(address: number): number {
-        var result = 0;
-        // check high byte, find appropriate handler
-        switch (address & 61440) {
-            case 0:
-            case 4096:
-                if (address < 2048) {
-                    result = this.Rams[address];
-                } else {
-                    result = address >> 8;
-                }
-                break;
-            case 8192:
-            case 12288:
-                result = 0;
-                //result = this.PPU_GetByte(this.clock, address);
-                break;
-            case 16384:
-                switch (address) {
-                    case 16406:
-                        result = this._padOne.GetByte(this.clock, address);
-                        break;
-                    case 16407:
-                        result = this._padTwo.GetByte(this.clock, address);
-                        break;
-                    case 16405:
-                        result = this.SoundBopper.GetByte(this.clock, address);
-                        break;
-                    default:
-                        // return open bus?
-                        result = address >> 8;
-                        break;
-                }
-                break;
-            case 20480:
-                // ??
-                result = address >> 8;
-                break;
-            case 24576:
-            case 28672:
-            case 32768:
-            case 36864:
-            case 40960:
-            case 45056:
-            case 49152:
-            case 53248:
-            case 57344:
-            case 61440:
-                // cart 
-                result = 0;
-                //result = this.Cart.GetByte(this.clock, address);
-                break;
-            default:
-                throw new Error("Bullshit!");
-        }
-        //if (_cheating && memoryPatches.ContainsKey(address))
-        //{
-
-        //    return memoryPatches[address].Activated ? memoryPatches[address].GetData(result) & 0xFF : result & 0xFF;
-        //}
-
-        return result & 255;
-    }
-
-    PeekBytes(start: number, finish: number): number[] {
-        var array = new Array<number>();
-        for (let i = 0; i < finish; ++i) {
-            if (i< this.Rams.length) array.push(this.Rams[i]);
-        }
-        return array;
-    }
-
 
     HandleNextEvent(): void {
         // this.ppu.HandleEvent(this.clock);
@@ -1266,7 +1170,6 @@ export class ChiChiCPPU implements IChiChiCPPU {
             _currentInstruction_ExtraTiming: this._currentInstruction_ExtraTiming,
             systemClock: this.systemClock,
             nextEvent: this.nextEvent,
-            Rams: this.Rams.slice(),
         
             Debugging: this.Debugging,
             cheating: this.cheating,
@@ -1301,9 +1204,6 @@ export class ChiChiCPPU implements IChiChiCPPU {
         this.cheating = value.cheating,
         this.genieCodes = value.genieCodes
 
-        for (let i = 0; i < this.Rams.length; ++i) {
-            this.Rams[i] = value.Rams[i];
-        }
                     
         
     }

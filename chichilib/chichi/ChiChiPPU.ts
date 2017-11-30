@@ -2,6 +2,7 @@ import { BaseCart, IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from './ChiChiCPU';
 import { ChiChiAPU, IChiChiAPUState } from './ChiChiAudio';
+import { IMemoryMap } from './ChiChiMemoryMap';
 
 export interface IChiChiPPUState {
 
@@ -28,7 +29,6 @@ export interface IChiChiPPU extends IChiChiPPUState {
     
     cpu: ChiChiCPPU;
     
-    chrRomHandler: IBaseCart;
     unpackedSprites: ChiChiSprite[];
 
 
@@ -45,7 +45,7 @@ export interface IChiChiPPU extends IChiChiPPUState {
     readonly NMIIsThrown: boolean;
     setupVINT(): void;
 
-
+    memoryMap: IMemoryMap;
     SetByte(Clock: number, address: number, data: number): void;
     GetByte(Clock: number, address: number): number;
     copySprites(copyFrom: number): void;
@@ -68,10 +68,9 @@ export class ChiChiPPU implements IChiChiPPU {
     constructor() {
         this.initSprites();
     }
-
-    // Rom handler
-    chrRomHandler: IBaseCart;
     
+    memoryMap: IMemoryMap;
+
     // private members
     // scanline position
     private yPosition: number = 0;
@@ -154,13 +153,6 @@ export class ChiChiPPU implements IChiChiPPU {
     public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
 
 
-    set ChrRomHandler(value: IBaseCart) {
-        this.chrRomHandler = value;
-    }
-    get ChrRomHandler(): IBaseCart {
-        return this.chrRomHandler;
-    }
-
     PPU_IRQAsserted: boolean;
 
     get NextEventAt(): number {
@@ -237,10 +229,10 @@ export class ChiChiPPU implements IChiChiPPU {
         let result = 0;
         if (address >= 8192 && address < 12288) {
 
-            result = this.chrRomHandler.GetPPUByte(0, address);
+            result = this.memoryMap.getPPUByte(0, address);
 
         } else {
-            result = this.chrRomHandler.GetPPUByte(0, address);
+            result = this.memoryMap.getPPUByte(0, address);
         }
         return result;
     }
@@ -339,10 +331,10 @@ export class ChiChiPPU implements IChiChiPPU {
                     }
                 } else {
                     // if ((this._PPUAddress & 0xF000) === 0x2000) {
-                    //     this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
+                    //     this.memoryMap.setPPUByte(Clock, this._PPUAddress, data);
                     // }
                     
-                    this.chrRomHandler.SetPPUByte(Clock, this._PPUAddress, data);
+                    this.memoryMap.setPPUByte(Clock, this._PPUAddress, data);
                 }
                 // if controlbyte0.4, set ppuaddress + 32, else inc
                 if ((this._PPUControlByte0 & 4) === 4) {
@@ -382,13 +374,13 @@ export class ChiChiPPU implements IChiChiPPU {
                 if ((this._PPUAddress & 0xFF00) === 0x3F00) {
                     tmp = this._palette[this._PPUAddress & 0x1F];
 
-                    this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress - 4096);
+                    this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress - 4096);
                 } else {
                     tmp = this.ppuReadBuffer;
                     if (this._PPUAddress >= 0x2000 && this._PPUAddress <= 0x2FFF) {
-                        this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress);
+                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress);
                     } else {
-                        this.ppuReadBuffer = this.chrRomHandler.GetPPUByte(Clock, this._PPUAddress & 0x3FFF);
+                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress & 0x3FFF);
                     }
                 }
                 if ((this._PPUControlByte0 & 4) === 4) {
@@ -406,8 +398,8 @@ export class ChiChiPPU implements IChiChiPPU {
     copySprites(copyFrom: number): void {
         for (var i = 0; i < 256; ++i) {
             var spriteLocation = (this._spriteAddress + i) & 255;
-            if (this.spriteRAM[spriteLocation] !== this.cpu.Rams[copyFrom + i]) {
-                this.spriteRAM[spriteLocation] = this.cpu.Rams[copyFrom + i];
+            if (this.spriteRAM[spriteLocation] !== this.memoryMap.Rams[copyFrom + i]) {
+                this.spriteRAM[spriteLocation] = this.memoryMap.Rams[copyFrom + i];
                 this.unpackedSprites[(spriteLocation >> 2) & 255].Changed = true;
             }
         }
@@ -472,8 +464,8 @@ export class ChiChiPPU implements IChiChiPPU {
                     yLine += 8;
                 }
 
-                patternEntry = this.chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine);
-                patternEntryBit2 = this.chrRomHandler.GetPPUByte(0, spritePatternTable + tileIndex * 16 + yLine + 8);
+                patternEntry = this.memoryMap.getPPUByte(0, spritePatternTable + tileIndex * 16 + yLine);
+                patternEntryBit2 = this.memoryMap.getPPUByte(0, spritePatternTable + tileIndex * 16 + yLine + 8);
 
                 result = (currSprite.FlipX ? ((patternEntry >> xPos) & 1) | (((patternEntryBit2 >> xPos) << 1) & 2) : ((patternEntry >> 7 - xPos) & 1) | (((patternEntryBit2 >> 7 - xPos) << 1) & 2)) & 255;
 
@@ -502,8 +494,8 @@ export class ChiChiPPU implements IChiChiPPU {
             y += 8;
         }
         const dataAddress = patternTableIndex + (tileIndex << 4) + y;
-        patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock, dataAddress);
-        patternEntryBit2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock, dataAddress + 8);
+        patternEntry = this.memoryMap.getPPUByte(this.LastcpuClock, dataAddress);
+        patternEntryBit2 = this.memoryMap.getPPUByte(this.LastcpuClock, dataAddress + 8);
 
         return (sprite.v.FlipX ? ((patternEntry >> x) & 1) | (((patternEntryBit2 >> x) << 1) & 2) : ((patternEntry >> 7 - x) & 1) | (((patternEntryBit2 >> 7 - x) << 1) & 2));
     }
@@ -580,7 +572,7 @@ export class ChiChiPPU implements IChiChiPPU {
     }
 
     getAttrEntry(ppuNameTableMemoryStart: number, i: number, j: number): number {
-        const LookUp = this.chrRomHandler.GetPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
+        const LookUp = this.memoryMap.getPPUByte(0, 8192 + ppuNameTableMemoryStart + 960 + (i >> 2) + ((j >> 2) * 8));
 
         switch ((i & 2) | (j & 2) * 2) {
             case 0:
@@ -621,7 +613,6 @@ export class ChiChiPPU implements IChiChiPPU {
                     if ((this._PPUControlByte1 & 0x18) !== 0) {
                         this.oddFrame = !this.oddFrame;
                         this.isRendering = true;
-                        
                     }
                     break;
                 case 81840: // ChiChiNES.CPU2A03.frameClockEnd:
@@ -667,14 +658,14 @@ export class ChiChiPPU implements IChiChiPPU {
 
                         const tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
 
-                        let tileIndex = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, tileNametablePosition);
+                        let tileIndex = this.memoryMap.getPPUByte(this.LastcpuClock + ticks, tileNametablePosition);
 
                         let patternTableYOffset = this.yPosition & 7;
 
                         let patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
 
-                        this.patternEntry = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID);
-                        this.patternEntryByte2 = this.chrRomHandler.GetPPUByte(this.LastcpuClock + ticks, patternID + 8);
+                        this.patternEntry = this.memoryMap.getPPUByte(this.LastcpuClock + ticks, patternID);
+                        this.patternEntryByte2 = this.memoryMap.getPPUByte(this.LastcpuClock + ticks, patternID + 8);
 
                         this.currentAttributeByte = this.getAttrEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
                         /* end fetch next tile */
@@ -702,9 +693,11 @@ export class ChiChiPPU implements IChiChiPPU {
                     this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
                     this.vbufLocation++;
                 }
+
                 if (this.currentXPosition === 324) {
-                    this.chrRomHandler.updateScanlineCounter();
+                    this.memoryMap.advanceScanline(1);
                 }
+
                 this.currentXPosition++;
 
                 if (this.currentXPosition > 340) {
@@ -732,8 +725,6 @@ export class ChiChiPPU implements IChiChiPPU {
                     } else {
                         this.yNTXor = 0;
                     }
-
-
                 }
             }
 

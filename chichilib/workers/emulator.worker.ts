@@ -179,13 +179,13 @@ export class tendoWrapper {
 
     updateBuffers() {
         const machine = this.machine;
-
+        
         let info = new NesInfo();
         info.bufferupdate = true;
         info.stateupdate = false;
         if (this.machine && this.machine.Cart) {
             info.Cpu = {
-                Rams: this.machine.Cpu.Rams,
+                Rams: this.machine.Cpu.memoryMap.Rams,
                 spriteRAM: this.machine.Cpu.ppu.spriteRAM
             }
             info.Cart = {
@@ -386,10 +386,9 @@ export class tendoWrapper {
             (romloader: any) => {
                 const machine = this.machine;
                 const cart = romloader.loader.loadRom(cmd.rom, cmd.name);
+                
                 this.machine.Cpu.setupMemoryMap(cart);
                 cart.installCart(this.machine.ppu, this.machine.Cpu);
-        
-                machine.Cart.NMIHandler = () => { this.machine.Cpu._handleIRQ = true; };
                         
                 this.machine.Cpu.cheating = false;
                 this.machine.Cpu.genieCodes = new Array<MemoryPatch>();

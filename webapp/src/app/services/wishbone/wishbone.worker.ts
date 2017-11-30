@@ -71,7 +71,7 @@ export class WishboneWorker {
         }
         if (data.bufferupdate) {
             if (data.Cpu.Rams) {
-                wishbone.Cpu.Rams = data.Cpu.Rams;
+                wishbone.Cpu.memoryMap.Rams = data.Cpu.Rams;
                 wishbone.ppu.spriteRAM = data.Cpu.spriteRAM;
                 for (let i = 0; i < wishbone.ppu.unpackedSprites.length; ++i) {
                     wishbone.ppu.unpackedSprites[i].Changed = true;

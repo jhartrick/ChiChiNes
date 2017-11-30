@@ -5,6 +5,15 @@ import { IBaseCart } from "../chichicarts/BaseCart";
 import { ChiChiInputHandler } from "./ChiChiControl";
 
 export interface IMemoryMap {
+    ppu: IChiChiPPU;
+    apu: IChiChiAPU;
+    pad1: ChiChiInputHandler;
+    pad2: ChiChiInputHandler;
+    cpu: IChiChiCPPU;
+    cart: IBaseCart;
+    Rams: Uint8Array;
+
+    readonly irqRaised: boolean;
 
     getByte(clock: number, address: number): number;
     setByte(clock: number, address: number, data: number): void;
@@ -12,23 +21,36 @@ export interface IMemoryMap {
     getPPUByte(clock: number, address: number): number;
 
     setPPUByte(clock: number, address: number, data: number): void;
+    advanceClock(value: number): void;
+    advanceScanline(value: number): void;
 }
 
 export class MemoryMap implements IMemoryMap {
-    private ppu: IChiChiPPU;
-    private apu: IChiChiAPU;
-    private pad1: ChiChiInputHandler;
-    private pad2: ChiChiInputHandler;
+    ppu: IChiChiPPU;
+    apu: IChiChiAPU;
+    pad1: ChiChiInputHandler;
+    pad2: ChiChiInputHandler;
+
+    // system ram
+    Rams = new Uint8Array(<any>new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));// System.Array.init(vv, 0, System.Int32);
+
+    get irqRaised(): boolean {
+        return this.cart.irqRaised || this.apu.interruptRaised;
+    }
+
 
     constructor(
-        private cpu: IChiChiCPPU, 
-        private cart: IBaseCart
+        public cpu: IChiChiCPPU, 
+        public cart: IBaseCart
     ) {
-            this.apu = cpu.SoundBopper;
-            this.ppu = cpu.ppu;
-            this.pad1 = cpu.PadOne;
-            this.pad2 = cpu.PadTwo;
-            this.cart = cart;
+        this.apu = cpu.SoundBopper;
+        this.ppu = cpu.ppu;
+        this.pad1 = cpu.PadOne;
+        this.pad2 = cpu.PadTwo;
+        this.cart = cart;
+
+        this.ppu.memoryMap = this;
+        this.apu.memoryMap = this;
     }
 
     getByte(clock: number, address: number): number {
@@ -38,7 +60,7 @@ export class MemoryMap implements IMemoryMap {
             case 0:
             case 0x1000:
                 if (address < 2048) {
-                    result = this.cpu.Rams[address];
+                    result = this.Rams[address];
                 } else {
                     result = address >> 8;
                 }
@@ -94,14 +116,14 @@ export class MemoryMap implements IMemoryMap {
     setByte(clock: number, address: number, data: number): void {
         // check high byte, find appropriate handler
         if (address < 2048) {
-            this.cpu.Rams[address & 2047] = data;
+            this.Rams[address & 2047] = data;
             return;
         }
         switch (address & 61440) {
             case 0:
             case 4096:
                 // nes sram
-                this.cpu.Rams[address & 2047] = data;
+                this.Rams[address & 2047] = data;
                 break;
             case 20480:
                 this.cart.SetByte(clock, address, data);
@@ -124,37 +146,43 @@ export class MemoryMap implements IMemoryMap {
                 this.ppu.SetByte(clock, address, data);
                 break;
             case 16384:
+            
                 switch (address) {
-                    case 16384:
-                    case 16385:
-                    case 16386:
-                    case 16387:
-                    case 16388:
-                    case 16389:
-                    case 16390:
-                    case 16391:
-                    case 16392:
-                    case 16393:
-                    case 16394:
-                    case 16395:
-                    case 16396:
-                    case 16397:
-                    case 16398:
-                    case 16399:
-                    case 16405:
-                    case 16407:
+                    case 0x4000:
+                    case 0x4001:
+                    case 0x4002:
+                    case 0x4003:
+                    case 0x4004:
+                    case 0x4005:
+                    case 0x4006:
+                    case 0x4007:
+                    case 0x4008:
+                    case 0x4009:
+                    case 0x400a:
+                    case 0x400b:
+                    case 0x400c:
+                    case 0x400d:
+                    case 0x400e:
+                    case 0x400f:
+                    case 0x4010:
+                    case 0x4011:
+                    case 0x4012:
+                    case 0x4013:
+                    
+                    case 0x4015:
+                    case 0x4017:
                         this.apu.SetByte(clock, address, data);
                         break;
-                    case 16404:
+                    case 0x4014:
                         this.ppu.copySprites(data * 256);
                         this.cpu._currentInstruction_ExtraTiming = this.cpu._currentInstruction_ExtraTiming + 513;
                         if (clock & 1) {
                             this.cpu._currentInstruction_ExtraTiming++;
                         }
                         break;
-                    case 16406:
-                        this.pad1.SetByte(clock, address, data & 1);
-                        this.pad2.SetByte(clock, address, data & 1);
+                    case 0X4016:
+                        this.pad1.SetByte(clock, address, (data & 1) | 0x40);
+                        this.pad2.SetByte(clock, address,(data & 1) | 0x40);
                         break;
                     default:
                         if (this.cart.mapsBelow6000)
@@ -172,4 +200,15 @@ export class MemoryMap implements IMemoryMap {
         this.cart.SetPPUByte(clock, address, data);
     }
 
+    advanceClock(value: number) {
+        this.apu.advanceClock(value);
+        this.ppu.advanceClock(value);
+        this.cart.advanceClock(value);
+    }
+
+    advanceScanline(value: number) {
+        while(value-- >= 0) {
+            this.cart.updateScanlineCounter();
+        }
+    }
 }

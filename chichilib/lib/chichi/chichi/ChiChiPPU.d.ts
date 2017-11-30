@@ -1,6 +1,6 @@
-import { IBaseCart } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from './ChiChiCPU';
+import { IMemoryMap } from './ChiChiMemoryMap';
 export interface IChiChiPPUState {
     spriteRAM: Uint8Array;
     _PPUControlByte0: number;
@@ -19,7 +19,6 @@ export interface IChiChiPPU extends IChiChiPPUState {
     byteOutBuffer: Uint8Array;
     LastcpuClock: number;
     cpu: ChiChiCPPU;
-    chrRomHandler: IBaseCart;
     unpackedSprites: ChiChiSprite[];
     NMIHandler: () => void;
     frameFinished: () => void;
@@ -31,6 +30,7 @@ export interface IChiChiPPU extends IChiChiPPUState {
     ReadState(state: any): void;
     readonly NMIIsThrown: boolean;
     setupVINT(): void;
+    memoryMap: IMemoryMap;
     SetByte(Clock: number, address: number, data: number): void;
     GetByte(Clock: number, address: number): number;
     copySprites(copyFrom: number): void;
@@ -45,7 +45,7 @@ export declare class ChiChiPPU implements IChiChiPPU {
     cpu: ChiChiCPPU;
     greyScale: boolean;
     constructor();
-    chrRomHandler: IBaseCart;
+    memoryMap: IMemoryMap;
     private yPosition;
     private xPosition;
     private vbufLocation;
@@ -103,7 +103,6 @@ export declare class ChiChiPPU implements IChiChiPPU {
     private patternEntry;
     private patternEntryByte2;
     byteOutBuffer: Uint8Array;
-    ChrRomHandler: IBaseCart;
     PPU_IRQAsserted: boolean;
     readonly NextEventAt: number;
     GetPPUStatus(): PpuStatus;
