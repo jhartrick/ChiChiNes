@@ -187,6 +187,10 @@ export class WishboneWorker {
         this.setRunStatus(RunningStatuses.Paused);
     }
 
+    stop() {
+        this.setRunStatus(RunningStatuses.Off);
+    }
+
     debugStep() {
         this.postNesMessage(new ChiChiMessages.DebugCommand(DebugStepTypes.Instruction));
     }

@@ -188,7 +188,7 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise.gain = this.noiseGain; this.noise.period = 0;
 
         this.dmc = new DMCChannel(this.myBlipper, 4, (address) => {
-                this.memoryMap.cpu._currentInstruction_ExtraTiming += 4;
+                this.memoryMap.cpu.borrowedCycles = 4;
                 return this.memoryMap.getByte(0, address);
             }
         );
@@ -201,7 +201,9 @@ export class ChiChiAPU implements IChiChiAPU {
             this._interruptRaised = false;
         }
         if (address === 0x4015) {
-            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this._interruptRaised ? 64 : 0);
+            const result = (this.dmc.interruptRaised ? 0x80 : 0) | (this.interruptRaised ? 0x40 : 0) | (this.dmc.length > 0 ? 0x10 : 0) | ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this._interruptRaised ? 64 : 0);
+            this.interruptRaised = false;
+            return result;
         } else {
             return 66;
         }
@@ -251,6 +253,7 @@ export class ChiChiAPU implements IChiChiAPU {
                 this.square1.writeRegister(4, data & 2, clock);
                 this.triangle.writeRegister(4, data & 4, clock);
                 this.noise.writeRegister(4, data & 8, clock);
+                this.dmc.WriteRegister(4, data & 0x10, clock);
                 break;
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);

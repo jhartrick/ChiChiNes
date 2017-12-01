@@ -1212,7 +1212,7 @@ var ChiChiAPU = /** @class */ (function () {
         this.noise.gain = this.noiseGain;
         this.noise.period = 0;
         this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, function (address) {
-            _this.memoryMap.cpu._currentInstruction_ExtraTiming += 4;
+            _this.memoryMap.cpu.borrowedCycles = 4;
             return _this.memoryMap.getByte(0, address);
         });
         this.dmc.gain = this.dmcGain;
@@ -1222,7 +1222,9 @@ var ChiChiAPU = /** @class */ (function () {
             this._interruptRaised = false;
         }
         if (address === 0x4015) {
-            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this._interruptRaised ? 64 : 0);
+            var result = (this.dmc.interruptRaised ? 0x80 : 0) | (this.interruptRaised ? 0x40 : 0) | (this.dmc.length > 0 ? 0x10 : 0) | ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this._interruptRaised ? 64 : 0);
+            this.interruptRaised = false;
+            return result;
         }
         else {
             return 66;
@@ -1270,6 +1272,7 @@ var ChiChiAPU = /** @class */ (function () {
                 this.square1.writeRegister(4, data & 2, clock);
                 this.triangle.writeRegister(4, data & 4, clock);
                 this.noise.writeRegister(4, data & 8, clock);
+                this.dmc.WriteRegister(4, data & 0x10, clock);
                 break;
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
@@ -1415,6 +1418,11 @@ var DMCChannel = /** @class */ (function () {
                 break;
             case 3:
                 this.length = data;
+                // if (!this.lengthCtr)
+                //     this.lengthCtr = this.length;
+                break;
+            case 4:
+                this.interruptRaised = false;
                 if (data) {
                     if (!this.lengthCtr) {
                         this.curAddr = 0xC000 | ((this.addr << 6) & 0xffff);
@@ -2585,6 +2593,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this._reset = false;
         //timing
         this._clock = 0;
+        this.borrowedCycles = 0;
         this._ticks = 0;
         // CPU Status
         this._statusRegister = 0;
@@ -2756,6 +2765,10 @@ var ChiChiCPPU = /** @class */ (function () {
     };
     ChiChiCPPU.prototype.Step = function () {
         //let tickCount = 0;
+        if (this.borrowedCycles) {
+            this.advanceClock(this.borrowedCycles);
+            this.borrowedCycles = 0;
+        }
         this._currentInstruction_ExtraTiming = 0;
         if (this._handleNMI) {
             this.advanceClock(7);

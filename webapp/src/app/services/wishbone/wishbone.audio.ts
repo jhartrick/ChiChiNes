@@ -48,7 +48,7 @@ export class WishboneAPU  implements IChiChiAPU {
 		enableSquare1: true,
 		enableTriangle: true,
 		enableNoise: true,
-		enablePCM: true,
+		enableDMC: true,
 		synced: true
 	};
 	
@@ -79,7 +79,7 @@ export class WishboneAPU  implements IChiChiAPU {
 			enableSquare1:  this.audioSettings.enableSquare1,
 			enableTriangle:  this.audioSettings.enableTriangle,
 			enableNoise:  this.audioSettings.enableNoise,
-			enablePCM: this.audioSettings.enablePCM,
+			enableDMC: this.audioSettings.enableDMC,
 			synced: this.audioSettings.synced
 		}
 	}
@@ -91,7 +91,7 @@ export class WishboneAPU  implements IChiChiAPU {
 			this._audioSettings.enableSquare0 = value.enableSquare0;
 			this._audioSettings.enableSquare1 = value.enableSquare1;
 			this._audioSettings.enableTriangle = value.enableTriangle;
-			this._audioSettings.enablePCM = value.enablePCM;
+			this._audioSettings.enableDMC = value.enableDMC;
 			this._audioSettings.master_volume = value.master_volume;
 			this._audioSettings.synced = value.synced;
 		}

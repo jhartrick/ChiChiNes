@@ -73,7 +73,11 @@ export class DMCChannel  {
             break;
         case 3:	
             this.length = data;
-            
+            // if (!this.lengthCtr)
+            //     this.lengthCtr = this.length;
+            break;
+        case 4:
+            this.interruptRaised = false;
         	if (data)
             {
                 if (!this.lengthCtr)
@@ -85,6 +89,7 @@ export class DMCChannel  {
             else	
             { 
                 this.lengthCtr = 0;
+                
             }
 
             break;

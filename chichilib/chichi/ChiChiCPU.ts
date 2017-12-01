@@ -35,6 +35,9 @@ export interface IChiChiCPPUState {
 
 export interface IChiChiCPPU extends IChiChiCPPUState {
 
+    borrowedCycles: number;
+    
+
     cheat(address: number, result: number): number;
     instructionHistoryPointer: number;
     _instructionHistory: ChiChiInstruction[];
@@ -113,6 +116,8 @@ export class ChiChiCPPU implements IChiChiCPPU {
             this._clock += value;
         }
     }
+
+    borrowedCycles = 0;
 
     private _ticks = 0;
 
@@ -309,6 +314,11 @@ export class ChiChiCPPU implements IChiChiCPPU {
 
     Step(): void {
         //let tickCount = 0;
+        if (this.borrowedCycles) {
+            this.advanceClock(this.borrowedCycles);
+            this.borrowedCycles = 0;
+        }
+
         this._currentInstruction_ExtraTiming = 0;
 
         if (this._handleNMI) {
