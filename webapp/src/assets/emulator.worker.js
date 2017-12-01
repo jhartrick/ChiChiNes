@@ -1262,6 +1262,7 @@ var ChiChiAPU = /** @class */ (function () {
             case 0x4012:
             case 0x4013:
                 this.dmc.WriteRegister(address - 0x4010, data, clock);
+                this.dmc.FrameClock(this.currentClock, 0);
                 break;
             case 0x4015:
                 this.reg15 = data;
@@ -1304,7 +1305,6 @@ var ChiChiAPU = /** @class */ (function () {
         this.noise.FrameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
-        this.dmc.FrameClock(time, step);
     };
     ChiChiAPU.prototype.endFrame = function (time) {
         this.square0.endFrame(time);

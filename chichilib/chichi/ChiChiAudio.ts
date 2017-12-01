@@ -242,6 +242,8 @@ export class ChiChiAPU implements IChiChiAPU {
             case 0x4012:
             case 0x4013:
                 this.dmc.WriteRegister(address - 0x4010, data, clock);
+                this.dmc.FrameClock(this.currentClock, 0)
+
                 break;
             case 0x4015:
                 this.reg15 = data;
@@ -294,7 +296,6 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise.FrameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
-         this.dmc.FrameClock(time, step)
     }
 
     endFrame(time: number): void {
