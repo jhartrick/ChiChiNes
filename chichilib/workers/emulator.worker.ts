@@ -44,7 +44,7 @@ class CommandHandler<T extends CCMessage.WorkerMessage> {
             if (cmdResp) {
                 return cmdResp;
             }
-            return new CCMessage.WorkerResponse(command, true)            ;
+            return new CCMessage.WorkerResponse(command, true);
             
         } catch (e) {
             return new CCMessage.WorkerResponse(command, false, e.toString());

@@ -71,6 +71,7 @@ export class MemoryMap implements IMemoryMap {
                 break;
             case 0x4000:
                 switch (address) {
+
                     case 0x4015:
                         result = this.apu.GetByte(clock, address);
                         break;

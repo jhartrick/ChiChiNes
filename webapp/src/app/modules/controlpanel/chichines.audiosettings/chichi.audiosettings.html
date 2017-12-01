@@ -18,4 +18,7 @@
   <mat-button-toggle class="audio_button" [checked]="audioSettings.enableNoise" (change)="audioSettings.enableNoise = $event.source.checked; worker.updateAudioSettings();" >
     Noise
   </mat-button-toggle>
+  <mat-button-toggle class="audio_button" [checked]="audioSettings.enableDMC" (change)="audioSettings.enableDMC = $event.source.checked; worker.updateAudioSettings();" >
+      DMC
+    </mat-button-toggle>
 </div>

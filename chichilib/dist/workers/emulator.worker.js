@@ -1074,12 +1074,13 @@ var ChiChiAPU = /** @class */ (function () {
         this.square1Gain = 873;
         this.triangleGain = 1004;
         this.noiseGain = 567;
+        this.dmcGain = 567;
         this.muted = false;
         this.lastFrameHit = 0;
         this.currentClock = 0;
         this.frameClocker = 0;
         //Muted: boolean;
-        this.interruptRaised = false;
+        this._interruptRaised = false;
         this.sequence4 = [7457, 14913, 22371, 29828, 29829, 29831];
         this.sequence5 = [7457, 14913, 22371, 37281, 37282, 37283];
         this.rebuildSound();
@@ -1095,13 +1096,14 @@ var ChiChiAPU = /** @class */ (function () {
                 enableSquare1: this.enableSquare1,
                 enableTriangle: this.enableTriangle,
                 enableNoise: this.enableNoise,
-                enablePCM: this.enableDMC,
+                enableDMC: this.enableDMC,
                 synced: this.writer.synced
             };
             return settings;
         },
         set: function (value) {
             this.enableNoise = value.enableNoise;
+            this.enableDMC = value.enableDMC;
             this.enableSquare0 = value.enableSquare0;
             this.enableSquare1 = value.enableSquare1;
             this.enableTriangle = value.enableTriangle;
@@ -1120,6 +1122,16 @@ var ChiChiAPU = /** @class */ (function () {
         set: function (value) {
             this._sampleRate = value;
             this.rebuildSound();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiAPU.prototype, "interruptRaised", {
+        get: function () {
+            return this._interruptRaised || this.dmc.interruptRaised;
+        },
+        set: function (val) {
+            this._interruptRaised = val;
         },
         enumerable: true,
         configurable: true
@@ -1169,7 +1181,7 @@ var ChiChiAPU = /** @class */ (function () {
             return this.dmc.gain > 0;
         },
         set: function (value) {
-            this.dmc.gain = value ? this.triangleGain : 0;
+            this.dmc.gain = value ? this.dmcGain : 0;
         },
         enumerable: true,
         configurable: true
@@ -1184,6 +1196,7 @@ var ChiChiAPU = /** @class */ (function () {
         this.square1Gain = 873;
         this.triangleGain = 1004;
         this.noiseGain = 567;
+        this.dmcGain = 567;
         this.square0 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
         this.square0.gain = this.square0Gain;
         this.square0.period = 10;
@@ -1199,15 +1212,17 @@ var ChiChiAPU = /** @class */ (function () {
         this.noise.gain = this.noiseGain;
         this.noise.period = 0;
         this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, function (address) {
+            _this.memoryMap.cpu._currentInstruction_ExtraTiming += 4;
             return _this.memoryMap.getByte(0, address);
-        }, function () { _this.interruptRaised = true; });
+        });
+        this.dmc.gain = this.dmcGain;
     };
     ChiChiAPU.prototype.GetByte = function (Clock, address) {
         if (address === 0x4000) {
-            this.interruptRaised = false;
+            this._interruptRaised = false;
         }
         if (address === 0x4015) {
-            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.interruptRaised ? 64 : 0);
+            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this._interruptRaised ? 64 : 0);
         }
         else {
             return 66;
@@ -1215,7 +1230,7 @@ var ChiChiAPU = /** @class */ (function () {
     };
     ChiChiAPU.prototype.SetByte = function (clock, address, data) {
         if (address === 16384) {
-            this.interruptRaised = false;
+            this._interruptRaised = false;
         }
         switch (address) {
             case 0x4000:
@@ -1258,8 +1273,6 @@ var ChiChiAPU = /** @class */ (function () {
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
                 this.frameMode = ((data & 128) == 128);
-                //this.endFrame(clock);
-                //this.lastFrameHit = 0;
                 break;
         }
     };
@@ -1278,7 +1291,7 @@ var ChiChiAPU = /** @class */ (function () {
             this.frameClocker = 0;
             this.endFrame(time);
             if (this.throwingIRQs && !this.frameMode) {
-                this.interruptRaised = true;
+                this._interruptRaised = true;
                 this.irqHandler();
             }
         }
@@ -1308,7 +1321,7 @@ var ChiChiAPU = /** @class */ (function () {
             return {
                 audioSettings: this.audioSettings,
                 sampleRate: this.sampleRate,
-                interruptRaised: this.interruptRaised,
+                interruptRaised: this._interruptRaised,
                 enableSquare0: this.enableSquare0,
                 enableSquare1: this.enableSquare1,
                 enableTriangle: this.enableTriangle,
@@ -1318,7 +1331,7 @@ var ChiChiAPU = /** @class */ (function () {
         set: function (value) {
             this.audioSettings = value.audioSettings;
             this.sampleRate = value.sampleRate;
-            this.interruptRaised = value.interruptRaised;
+            this._interruptRaised = value.interruptRaised;
             this.enableSquare0 = value.enableSquare0;
             this.enableSquare1 = value.enableSquare1;
             this.enableTriangle = value.enableTriangle;
@@ -1341,7 +1354,9 @@ exports.ChiChiAPU = ChiChiAPU;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var DMCChannel = /** @class */ (function () {
-    function DMCChannel(bleeper, chan, doDma, setIrq) {
+    function DMCChannel(bleeper, chan, doDma) {
+        this.directLoad = false;
+        this.amplitude = 0;
         this.time = 0;
         this.internalClock = 0;
         this.fetching = false;
@@ -1363,20 +1378,20 @@ var DMCChannel = /** @class */ (function () {
         this.pcmdata = 0;
         this.doirq = 0;
         this.frequency = 0;
-        this.wavehold = 0;
+        this.loopFlag = 0;
         this._chan = 0;
         this.delta = 0;
-        this.gain = 0;
-        this._bleeper = null;
-        this._bleeper = bleeper;
+        this.gain = 503;
+        this.interruptRaised = false;
+        this.bleeper = null;
+        this.bleeper = bleeper;
         this._chan = chan;
         this.handleDma = function (address) {
             return doDma(address);
         };
-        this.handleIrq = function () { return setIrq(); };
     }
     DMCChannel.prototype.handleIrq = function () {
-        return;
+        this.interruptRaised = true;
     };
     DMCChannel.prototype.handleDma = function (address) {
         return 0;
@@ -1384,76 +1399,71 @@ var DMCChannel = /** @class */ (function () {
     DMCChannel.prototype.WriteRegister = function (register, data, time) {
         switch (register) {
             case 0:
-                this.frequency = data & 0xF;
-                this.wavehold = (data >> 6) & 0x1;
-                this.doirq = data >> 7;
-                if (this.doirq) {
-                    this.handleIrq();
-                    //CPU::WantIRQ &= ~IRQ_DPCM;
+                this.frequency = data & 0xf;
+                this.loopFlag = (data >> 6) & 0x1;
+                this.doirq = (data >> 7) & 1;
+                if (this.doirq === 0) {
+                    this.interruptRaised = false;
                 }
                 break;
             case 1:
-                this.pcmdata = data & 0x7F;
-                this.pos = (this.pcmdata - 0x40) * 3;
+                this.pcmdata = data & 0x7f;
+                this.updateAmplitude(this.pcmdata);
                 break;
             case 2:
                 this.addr = data;
                 break;
             case 3:
                 this.length = data;
-                break;
-            case 4:
                 if (data) {
                     if (!this.lengthCtr) {
-                        this.curAddr = 0xC000 | (this.addr << 6);
+                        this.curAddr = 0xC000 | ((this.addr << 6) & 0xffff);
                         this.lengthCtr = (this.length << 4) + 1;
                     }
                 }
                 else {
                     this.lengthCtr = 0;
                 }
-                // CPU::WantIRQ &= ~IRQ_DPCM;
                 break;
         }
     };
+    DMCChannel.prototype.updateAmplitude = function (new_amp) {
+        var delta = new_amp * this.gain - this.amplitude;
+        this.amplitude += delta;
+        this.bleeper.blip_add_delta(this.time, delta);
+    };
     DMCChannel.prototype.Run = function (end_time) {
-        // this uses pre-decrement due to the lookup table
         for (; this.time < end_time; this.time++) {
-            for (var i = 0; i < 8; ++i) {
-                if (this.cycles-- <= 0) {
-                    this.cycles = this.freqTable[this.frequency];
-                    if (!this.silenced) {
-                        if (this.shiftreg & 1) {
-                            if (this.pcmdata <= 0x7D)
-                                this.pcmdata += 2;
-                        }
-                        else {
-                            if (this.pcmdata >= 0x02)
-                                this.pcmdata -= 2;
-                        }
-                        this.shiftreg >>= 1;
-                        this.pos = (this.pcmdata - 0x40) * 3;
-                        this._bleeper.blip_add_delta(this.time, this.pcmdata);
+            if (--this.cycles <= 0) {
+                this.cycles = this.freqTable[this.frequency];
+                if (!this.silenced) {
+                    if (this.shiftreg & 1) {
+                        if (this.pcmdata <= 0x7D)
+                            this.pcmdata += 2;
                     }
-                    if (!--this.outbits) {
-                        this.outbits = 8;
-                        if (!this.bufempty) {
-                            this.shiftreg = this.buffer;
-                            this.bufempty = true;
-                            this.silenced = false;
-                        }
-                        else {
-                            this.silenced = true;
-                        }
+                    else {
+                        if (this.pcmdata >= 0x02)
+                            this.pcmdata -= 2;
+                    }
+                    this.shiftreg >>= 1;
+                    this.updateAmplitude(this.pcmdata);
+                }
+                if (--this.outbits <= 0) {
+                    this.outbits = 8;
+                    if (!this.bufempty) {
+                        this.shiftreg = this.buffer;
+                        this.bufempty = true;
+                        this.silenced = false;
+                    }
+                    else {
+                        this.silenced = true;
                     }
                 }
-                if (this.bufempty && !this.fetching && this.lengthCtr && (this.internalClock & 1)) {
-                    this.fetching = true;
-                    this.fetch();
-                    //CPU::EnableDMA |= DMA_PCM;
-                    // decrement LengthCtr now, so $4015 reads are updated in time
-                    this.lengthCtr--;
-                }
+            }
+            if (this.bufempty && !this.fetching && this.lengthCtr) {
+                this.fetching = true;
+                this.fetch();
+                this.lengthCtr--;
             }
         }
     };
@@ -1464,8 +1474,8 @@ var DMCChannel = /** @class */ (function () {
         if (++this.curAddr == 0x10000)
             this.curAddr = 0x8000;
         if (!this.lengthCtr) {
-            if (this.wavehold) {
-                this.curAddr = 0xC000 | (this.addr << 6);
+            if (this.loopFlag) {
+                this.curAddr = 0xC000 | ((this.addr << 6) & 0xffff);
                 this.lengthCtr = (this.length << 4) + 1;
             }
             else if (this.doirq) {
@@ -3892,7 +3902,7 @@ var AudioCommand = /** @class */ (function (_super) {
     function AudioCommand(audioSettings) {
         var _this = _super.call(this) || this;
         _this.audioSettings = audioSettings;
-        _this.command = exports.CMD_CHEAT;
+        _this.command = exports.CMD_AUDIOSETTINGS;
         return _this;
     }
     return AudioCommand;

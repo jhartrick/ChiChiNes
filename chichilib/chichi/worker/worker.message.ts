@@ -78,7 +78,7 @@ export class CheatCommand extends WorkerMessage {
 }
 
 export class AudioCommand extends WorkerMessage {
-    readonly command: string = CMD_CHEAT;
+    readonly command: string = CMD_AUDIOSETTINGS;
     constructor(public audioSettings: AudioSettings) {
         super();
     }

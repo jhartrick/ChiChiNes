@@ -4,8 +4,10 @@ import { IMemoryMap } from "../chichi/ChiChiMemoryMap";
 import { VSMemoryMap } from "../chichi/MemoryMaps/VSMemoryMap";
 
 export class VSCart extends BaseCart {
-    coin: number;
-
+        coin: number = 0;
+        dips1: number = 0x0;
+        dips2: number = 0x0;
+        
         customPalette = [430,326,44,660,0,755,14,630,555,310,70,3,764,770,4,572,
                         737,200,27,747,0,222,510,740,653,53,447,140,403,0,473,357,
                         503,31,420,6,407,507,333,704,22,666,36,20,111,773,444,707,
@@ -56,6 +58,9 @@ export class VSCart extends BaseCart {
         createMemoryMap(cpu: ChiChiCPPU): IMemoryMap {
             return new VSMemoryMap(cpu, this);
         }
+
+        clocks = 0;
+
     
      }
      

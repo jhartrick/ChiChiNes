@@ -102,7 +102,7 @@ export interface AudioSettings {
     enableSquare1: boolean;
     enableTriangle: boolean;
     enableNoise: boolean;
-    enablePCM: boolean;
+    enableDMC: boolean;
 
     synced: boolean;
 }

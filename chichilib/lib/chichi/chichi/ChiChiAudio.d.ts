@@ -40,6 +40,7 @@ export declare class ChiChiAPU implements IChiChiAPU {
     private square1Gain;
     private triangleGain;
     private noiseGain;
+    private dmcGain;
     private muted;
     private lastFrameHit;
     memoryMap: IMemoryMap;
@@ -48,6 +49,7 @@ export declare class ChiChiAPU implements IChiChiAPU {
     constructor(writer: WavSharer);
     audioSettings: AudioSettings;
     sampleRate: number;
+    _interruptRaised: boolean;
     interruptRaised: boolean;
     enableSquare0: boolean;
     enableSquare1: boolean;

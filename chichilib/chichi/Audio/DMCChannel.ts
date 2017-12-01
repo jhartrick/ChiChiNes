@@ -2,6 +2,8 @@ import { Blip } from "./CommonAudio";
 import { ChiChiCPPU } from "../ChiChiCPU";
 
 export class DMCChannel  {
+    directLoad: boolean = false;
+    amplitude: number = 0;
     time: number = 0;
     internalClock: number = 0;
     fetching: boolean = false;
@@ -24,25 +26,27 @@ export class DMCChannel  {
     pcmdata: number = 0;
     doirq: number = 0;
     frequency: number= 0;
-    wavehold: number= 0;
+    loopFlag: number= 0;
     _chan: number= 0;
     delta = 0;
-    gain = 0;
+    gain = 503;
 
-    private _bleeper: Blip = null;
+    interruptRaised = false;
+
+    private bleeper: Blip = null;
     
-    constructor(bleeper: Blip, chan: number, doDma: (address: number) => number, setIrq: () => void) {
-        this._bleeper = bleeper;
+    constructor(bleeper: Blip, chan: number, doDma: (address: number) => number) {
+        this.bleeper = bleeper;
         this._chan = chan;
         this.handleDma = (address) => {
             return doDma(address)
         }
-        this.handleIrq = () => setIrq();
+       
 
     }
 
     handleIrq(): void {
-        return;
+        this.interruptRaised = true;
     }
 
     handleDma(address: number): number {
@@ -52,29 +56,29 @@ export class DMCChannel  {
     WriteRegister(register: number, data: number, time: number): void {
         switch (register)
         {
-        case 0:	this.frequency = data & 0xF;
-            this.wavehold = (data >> 6) & 0x1;
-            this.doirq = data >> 7;
-            if (this.doirq) {
-                this.handleIrq();
-                //CPU::WantIRQ &= ~IRQ_DPCM;
+        case 0:	
+            this.frequency = data & 0xf;
+            this.loopFlag = (data >> 6) & 0x1;
+            this.doirq = (data >> 7) & 1;
+            if (this.doirq === 0) {
+                this.interruptRaised = false;
             }
             break;
         case 1:	
-            this.pcmdata = data & 0x7F;
-            this.pos = (this.pcmdata - 0x40) * 3;
+            this.pcmdata = data & 0x7f;
+            this.updateAmplitude(this.pcmdata);
             break;
         case 2:	
             this.addr = data;
             break;
         case 3:	
             this.length = data;
-            break;
-        case 4:	if (data)
+            
+        	if (data)
             {
                 if (!this.lengthCtr)
                 {
-                    this.curAddr = 0xC000 | (this.addr << 6);
+                    this.curAddr = 0xC000 | ((this.addr << 6) & 0xffff);
                     this.lengthCtr = (this.length << 4) + 1;
                 }
             }
@@ -82,58 +86,65 @@ export class DMCChannel  {
             { 
                 this.lengthCtr = 0;
             }
-            // CPU::WantIRQ &= ~IRQ_DPCM;
+
             break;
         }
     }
 
+    updateAmplitude(new_amp: number): void {
+
+        const delta = new_amp * this.gain - this.amplitude;
+        this.amplitude += delta;
+        this.bleeper.blip_add_delta(this.time, delta);
+    }
+
+
     Run(end_time: number): void {
-        // this uses pre-decrement due to the lookup table
+
+
+        
         for (; this.time < end_time; this.time ++) {
-            for(let i =0; i< 8; ++i) {
                 
-                if (this.cycles-- <= 0)
+            if (--this.cycles <= 0)
+            {
+
+                this.cycles = this.freqTable[this.frequency];
+                if (!this.silenced)
                 {
-                    this.cycles = this.freqTable[this.frequency];
-                    if (!this.silenced)
+                    if (this.shiftreg & 1)
                     {
-                        if (this.shiftreg & 1)
-                        {
-                            if (this.pcmdata <= 0x7D)
-                            this.pcmdata += 2;
-                        }
-                        else
-                        {
-                            if (this.pcmdata >= 0x02)
-                            this.pcmdata -= 2;
-                        }
-                        this.shiftreg >>= 1;
-                        this.pos = (this.pcmdata - 0x40) * 3;
-                        this._bleeper.blip_add_delta(this.time, this.pcmdata);
+                        if (this.pcmdata <= 0x7D)
+                        this.pcmdata += 2;
                     }
-                    if (!--this.outbits)
+                    else
                     {
-                        this.outbits = 8;
-                        if (!this.bufempty)
-                        {
-                            this.shiftreg = this.buffer;
-                            this.bufempty = true;
-                            this.silenced = false;
-                        }
-                        else 
-                        {
-                            this.silenced = true;
-                        }
+                        if (this.pcmdata >= 0x02)
+                        this.pcmdata -= 2;
+                    }
+                    this.shiftreg >>= 1;
+                    this.updateAmplitude(this.pcmdata);
+                }
+                if (--this.outbits <= 0)
+                {
+                    this.outbits = 8;
+                    if (!this.bufempty)
+                    {
+                        this.shiftreg = this.buffer;
+                        this.bufempty = true;
+                        this.silenced = false;
+                    }
+                    else 
+                    {
+                        this.silenced = true;
                     }
                 }
-                if (this.bufempty && !this.fetching && this.lengthCtr && (this.internalClock & 1))
-                {
-                    this.fetching = true;
-                    this.fetch();
-                    //CPU::EnableDMA |= DMA_PCM;
-                    // decrement LengthCtr now, so $4015 reads are updated in time
-                    this.lengthCtr--;
-                }
+            }
+            if (this.bufempty && !this.fetching && this.lengthCtr )
+            {
+                this.fetching = true;
+                this.fetch();
+                this.lengthCtr--;
+                
             }
         }
 
@@ -146,11 +157,12 @@ export class DMCChannel  {
         this.fetching = false;
         if (++this.curAddr == 0x10000)
             this.curAddr = 0x8000;
+
         if (!this.lengthCtr)
         {
-            if (this.wavehold)
+            if (this.loopFlag)
             {
-                this.curAddr = 0xC000 | (this.addr << 6);
+                this.curAddr = 0xC000 | ((this.addr << 6) & 0xffff);
                 this.lengthCtr = (this.length << 4) + 1;
             }
             else if (this.doirq) {

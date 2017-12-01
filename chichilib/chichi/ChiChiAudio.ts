@@ -59,6 +59,8 @@ export class ChiChiAPU implements IChiChiAPU {
     private square1Gain = 873;
     private triangleGain = 1004;
     private noiseGain = 567;
+    private dmcGain = 567;
+
     private muted = false;
     private lastFrameHit = 0;
 
@@ -73,6 +75,7 @@ export class ChiChiAPU implements IChiChiAPU {
 
     set audioSettings(value: AudioSettings) {
         this.enableNoise = value.enableNoise;
+        this.enableDMC = value.enableDMC;
         this.enableSquare0 = value.enableSquare0;
         this.enableSquare1 = value.enableSquare1;
         this.enableTriangle = value.enableTriangle;
@@ -90,7 +93,7 @@ export class ChiChiAPU implements IChiChiAPU {
             enableSquare1: this.enableSquare1,
             enableTriangle: this.enableTriangle,
             enableNoise: this.enableNoise,
-            enablePCM: this.enableDMC,
+            enableDMC: this.enableDMC,
             synced: this.writer.synced
         };
         return settings;
@@ -106,7 +109,15 @@ export class ChiChiAPU implements IChiChiAPU {
     }
 
     //Muted: boolean;
-    interruptRaised: boolean = false;
+    _interruptRaised: boolean = false;
+    get interruptRaised(): boolean {
+        return this._interruptRaised || this.dmc.interruptRaised;
+    }
+
+    set interruptRaised(val: boolean) {
+        this._interruptRaised = val;
+    }
+
     
     get enableSquare0(): boolean {
         return this.square0.gain > 0;
@@ -145,7 +156,7 @@ export class ChiChiAPU implements IChiChiAPU {
     }
 
     set enableDMC(value: boolean) {
-        this.dmc.gain = value ? this.triangleGain : 0;
+        this.dmc.gain = value ? this.dmcGain : 0;
     }
 
     rebuildSound(): void {
@@ -158,7 +169,8 @@ export class ChiChiAPU implements IChiChiAPU {
         this.square1Gain = 873;
         this.triangleGain = 1004;
         this.noiseGain = 567;
-
+        this.dmcGain = 567;
+        
         this.square0 = new SquareChannel(this.myBlipper, 0);
         this.square0.gain = this.square0Gain;
         this.square0.period = 10;
@@ -176,18 +188,20 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise.gain = this.noiseGain; this.noise.period = 0;
 
         this.dmc = new DMCChannel(this.myBlipper, 4, (address) => {
-            return this.memoryMap.getByte(0, address);
-        }, () => { this.interruptRaised = true; } 
-    );
+                this.memoryMap.cpu._currentInstruction_ExtraTiming += 4;
+                return this.memoryMap.getByte(0, address);
+            }
+        );
+        this.dmc.gain = this.dmcGain;
         
     }
 
     GetByte(Clock: number, address: number): number {
         if (address === 0x4000) {
-            this.interruptRaised = false;
+            this._interruptRaised = false;
         }
         if (address === 0x4015) {
-            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this.interruptRaised ? 64 : 0);
+            return ((this.square0.length > 0) ? 1 : 0) | ((this.square1.length > 0) ? 2 : 0) | ((this.triangle.length > 0) ? 4 : 0) | ((this.square0.length > 0) ? 8 : 0) | (this._interruptRaised ? 64 : 0);
         } else {
             return 66;
         }
@@ -196,7 +210,7 @@ export class ChiChiAPU implements IChiChiAPU {
     
     SetByte(clock: number, address: number, data: number): void {
         if (address === 16384) {
-            this.interruptRaised = false;
+            this._interruptRaised = false;
         }
         switch (address) {
             case 0x4000:
@@ -239,8 +253,6 @@ export class ChiChiAPU implements IChiChiAPU {
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
                 this.frameMode  = ((data & 128) == 128);
-                //this.endFrame(clock);
-                //this.lastFrameHit = 0;
                 break;
         }
     }
@@ -268,7 +280,7 @@ export class ChiChiAPU implements IChiChiAPU {
             this.frameClocker = 0;
             this.endFrame(time)
             if (this.throwingIRQs && !this.frameMode) {
-                this.interruptRaised = true;
+                this._interruptRaised = true;
                 this.irqHandler();
             }
 
@@ -305,7 +317,7 @@ export class ChiChiAPU implements IChiChiAPU {
         return {
             audioSettings: this.audioSettings,
             sampleRate: this.sampleRate,
-            interruptRaised: this.interruptRaised,
+            interruptRaised: this._interruptRaised,
             enableSquare0: this.enableSquare0,
             enableSquare1: this.enableSquare1,
             enableTriangle: this.enableTriangle,
@@ -316,7 +328,7 @@ export class ChiChiAPU implements IChiChiAPU {
     set state(value: IChiChiAPUState) {
         this.audioSettings = value.audioSettings;
         this.sampleRate = value.sampleRate;
-        this.interruptRaised = value.interruptRaised;
+        this._interruptRaised = value.interruptRaised;
         this.enableSquare0 = value.enableSquare0;
         this.enableSquare1 = value.enableSquare1;
         this.enableTriangle = value.enableTriangle;

@@ -5607,6 +5607,9 @@ var VSCart = /** @class */ (function (_super) {
     __extends(VSCart, _super);
     function VSCart() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.coin = 0;
+        _this.dips1 = 0x0;
+        _this.dips2 = 0x0;
         _this.customPalette = [430, 326, 44, 660, 0, 755, 14, 630, 555, 310, 70, 3, 764, 770, 4, 572,
             737, 200, 27, 747, 0, 222, 510, 740, 653, 53, 447, 140, 403, 0, 473, 357,
             503, 31, 420, 6, 407, 507, 333, 704, 22, 666, 36, 20, 111, 773, 444, 707,
@@ -5617,6 +5620,7 @@ var VSCart = /** @class */ (function (_super) {
         //SRAMEnabled = SRAMCanSave;
         _this.reg16 = 0;
         _this.bankSelect = 0;
+        _this.clocks = 0;
         return _this;
     }
     VSCart.prototype.InitializeCart = function () {
