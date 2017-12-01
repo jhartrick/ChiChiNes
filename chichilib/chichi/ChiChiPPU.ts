@@ -694,9 +694,9 @@ export class ChiChiPPU implements IChiChiPPU {
                     this.vbufLocation++;
                 }
 
-                if (this.currentXPosition === 324) {
-                    this.memoryMap.advanceScanline(1);
-                }
+                // if (this.currentXPosition === 324) {
+                //     this.memoryMap.advanceScanline(1);
+                // }
 
                 this.currentXPosition++;
 

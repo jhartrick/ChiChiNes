@@ -2375,6 +2375,7 @@ var MemoryMap = /** @class */ (function () {
         this.cart = cart;
         // system ram
         this.Rams = new Uint8Array(new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT)); // System.Array.init(vv, 0, System.Int32);
+        this.lastAddress = 0;
         this.apu = cpu.SoundBopper;
         this.ppu = cpu.ppu;
         this.pad1 = cpu.PadOne;
@@ -2426,20 +2427,20 @@ var MemoryMap = /** @class */ (function () {
                         break;
                 }
                 break;
-            case 20480:
+            case 0x5000:
                 // ??
                 result = address >> 8;
                 break;
-            case 24576:
-            case 28672:
-            case 32768:
-            case 36864:
-            case 40960:
-            case 45056:
-            case 49152:
-            case 53248:
-            case 57344:
-            case 61440:
+            case 0x6000:
+            case 0x7000:
+            case 0x8000:
+            case 0x9000:
+            case 0xa000:
+            case 0xb000:
+            case 0xc000:
+            case 0xd000:
+            case 0xe000:
+            case 0xf000:
                 // cart 
                 result = this.cart.GetByte(clock, address);
                 break;
@@ -2456,7 +2457,7 @@ var MemoryMap = /** @class */ (function () {
         }
         switch (address & 61440) {
             case 0:
-            case 4096:
+            case 0x1000:
                 // nes sram
                 this.Rams[address & 2047] = data;
                 break;
@@ -2525,9 +2526,17 @@ var MemoryMap = /** @class */ (function () {
         }
     };
     MemoryMap.prototype.getPPUByte = function (clock, address) {
+        if (((this.lastAddress & 0x800) == 0) && (address & 0x800)) {
+            this.advanceScanline(1);
+        }
+        this.lastAddress = address;
         return this.cart.GetPPUByte(clock, address);
     };
     MemoryMap.prototype.setPPUByte = function (clock, address, data) {
+        if (((this.lastAddress & 0x800) == 0) && (address & 0x800)) {
+            this.advanceScanline(1);
+        }
+        this.lastAddress = address;
         this.cart.SetPPUByte(clock, address, data);
     };
     MemoryMap.prototype.advanceClock = function (value) {
@@ -5721,20 +5730,20 @@ var VSMemoryMap = /** @class */ (function (_super) {
                     result = this.cart.GetByte(clock, address) & 0xfe;
                 }
                 break;
-            case 20480:
+            case 0x5000:
                 // ??
                 result = address >> 8;
                 break;
-            case 24576:
-            case 28672:
-            case 32768:
-            case 36864:
-            case 40960:
-            case 45056:
-            case 49152:
-            case 53248:
-            case 57344:
-            case 61440:
+            case 0x6000:
+            case 0x7000:
+            case 0x8000:
+            case 0x9000:
+            case 0xa000:
+            case 0xb000:
+            case 0xc000:
+            case 0xd000:
+            case 0xe000:
+            case 0xf000:
                 // cart 
                 result = this.cart.GetByte(clock, address);
                 break;

@@ -48,20 +48,20 @@ export class VSMemoryMap extends MemoryMap {
                     result = this.cart.GetByte(clock, address) & 0xfe;
                 }
                 break;
-            case 20480:
+            case 0x5000:
                 // ??
                 result = address >> 8;
                 break;
-            case 24576:
-            case 28672:
-            case 32768:
-            case 36864:
-            case 40960:
-            case 45056:
-            case 49152:
-            case 53248:
-            case 57344:
-            case 61440:
+            case 0x6000:
+            case 0x7000:
+            case 0x8000:
+            case 0x9000:
+            case 0xa000:
+            case 0xb000:
+            case 0xc000:
+            case 0xd000:
+            case 0xe000:
+            case 0xf000:
                 // cart 
                 result = this.cart.GetByte(clock, address);
                 break;

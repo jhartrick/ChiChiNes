@@ -1263,8 +1263,8 @@ var ChiChiAPU = /** @class */ (function () {
             case 0x4011:
             case 0x4012:
             case 0x4013:
-                this.dmc.WriteRegister(address - 0x4010, data, clock);
-                this.dmc.FrameClock(this.currentClock, 0);
+                this.dmc.writeRegister(address - 0x4010, data, clock);
+                this.dmc.run(this.currentClock);
                 break;
             case 0x4015:
                 this.reg15 = data;
@@ -1272,9 +1272,11 @@ var ChiChiAPU = /** @class */ (function () {
                 this.square1.writeRegister(4, data & 2, clock);
                 this.triangle.writeRegister(4, data & 4, clock);
                 this.noise.writeRegister(4, data & 8, clock);
-                this.dmc.WriteRegister(4, data & 0x10, clock);
+                this.dmc.writeRegister(4, data & 0x10, clock);
                 break;
             case 0x4017:
+                // this.endFrame(clock);
+                // this.lastFrameHit ==0; // this.frameClocker = 0;
                 this.throwingIRQs = ((data & 64) !== 64);
                 this.frameMode = ((data & 128) == 128);
                 break;
@@ -1305,7 +1307,7 @@ var ChiChiAPU = /** @class */ (function () {
     };
     ChiChiAPU.prototype.runFrameEvents = function (time, step) {
         this.triangle.frameClock(time, step);
-        this.noise.FrameClock(time, step);
+        this.noise.frameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
     };
@@ -1313,8 +1315,8 @@ var ChiChiAPU = /** @class */ (function () {
         this.square0.endFrame(time);
         this.square1.endFrame(time);
         this.triangle.endFrame(time);
-        this.noise.EndFrame(time);
-        this.dmc.EndFrame(time);
+        this.noise.endFrame(time);
+        this.dmc.endFrame(time);
         this.myBlipper.blip_end_frame(time);
         this.myBlipper.ReadElementsLoop(this.writer);
         this.currentClock = 0;
@@ -1399,7 +1401,7 @@ var DMCChannel = /** @class */ (function () {
     DMCChannel.prototype.handleDma = function (address) {
         return 0;
     };
-    DMCChannel.prototype.WriteRegister = function (register, data, time) {
+    DMCChannel.prototype.writeRegister = function (register, data, time) {
         switch (register) {
             case 0:
                 this.frequency = data & 0xf;
@@ -1418,8 +1420,6 @@ var DMCChannel = /** @class */ (function () {
                 break;
             case 3:
                 this.length = data;
-                // if (!this.lengthCtr)
-                //     this.lengthCtr = this.length;
                 break;
             case 4:
                 this.interruptRaised = false;
@@ -1440,7 +1440,7 @@ var DMCChannel = /** @class */ (function () {
         this.amplitude += delta;
         this.bleeper.blip_add_delta(this.time, delta);
     };
-    DMCChannel.prototype.Run = function (end_time) {
+    DMCChannel.prototype.run = function (end_time) {
         for (; this.time < end_time; this.time++) {
             if (--this.cycles <= 0) {
                 this.cycles = this.freqTable[this.frequency];
@@ -1491,12 +1491,9 @@ var DMCChannel = /** @class */ (function () {
             }
         }
     };
-    DMCChannel.prototype.EndFrame = function (time) {
-        this.Run(time);
+    DMCChannel.prototype.endFrame = function (time) {
+        this.run(time);
         this.time = 0;
-    };
-    DMCChannel.prototype.FrameClock = function (time, step) {
-        this.Run(time);
     };
     return DMCChannel;
 }());
@@ -1818,33 +1815,33 @@ exports.TriangleChannel = TriangleChannel;
 Object.defineProperty(exports, "__esModule", { value: true });
 var NoiseChannel = /** @class */ (function () {
     function NoiseChannel(bleeper, chan) {
-        this._bleeper = null;
-        this._chan = 0;
+        this.bleeper = null;
+        this.chan = 0;
         this.noisePeriods = [4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068];
         this.lengthCounts = [10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30];
-        this._time = 0;
-        this._envConstantVolume = false;
-        this._envVolume = 0;
+        this.time = 0;
+        this.envConstantVolume = false;
+        this.envVolume = 0;
         this.amplitude = 0;
-        this._phase = 0;
-        this._envTimer = 0;
-        this._envStart = false;
+        this.phase = 0;
+        this.envTimer = 0;
+        this.envStart = false;
         this.length = 0;
         this.period = 0;
         this.volume = 0;
         this.looping = false;
         this.gain = 0;
         this.enabled = true;
-        this._bleeper = bleeper;
-        this._chan = chan;
-        this._phase = 1;
-        this._envTimer = 15;
+        this.bleeper = bleeper;
+        this.chan = chan;
+        this.phase = 1;
+        this.envTimer = 15;
     }
     NoiseChannel.prototype.writeRegister = function (register, data, time) {
         // Run(time);
         switch (register) {
             case 0:
-                this._envConstantVolume = (data & 16) === 16;
+                this.envConstantVolume = (data & 16) === 16;
                 this.volume = data & 15;
                 this.looping = (data & 128) === 128;
                 break;
@@ -1859,7 +1856,7 @@ var NoiseChannel = /** @class */ (function () {
                 if (this.enabled) {
                     this.length = this.lengthCounts[(data >> 3) & 31];
                 }
-                this._envStart = true;
+                this.envStart = true;
                 break;
             case 4:
                 this.enabled = (data !== 0);
@@ -1869,58 +1866,58 @@ var NoiseChannel = /** @class */ (function () {
                 break;
         }
     };
-    NoiseChannel.prototype.Run = function (end_time) {
-        var volume = this._envConstantVolume ? this.volume : this._envVolume;
+    NoiseChannel.prototype.run = function (end_time) {
+        var volume = this.envConstantVolume ? this.volume : this.envVolume;
         if (this.length === 0) {
             volume = 0;
         }
         if (this.period === 0) {
-            this._time = end_time;
-            this.UpdateAmplitude(0);
+            this.time = end_time;
+            this.updateAmplitude(0);
             return;
         }
-        if (this._phase === 0) {
-            this._phase = 1;
+        if (this.phase === 0) {
+            this.phase = 1;
         }
-        for (; this._time < end_time; this._time += this.period) {
+        for (; this.time < end_time; this.time += this.period) {
             var new15;
             if (this.looping) {
-                new15 = ((this._phase & 1) ^ ((this._phase >> 6) & 1));
+                new15 = ((this.phase & 1) ^ ((this.phase >> 6) & 1));
             }
             else {
-                new15 = ((this._phase & 1) ^ ((this._phase >> 1) & 1));
+                new15 = ((this.phase & 1) ^ ((this.phase >> 1) & 1));
             }
-            this.UpdateAmplitude(this._phase & 1 * volume);
-            this._phase = ((this._phase >> 1) | (new15 << 14)) & 65535;
+            this.updateAmplitude(this.phase & 1 * volume);
+            this.phase = ((this.phase >> 1) | (new15 << 14)) & 0xffff;
         }
     };
-    NoiseChannel.prototype.UpdateAmplitude = function (amp) {
+    NoiseChannel.prototype.updateAmplitude = function (amp) {
         var delta = amp * this.gain - this.amplitude;
         this.amplitude += delta;
-        this._bleeper.blip_add_delta(this._time, delta);
+        this.bleeper.blip_add_delta(this.time, delta);
     };
-    NoiseChannel.prototype.EndFrame = function (time) {
-        this.Run(time);
-        this._time = 0;
+    NoiseChannel.prototype.endFrame = function (time) {
+        this.run(time);
+        this.time = 0;
     };
-    NoiseChannel.prototype.FrameClock = function (time, step) {
-        this.Run(time);
-        if (!this._envStart) {
-            this._envTimer--;
-            if (this._envTimer === 0) {
-                this._envTimer = this.volume + 1;
-                if (this._envVolume > 0) {
-                    this._envVolume--;
+    NoiseChannel.prototype.frameClock = function (time, step) {
+        this.run(time);
+        if (!this.envStart) {
+            this.envTimer--;
+            if (this.envTimer === 0) {
+                this.envTimer = this.volume + 1;
+                if (this.envVolume > 0) {
+                    this.envVolume--;
                 }
                 else {
-                    this._envVolume = this.looping ? 15 : 0;
+                    this.envVolume = this.looping ? 15 : 0;
                 }
             }
         }
         else {
-            this._envStart = false;
-            this._envTimer = this.volume + 1;
-            this._envVolume = 15;
+            this.envStart = false;
+            this.envTimer = this.volume + 1;
+            this.envVolume = 15;
         }
         switch (step) {
             case 1:
@@ -2484,9 +2481,9 @@ var ChiChiPPU = /** @class */ (function () {
                     this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
                     this.vbufLocation++;
                 }
-                if (this.currentXPosition === 324) {
-                    this.memoryMap.advanceScanline(1);
-                }
+                // if (this.currentXPosition === 324) {
+                //     this.memoryMap.advanceScanline(1);
+                // }
                 this.currentXPosition++;
                 if (this.currentXPosition > 340) {
                     this.currentXPosition = 0;

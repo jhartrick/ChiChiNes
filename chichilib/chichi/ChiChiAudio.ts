@@ -243,8 +243,8 @@ export class ChiChiAPU implements IChiChiAPU {
             case 0x4011:
             case 0x4012:
             case 0x4013:
-                this.dmc.WriteRegister(address - 0x4010, data, clock);
-                this.dmc.FrameClock(this.currentClock, 0)
+                this.dmc.writeRegister(address - 0x4010, data, clock);
+                this.dmc.run(this.currentClock);
 
                 break;
             case 0x4015:
@@ -253,9 +253,12 @@ export class ChiChiAPU implements IChiChiAPU {
                 this.square1.writeRegister(4, data & 2, clock);
                 this.triangle.writeRegister(4, data & 4, clock);
                 this.noise.writeRegister(4, data & 8, clock);
-                this.dmc.WriteRegister(4, data & 0x10, clock);
+                this.dmc.writeRegister(4, data & 0x10, clock);
                 break;
             case 0x4017:
+                // this.endFrame(clock);
+                // this.lastFrameHit ==0; // this.frameClocker = 0;
+                
                 this.throwingIRQs = ((data & 64) !== 64);
                 this.frameMode  = ((data & 128) == 128);
                 break;
@@ -296,7 +299,7 @@ export class ChiChiAPU implements IChiChiAPU {
 
     runFrameEvents(time: number, step: number): void {
         this.triangle.frameClock(time, step);
-        this.noise.FrameClock(time, step);
+        this.noise.frameClock(time, step);
         this.square0.frameClock(time, step);
         this.square1.frameClock(time, step);
     }
@@ -306,11 +309,10 @@ export class ChiChiAPU implements IChiChiAPU {
         this.square0.endFrame(time);
         this.square1.endFrame(time);
         this.triangle.endFrame(time);
-        this.noise.EndFrame(time);
-        this.dmc.EndFrame(time);
+        this.noise.endFrame(time);
+        this.dmc.endFrame(time);
 
         this.myBlipper.blip_end_frame(time);
-
         this.myBlipper.ReadElementsLoop(this.writer);
 
         this.currentClock = 0;

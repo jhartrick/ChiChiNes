@@ -53,7 +53,7 @@ export class DMCChannel  {
         return 0;
     }
 
-    WriteRegister(register: number, data: number, time: number): void {
+    writeRegister(register: number, data: number, time: number): void {
         switch (register)
         {
         case 0:	
@@ -73,8 +73,7 @@ export class DMCChannel  {
             break;
         case 3:	
             this.length = data;
-            // if (!this.lengthCtr)
-            //     this.lengthCtr = this.length;
+
             break;
         case 4:
             this.interruptRaised = false;
@@ -104,10 +103,7 @@ export class DMCChannel  {
     }
 
 
-    Run(end_time: number): void {
-
-
-        
+    run(end_time: number): void {
         for (; this.time < end_time; this.time ++) {
                 
             if (--this.cycles <= 0)
@@ -176,13 +172,9 @@ export class DMCChannel  {
         }
     }
 
-    EndFrame(time: number): void {
-        this.Run(time);
+    endFrame(time: number): void {
+        this.run(time);
         this.time = 0;
-    }
-
-    FrameClock(time: number, step: number): void {
-        this.Run(time);
     }
 
 

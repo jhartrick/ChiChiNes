@@ -53,7 +53,10 @@ export class MemoryMap implements IMemoryMap {
         this.apu.memoryMap = this;
     }
 
+    private lastAddress = 0;
+
     getByte(clock: number, address: number): number {
+
         let result: number = 0;
         // check high byte, find appropriate handler
         switch (address & 0xF000) {
@@ -90,20 +93,20 @@ export class MemoryMap implements IMemoryMap {
                         break;
                 }
                 break;
-            case 20480:
+            case 0x5000:
                 // ??
                 result = address >> 8;
                 break;
-            case 24576:
-            case 28672:
-            case 32768:
-            case 36864:
-            case 40960:
-            case 45056:
-            case 49152:
-            case 53248:
-            case 57344:
-            case 61440:
+            case 0x6000:
+            case 0x7000:
+            case 0x8000:
+            case 0x9000:
+            case 0xa000:
+            case 0xb000:
+            case 0xc000:
+            case 0xd000:
+            case 0xe000:
+            case 0xf000:
                 // cart 
                 result = this.cart.GetByte(clock, address);
                 break;
@@ -115,6 +118,8 @@ export class MemoryMap implements IMemoryMap {
     }
 
     setByte(clock: number, address: number, data: number): void {
+
+
         // check high byte, find appropriate handler
         if (address < 2048) {
             this.Rams[address & 2047] = data;
@@ -122,7 +127,7 @@ export class MemoryMap implements IMemoryMap {
         }
         switch (address & 61440) {
             case 0:
-            case 4096:
+            case 0x1000:
                 // nes sram
                 this.Rams[address & 2047] = data;
                 break;
@@ -194,10 +199,21 @@ export class MemoryMap implements IMemoryMap {
     }
 
     getPPUByte(clock: number, address: number): number {
+        if (((this.lastAddress & 0x800) ==0) && (address & 0x800)) {
+            this.advanceScanline(1);
+        }
+        this.lastAddress = address;
+
         return this.cart.GetPPUByte(clock, address);
     }
 
     setPPUByte(clock: number, address: number, data: number): void {
+
+        if (((this.lastAddress & 0x800) ==0) && (address & 0x800)) {
+            this.advanceScanline(1);
+        }
+        this.lastAddress = address;
+
         this.cart.SetPPUByte(clock, address, data);
     }
 
