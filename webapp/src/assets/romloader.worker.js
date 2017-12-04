@@ -224,7 +224,6 @@ var BaseCart = /** @class */ (function () {
         seg = sb.getSegment('chrrom');
         if (seg.size > 0) {
             this.chrRom = new Uint8Array(seg.buffer, seg.start, seg.size);
-            this.chrRom.fill(0);
         }
     };
     BaseCart.prototype.loadFile = function (file) {

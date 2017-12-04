@@ -2991,6 +2991,8 @@ exports.ChiChiPPU = ChiChiPPU;
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiTypes_1 = __webpack_require__(0);
 var ChiChiControl_1 = __webpack_require__(19);
+var PRG_CTR = 0;
+var PRG_ADR = 1;
 //chichipig
 var ChiChiCPPU = /** @class */ (function () {
     function ChiChiCPPU(bopper, ppu) {
@@ -3008,17 +3010,19 @@ var ChiChiCPPU = /** @class */ (function () {
         this.borrowedCycles = 0;
         this._ticks = 0;
         // CPU Status
-        this._statusRegister = 0;
-        this._programCounter = 0;
+        this.cpuStatus16 = new Uint16Array(2);
+        // addressBus = 0;
         this._handleNMI = false;
-        this._handleIRQ = false;
         // CPU Op info
-        this._addressBus = 0;
-        this._dataBus = 0;
+        this.cpuStatus = new Uint8Array(8);
+        // system ram
+        // private stackPointer = 255;
+        //statusRegister = 0;
+        //accumulator = 0;
+        // indexRegisterX = 0;
+        // indexRegisterY = 0;
+        // dataBus = 0;
         this._operationCounter = 0;
-        this._accumulator = 0;
-        this._indexRegisterX = 0;
-        this._indexRegisterY = 0;
         // Current Instruction
         this._currentInstruction_AddressingMode = ChiChiTypes_1.ChiChiCPPU_AddressingModes.Bullshit;
         this._currentInstruction_Address = 0;
@@ -3027,12 +3031,6 @@ var ChiChiCPPU = /** @class */ (function () {
         this._currentInstruction_Parameters1 = 0;
         this._currentInstruction_ExtraTiming = 0;
         this.systemClock = 0;
-        this.nextEvent = -1;
-        //tbi
-        this._cheating = false;
-        this.__frameFinished = true;
-        // system ram
-        this._stackPointer = 255;
         // debug helpers
         this.instructionUsage = new Uint32Array(256); //System.Array.init(256, 0, System.Int32);
         this._debugging = false;
@@ -3067,6 +3065,87 @@ var ChiChiCPPU = /** @class */ (function () {
             this._clock += value;
         }
     };
+    Object.defineProperty(ChiChiCPPU.prototype, "programCounter", {
+        // programCounter = 0;
+        get: function () {
+            return this.cpuStatus16[PRG_CTR];
+        },
+        set: function (val) {
+            this.cpuStatus16[PRG_CTR] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiCPPU.prototype, "addressBus", {
+        get: function () {
+            return this.cpuStatus16[PRG_ADR];
+        },
+        set: function (val) {
+            this.cpuStatus16[PRG_ADR] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiCPPU.prototype, "statusRegister", {
+        get: function () {
+            return this.cpuStatus[0];
+        },
+        set: function (val) {
+            this.cpuStatus[0] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiCPPU.prototype, "accumulator", {
+        get: function () {
+            return this.cpuStatus[1];
+        },
+        set: function (val) {
+            this.cpuStatus[1] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiCPPU.prototype, "indexRegisterX", {
+        get: function () {
+            return this.cpuStatus[2];
+        },
+        set: function (val) {
+            this.cpuStatus[2] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiCPPU.prototype, "indexRegisterY", {
+        get: function () {
+            return this.cpuStatus[3];
+        },
+        set: function (val) {
+            this.cpuStatus[3] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiCPPU.prototype, "dataBus", {
+        get: function () {
+            return this.cpuStatus[4];
+        },
+        set: function (val) {
+            this.cpuStatus[4] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ChiChiCPPU.prototype, "stackPointer", {
+        get: function () {
+            return this.cpuStatus[5];
+        },
+        set: function (val) {
+            this.cpuStatus[5] = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(ChiChiCPPU.prototype, "Debugging", {
         get: function () {
             return this._debugging;
@@ -3139,32 +3218,31 @@ var ChiChiCPPU = /** @class */ (function () {
         configurable: true
     });
     ChiChiCPPU.prototype.setFlag = function (Flag, value) {
-        this._statusRegister = (value ? (this._statusRegister | Flag) : (this._statusRegister & ~Flag));
-        this._statusRegister |= 32; // (int)CPUStatusMasks.ExpansionMask;
+        this.statusRegister = (value ? (this.statusRegister | Flag) : (this.statusRegister & ~Flag));
+        this.statusRegister |= 32; // (int)CPUStatusMasks.ExpansionMask;
     };
     ChiChiCPPU.prototype.GetFlag = function (flag) {
-        return ((this._statusRegister & flag) === flag);
+        return ((this.statusRegister & flag) === flag);
     };
     ChiChiCPPU.prototype.interruptRequest = function () {
-        this._handleIRQ = false;
         if (!this.GetFlag(this.SRMasks_InterruptDisableMask)) {
             this.advanceClock(7);
             this.setFlag(this.SRMasks_InterruptDisableMask, true);
-            var newStatusReg1 = this._statusRegister & ~0x10 | 0x20;
-            this.pushStack(this._programCounter >> 8);
-            this.pushStack(this._programCounter);
-            this.pushStack(this._statusRegister);
-            this._programCounter = this.GetByte(0xFFFE) + (this.GetByte(0xFFFF) << 8);
+            var newStatusReg1 = this.statusRegister & ~0x10 | 0x20;
+            this.pushStack(this.programCounter >> 8);
+            this.pushStack(this.programCounter);
+            this.pushStack(this.statusRegister);
+            this.programCounter = this.GetByte(0xFFFE) + (this.GetByte(0xFFFF) << 8);
         }
     };
     ChiChiCPPU.prototype.nonMaskableInterrupt = function () {
         //When an IRQ or NMI occurs, the current status with bit 4 clear and bit 5 
         //  set is pushed on the stack, then the I flag is set. 
-        var newStatusReg = this._statusRegister & ~0x10 | 0x20;
+        var newStatusReg = this.statusRegister & ~0x10 | 0x20;
         this.setFlag(this.SRMasks_InterruptDisableMask, true);
         // push pc onto stack (high byte first)
-        this.pushStack(this._programCounter >> 8);
-        this.pushStack(this._programCounter & 0xFF);
+        this.pushStack(this.programCounter >> 8);
+        this.pushStack(this.programCounter & 0xFF);
         //c7ab
         // push sr onto stack
         this.pushStack(newStatusReg);
@@ -3172,7 +3250,7 @@ var ChiChiCPPU = /** @class */ (function () {
         var lowByte = this.GetByte(0xFFFA);
         var highByte = this.GetByte(0xFFFB);
         var jumpTo = lowByte | (highByte << 8);
-        this._programCounter = jumpTo;
+        this.programCounter = jumpTo;
         //nonOpCodeticks = 7;
     };
     ChiChiCPPU.prototype.step = function () {
@@ -3186,9 +3264,9 @@ var ChiChiCPPU = /** @class */ (function () {
             this.interruptRequest();
         }
         //FetchNextInstruction();
-        this._currentInstruction_Address = this._programCounter;
-        this._currentInstruction_OpCode = this.GetByte(this._programCounter);
-        this._programCounter = (this._programCounter + 1) & 0xffff;
+        this._currentInstruction_Address = this.programCounter;
+        this._currentInstruction_OpCode = this.GetByte(this.programCounter);
+        this.programCounter = (this.programCounter + 1) & 0xffff;
         this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
         this.fetchInstructionParameters();
         this.execute();
@@ -3210,8 +3288,8 @@ var ChiChiCPPU = /** @class */ (function () {
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.AbsoluteY:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Indirect:
                 // case AddressingModes.IndirectAbsoluteX:
-                this._currentInstruction_Parameters0 = this.GetByte((this._programCounter++) & 0xFFFF);
-                this._currentInstruction_Parameters1 = this.GetByte((this._programCounter++) & 0xFFFF);
+                this._currentInstruction_Parameters0 = this.GetByte((this.programCounter++) & 0xFFFF);
+                this._currentInstruction_Parameters1 = this.GetByte((this.programCounter++) & 0xFFFF);
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.ZeroPage:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.ZeroPageX:
@@ -3221,7 +3299,7 @@ var ChiChiCPPU = /** @class */ (function () {
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.IndirectIndexed:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.IndirectZeroPage:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Immediate:
-                this._currentInstruction_Parameters0 = this.GetByte((this._programCounter++) & 0xFFFF);
+                this._currentInstruction_Parameters0 = this.GetByte((this.programCounter++) & 0xFFFF);
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Accumulator:
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Implicit:
@@ -3232,20 +3310,20 @@ var ChiChiCPPU = /** @class */ (function () {
         }
     };
     ChiChiCPPU.prototype.ResetCPU = function () {
-        this._statusRegister = 52;
+        this.statusRegister = 52;
         this._operationCounter = 0;
-        this._stackPointer = 253;
-        this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
+        this.stackPointer = 253;
+        this.programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
         this.advanceClock(4);
         this.genieCodes = [];
     };
     ChiChiCPPU.prototype.PowerOn = function () {
         // powers up with this state
-        this._statusRegister = 52;
-        this._stackPointer = 253;
+        this.statusRegister = 52;
+        this.stackPointer = 253;
         this._operationCounter = 0;
         this.advanceClock(4);
-        this._programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
+        this.programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
     };
     ChiChiCPPU.prototype.decodeAddress = function () {
         this._currentInstruction_ExtraTiming = 0;
@@ -3259,15 +3337,15 @@ var ChiChiCPPU = /** @class */ (function () {
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.AbsoluteX:
                 // absolute, x indexed - two paramaters + Index register x
-                result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterX) | 0));
-                if ((result & 0xFF) < this._indexRegisterX) {
+                result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this.indexRegisterX) | 0));
+                if ((result & 0xFF) < this.indexRegisterX) {
                     this._currentInstruction_ExtraTiming = 1;
                 }
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.AbsoluteY:
                 // absolute, y indexed - two paramaters + Index register y
-                result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this._indexRegisterY) | 0));
-                if ((result & 0xFF) < this._indexRegisterY) {
+                result = (((((this._currentInstruction_Parameters1 << 8) | this._currentInstruction_Parameters0) + this.indexRegisterY) | 0));
+                if ((result & 0xFF) < this.indexRegisterY) {
                     this._currentInstruction_ExtraTiming = 1;
                 }
                 break;
@@ -3276,10 +3354,10 @@ var ChiChiCPPU = /** @class */ (function () {
                 result = this._currentInstruction_Parameters0;
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.ZeroPageX:
-                result = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 0xFF;
+                result = (((this._currentInstruction_Parameters0 + this.indexRegisterX) | 0)) & 0xFF;
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.ZeroPageY:
-                result = ((((this._currentInstruction_Parameters0 & 0xFF) + (this._indexRegisterY & 0xFF)) | 0)) & 0xFF;
+                result = ((((this._currentInstruction_Parameters0 & 0xFF) + (this.indexRegisterY & 0xFF)) | 0)) & 0xFF;
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Indirect:
                 lowByte = this._currentInstruction_Parameters0;
@@ -3292,7 +3370,7 @@ var ChiChiCPPU = /** @class */ (function () {
                 result = indirectAddr;
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.IndexedIndirect:
-                var addr = (((this._currentInstruction_Parameters0 + this._indexRegisterX) | 0)) & 0xFF;
+                var addr = (((this._currentInstruction_Parameters0 + this.indexRegisterX) | 0)) & 0xFF;
                 lowByte = this.GetByte(addr);
                 addr = (addr + 1) | 0;
                 highByte = this.GetByte(addr & 0xFF);
@@ -3303,13 +3381,13 @@ var ChiChiCPPU = /** @class */ (function () {
                 lowByte = this.GetByte(this._currentInstruction_Parameters0);
                 highByte = this.GetByte((((this._currentInstruction_Parameters0 + 1) | 0)) & 0xFF) << 8;
                 addr = (lowByte | highByte);
-                result = (addr + this._indexRegisterY) | 0;
-                if ((result & 0xFF) > this._indexRegisterY) {
+                result = (addr + this.indexRegisterY) | 0;
+                if ((result & 0xFF) > this.indexRegisterY) {
                     this._currentInstruction_ExtraTiming = 1;
                 }
                 break;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Relative:
-                result = (((this._programCounter + this._currentInstruction_Parameters0) | 0));
+                result = (((this.programCounter + this._currentInstruction_Parameters0) | 0));
                 break;
             default:
                 this.HandleBadOperation();
@@ -3325,13 +3403,13 @@ var ChiChiCPPU = /** @class */ (function () {
     ChiChiCPPU.prototype.decodeOperand = function () {
         switch (this._currentInstruction_AddressingMode) {
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Immediate:
-                this._dataBus = this._currentInstruction_Parameters0;
+                this.dataBus = this._currentInstruction_Parameters0;
                 return this._currentInstruction_Parameters0;
             case ChiChiTypes_1.ChiChiCPPU_AddressingModes.Accumulator:
-                return this._accumulator;
+                return this.accumulator;
             default:
-                this._dataBus = this.GetByte(this.decodeAddress());
-                return this._dataBus;
+                this.dataBus = this.GetByte(this.decodeAddress());
+                return this.dataBus;
         }
     };
     ChiChiCPPU.prototype.execute = function () {
@@ -3375,15 +3453,15 @@ var ChiChiCPPU = /** @class */ (function () {
             case 113:
                 //ADC
                 data = this.decodeOperand();
-                carryFlag = (this._statusRegister & 1);
-                result = (this._accumulator + data + carryFlag) | 0;
+                carryFlag = (this.statusRegister & 1);
+                result = (this.accumulator + data + carryFlag) | 0;
                 // carry flag
                 this.setFlag(this.SRMasks_CarryMask, result > 255);
                 // overflow flag
-                this.setFlag(this.SRMasks_OverflowMask, ((this._accumulator ^ data) & 128) !== 128 && ((this._accumulator ^ result) & 128) === 128);
+                this.setFlag(this.SRMasks_OverflowMask, ((this.accumulator ^ data) & 128) !== 128 && ((this.accumulator ^ result) & 128) === 128);
                 // occurs when bit 7 is set
-                this._accumulator = result & 0xFF;
-                this.setZNFlags(this._accumulator);
+                this.accumulator = result & 0xFF;
+                this.setZNFlags(this.accumulator);
                 break;
             case 41:
             case 37:
@@ -3394,8 +3472,8 @@ var ChiChiCPPU = /** @class */ (function () {
             case 33:
             case 49:
                 //AND
-                this._accumulator = (this._accumulator & this.decodeOperand());
-                this.setZNFlags(this._accumulator);
+                this.accumulator = (this.accumulator & this.decodeOperand());
+                this.setZNFlags(this.accumulator);
                 break;
             case 10:
             case 6:
@@ -3408,7 +3486,7 @@ var ChiChiCPPU = /** @class */ (function () {
                 this.setFlag(this.SRMasks_CarryMask, ((data & 128) === 128));
                 data = (data << 1) & 254;
                 if (this._currentInstruction_AddressingMode === ChiChiTypes_1.ChiChiCPPU_AddressingModes.Accumulator) {
-                    this._accumulator = data;
+                    this.accumulator = data;
                 }
                 else {
                     this.SetByte(this.decodeAddress(), data);
@@ -3417,19 +3495,19 @@ var ChiChiCPPU = /** @class */ (function () {
                 break;
             case 144:
                 //BCC
-                if ((this._statusRegister & 1) !== 1) {
+                if ((this.statusRegister & 1) !== 1) {
                     this.branch();
                 }
                 break;
             case 176:
                 //BCS();
-                if ((this._statusRegister & 1) === 1) {
+                if ((this.statusRegister & 1) === 1) {
                     this.branch();
                 }
                 break;
             case 240:
                 //BEQ();
-                if ((this._statusRegister & 2) === 2) {
+                if ((this.statusRegister & 2) === 2) {
                     this.branch();
                 }
                 break;
@@ -3441,59 +3519,59 @@ var ChiChiCPPU = /** @class */ (function () {
                 this.setFlag(this.SRMasks_OverflowMask, (data & 64) === 64);
                 // negative is bit 7
                 if ((data & 128) === 128) {
-                    this._statusRegister = this._statusRegister | 128;
+                    this.statusRegister = this.statusRegister | 128;
                 }
                 else {
-                    this._statusRegister = this._statusRegister & 127;
+                    this.statusRegister = this.statusRegister & 127;
                 }
-                if ((data & this._accumulator) === 0) {
-                    this._statusRegister = this._statusRegister | 2;
+                if ((data & this.accumulator) === 0) {
+                    this.statusRegister = this.statusRegister | 2;
                 }
                 else {
-                    this._statusRegister = this._statusRegister & 253;
+                    this.statusRegister = this.statusRegister & 253;
                 }
                 break;
             case 48:
                 //BMI();
-                if ((this._statusRegister & 128) === 128) {
+                if ((this.statusRegister & 128) === 128) {
                     this.branch();
                 }
                 break;
             case 208:
                 //BNE();
-                if ((this._statusRegister & 2) !== 2) {
+                if ((this.statusRegister & 2) !== 2) {
                     this.branch();
                 }
                 break;
             case 16:
                 // BPL();
-                if ((this._statusRegister & 128) !== 128) {
+                if ((this.statusRegister & 128) !== 128) {
                     this.branch();
                 }
                 break;
             case 0:
                 // BRK();
-                this._programCounter = this._programCounter + 1;
-                this.pushStack(this._programCounter >> 8 & 0xFF);
-                this.pushStack(this._programCounter & 0xFF);
-                data = this._statusRegister | 16 | 32;
+                this.programCounter = this.programCounter + 1;
+                this.pushStack(this.programCounter >> 8 & 0xFF);
+                this.pushStack(this.programCounter & 0xFF);
+                data = this.statusRegister | 16 | 32;
                 this.pushStack(data);
-                this._statusRegister = this._statusRegister | 20;
-                this._addressBus = 65534;
-                lowByte = this.GetByte(this._addressBus);
-                this._addressBus = 65535;
-                highByte = this.GetByte(this._addressBus);
-                this._programCounter = lowByte + highByte * 256;
+                this.statusRegister = this.statusRegister | 20;
+                this.addressBus = 65534;
+                lowByte = this.GetByte(this.addressBus);
+                this.addressBus = 65535;
+                highByte = this.GetByte(this.addressBus);
+                this.programCounter = lowByte + highByte * 256;
                 break;
             case 80:
                 // BVC();
-                if ((this._statusRegister & 64) !== 64) {
+                if ((this.statusRegister & 64) !== 64) {
                     this.branch();
                 }
                 break;
             case 112:
                 // BVS();
-                if ((this._statusRegister & 64) === 64) {
+                if ((this.statusRegister & 64) === 64) {
                     this.branch();
                 }
                 break;
@@ -3522,21 +3600,21 @@ var ChiChiCPPU = /** @class */ (function () {
             case 193:
             case 209:
                 // CMP();
-                data = (this._accumulator + 256 - this.decodeOperand());
+                data = (this.accumulator + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
             case 224:
             case 228:
             case 236:
                 // CPX();
-                data = (this._indexRegisterX + 256 - this.decodeOperand());
+                data = (this.indexRegisterX + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
             case 192:
             case 196:
             case 204:
                 // CPY();
-                data = (this._indexRegisterY + 256 - this.decodeOperand());
+                data = (this.indexRegisterY + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
             case 198:
@@ -3551,15 +3629,15 @@ var ChiChiCPPU = /** @class */ (function () {
                 break;
             case 202:
                 // DEX();
-                this._indexRegisterX = this._indexRegisterX - 1;
-                this._indexRegisterX = this._indexRegisterX & 0xFF;
-                this.setZNFlags(this._indexRegisterX);
+                this.indexRegisterX = this.indexRegisterX - 1;
+                this.indexRegisterX = this.indexRegisterX & 0xFF;
+                this.setZNFlags(this.indexRegisterX);
                 break;
             case 136:
                 //DEY();
-                this._indexRegisterY = this._indexRegisterY - 1;
-                this._indexRegisterY = this._indexRegisterY & 0xFF;
-                this.setZNFlags(this._indexRegisterY);
+                this.indexRegisterY = this.indexRegisterY - 1;
+                this.indexRegisterY = this.indexRegisterY & 0xFF;
+                this.setZNFlags(this.indexRegisterY);
                 break;
             case 73:
             case 69:
@@ -3570,8 +3648,8 @@ var ChiChiCPPU = /** @class */ (function () {
             case 65:
             case 81:
                 // EOR();
-                this._accumulator = (this._accumulator ^ this.decodeOperand());
-                this.setZNFlags(this._accumulator);
+                this.accumulator = (this.accumulator ^ this.decodeOperand());
+                this.setZNFlags(this.accumulator);
                 break;
             case 230:
             case 246:
@@ -3585,31 +3663,31 @@ var ChiChiCPPU = /** @class */ (function () {
                 break;
             case 232:
                 //INX();
-                this._indexRegisterX = this._indexRegisterX + 1;
-                this._indexRegisterX = this._indexRegisterX & 0xFF;
-                this.setZNFlags(this._indexRegisterX);
+                this.indexRegisterX = this.indexRegisterX + 1;
+                this.indexRegisterX = this.indexRegisterX & 0xFF;
+                this.setZNFlags(this.indexRegisterX);
                 break;
             case 200:
-                this._indexRegisterY = this._indexRegisterY + 1;
-                this._indexRegisterY = this._indexRegisterY & 0xFF;
-                this.setZNFlags(this._indexRegisterY);
+                this.indexRegisterY = this.indexRegisterY + 1;
+                this.indexRegisterY = this.indexRegisterY & 0xFF;
+                this.setZNFlags(this.indexRegisterY);
                 break;
             case 76:
             case 108:
                 // JMP();
                 // 6052 indirect jmp bug
                 if (this._currentInstruction_AddressingMode === ChiChiTypes_1.ChiChiCPPU_AddressingModes.Indirect && this._currentInstruction_Parameters0 === 255) {
-                    this._programCounter = 255 | this._currentInstruction_Parameters1 << 8;
+                    this.programCounter = 255 | this._currentInstruction_Parameters1 << 8;
                 }
                 else {
-                    this._programCounter = this.decodeAddress();
+                    this.programCounter = this.decodeAddress();
                 }
                 break;
             case 32:
                 //JSR();
-                this.pushStack((this._programCounter >> 8) & 0xFF);
-                this.pushStack((this._programCounter - 1) & 0xFF);
-                this._programCounter = this.decodeAddress();
+                this.pushStack((this.programCounter >> 8) & 0xFF);
+                this.pushStack((this.programCounter - 1) & 0xFF);
+                this.programCounter = this.decodeAddress();
                 break;
             case 169:
             case 165:
@@ -3620,8 +3698,8 @@ var ChiChiCPPU = /** @class */ (function () {
             case 161:
             case 177:
                 //LDA();
-                this._accumulator = this.decodeOperand();
-                this.setZNFlags(this._accumulator);
+                this.accumulator = this.decodeOperand();
+                this.setZNFlags(this.accumulator);
                 break;
             case 162:
             case 166:
@@ -3629,8 +3707,8 @@ var ChiChiCPPU = /** @class */ (function () {
             case 174:
             case 190:
                 //LDX();
-                this._indexRegisterX = this.decodeOperand();
-                this.setZNFlags(this._indexRegisterX);
+                this.indexRegisterX = this.decodeOperand();
+                this.setZNFlags(this.indexRegisterX);
                 break;
             case 160:
             case 164:
@@ -3638,8 +3716,8 @@ var ChiChiCPPU = /** @class */ (function () {
             case 172:
             case 188:
                 //LDY();
-                this._indexRegisterY = this.decodeOperand();
-                this.setZNFlags(this._indexRegisterY);
+                this.indexRegisterY = this.decodeOperand();
+                this.setZNFlags(this.indexRegisterY);
                 break;
             case 74:
             case 70:
@@ -3654,7 +3732,7 @@ var ChiChiCPPU = /** @class */ (function () {
                 data = data >> 1 & 0xFF;
                 this.setZNFlags(data);
                 if (this._currentInstruction_AddressingMode === ChiChiTypes_1.ChiChiCPPU_AddressingModes.Accumulator) {
-                    this._accumulator = data;
+                    this.accumulator = data;
                 }
                 else {
                     this.SetByte(this.decodeAddress(), data);
@@ -3668,28 +3746,8 @@ var ChiChiCPPU = /** @class */ (function () {
             case 218:
             case 250:
             case 137:
-                //case 0x04:
-                //case 0x14:
-                //case 0x34:
-                //case 0x44:
-                //case 0x64:
-                //case 0x80:
-                //case 0x82:
-                //case 0xc2:
-                //case 0xd4:
-                //case 0xe2:
-                //case 0xf4:
-                //case 0x0c:
-                //case 0x1c:
-                //case 0x3c:
-                //case 0x5c:
-                //case 0x7c:
-                //case 0xdc:
-                //case 0xfc:
                 //NOP();
-                if (this._currentInstruction_AddressingMode === ChiChiTypes_1.ChiChiCPPU_AddressingModes.AbsoluteX) {
-                    this.decodeAddress();
-                }
+                this.decodeAddress();
                 break;
             case 9:
             case 5:
@@ -3700,26 +3758,26 @@ var ChiChiCPPU = /** @class */ (function () {
             case 1:
             case 17:
                 //ORA();
-                this._accumulator = (this._accumulator | this.decodeOperand());
-                this.setZNFlags(this._accumulator);
+                this.accumulator = (this.accumulator | this.decodeOperand());
+                this.setZNFlags(this.accumulator);
                 break;
             case 72:
                 //PHA();
-                this.pushStack(this._accumulator);
+                this.pushStack(this.accumulator);
                 break;
             case 8:
                 //PHP();
-                data = this._statusRegister | 16 | 32;
+                data = this.statusRegister | 16 | 32;
                 this.pushStack(data);
                 break;
             case 104:
                 //PLA();
-                this._accumulator = this.popStack();
-                this.setZNFlags(this._accumulator);
+                this.accumulator = this.popStack();
+                this.setZNFlags(this.accumulator);
                 break;
             case 40:
                 //PLP();
-                this._statusRegister = this.popStack(); // | 0x20;
+                this.statusRegister = this.popStack(); // | 0x20;
                 break;
             case 42:
             case 38:
@@ -3729,14 +3787,14 @@ var ChiChiCPPU = /** @class */ (function () {
                 //ROL();
                 data = this.decodeOperand();
                 // old carry bit shifted into bit 1
-                oldbit = (this._statusRegister & 1) === 1 ? 1 : 0;
+                oldbit = (this.statusRegister & 1) === 1 ? 1 : 0;
                 this.setFlag(this.SRMasks_CarryMask, (data & 128) === 128);
                 data = ((data << 1) | oldbit) & 0xFF;
                 //data = data & 0xFF;
                 //data = data | oldbit;
                 this.setZNFlags(data);
                 if (this._currentInstruction_AddressingMode === ChiChiTypes_1.ChiChiCPPU_AddressingModes.Accumulator) {
-                    this._accumulator = data;
+                    this.accumulator = data;
                 }
                 else {
                     this.SetByte(this.decodeAddress(), data);
@@ -3750,13 +3808,13 @@ var ChiChiCPPU = /** @class */ (function () {
                 //ROR();
                 data = this.decodeOperand();
                 // old carry bit shifted into bit 7
-                oldbit = (this._statusRegister & 1) === 1 ? 128 : 0;
+                oldbit = (this.statusRegister & 1) === 1 ? 128 : 0;
                 // original bit 0 shifted to carry
                 this.setFlag(this.SRMasks_CarryMask, (data & 1) === 1);
                 data = (data >> 1) | oldbit;
                 this.setZNFlags(data);
                 if (this._currentInstruction_AddressingMode === ChiChiTypes_1.ChiChiCPPU_AddressingModes.Accumulator) {
-                    this._accumulator = data;
+                    this.accumulator = data;
                 }
                 else {
                     this.SetByte(this.decodeAddress(), data);
@@ -3764,16 +3822,16 @@ var ChiChiCPPU = /** @class */ (function () {
                 break;
             case 64:
                 //RTI();
-                this._statusRegister = this.popStack(); // | 0x20;
+                this.statusRegister = this.popStack(); // | 0x20;
                 lowByte = this.popStack();
                 highByte = this.popStack();
-                this._programCounter = ((highByte << 8) | lowByte);
+                this.programCounter = ((highByte << 8) | lowByte);
                 break;
             case 96:
                 //RTS();
                 lowByte = (this.popStack() + 1) & 0xFF;
                 highByte = this.popStack();
-                this._programCounter = ((highByte << 8) | lowByte);
+                this.programCounter = ((highByte << 8) | lowByte);
                 break;
             case 235:
             case 233:
@@ -3787,13 +3845,13 @@ var ChiChiCPPU = /** @class */ (function () {
                 //SBC();
                 // start the read process
                 data = this.decodeOperand() & 4095;
-                carryFlag = ((this._statusRegister ^ 1) & 1);
-                result = (((this._accumulator - data) & 4095) - carryFlag) & 4095;
+                carryFlag = ((this.statusRegister ^ 1) & 1);
+                result = (((this.accumulator - data) & 4095) - carryFlag) & 4095;
                 // set overflow flag if sign bit of accumulator changed
-                this.setFlag(this.SRMasks_OverflowMask, ((this._accumulator ^ result) & 128) === 128 && ((this._accumulator ^ data) & 128) === 128);
+                this.setFlag(this.SRMasks_OverflowMask, ((this.accumulator ^ result) & 128) === 128 && ((this.accumulator ^ data) & 128) === 128);
                 this.setFlag(this.SRMasks_CarryMask, (result < 256));
-                this._accumulator = (result) & 0xFF;
-                this.setZNFlags(this._accumulator);
+                this.accumulator = (result) & 0xFF;
+                this.setZNFlags(this.accumulator);
                 break;
             case 56:
                 //SEC();
@@ -3815,65 +3873,65 @@ var ChiChiCPPU = /** @class */ (function () {
             case 129:
             case 145:
                 //STA();
-                this.SetByte(this.decodeAddress(), this._accumulator);
+                this.SetByte(this.decodeAddress(), this.accumulator);
                 break;
             case 134:
             case 150:
             case 142:
                 //STX();
-                this.SetByte(this.decodeAddress(), this._indexRegisterX);
+                this.SetByte(this.decodeAddress(), this.indexRegisterX);
                 break;
             case 132:
             case 148:
             case 140:
                 //STY();
-                this.SetByte(this.decodeAddress(), this._indexRegisterY);
+                this.SetByte(this.decodeAddress(), this.indexRegisterY);
                 break;
             case 170:
                 //TAX();
-                this._indexRegisterX = this._accumulator;
-                this.setZNFlags(this._indexRegisterX);
+                this.indexRegisterX = this.accumulator;
+                this.setZNFlags(this.indexRegisterX);
                 break;
             case 168:
                 //TAY();
-                this._indexRegisterY = this._accumulator;
-                this.setZNFlags(this._indexRegisterY);
+                this.indexRegisterY = this.accumulator;
+                this.setZNFlags(this.indexRegisterY);
                 break;
             case 186:
                 //TSX();
-                this._indexRegisterX = this._stackPointer;
-                this.setZNFlags(this._indexRegisterX);
+                this.indexRegisterX = this.stackPointer;
+                this.setZNFlags(this.indexRegisterX);
                 break;
             case 138:
                 //TXA();
-                this._accumulator = this._indexRegisterX;
-                this.setZNFlags(this._accumulator);
+                this.accumulator = this.indexRegisterX;
+                this.setZNFlags(this.accumulator);
                 break;
             case 154:
                 //TXS();
-                this._stackPointer = this._indexRegisterX;
+                this.stackPointer = this.indexRegisterX;
                 break;
             case 152:
                 //TYA();
-                this._accumulator = this._indexRegisterY;
-                this.setZNFlags(this._accumulator);
+                this.accumulator = this.indexRegisterY;
+                this.setZNFlags(this.accumulator);
                 break;
             case 11:
             case 43:
                 //AAC();
                 //AND byte with accumulator. If result is negative then carry is set.
                 //Status flags: N,Z,C
-                this._accumulator = this.decodeOperand() & this._accumulator & 0xFF;
-                this.setFlag(this.SRMasks_CarryMask, (this._accumulator & 128) === 128);
-                this.setZNFlags(this._accumulator);
+                this.accumulator = this.decodeOperand() & this.accumulator & 0xFF;
+                this.setFlag(this.SRMasks_CarryMask, (this.accumulator & 128) === 128);
+                this.setZNFlags(this.accumulator);
                 break;
             case 75:
                 //AND byte with accumulator, then shift right one bit in accumu-lator.
                 //Status flags: N,Z,C
-                this._accumulator = this.decodeOperand() & this._accumulator;
-                this.setFlag(this.SRMasks_CarryMask, (this._accumulator & 1) === 1);
-                this._accumulator = this._accumulator >> 1;
-                this.setZNFlags(this._accumulator);
+                this.accumulator = this.decodeOperand() & this.accumulator;
+                this.setFlag(this.SRMasks_CarryMask, (this.accumulator & 1) === 1);
+                this.accumulator = this.accumulator >> 1;
+                this.setZNFlags(this.accumulator);
                 break;
             case 107:
                 //ARR();
@@ -3884,17 +3942,17 @@ var ChiChiCPPU = /** @class */ (function () {
                 //If only bit 5 is 1: set V, clear C.
                 //If only bit 6 is 1: set C and V.
                 //Status flags: N,V,Z,C
-                this._accumulator = this.decodeOperand() & this._accumulator;
-                if ((this._statusRegister & 1) === 1) {
-                    this._accumulator = (this._accumulator >> 1) | 128;
+                this.accumulator = this.decodeOperand() & this.accumulator;
+                if ((this.statusRegister & 1) === 1) {
+                    this.accumulator = (this.accumulator >> 1) | 128;
                 }
                 else {
-                    this._accumulator = (this._accumulator >> 1);
+                    this.accumulator = (this.accumulator >> 1);
                 }
                 // original bit 0 shifted to carry
                 //            target.SetFlag(CPUStatusBits.Carry, (); 
-                this.setFlag(this.SRMasks_CarryMask, (this._accumulator & 1) === 1);
-                switch (this._accumulator & 48) {
+                this.setFlag(this.SRMasks_CarryMask, (this.accumulator & 1) === 1);
+                switch (this.accumulator & 48) {
                     case 48:
                         this.setFlag(this.SRMasks_CarryMask, true);
                         this.setFlag(this.SRMasks_InterruptDisableMask, false);
@@ -3917,8 +3975,8 @@ var ChiChiCPPU = /** @class */ (function () {
                 //ATX();
                 //AND byte with accumulator, then transfer accumulator to X register.
                 //Status flags: N,Z
-                this._indexRegisterX = (this._accumulator = this.decodeOperand() & this._accumulator);
-                this.setZNFlags(this._indexRegisterX);
+                this.indexRegisterX = (this.accumulator = this.decodeOperand() & this.accumulator);
+                this.setZNFlags(this.indexRegisterX);
                 break;
         }
     };
@@ -3926,16 +3984,16 @@ var ChiChiCPPU = /** @class */ (function () {
         //zeroResult = (data & 0xFF) == 0;
         //negativeResult = (data & 0x80) == 0x80;
         if ((data & 255) === 0) {
-            this._statusRegister |= 2;
+            this.statusRegister |= 2;
         }
         else {
-            this._statusRegister &= -3;
+            this.statusRegister &= -3;
         } // ((int)CPUStatusMasks.ZeroResultMask);
         if ((data & 128) === 128) {
-            this._statusRegister |= 128;
+            this.statusRegister |= 128;
         }
         else {
-            this._statusRegister &= -129;
+            this.statusRegister &= -129;
         } // ((int)CPUStatusMasks.NegativeResultMask);
     };
     ChiChiCPPU.prototype.compare = function (data) {
@@ -3943,15 +4001,15 @@ var ChiChiCPPU = /** @class */ (function () {
         this.setZNFlags(data & 255);
     };
     ChiChiCPPU.prototype.branch = function () {
-        var highByte = (this._programCounter >> 8) & 0xff;
+        var highByte = (this.programCounter >> 8) & 0xff;
         this._currentInstruction_ExtraTiming = 1;
         var addr = this._currentInstruction_Parameters0 & 255;
         if ((addr & 128) === 128) {
             addr = addr - 256;
         }
-        this._programCounter += addr;
-        this._programCounter &= 0xffff;
-        var newHighByte = (this._programCounter >> 8) & 0xff;
+        this.programCounter += addr;
+        this.programCounter &= 0xffff;
+        var newHighByte = (this.programCounter >> 8) & 0xff;
         if (highByte != newHighByte) {
             this._currentInstruction_ExtraTiming = 2;
         }
@@ -3960,18 +4018,18 @@ var ChiChiCPPU = /** @class */ (function () {
         this._handleNMI = true;
     };
     ChiChiCPPU.prototype.pushStack = function (data) {
-        this.memoryMap.Rams[this._stackPointer + 256] = data;
-        this._stackPointer--;
-        if (this._stackPointer < 0) {
-            this._stackPointer = 255;
+        this.memoryMap.Rams[this.stackPointer + 256] = data;
+        this.stackPointer--;
+        if (this.stackPointer < 0) {
+            this.stackPointer = 255;
         }
     };
     ChiChiCPPU.prototype.popStack = function () {
-        this._stackPointer++;
-        if (this._stackPointer > 255) {
-            this._stackPointer = 0;
+        this.stackPointer++;
+        if (this.stackPointer > 255) {
+            this.stackPointer = 0;
         }
-        return this.memoryMap.Rams[this._stackPointer + 256];
+        return this.memoryMap.Rams[this.stackPointer + 256];
     };
     ChiChiCPPU.prototype.setupMemoryMap = function (cart) {
         this.memoryMap = cart.createMemoryMap(this);
@@ -4011,11 +4069,11 @@ var ChiChiCPPU = /** @class */ (function () {
     ChiChiCPPU.prototype.writeInstructionHistory = function () {
         var inst = new ChiChiTypes_1.ChiChiInstruction();
         inst.time = this.systemClock;
-        inst.A = this._accumulator;
-        inst.X = this._indexRegisterX;
-        inst.Y = this._indexRegisterY;
-        inst.SR = this._statusRegister;
-        inst.SP = this._stackPointer;
+        inst.A = this.accumulator;
+        inst.X = this.indexRegisterX;
+        inst.Y = this.indexRegisterY;
+        inst.SR = this.statusRegister;
+        inst.SP = this.stackPointer;
         inst.frame = this.clock;
         inst.OpCode = this._currentInstruction_OpCode;
         inst.Parameters0 = this._currentInstruction_Parameters0;
@@ -4033,12 +4091,12 @@ var ChiChiCPPU = /** @class */ (function () {
     };
     ChiChiCPPU.prototype.GetStatus = function () {
         return {
-            PC: this._programCounter,
-            A: this._accumulator,
-            X: this._indexRegisterX,
-            Y: this._indexRegisterY,
-            SP: this._stackPointer,
-            SR: this._statusRegister
+            PC: this.programCounter,
+            A: this.accumulator,
+            X: this.indexRegisterX,
+            Y: this.indexRegisterY,
+            SP: this.stackPointer,
+            SR: this.statusRegister
         };
     };
     // get state(): IChiChiCPPUState {
@@ -4096,36 +4154,21 @@ var ChiChiCPPU = /** @class */ (function () {
         sb.onRestore.subscribe(function (buffer) {
             _this.attachStateBuffer(buffer);
         });
-        sb.onSync.subscribe(function (buffer) {
-            _this.updateStateBuffer(buffer);
-        });
-        sb.pushSegment(1 * Uint16Array.BYTES_PER_ELEMENT, 'pc')
-            .pushSegment(2, 'acc')
-            .pushSegment(2, 'idx')
-            .pushSegment(2, 'idy')
-            .pushSegment(2, 'sp')
-            .pushSegment(2, 'sr');
+        sb.pushSegment(2 * Uint16Array.BYTES_PER_ELEMENT, 'cpu_status_16')
+            .pushSegment(8, 'cpu_status');
         return sb;
     };
     ChiChiCPPU.prototype.attachStateBuffer = function (sb) {
-        this._accumulator = sb.buffer[sb.getSegment('acc').start];
-        this._indexRegisterX = sb.buffer[sb.getSegment('idx').start];
-        this._indexRegisterY = sb.buffer[sb.getSegment('idy').start];
-        this._stackPointer = sb.buffer[sb.getSegment('sp').start];
-        this._statusRegister = sb.buffer[sb.getSegment('sr').start];
-        var seg = sb.getSegment('pc');
-        var pc = new Uint16Array(seg.buffer, seg.start, 1);
-        this._programCounter = pc[0];
-    };
-    ChiChiCPPU.prototype.updateStateBuffer = function (sb) {
-        sb.buffer[sb.getSegment('acc').start] = this._accumulator;
-        sb.buffer[sb.getSegment('idx').start] = this._indexRegisterX;
-        sb.buffer[sb.getSegment('idy').start] = this._indexRegisterY;
-        sb.buffer[sb.getSegment('sp').start] = this._stackPointer;
-        sb.buffer[sb.getSegment('sr').start] = this._statusRegister;
-        var seg = sb.getSegment('pc');
-        var pc = new Uint16Array(seg.buffer, seg.start, 1);
-        pc[0] = this._programCounter;
+        this.cpuStatus = sb.getUint8Array('cpu_status');
+        this.cpuStatus16 = sb.getUint16Array('cpu_status_16');
+        // this.accumulator       = sb.buffer[sb.getSegment('acc').start]; 
+        // this.indexRegisterX    = sb.buffer[sb.getSegment('idx').start];
+        // this.indexRegisterY    = sb.buffer[sb.getSegment('idy').start];
+        // this.stackPointer      = sb.buffer[sb.getSegment('sp').start];
+        // this.statusRegister    = sb.buffer[sb.getSegment('sr').start];
+        // let seg = sb.getSegment('pc');
+        // let pc = new Uint16Array(seg.buffer, seg.start, 1);
+        // this.programCounter    = pc[0];
     };
     // statics
     ChiChiCPPU.cpuTiming = [7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0];

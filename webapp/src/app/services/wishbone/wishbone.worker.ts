@@ -68,16 +68,15 @@ export class WishboneWorker {
         if (data.machine) {
             this.wishbone.runningStatus = data.machine.runStatus;
         }
-        if (data.bufferupdate) {
-            // wishbone.stateBuffer.syncBuffer(data.stateBuffer);
 
-            if (data.Cart && wishbone.Cart.realCart) {
-            }
+        if (data.bufferupdate) {
+            wishbone.stateBuffer.syncBuffer(data.stateBuffer);
 
             if (data.sound) {
                 wishbone.WaveForms.controlBuffer = data.sound.waveForms_controlBuffer; 
             }
         }
+
         if (data.stateupdate) {
             if (data.Cpu) {
                 wishbone.ppu.backgroundPatternTableIndex = data.Cpu.backgroundPatternTableIndex;

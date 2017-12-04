@@ -1,4 +1,5 @@
 import { Component, Input } from "@angular/core";
+import { NESService } from "../../../services/NESService";
 
 @Component({
     selector: 'debug-cpustatus',
@@ -7,4 +8,7 @@ import { Component, Input } from "@angular/core";
 })
 export class CpuStatusComponent {
     @Input('cpuStatus') cpuStatus;
+    constructor(private nes: NESService) {
+        this.cpuStatus = nes.wishbone.cpuStatus;
+    }
 }

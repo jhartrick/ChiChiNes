@@ -7,16 +7,19 @@ import { MatExpansionModule } from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { CartInfoButtonComponent } from './cartinfo-button.component';
 
 @NgModule({
   declarations: [
       CartInfoDialogComponent,
       CartInfoComponent,
-      CartInfoDialogComponent
+      CartInfoDialogComponent,
+      CartInfoButtonComponent
   ],
   entryComponents: [
     CartInfoDialogComponent,
-    CartInfoComponent
+    CartInfoComponent,
+    CartInfoButtonComponent
 ],
   imports: [
       BrowserModule,

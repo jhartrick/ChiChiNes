@@ -17,7 +17,7 @@ import { WishboneWorker } from '../../../services/wishbone/wishbone.worker';
 export class AudioSettingsComponent {
     audioSettings: AudioSettings ;
 
-    constructor(public wishbone: WishboneMachine, private worker: WishboneWorker ) {
+    constructor(public wishbone: WishboneMachine, public worker: WishboneWorker ) {
         this.audioSettings = this.wishbone.SoundBopper.audioSettings;
     }
 }

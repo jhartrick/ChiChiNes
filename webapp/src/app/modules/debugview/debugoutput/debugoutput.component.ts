@@ -17,6 +17,6 @@ export class DebugOutputComponent {
 
     decodedStatusRegister = '';
 
-    constructor(private cd: ChangeDetectorRef, private dbg: Debugger, public wishbone: WishboneMachine, private worker: WishboneWorker) {
+    constructor(private cd: ChangeDetectorRef, private dbg: Debugger, public wishbone: WishboneMachine, public worker: WishboneWorker) {
     }
 }
