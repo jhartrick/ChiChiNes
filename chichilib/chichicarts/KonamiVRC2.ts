@@ -130,7 +130,7 @@ class VRC2or4Cart extends VRCIrqBase {
     vrcmirroring = this.vrc4mirroring;
 
     useMicrowire () {
-        this.GetByte = this.getByteMicrowire;
+        this.getByte = this.getByteMicrowire;
         this.microwire = true;
         
     }  
@@ -154,9 +154,9 @@ class VRC2or4Cart extends VRCIrqBase {
         case 0x8000:
             let bank8 = data & 0x1F;
             if (this.swapMode) {
-                this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
+                this.setupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
             } else {
-                this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
+                this.setupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
             }           
             break;      
         case 0x9000:
@@ -165,7 +165,7 @@ class VRC2or4Cart extends VRCIrqBase {
         case 0xa000:
             // 8kib prg rom at A000
             let bankA = data & 0x1F;
-            this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+            this.setupBankStarts(this.current8, bankA, this.currentC, this.currentE);
             break;
         case 0xb000:
         case 0xc000: 
@@ -216,9 +216,9 @@ class VRC2or4Cart extends VRCIrqBase {
             case 0x8000:
                 let bank8 = data & 0x1F;
                 if (this.swapMode) {
-                    this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
+                    this.setupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
                 } else {
-                    this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
+                    this.setupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
                 }           
                 break;      
             case 0x9000:
@@ -227,7 +227,7 @@ class VRC2or4Cart extends VRCIrqBase {
             case 0xa000:
                 // 8kib prg rom at A000
                 let bankA = data & 0x1F;
-                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+                this.setupBankStarts(this.current8, bankA, this.currentC, this.currentE);
                 break;
             case 0xb000:
             case 0xc000:
@@ -279,9 +279,9 @@ class VRC2or4Cart extends VRCIrqBase {
             case 0x8000:
                 let bank8 = data & 0x1F;
                 if (this.swapMode) {
-                    this.SetupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
+                    this.setupBankStarts(this.prgRomCount * 2 - 2, this.currentA, bank8, this.currentE);
                 } else {
-                    this.SetupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
+                    this.setupBankStarts(bank8, this.currentA, this.prgRomCount * 2 - 2, this.currentE);
                 }           
                 break;      
             case 0x9000:
@@ -290,7 +290,7 @@ class VRC2or4Cart extends VRCIrqBase {
             case 0xa000:
                 // 8kib prg rom at A000
                 let bankA = data & 0x1F;
-                this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+                this.setupBankStarts(this.current8, bankA, this.currentC, this.currentE);
                 break;
             case 0xb000:
             case 0xc000:
@@ -353,20 +353,20 @@ export class KonamiVRC2Cart extends VRC2or4Cart {
         this.regMask = 0xf;
     }
 
-    InitializeCart() {
+    initializeCart() {
         this.mapperName = 'KonamiVRC24';
         this.usesSRAM = true;
         this.ramMask = 0xfff;
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.setupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);
 
-        this.SetByte = this.setByteVRC4;
+        this.setByte = this.setByteVRC4;
 
         switch (this.ROMHashFunction)
         {
             case 'CC9FFEC': // ganbare goemon 2 
             case 'B27B8CF4': // Gryzor (contra j)
-                this.SetByte = this.setByteVRC2;
+                this.setByte = this.setByteVRC2;
                 this.useMicrowire();
                 break;
             case 'D467C0CC': // parodius da!
@@ -381,14 +381,14 @@ export class KonamiVRC2Cart extends VRC2or4Cart {
 }
 
 export class KonamiVRC022Cart extends VRC2or4Cart {
-    InitializeCart() {
+    initializeCart() {
         this.mapperName = 'KonamiVRC2a';
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.setupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);
         this.regNums = [0x0, 0x2, 0x1, 0x3];
         this.vrcmirroring = this.vrc2mirroring;
         this.useMicrowire();
-        this.SetByte = this.setByteVRC2a;
+        this.setByte = this.setByteVRC2a;
         
         
         switch (this.ROMHashFunction) {
@@ -401,9 +401,9 @@ export class KonamiVRC022Cart extends VRC2or4Cart {
 
 export class Konami021Cart extends VRC2or4Cart {
 
-    InitializeCart() {
+    initializeCart() {
         this.mapperName = 'KonamiVRC2';
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.setupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);
         this.regNums = [
             0x00,
@@ -425,18 +425,18 @@ export class Konami021Cart extends VRC2or4Cart {
                 this.ramMask = 0x1fff;
             break;
         }
-        this.SetByte = this.setByteVRC2;
+        this.setByte = this.setByteVRC2;
         
     }
 }
 
 export class Konami025Cart extends VRC2or4Cart {
 
-    InitializeCart() {
+    initializeCart() {
         this.usesSRAM = true;
         
         this.mapperName = 'KonamiVRC4';
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.setupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.regNums = [0x000, 0x002, 0x001, 0x003];
         this.regMask = 0xf;
         switch (this.ROMHashFunction)
@@ -447,7 +447,7 @@ export class Konami025Cart extends VRC2or4Cart {
                 ];
             break;
         }
-        this.SetByte = this.setByteVRC4;
+        this.setByte = this.setByteVRC4;
         
     }
 

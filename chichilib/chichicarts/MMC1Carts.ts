@@ -13,26 +13,26 @@ export class MMC1Cart extends BaseCart  {
     _registers = new Array<number>(4);
     lastwriteAddress = 0;
 
-    InitializeCart() {
+    initializeCart() {
         this.mapperName = 'MMC1';
         this.usesSRAM = true;
         this.mapsBelow6000 = false;
         this.ramMask = 0x1fff;
         if (this.chrRomCount > 0) {
-            this.copyBanks(0,0, 0, 2);
+            this.copyBanks(0, 0, 0, 2);
         } 
         this._registers[0] = 12;
         this._registers[1] = 0;
         this._registers[2] = 0;
         this._registers[3] = 0;
 
-        this.SetupBankStarts(0, 1, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.setupBankStarts(0, 1, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
 
         this.sequence = 0;
         this.accumulator = 0;
     }
 
-    SetByte(clock: number, address: number, val: number) {
+    setByte(clock: number, address: number, val: number) {
 
         // if write is to a different register, reset
         switch (address & 0xf000) {
@@ -88,7 +88,6 @@ export class MMC1Cart extends BaseCart  {
             this.copyBanks4k(clock, 0, this._registers[1], 1);
             this.copyBanks4k(clock, 1, this._registers[1] + 1, 1);
         }
-        this.bankSwitchesChanged = true;
     }
 
     setMMC1PrgBanking() {
@@ -104,13 +103,13 @@ export class MMC1Cart extends BaseCart  {
 
         if ((this._registers[0] & 8) === 0) {
             reg = (4 * ((this._registers[3] >> 1) & 15) + this.bank_select);
-            this.SetupBankStarts(reg, reg + 1, reg + 2, reg + 3);
+            this.setupBankStarts(reg, reg + 1, reg + 2, reg + 3);
         } else {
             reg = (2 * (this._registers[3]) + this.bank_select);
             if ((this._registers[0] & 4) === 4) {
-                this.SetupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
+                this.setupBankStarts(reg, reg + 1, (this.prgRomCount << 1) - 2, (this.prgRomCount << 1) - 1);
             } else {
-                this.SetupBankStarts(0, 1, reg, reg + 1);
+                this.setupBankStarts(0, 1, reg, reg + 1);
             }
         }
 
@@ -134,7 +133,6 @@ export class MMC1Cart extends BaseCart  {
                 this.mirror(clock, 2);
                 break;
         }
-        this.bankSwitchesChanged = true;
     }
 
 

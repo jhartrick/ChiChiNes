@@ -162,42 +162,9 @@ export class Blip  {
         this.blipBuffer.arrayLength = count;
     }
 
-    ReadBytes(outbuf: any, count: number, stereo: number): number {
-        if (count > this.blipBuffer.avail) {
-            count = this.blipBuffer.avail;
-        }
-
-        if (count !== 0) {
-            const step = 1;
-            let inPtr = 0, outPtr = 0;
-            let endPtr = inPtr + count;
-            let sum = this.blipBuffer.integrator;
-
-            do {
-                let st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
-                sum = sum + this.blipBuffer.samples[inPtr];
-                inPtr++;
-                if (st !== st) {
-                    st = (st >> 31) ^ 32767;
-                }
-                const f = st / 65536; 
-                outbuf[outPtr] = f;
-                // outbuf[outPtr+ 1] = (byte)(st >> 8);
-                outPtr += step;
-                sum = sum - (st << (7));
-            } while (inPtr !== endPtr);
-
-            this.blipBuffer.integrator = sum;
-
-            this.remove_samples(count);
-        }
-
-        return count;
-    }
-
     // reads 'count' elements into array 'outbuf', beginning at 'start' and looping at array boundary if needed
     // returns number of elements written
-    ReadElementsLoop(wavSharer: WavSharer): number {
+    readElementsLoop(wavSharer: WavSharer): number {
         let outbuf = wavSharer.SharedBuffer;
         let start = wavSharer.sharedAudioBufferPos;
 
@@ -209,25 +176,21 @@ export class Blip  {
         if (count !== 0) {
             const step = 1;
             do {
-                let st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
+                let st = sum >> Blip.delta_bits; 
                 sum = sum + this.blipBuffer.samples[inPtr];
                 inPtr++;
-                if (st !== st) {
-                    st = (st >> 31) ^ 32767;
-                }
-                var f = st / 65536; // (st/0xFFFF) * 2 - 1;
 
                 outPtr += step;
                 if (outPtr >= outbuf.length) {
                     outPtr=0;
                 }
-                outbuf[outPtr] = f;
-                // outbuf[outPtr+ 1] = (byte)(st >> 8);
+
+                outbuf[outPtr] = st / 65536;
+
                 sum = sum - (st << (7));
             } while (end-- > 0);
 
             this.blipBuffer.integrator = sum;
-
             this.remove_samples(count);
         }
         wavSharer.sharedAudioBufferPos = outPtr;
@@ -257,58 +220,12 @@ export class Blip  {
         const delta2 = (delta * interp) >> interp_bits;
         delta -= delta2;
 
-        /* Fails if buffer size was exceeded */
-        //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
-
-        for (var i = 0; i < 8; ++i) {
+        for (let i = 0; i < 8; ++i) {
             this.blipBuffer.samples[outPtr + i] += (Blip.bl_step[inStep][i] * delta) + (Blip.bl_step[inStep][i] * delta2);
             this.blipBuffer.samples[outPtr + (15 - i)] += (Blip.bl_step[rev][i] * delta) + (Blip.bl_step[rev - 1][i] * delta2);
         }
 
     }
 
-    blip_add_delta_fast(time: number, delta: number): void {
-        const fixedTime = time * this.blipBuffer.factor + this.blipBuffer.offset;
-
-        const outPtr = this.blipBuffer.avail + (fixedTime >> Blip.time_bits);
-
-        const delta_unit = 1 << Blip.delta_bits;
-        const phase_shift = Blip.time_bits - Blip.delta_bits;
-        const phase = fixedTime >> phase_shift & (delta_unit - 1);
-        const delta2 = delta * phase;
-
-        /* Fails if buffer size was exceeded */
-        //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
-
-
-        this.blipBuffer.samples[outPtr + 8] += delta * delta_unit - delta2;
-        this.blipBuffer.samples[outPtr + 9] += delta2;
-        //out [8] += delta * delta_unit - delta2;
-        //out [9] += delta2;
-    }
-
-}
-
-export class PortWriteEntry {
-    constructor(public time: number, public address: number, public data: number) { }
-}
-
-export class QueuedPort {
-    private array = new Array<PortWriteEntry>();
-
-    get Count(): number {
-        return this.array.length;
-    }
-
-    clear() {
-        this.array.length = 0;
-    }
-    enqueue(item: PortWriteEntry) {
-        this.array.push(item);
-    }
-
-    dequeue(): PortWriteEntry {
-        return this.array.pop();
-    }
 
 }

@@ -5,14 +5,14 @@ export class Mapper068Cart extends BaseCart {
     cramStart = 0;
     cromStart = 0;
     
-    InitializeCart(): void {
+    initializeCart(): void {
         this.mapperName = 'Sunsoft-4';
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.setupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
         this.cramStart = this.chrRamStart;
         //this.mirror(0, 0);
      }
 
-     SetByte(clock: number, address: number, val: number): void {
+     setByte(clock: number, address: number, val: number): void {
         if (address < 0x5000) return;
         if (address >= 24576 && address <= 32767) {
             if (this.SRAMEnabled) {
@@ -24,7 +24,7 @@ export class Mapper068Cart extends BaseCart {
         switch (address & 0xF000) {
             case 0xF000:
                 let newbank8 = (val * 0xF) <<1;
-                this.SetupBankStarts(newbank8, newbank8 + 1, this.currentC, this.currentE);
+                this.setupBankStarts(newbank8, newbank8 + 1, this.currentC, this.currentE);
                 break;
             case 0x8000:
                 //Map a 2 KiB CHR ROM bank into PPU $0000.    

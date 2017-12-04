@@ -10,8 +10,11 @@ export interface IChiChiAPUState {
     enableTriangle: boolean;
     enableNoise: boolean;
 }
-export interface IChiChiAPU extends IChiChiAPUState {
+export interface IChiChiAPU {
     writer: WavSharer;
+    sampleRate: number;
+    interruptRaised: boolean;
+    audioSettings: AudioSettings;
     irqHandler(): void;
     GetByte(clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;
@@ -24,6 +27,8 @@ export declare class ChiChiAPU implements IChiChiAPU {
     writer: WavSharer;
     frameMode: boolean;
     irqHandler(): any;
+    pulseTable: number[];
+    tndTable: number[];
     lastClock: number;
     throwingIRQs: boolean;
     reg15: number;
@@ -35,12 +40,6 @@ export declare class ChiChiAPU implements IChiChiAPU {
     private dmc;
     private _sampleRate;
     private static clock_rate;
-    private master_vol;
-    private square0Gain;
-    private square1Gain;
-    private triangleGain;
-    private noiseGain;
-    private dmcGain;
     private muted;
     private lastFrameHit;
     memoryMap: IMemoryMap;
@@ -51,11 +50,6 @@ export declare class ChiChiAPU implements IChiChiAPU {
     sampleRate: number;
     _interruptRaised: boolean;
     interruptRaised: boolean;
-    enableSquare0: boolean;
-    enableSquare1: boolean;
-    enableTriangle: boolean;
-    enableNoise: boolean;
-    enableDMC: boolean;
     rebuildSound(): void;
     GetByte(Clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;
@@ -66,4 +60,6 @@ export declare class ChiChiAPU implements IChiChiAPU {
     runFrameEvents(time: number, step: number): void;
     endFrame(time: number): void;
     state: IChiChiAPUState;
+    private lastOutput;
+    private writeAudio(clock);
 }

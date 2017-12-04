@@ -1,5 +1,5 @@
 export { ChiChiStateManager, ChiChiState } from './ChiChiState';
-
+export { StateBuffer } from './StateBuffer'; 
 export { ChiChiMachine } from './ChiChiMachine';
 export { IChiChiCPPU, IChiChiCPPUState, ChiChiCPPU } from './ChiChiCPU';
 export { ChiChiAPU, IChiChiAPUState, IChiChiAPU } from './ChiChiAudio';

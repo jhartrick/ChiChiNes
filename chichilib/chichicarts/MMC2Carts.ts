@@ -6,7 +6,7 @@ export class MMC2Cart extends BaseCart {
     latches: number[] = [0,0];
     banks: number[] = [0,0,0,0];
     
-    InitializeCart() {
+    initializeCart() {
         this.mapperName='MMC2';
         this.latches[0] = 1;
         this.latches[1] = 2;
@@ -16,14 +16,14 @@ export class MMC2Cart extends BaseCart {
         this.banks[2] = 0;
         this.banks[3] = 0;
 
-        this.SetupBankStarts(0,(this.prgRomCount * 2) - 3,(this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.setupBankStarts(0,(this.prgRomCount * 2) - 3,(this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
 
         this.copyBanks4k(0, 0,this.banks[this.latches[0]], 1);
         this.copyBanks4k(0,1,this.banks[this.latches[1]], 1);
 
     }
 
-    GetPPUByte(clock: number, address: number) : number {
+    getPPUByte(clock: number, address: number) : number {
         var bank: number = 0;
         if (address == 0xfd8) {
                 bank = (address >> 11) & 0x2; 
@@ -45,13 +45,13 @@ export class MMC2Cart extends BaseCart {
                 this.copyBanks4k(clock,1,this.banks[this.latches[1]], 1);
         }
 
-        bank = address >> 10 ;
-        let newAddress = this.ppuBankStarts[bank] + (address & 1023);
+        // bank = address >> 10 ;
+        // let newAddress = this.ppuBankStarts[bank] + (address & 1023);
 
-        return this.chrRom[newAddress];
+        return  super.getPPUByte(clock, address);// this.chrRom[newAddress];
     }
 
-    SetByte(clock: number, address: number, val: number) {
+    setByte(clock: number, address: number, val: number) {
 
         switch (address >> 12) {
             case 0x6:
@@ -59,7 +59,7 @@ export class MMC2Cart extends BaseCart {
                 this.prgRomBank6[address & 0x1fff] = val & 0xff;
                 break;
             case 0xA:
-                this.SetupBankStarts((val & 0xF), this.currentA, this.currentC, this.currentE);
+                this.setupBankStarts((val & 0xF), this.currentA, this.currentC, this.currentE);
                 break
             case 0xB:
             case 0xC:
@@ -85,7 +85,7 @@ export class MMC4Cart extends BaseCart {
     selector: number[] = [0,0];
     banks: number[] = [0,0,0,0];
     
-    InitializeCart() {
+    initializeCart() {
         this.mapperName='MMC4';
         this.selector[0] = 1;
         this.selector[1] = 2;
@@ -95,7 +95,7 @@ export class MMC4Cart extends BaseCart {
         this.banks[2] = 0;
         this.banks[3] = 0;
 
-        this.SetupBankStarts(0, 1,(this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.setupBankStarts(0, 1,(this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
 
         this.copyBanks4k(0, 0,this.banks[this.selector[0]], 1);
         this.copyBanks4k(0,1,this.banks[this.selector[1]], 1);
@@ -103,7 +103,7 @@ export class MMC4Cart extends BaseCart {
     }
 
     
-    GetPPUByte(clock: number, address: number) : number {
+    getPPUByte(clock: number, address: number) : number {
         var bank: number =0;
         if (address >= 0xFD8 && address <= 0xFDF)
         {
@@ -133,7 +133,7 @@ export class MMC4Cart extends BaseCart {
         return data;
     }
 
-    SetByte(clock: number, address: number, val: number) {
+    setByte(clock: number, address: number, val: number) {
 
         switch (address >> 12) {
             case 0x6:
@@ -144,7 +144,7 @@ export class MMC4Cart extends BaseCart {
                 break;
             case 0xA:
                 const bank8 = (val & 0xF) << 1;
-                this.SetupBankStarts(bank8, bank8 + 1, this.currentC, this.currentE);
+                this.setupBankStarts(bank8, bank8 + 1, this.currentC, this.currentE);
                 break
             case 0xB:
             case 0xC:

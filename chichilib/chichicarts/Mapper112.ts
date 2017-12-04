@@ -6,13 +6,13 @@ export class Mapper112Cart extends BaseCart {
     registers = [0,0,0,0,0,0,0,0];
     latch = 0;
 
-    InitializeCart() {
+    initializeCart() {
         this.mapperName = 'asder';
-        this.SetupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        this.setupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
     }
 
     updateBanks() {
-        this.SetupBankStarts(this.registers[0], this.registers[1], this.currentC, this.currentE);
+        this.setupBankStarts(this.registers[0], this.registers[1], this.currentC, this.currentE);
 
         this.copyBanks2k(0, 0, this.registers[2], 1 );
         this.copyBanks2k(0, 1, this.registers[3], 1 );
@@ -24,7 +24,7 @@ export class Mapper112Cart extends BaseCart {
 
     }
 
-    SetByte(clock:number, address: number, data: number) {
+    setByte(clock:number, address: number, data: number) {
         if (address >= 0x8000 && address <= 0xffff) {
             switch(address & 0xe001) {
                 case 0x8000:

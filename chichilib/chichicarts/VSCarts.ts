@@ -19,17 +19,18 @@ export class VSCart extends BaseCart {
         //SRAMEnabled = SRAMCanSave;
         reg16 = 0;
         bankSelect = 0;
-        InitializeCart() {
+        initializeCart() {
             // this.usesSRAM = true;
             this.mapperName = 'VS Unisystem';
             this.mapsBelow6000 = true;
-            this.SetupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+            this.setupBankStarts(0, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+            this.copyBanks(0,0,0,1);
             this.mirror(0,3);
             
             
         }
 
-        GetByte(clock: number, address: number) {
+        getByte(clock: number, address: number) {
             if (address == 0x4020) {
                 return this.coin;
             }
@@ -39,14 +40,14 @@ export class VSCart extends BaseCart {
             }
         }
 
-        SetByte(clock: number, address: number, val: number): void {
+        setByte(clock: number, address: number, val: number): void {
             this.setPrgRam(address, val);
 
             if (address == 0x4016) {
                 this.bankSelect = val;
                 const chrbank = (val >> 2) & 0x1;
                 if (this.prgRomCount > 2) { 
-                    this.SetupBankStarts(chrbank, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+                    this.setupBankStarts(chrbank, (this.prgRomCount * 2) - 3, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
                 }
                 this.copyBanks(clock, 0, chrbank, 1);
             }

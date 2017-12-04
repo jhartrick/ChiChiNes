@@ -2,7 +2,7 @@ import { NgZone, Injectable, EventEmitter } from '@angular/core';
 import * as crc from 'crc';
 
 import { CpuStatus, BaseCart, ChiChiInputHandler, AudioSettings, PpuStatus, IChiChiAPU, IChiChiAPUState,
-        WavSharer, ChiChiCPPU, ChiChiMachine, ChiChiPPU, GameGenieCode, ChiChiCheats, IBaseCart, WorkerInterop, RunningStatuses  } from 'chichi';
+        WavSharer, ChiChiCPPU, ChiChiMachine, ChiChiPPU, GameGenieCode, ChiChiCheats, IBaseCart, WorkerInterop, RunningStatuses, StateBuffer  } from 'chichi';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
@@ -19,6 +19,7 @@ export class WishbonePPU extends ChiChiPPU {
 
 @Injectable()
 export class WishboneMachine  {
+    stateBuffer: StateBuffer;
 
     ppuStatus: PpuStatus = new PpuStatus();
     cpuStatus: CpuStatus = new CpuStatus();
@@ -82,6 +83,10 @@ export class WishboneMachine  {
     }
 
     insertCart(cart: BaseCart) {
+        this.stateBuffer = new StateBuffer();
+        this.Cpu.setupStateBuffer(this.stateBuffer);
+        cart.setupStateBuffer(this.stateBuffer);
+        this.stateBuffer.build();
 
         this.tileDoodler = new TileDoodler(this.ppu);
         this.Cpu.setupMemoryMap(cart);

@@ -1,8 +1,11 @@
 import { Blip } from "./CommonAudio";
+import { IChannel } from "./IChannel";
 
-export class SquareChannel {
+export class SquareChannel implements IChannel {
+    output: number = 0;
+    playing =  true;
+    
     private _chan = 0;
-    private _bleeper: Blip = null;
     private lengthCounts = new Uint8Array(
         [
             0x0A,0xFE,
@@ -13,7 +16,6 @@ export class SquareChannel {
 	        0x3C,0x0A,
 	        0x0E,0x0C,
 	        0x1A,0x0E,
-
 	        0x0C,0x10,
 	        0x18,0x12,
 	        0x30,0x14,
@@ -23,6 +25,7 @@ export class SquareChannel {
 	        0x10,0x1C,
 	        0x20,0x1E
         ]);
+
     private _length = 0;
     period = 0;
     private _rawTimer = 0;
@@ -31,7 +34,6 @@ export class SquareChannel {
     private envelope = 0;
     private looping = false;
     private enabled = false;
-    private _amplitude = 0;
     private doodies: number[] = [2, 6, 30, 249];
     private _sweepShift = 0;
     private _sweepCounter = 0;
@@ -47,8 +49,7 @@ export class SquareChannel {
     private _envVolume = 0;
 
 
-    constructor(bleeper: Blip, chan: number) {
-        this._bleeper = bleeper;
+    constructor(chan: number, public onWriteAudio: (x: number)=> void) {
         this._chan = chan;
 
         this.enabled = true;
@@ -58,7 +59,6 @@ export class SquareChannel {
 
     // properties
     length: number;
-    gain = 0;
     sweepComplement = false;
     dutyCycle = 0;
 
@@ -106,11 +106,18 @@ export class SquareChannel {
     }
 
     run(end_time: number): void {
+        if (!this.playing) {
+            this.time = end_time;
+            this.output = 0;
+            return ;
+        }
+
         const period = this._sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
 
         if (period === 0) {
             this.time = end_time;
-            this.updateAmplitude(0);
+            this.output = 0;
+            this.onWriteAudio(this.time);
             return;
         }
 
@@ -118,27 +125,24 @@ export class SquareChannel {
 
         if (this._length === 0 || volume === 0 || this._sweepInvalid) {
             this._phase += ((end_time - this.time) / period) & 7;
-            this.time = end_time;
-            this.updateAmplitude(0);
+            this.output = 0;
+            this.onWriteAudio(this.time);
             return;
         }
         for (; this.time < end_time; this.time += period, this._phase++) {
-            this.updateAmplitude((this.dutyCycle >> (this._phase & 7) & 1) * volume);
+            this.output = (this.dutyCycle >> (this._phase & 7) & 1) * volume;
+            this.onWriteAudio(this.time);
         }
         this._phase &= 7;
     }
     
-    updateAmplitude(new_amp: number): void {
-        const delta = new_amp * this.gain - this._amplitude;
 
-        this._amplitude += delta;
-        this._bleeper.blip_add_delta(this.time, delta);
-    }
     endFrame(time: number): void {
         this.run(time);
 
         this.time = 0;
     }
+
     frameClock(time: number, step: number): void {
         this.run(time);
 

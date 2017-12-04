@@ -57,7 +57,7 @@ export class NESService {
     }
 
 
-    setupCart(cart: BaseCart, rom: number[]) {
+    setupCart(cart: BaseCart, rom: ArrayBuffer) {
 
         this.worker.createAndLoadRom(cart, rom, { 
             vbuffer: this.vbuffer,

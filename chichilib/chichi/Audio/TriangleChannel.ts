@@ -1,7 +1,10 @@
 import { Blip } from "./CommonAudio";
+import { IChannel } from "./IChannel";
 
-export class TriangleChannel {
-    private _bleeper: Blip;
+export class TriangleChannel implements IChannel {
+    playing = true;
+    output: number = 0;
+
     private _chan = 0;
     
     private lengthCounts = new Uint8Array([
@@ -28,16 +31,13 @@ export class TriangleChannel {
     envelope = 0;
     looping = false;
     enabled = false;
-    amplitude = 0;
-    gain = 0;
     
     private linCtr = 0;
     private _phase = 0;
     private _linVal = 0;
     private linStart = false;
 
-    constructor(bleeper: Blip, chan: number) {
-        this._bleeper = bleeper;
+    constructor(chan: number, public onWriteAudio: (time: number)=> void) {
         this._chan = chan;
 
         this.enabled = true;
@@ -58,7 +58,7 @@ export class TriangleChannel {
                 this.period |= data;
                 break;
             case 3:
-                this.period &= 0xFF;
+                this.period &= 0xff;
                 this.period |= (data & 7) << 8;
                 // setup lengthhave
                 if (this.enabled) {
@@ -76,6 +76,13 @@ export class TriangleChannel {
     }
 
     run(end_time: number): void {
+        if (!this.playing) {
+            this.time = end_time;
+            this.output = 0;
+            return ;
+        }
+
+
         var period = this.period + 1;
         if (this.linCtr === 0 || this.length === 0 || this.period < 4) {
             // leave it at it's current phase
@@ -84,15 +91,12 @@ export class TriangleChannel {
         }
 
         for (; this.time < end_time; this.time += period, this._phase = (this._phase + 1) % 32) {
-            this.updateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
+            this.output = this._phase < 16 ? this._phase : 31 - this._phase;
+            this.onWriteAudio(this.time);
         }
+
     }
 
-    updateAmplitude(new_amp: number): void {
-        var delta = new_amp * this.gain - this.amplitude;
-        this.amplitude += delta;
-        this._bleeper.blip_add_delta(this.time, delta);
-    }
 
     endFrame(time: number): void {
         this.run(time);

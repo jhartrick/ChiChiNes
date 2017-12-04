@@ -42,7 +42,7 @@ export class RomLoader {
         const obs = new Observable<BaseCart>((observer) => {
             const reader: FileReader = new FileReader();
             reader.onload = (ze) => {
-                const rom: number[] = Array.from(new Uint8Array(reader.result));
+                const rom = reader.result;
                 RomLoader.doLoadCart(rom, name ).subscribe((cart)=>{
                     this.nes.setupCart(cart, rom);
                     observer.next(cart);
@@ -91,7 +91,7 @@ export class RomLoader {
 
     }
 
-    static doLoadCart(rom: number[], name: string): Observable<BaseCart> {
+    static doLoadCart(rom: ArrayBuffer, name: string): Observable<BaseCart> {
         return new Observable<BaseCart>((subj) => {
             (require as any).ensure(['../../assets/romloader.worker.js'], (require) => {
                 const romLoader = require('../../assets/romloader.worker.js');

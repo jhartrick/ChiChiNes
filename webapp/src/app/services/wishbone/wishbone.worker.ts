@@ -3,7 +3,7 @@ import { WishboneMachine } from './wishbone';
 import { Observable } from 'rxjs/Observable';
 import { Local } from 'protractor/built/driverProviders';
 import { Injectable } from '@angular/core';
-import { MemoryPatch, IBaseCart, BaseCart, ChiChiMessages, RunningStatuses, DebugStepTypes } from 'chichi';
+import { MemoryPatch, IBaseCart, BaseCart, ChiChiMessages, RunningStatuses, DebugStepTypes, StateBuffer } from 'chichi';
 import { WishboneWorkerInterop } from './wishbone.worker.interop';
 
 class Buffers{
@@ -29,7 +29,7 @@ export class WishboneWorker {
 
     }
 
-    createAndLoadRom(cart: BaseCart, rom: number[], buffers: Buffers) : Observable<any> {
+    createAndLoadRom(cart: BaseCart, rom: ArrayBuffer, buffers: Buffers) : Observable<any> {
         return new Observable((subj)=>{
             if (this.worker) {
                 this.worker.terminate();
@@ -63,30 +63,19 @@ export class WishboneWorker {
     private sync(data: any) {
         const wishbone = this.wishbone;
         if (data.state) {
-            
-            // console.log("state "  + JSON.stringify(data.state));
+
         }
         if (data.machine) {
             this.wishbone.runningStatus = data.machine.runStatus;
         }
         if (data.bufferupdate) {
-            if (data.Cpu.Rams) {
-                wishbone.Cpu.memoryMap.Rams = data.Cpu.Rams;
-                wishbone.ppu.spriteRAM = data.Cpu.spriteRAM;
-                for (let i = 0; i < wishbone.ppu.unpackedSprites.length; ++i) {
-                    wishbone.ppu.unpackedSprites[i].Changed = true;
-                }
-                wishbone.ppu.unpackSprites();
-            }
-            if (data.Cart && wishbone.Cart.realCart) {
+            // wishbone.stateBuffer.syncBuffer(data.stateBuffer);
 
-                wishbone.Cart.realCart.prgRomBank6 = data.Cart.prgRomBank6;
-                wishbone.Cart.realCart.ppuBankStarts = data.Cart.ppuBankStarts;
-                //wishbonethis.Cart.realCart.bankStartCache = data.Cart.bankStartCache;
-                wishbone.Cart.realCart.chrRom = data.Cart.chrRom;
+            if (data.Cart && wishbone.Cart.realCart) {
             }
+
             if (data.sound) {
-                wishbone.WaveForms.controlBuffer = data.sound.waveForms_controlBuffer;//
+                wishbone.WaveForms.controlBuffer = data.sound.waveForms_controlBuffer; 
             }
         }
         if (data.stateupdate) {
@@ -94,13 +83,11 @@ export class WishboneWorker {
                 wishbone.ppu.backgroundPatternTableIndex = data.Cpu.backgroundPatternTableIndex;
                 wishbone.cpuStatus = data.Cpu.status;
                 wishbone.ppuStatus = data.Cpu.ppuStatus;
-                wishbone.ppu._PPUControlByte0 = data.Cpu._PPUControlByte0;
-                wishbone.ppu._PPUControlByte1 = data.Cpu._PPUControlByte1;
+                wishbone.ppu.controlByte0 = data.Cpu.controlByte0;
+                wishbone.ppu.controlByte1 = data.Cpu.controlByte1;
 
             }
-            if (data.Cart && wishbone.Cart.realCart) {
 
-            }
         }
         if (data.sound) {
             wishbone.SoundBopper.updateSettings(data.sound.settings);

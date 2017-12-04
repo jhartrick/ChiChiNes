@@ -3,6 +3,7 @@ import { IChiChiPPU } from "./ChiChiPPU";
 import { IChiChiAPU } from "./ChiChiAudio";
 import { IBaseCart } from "../chichicarts/BaseCart";
 import { ChiChiInputHandler } from "./ChiChiControl";
+import { StateBuffer } from "./StateBuffer";
 
 export interface IMemoryMap {
     ppu: IChiChiPPU;
@@ -23,6 +24,8 @@ export interface IMemoryMap {
     setPPUByte(clock: number, address: number, data: number): void;
     advanceClock(value: number): void;
     advanceScanline(value: number): void;
+
+    setupStateBuffer(sb: StateBuffer): void;
 }
 
 export class MemoryMap implements IMemoryMap {
@@ -87,7 +90,7 @@ export class MemoryMap implements IMemoryMap {
 
                     default:
                         if (this.cart.mapsBelow6000)
-                            result = this.cart.GetByte(clock, address);
+                            result = this.cart.getByte(clock, address);
                         else
                             result = address >> 8;
                         break;
@@ -108,7 +111,7 @@ export class MemoryMap implements IMemoryMap {
             case 0xe000:
             case 0xf000:
                 // cart 
-                result = this.cart.GetByte(clock, address);
+                result = this.cart.getByte(clock, address);
                 break;
             default:
                 throw new Error("Bullshit!");
@@ -132,7 +135,7 @@ export class MemoryMap implements IMemoryMap {
                 this.Rams[address & 2047] = data;
                 break;
             case 20480:
-                this.cart.SetByte(clock, address, data);
+                this.cart.setByte(clock, address, data);
                 break;
             case 24576:
             case 28672:
@@ -145,7 +148,7 @@ export class MemoryMap implements IMemoryMap {
             case 57344:
             case 61440:
                 // cart rom banks
-                this.cart.SetByte(clock, address, data);
+                this.cart.setByte(clock, address, data);
                 break;
             case 8192:
             case 12288:
@@ -192,29 +195,21 @@ export class MemoryMap implements IMemoryMap {
                         break;
                     default:
                         if (this.cart.mapsBelow6000)
-                            this.cart.SetByte(clock, address, data);
+                            this.cart.setByte(clock, address, data);
                 }
                 break;
         }
     }
 
     getPPUByte(clock: number, address: number): number {
-        if (((this.lastAddress & 0x800) ==0) && (address & 0x800)) {
-            this.advanceScanline(1);
-        }
-        this.lastAddress = address;
 
-        return this.cart.GetPPUByte(clock, address);
+        return this.cart.getPPUByte(clock, address);
     }
 
     setPPUByte(clock: number, address: number, data: number): void {
 
-        if (((this.lastAddress & 0x800) ==0) && (address & 0x800)) {
-            this.advanceScanline(1);
-        }
-        this.lastAddress = address;
 
-        this.cart.SetPPUByte(clock, address, data);
+        this.cart.setPPUByte(clock, address, data);
     }
 
     advanceClock(value: number) {
@@ -228,4 +223,16 @@ export class MemoryMap implements IMemoryMap {
             this.cart.updateScanlineCounter();
         }
     }
+
+    setupStateBuffer(sb: StateBuffer) {
+        sb.onRestore.subscribe((buffer: StateBuffer) => {
+            this.Rams = buffer.getUint8Array('rams');
+        })
+
+        sb  .pushSegment(8192 * Uint8Array.BYTES_PER_ELEMENT, 'rams');
+        return sb;
+
+    }
+
+    
 }

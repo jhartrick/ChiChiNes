@@ -37,15 +37,15 @@ export class VSMemoryMap extends MemoryMap {
                         break;
                     case 0x4016:
                         result = this.pad2.GetByte(clock, address) & 1;
-                        result |= this.cart.GetByte(clock, address) & 0xfe;
+                        result |= this.cart.getByte(clock, address) & 0xfe;
                         break;
                     case 0x4017:
                         result = this.pad1.GetByte(clock, address) & 1;
-                        result |= this.cart.GetByte(clock, address) & 0xfe;
+                        result |= this.cart.getByte(clock, address) & 0xfe;
                         break;
                 }
                 if (address >= 0x4020 && address <= 0x5fff) {
-                    result = this.cart.GetByte(clock, address) & 0xfe;
+                    result = this.cart.getByte(clock, address) & 0xfe;
                 }
                 break;
             case 0x5000:
@@ -63,7 +63,7 @@ export class VSMemoryMap extends MemoryMap {
             case 0xe000:
             case 0xf000:
                 // cart 
-                result = this.cart.GetByte(clock, address);
+                result = this.cart.getByte(clock, address);
                 break;
             default:
                 throw new Error("Bullshit!");
@@ -85,7 +85,7 @@ export class VSMemoryMap extends MemoryMap {
                 this.Rams[address & 2047] = data;
                 break;
             case 20480:
-                this.cart.SetByte(clock, address, data);
+                this.cart.setByte(clock, address, data);
                 break;
             case 24576:
             case 28672:
@@ -98,7 +98,7 @@ export class VSMemoryMap extends MemoryMap {
             case 57344:
             case 61440:
                 // cart rom banks
-                this.cart.SetByte(clock, address, data);
+                this.cart.setByte(clock, address, data);
                 break;
             case 8192:
             case 12288:
@@ -139,7 +139,7 @@ export class VSMemoryMap extends MemoryMap {
                         break;
                     default:
                         if (this.cart.mapsBelow6000)
-                            this.cart.SetByte(clock, address, data);
+                            this.cart.setByte(clock, address, data);
                 }
                 break;
         }

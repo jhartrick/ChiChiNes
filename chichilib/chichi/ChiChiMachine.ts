@@ -71,7 +71,7 @@ export class ChiChiMachine {
     Reset(): void {
         if (this.Cpu  && this.Cart && this.Cart.supported) {
 
-            this.Cart.InitializeCart(true);
+            this.Cart.initializeCart(true);
             this.Cpu.ResetCPU();
             this.SoundBopper.rebuildSound();
             //ClearGenieCodes();
@@ -82,7 +82,7 @@ export class ChiChiMachine {
 
     PowerOn(): void {
         if (this.Cpu && this.Cart && this.Cart.supported) {
-            this.Cart.InitializeCart();
+            this.Cart.initializeCart();
             this.Cpu.ppu.Initialize();
             this.SoundBopper.rebuildSound();
             this.Cpu.PowerOn();
@@ -99,7 +99,7 @@ export class ChiChiMachine {
             this.frameOn = true;
             this.frameJustEnded = false;
         }
-        this.Cpu.Step();
+        this.Cpu.step();
 
         if (!this.frameOn) {
             this.totalCPUClocks = 0;
@@ -116,7 +116,7 @@ export class ChiChiMachine {
         this.frameJustEnded = false;
 
         do {
-            this.Cpu.Step();
+            this.Cpu.step();
         } while (this.frameOn);
 
         this.totalCPUClocks = 0;

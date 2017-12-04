@@ -47,7 +47,7 @@ export class WishboneCart {
 
     GetPPUByte(clock: number, address: number): number {
         if (this.realCart) {
-            return this.realCart.GetPPUByte(clock, address);
+            return this.realCart.getPPUByte(clock, address);
         } else {
             return 0;
         }
@@ -55,7 +55,7 @@ export class WishboneCart {
 
     GetByte(Clock: number, address: number): number {
         if (this.realCart) {
-            return this.realCart.GetByte(Clock, address);
+            return this.realCart.getByte(Clock, address);
         } else  {
             return 0;
         }

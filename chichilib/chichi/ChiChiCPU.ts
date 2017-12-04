@@ -5,6 +5,7 @@ import { IChiChiAPU, IChiChiAPUState } from "./ChiChiAudio";
 import { IBaseCart } from '../chichicarts/BaseCart'
 import { MemoryPatch } from "./ChiChiCheats";
 import { MemoryMap, IMemoryMap } from "./ChiChiMemoryMap";
+import { StateBuffer } from "./StateBuffer";
 
 export interface IChiChiCPPUState {
     clock: number;
@@ -50,7 +51,7 @@ export interface IChiChiCPPU extends IChiChiCPPUState {
     SoundBopper: IChiChiAPU;
     FrameOn: boolean;
 
-    Step(): void;
+    step(): void;
 
     ResetCPU(): void;
     PowerOn(): void;
@@ -72,12 +73,11 @@ export interface IChiChiCPPU extends IChiChiCPPUState {
 
     HandleNextEvent(): void;
     ResetInstructionHistory(): void;
-    WriteInstructionHistoryAndUsage(): void;
+    writeInstructionHistory(): void;
     FireDebugEvent(s: string): void;
     
     GetStatus(): CpuStatus;
 
-    state: IChiChiCPPUState;
 }
 
 //chichipig
@@ -312,12 +312,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
     }
 
 
-    Step(): void {
-        //let tickCount = 0;
-        if (this.borrowedCycles) {
-            this.advanceClock(this.borrowedCycles);
-            this.borrowedCycles = 0;
-        }
+    step(): void {
 
         this._currentInstruction_ExtraTiming = 0;
 
@@ -334,20 +329,23 @@ export class ChiChiCPPU implements IChiChiCPPU {
         this._currentInstruction_OpCode = this.GetByte(this._programCounter );
         this._programCounter = (this._programCounter + 1) & 0xffff;
         this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
+        
         this.fetchInstructionParameters();
-
-        this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
         
         this.execute();
 
+        this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
         this.advanceClock(this._currentInstruction_ExtraTiming);
 
-        //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
+        if (this.borrowedCycles) {
+            this.advanceClock(this.borrowedCycles);
+            this.borrowedCycles = 0;
+        }
+
         if (this._debugging) {
-            this.WriteInstructionHistoryAndUsage();
+            this.writeInstructionHistory();
             this._operationCounter++;
         }
-        //this.clock += ;
     }
 
     fetchInstructionParameters(): any {
@@ -505,7 +503,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
         switch (this._currentInstruction_OpCode) {
             case 128: case 130: case 194: case 226: case 4: case 20: case 52: case 68: case 84: case 100: case 116:
             case 212: case 244: case 12: case 28: case 60: case 92: case 124: case 220: case 252:
-                //SKB, SKW, DOP, - undocumented noops
+                // SKB, SKW, DOP, - undocumented noops
                 this.decodeAddress();
                 break;
             case 105: case 101: case 117: case 109: case 125: case 121: case 97: case 113:
@@ -587,86 +585,82 @@ export class ChiChiCPPU implements IChiChiCPPU {
                 }
                 break;
             case 16:
-                //BPL();
+                // BPL();
                 if ((this._statusRegister & 128) !== 128) {
                     this.branch();
                 }
                 break;
             case 0:
-                //BRK();
-                //BRK causes a non-maskable interrupt and increments the program counter by one. 
-                //Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to replace a two-byte instruction 
-                // for debugging and the subsequent RTI will be correct. 
-                // push pc onto stack (high byte first)
+                // BRK();
+
                 this._programCounter = this._programCounter + 1;
                 this.pushStack(this._programCounter >> 8 & 0xFF);
                 this.pushStack(this._programCounter & 0xFF);
-                // push sr onto stack
-                //PHP and BRK push the current status with bits 4 and 5 set on the stack; 
+
                 data = this._statusRegister | 16 | 32;
                 this.pushStack(data);
-                // set interrupt disable, and break flags
-                // BRK then sets the I flag.
+
                 this._statusRegister = this._statusRegister | 20;
-                // point pc to interrupt service routine
                 this._addressBus = 65534;
+
                 lowByte = this.GetByte(this._addressBus);
                 this._addressBus = 65535;
+
                 highByte = this.GetByte(this._addressBus);
                 this._programCounter = lowByte + highByte * 256;
                 break;
             case 80:
-                //BVC();
+                // BVC();
                 if ((this._statusRegister & 64) !== 64) {
                     this.branch();
                 }
                 break;
             case 112:
-                //BVS();
+                // BVS();
                 if ((this._statusRegister & 64) === 64) {
                     this.branch();
                 }
                 break;
             case 24:
-                //CLC();
+                // CLC();
                 this.setFlag(this.SRMasks_CarryMask, false);
                 break;
             case 216:
-                //CLD();
+                // CLD();
                 this.setFlag(this.SRMasks_DecimalModeMask, false);
                 break;
             case 88:
-                //CLI();
+                // CLI();
                 this.setFlag(this.SRMasks_InterruptDisableMask, false);
                 break;
             case 184:
-                //CLV();
+                // CLV();
                 this.setFlag(this.SRMasks_OverflowMask, false);
                 break;
             case 201: case 197: case 213: case 205: case 221: case 217: case 193: case 209:
-                //CMP();
+                // CMP();
                 data = (this._accumulator + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
             case 224: case 228: case 236:
-                //CPX();
+                // CPX();
                 data = (this._indexRegisterX + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
             case 192: case 196: case 204:
-                //CPY();
+                // CPY();
                 data = (this._indexRegisterY + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
             case 198: case 214: case 206: case 222:
-                //DEC();
+                // DEC();
                 data = this.decodeOperand();
                 data = (data - 1) & 0xFF;
                 this.SetByte(this.decodeAddress(), data);
                 this.setZNFlags(data);
                 break;
             case 202:
-                //DEX();
+                // DEX();
                 this._indexRegisterX = this._indexRegisterX - 1;
                 this._indexRegisterX = this._indexRegisterX & 0xFF;
                 this.setZNFlags(this._indexRegisterX);
@@ -685,7 +679,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
             case 89:
             case 65:
             case 81:
-                //EOR();
+                // EOR();
                 this._accumulator = (this._accumulator ^ this.decodeOperand());
                 this.setZNFlags(this._accumulator);
                 break;
@@ -693,7 +687,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
             case 246:
             case 238:
             case 254:
-                //INC();
+                // INC();
                 data = this.decodeOperand();
                 data = (data + 1) & 0xFF;
                 this.SetByte(this.decodeAddress(), data);
@@ -1121,7 +1115,7 @@ export class ChiChiCPPU implements IChiChiCPPU {
         this.instructionHistoryPointer = 0xFF;
     }
 
-    WriteInstructionHistoryAndUsage(): void {
+    writeInstructionHistory(): void {
         const inst: ChiChiInstruction = new ChiChiInstruction();
         inst.time = this.systemClock;
         inst.A = this._accumulator;
@@ -1158,66 +1152,107 @@ export class ChiChiCPPU implements IChiChiCPPU {
         }
     }
 
-    get state(): IChiChiCPPUState {
-        return {
-            clock: this.clock,
+    // get state(): IChiChiCPPUState {
+    //     return {
+    //         clock: this.clock,
             
-            _statusRegister: this._statusRegister,
-            _programCounter: this._programCounter,
-            _handleNMI: this._handleNMI,
-            _handleIRQ: this._handleIRQ,
-            _addressBus: this._addressBus,
-            _dataBus: this._dataBus,
-            _operationCounter: this._operationCounter,
-            _accumulator: this._accumulator,
-            _indexRegisterX: this._indexRegisterX,
-            _indexRegisterY: this._indexRegisterY,
-            _currentInstruction_AddressingMode: this._currentInstruction_AddressingMode,
-            _currentInstruction_Address: this._currentInstruction_Address,
-            _currentInstruction_OpCode: this._currentInstruction_OpCode,
-            _currentInstruction_Parameters0: this._currentInstruction_Parameters0,
-            _currentInstruction_Parameters1: this._currentInstruction_Parameters1,
-            _currentInstruction_ExtraTiming: this._currentInstruction_ExtraTiming,
-            systemClock: this.systemClock,
-            nextEvent: this.nextEvent,
+    //         _statusRegister: this._statusRegister,
+    //         _programCounter: this._programCounter,
+    //         _handleNMI: this._handleNMI,
+    //         _handleIRQ: this._handleIRQ,
+    //         _addressBus: this._addressBus,
+    //         _dataBus: this._dataBus,
+    //         _operationCounter: this._operationCounter,
+    //         _accumulator: this._accumulator,
+    //         _indexRegisterX: this._indexRegisterX,
+    //         _indexRegisterY: this._indexRegisterY,
+    //         _currentInstruction_AddressingMode: this._currentInstruction_AddressingMode,
+    //         _currentInstruction_Address: this._currentInstruction_Address,
+    //         _currentInstruction_OpCode: this._currentInstruction_OpCode,
+    //         _currentInstruction_Parameters0: this._currentInstruction_Parameters0,
+    //         _currentInstruction_Parameters1: this._currentInstruction_Parameters1,
+    //         _currentInstruction_ExtraTiming: this._currentInstruction_ExtraTiming,
+    //         systemClock: this.systemClock,
+    //         nextEvent: this.nextEvent,
         
-            Debugging: this.Debugging,
-            cheating: this.cheating,
-            genieCodes: this.genieCodes
+    //         Debugging: this.Debugging,
+    //         cheating: this.cheating,
+    //         genieCodes: this.genieCodes
 
-        };
-    }
+    //     };
+    // }
 
-    set state(value: IChiChiCPPUState) {
-        this.clock = value.clock,
+    // set state(value: IChiChiCPPUState) {
+    //     this.clock = value.clock,
         
-        this._statusRegister = value._statusRegister,
-        this._programCounter = value._programCounter,
-        this._handleNMI = value._handleNMI,
-        this._handleIRQ = value._handleIRQ,
-        this._addressBus = value._addressBus,
-        this._dataBus = value._dataBus,
-        this._operationCounter = value._operationCounter,
-        this._accumulator = value._accumulator,
-        this._indexRegisterX = value._indexRegisterX,
-        this._indexRegisterY = value._indexRegisterY,
-        this._currentInstruction_AddressingMode = value._currentInstruction_AddressingMode,
-        this._currentInstruction_Address = value._currentInstruction_Address,
-        this._currentInstruction_OpCode = value._currentInstruction_OpCode,
-        this._currentInstruction_Parameters0 = value._currentInstruction_Parameters0,
-        this._currentInstruction_Parameters1 = value._currentInstruction_Parameters1,
-        this._currentInstruction_ExtraTiming = value._currentInstruction_ExtraTiming,
-        this.systemClock = value.systemClock,
-        this.nextEvent = value.nextEvent,
+    //     this._statusRegister = value._statusRegister,
+    //     this._programCounter = value._programCounter,
+    //     this._handleNMI = value._handleNMI,
+    //     this._handleIRQ = value._handleIRQ,
+    //     this._addressBus = value._addressBus,
+    //     this._dataBus = value._dataBus,
+    //     this._operationCounter = value._operationCounter,
+    //     this._accumulator = value._accumulator,
+    //     this._indexRegisterX = value._indexRegisterX,
+    //     this._indexRegisterY = value._indexRegisterY,
+    //     this._currentInstruction_AddressingMode = value._currentInstruction_AddressingMode,
+    //     this._currentInstruction_Address = value._currentInstruction_Address,
+    //     this._currentInstruction_OpCode = value._currentInstruction_OpCode,
+    //     this._currentInstruction_Parameters0 = value._currentInstruction_Parameters0,
+    //     this._currentInstruction_Parameters1 = value._currentInstruction_Parameters1,
+    //     this._currentInstruction_ExtraTiming = value._currentInstruction_ExtraTiming,
+    //     this.systemClock = value.systemClock,
+    //     this.nextEvent = value.nextEvent,
 
-        this.Debugging = value.Debugging,
-        this.cheating = value.cheating,
-        this.genieCodes = value.genieCodes
+    //     this.Debugging = value.Debugging,
+    //     this.cheating = value.cheating,
+    //     this.genieCodes = value.genieCodes
 
                     
         
-    }
+    // }
 
+    setupStateBuffer(sb: StateBuffer) {
+        sb.onRestore.subscribe((buffer: StateBuffer) => {
+            this.attachStateBuffer(buffer);
+        })
+        sb.onSync.subscribe((buffer)=> {
+            this.updateStateBuffer(buffer);
+        })
+
+        sb  .pushSegment(1 * Uint16Array.BYTES_PER_ELEMENT, 'pc')
+            .pushSegment(2, 'acc')
+            .pushSegment(2, 'idx')
+            .pushSegment(2, 'idy')
+            .pushSegment(2, 'sp')
+            .pushSegment(2, 'sr')
+            ;
+        return sb;
+
+    }
+    
+    attachStateBuffer(sb: StateBuffer) {
+        this._accumulator       = sb.buffer[sb.getSegment('acc').start]; 
+        this._indexRegisterX    = sb.buffer[sb.getSegment('idx').start];
+        this._indexRegisterY    = sb.buffer[sb.getSegment('idy').start];
+        this._stackPointer      = sb.buffer[sb.getSegment('sp').start];
+        this._statusRegister    = sb.buffer[sb.getSegment('sr').start];
+        let seg = sb.getSegment('pc');
+        let pc = new Uint16Array(seg.buffer, seg.start, 1);
+        this._programCounter    = pc[0];
+    }
+    
+    updateStateBuffer(sb: StateBuffer) {
+        sb.buffer[sb.getSegment('acc').start] = this._accumulator; 
+        sb.buffer[sb.getSegment('idx').start] = this._indexRegisterX;
+        sb.buffer[sb.getSegment('idy').start] = this._indexRegisterY;
+        sb.buffer[sb.getSegment('sp').start] = this._stackPointer;
+        sb.buffer[sb.getSegment('sr').start] = this._statusRegister;
+        let seg = sb.getSegment('pc');
+        let pc = new Uint16Array(seg.buffer, seg.start, 1);
+        pc[0] = this._programCounter;
+    }
+    
 }
 
 

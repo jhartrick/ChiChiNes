@@ -21,7 +21,7 @@ export class MMC3Cart extends BaseCart {
     private ppuBankSwap = false;
     private PPUBanks = new Uint32Array(8);
 
-    InitializeCart() {
+    initializeCart() {
         this.usesSRAM =true;
         this.mapperName = 'MMC3';
         this._registers.fill(0);
@@ -51,7 +51,7 @@ export class MMC3Cart extends BaseCart {
         }
     }
 
-    SetByte(clock: number, address: number, val: number) {
+    setByte(clock: number, address: number, val: number) {
         if (address >= 24576 && address < 32768) {
             if (this.SRAMEnabled && this.SRAMCanWrite) {
                 this.prgRomBank6[address & 8191] = val & 255;
@@ -206,9 +206,9 @@ export class MMC3Cart extends BaseCart {
 
         if (this.prgSwap === 1) {
 
-            this.SetupBankStarts(this.prgRomCount * 2 - 2, this.prgSwitch2, this.prgSwitch1, this.prgRomCount * 2 - 1);
+            this.setupBankStarts(this.prgRomCount * 2 - 2, this.prgSwitch2, this.prgSwitch1, this.prgRomCount * 2 - 1);
         } else {
-            this.SetupBankStarts(this.prgSwitch1, this.prgSwitch2, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+            this.setupBankStarts(this.prgSwitch1, this.prgSwitch2, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         }
 
     }
@@ -218,9 +218,7 @@ export class MMC3Cart extends BaseCart {
 
         if (this.scanlineCounter === 0) {
             this.scanlineCounter = this._mmc3IrqVal;
-            //Writing $00 to $C000 will result in a single IRQ being generated on the next rising edge of PPU A12. 
-            //No more IRQs will be generated until $C000 is changed to a non-zero value, upon which the 
-            // counter will start counting from the new value, generating an IRQ once it reaches zero. 
+
             if (this._mmc3IrqVal === 0) {
                 if (this._mmc3IrcOn) {
                     

@@ -3,20 +3,23 @@ import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from './ChiChiCPU';
 import { ChiChiAPU, IChiChiAPUState } from './ChiChiAudio';
 import { IMemoryMap } from './ChiChiMemoryMap';
+import { StateBuffer } from './StateBuffer';
 
 export interface IChiChiPPUState {
 
     spriteRAM: Uint8Array;
-    _PPUControlByte0: number;
-    _PPUControlByte1: number;
+    controlByte0: number;
+    controlByte1: number;
 
-    _PPUAddress: number;
-    _PPUStatus: number;
-    _spriteAddress: number;
+    address: number;
+    status: number;
+    spriteAddress: number;
     currentXPosition: number;
     currentYPosition: number;
-    _hScroll: number;
-    _vScroll: number;
+
+    hScroll: number;
+    vScroll: number;
+
     lockedHScroll: number;
     lockedVScroll: number;
 
@@ -40,9 +43,7 @@ export interface IChiChiPPU extends IChiChiPPUState {
     readonly SpritePatternTableIndex: number;
 
     Initialize(): void;
-    WriteState(writer: any): void;
-    ReadState(state: any): void;
-    readonly NMIIsThrown: boolean;
+
     setupVINT(): void;
 
     memoryMap: IMemoryMap;
@@ -50,8 +51,8 @@ export interface IChiChiPPU extends IChiChiPPUState {
     GetByte(Clock: number, address: number): number;
     copySprites(copyFrom: number): void;
     advanceClock(ticks: number): void;
+    setupStateBuffer(sb: StateBuffer): void;
 
-    state: IChiChiPPUState;
 }
 
 export class ChiChiPPU implements IChiChiPPU {
@@ -105,36 +106,34 @@ export class ChiChiPPU implements IChiChiPPU {
 
 
     //PPU implementation
-    _PPUAddress: number = 0;
-    _PPUStatus: number = 0;
-    _PPUControlByte0: number = 0; 
-    _PPUControlByte1: number = 0;
-    _spriteAddress: number = 0;
+    address: number = 0;
+    status: number = 0;
+    controlByte0: number = 0; 
+    controlByte1: number = 0;
+    spriteAddress: number = 0;
     currentXPosition = 0;
     currentYPosition = 0;
-    _hScroll = 0;
-    _vScroll = 0;
+    hScroll = 0;
+    vScroll = 0;
     lockedHScroll = 0;
     lockedVScroll = 0;
-    //private scanlineNum = 0;
-    //private scanlinePos = 0;
-
     private shouldRender = false;
 
-    //private NMIHasBeenThrownThisFrame = false;
-    private _frames = 0;
+    framesRun = 0;
+    
     private hitSprite = false;
-    private PPUAddressLatchIsHigh = true;
-    private p32 = new Uint32Array(256);// System.Array.init(256, 0, System.Int32);
+    private addressLatchIsHigh = true;
+
     private isRendering = true;
+
     public frameClock = 0;
-    public FrameEnded = false;
+    private oddFrame: boolean = true;
     private frameOn = false;
-    //private framePalette = System.Array.init(256, 0, System.Int32);
+
     private nameTableBits = 0;
-    private vidRamIsRam = true;
-    _palette = new Uint8Array(32);// System.Array.init(32, 0, System.Int32);
-    private _openBus = 0;
+
+    palette = new Uint8Array(32); 
+    private openBus = 0;
     private sprite0scanline = 0;
     private sprite0x = 0;
     private _maxSpritesPerScanline = 64;
@@ -150,25 +149,13 @@ export class ChiChiPPU implements IChiChiPPU {
     // tile bytes currently latched in ppu
     private patternEntry = 0; private patternEntryByte2 = 0;
 
-    public byteOutBuffer = new Uint8Array(256 * 256 * 4);// System.Array.init(262144, 0, System.Int32);
-
-
-    PPU_IRQAsserted: boolean;
-
-    get NextEventAt(): number {
-
-        if (this.frameClock < 6820) {
-            return (6820 - this.frameClock) / 3;
-        } else {
-            return (((89345 - this.frameClock) / 341) / 3);
-        }
-    }
+    public byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
 
     GetPPUStatus(): PpuStatus {
         return {
-            status: this._PPUStatus,
-            controlByte0: this._PPUControlByte0,
-            controlByte1: this._PPUControlByte1,
+            status: this.status,
+            controlByte0: this.controlByte0,
+            controlByte1: this.controlByte1,
             nameTableStart: this.nameTableMemoryStart,
             currentTile: this.currentTileIndex,
             lockedVScroll: this.lockedVScroll,
@@ -183,7 +170,7 @@ export class ChiChiPPU implements IChiChiPPU {
     }
     public get SpritePatternTableIndex(): number {
         let spritePatternTable = 0;
-        if ((this._PPUControlByte0 & 32) === 32) {
+        if ((this.controlByte0 & 32) === 32) {
             spritePatternTable = 4096;
         }
         return spritePatternTable;
@@ -191,160 +178,137 @@ export class ChiChiPPU implements IChiChiPPU {
 
 
     Initialize(): void {
-        this._PPUAddress = 0;
-        this._PPUStatus = 0;
-        this._PPUControlByte0 = 0;
-        this._PPUControlByte1 = 0;
-        this._hScroll = 0;
-        this._vScroll = 0;
+        this.address = 0;
+        this.status = 0;
+        this.controlByte0 = 0;
+        this.controlByte1 = 0;
+        this.hScroll = 0;
+        this.vScroll = 0;
         //this.scanlineNum = 0;
         //this.scanlinePos = 0;
-        this._spriteAddress = 0;
+        this.spriteAddress = 0;
         
         this.initSprites();
     }
 
-    WriteState(writer: any): void {
-        throw new Error('Method not implemented.');
-    }
-
-    ReadState(state: any): void {
-        throw new Error('Method not implemented.');
-    }
-
-    get NMIIsThrown(): boolean {
-        return (this._PPUControlByte0 & 128) === 128;
-    }
 
     setupVINT(): void {
-        this._PPUStatus = this._PPUStatus | 128;
-        this._frames = this._frames + 1;
+        this.status = this.status | 128;
+        this.framesRun = this.framesRun + 1;
 
-        if (this._PPUControlByte0 & 128) {
+        if (this.controlByte0 & 128) {
             this.cpu._handleNMI = true;
         }
-    }
-
-    VidRAM_GetNTByte(address: number): number {
-        let result = 0;
-        if (address >= 8192 && address < 12288) {
-
-            result = this.memoryMap.getPPUByte(0, address);
-
-        } else {
-            result = this.memoryMap.getPPUByte(0, address);
-        }
-        return result;
     }
 
     SetByte(Clock: number, address: number, data: number): void {
         switch (address & 7) {
             case 0:
 
-                this._PPUControlByte0 = data;
-                this._openBus = data;
-                this.nameTableBits = this._PPUControlByte0 & 3;
-                this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
+                this.controlByte0 = data;
+                this.openBus = data;
+                this.nameTableBits = this.controlByte0 & 3;
+                this.backgroundPatternTableIndex = ((this.controlByte0 & 16) >> 4) * 0x1000;
 
                 this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 1:
                 this.isRendering = (data & 0x18) !== 0;
-                this._PPUControlByte1 = data;
-                this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
+                this.controlByte1 = data;
+                this.emphasisBits = (this.controlByte1 >> 5) & 7;
 
-                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
-                this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
-                this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
-                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
-                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
+                this.greyScale = (this.controlByte1 & 0x1) === 0x1;
+                this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+                this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+                this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
+                this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
                 break;
             case 2:
                 this.ppuReadBuffer = data;
-                this._openBus = data;
+                this.openBus = data;
                 break;
             case 3:
-                this._spriteAddress = data & 0xFF;
-                this._openBus = this._spriteAddress;
+                this.spriteAddress = data & 0xFF;
+                this.openBus = this.spriteAddress;
                 break;
             case 4:
-                this.spriteRAM[this._spriteAddress] = data;
-                this._spriteAddress = (this._spriteAddress + 1) & 255;
-                this.unpackedSprites[this._spriteAddress >> 2].Changed = true;
+                this.spriteRAM[this.spriteAddress] = data;
+                this.spriteAddress = (this.spriteAddress + 1) & 255;
+                this.unpackedSprites[this.spriteAddress >> 2].Changed = true;
                 this.spriteChanges = true;
                 break;
             case 5:
-                if (this.PPUAddressLatchIsHigh) {
-                    this._hScroll = data;
-                    this.lockedHScroll = this._hScroll & 7;
-                    this.PPUAddressLatchIsHigh = false;
+                if (this.addressLatchIsHigh) {
+                    this.hScroll = data;
+                    this.lockedHScroll = this.hScroll & 7;
+                    this.addressLatchIsHigh = false;
                 } else {
-                    this._vScroll = data;
+                    this.vScroll = data;
                     if (data > 240) {
-                        this._vScroll = data - 256;
+                        this.vScroll = data - 256;
                     }
                         
                     if (!this.frameOn || (this.frameOn && !this.isRendering)) {
-                        this.lockedVScroll = this._vScroll;
+                        this.lockedVScroll = this.vScroll;
                     }
 
-                    this.PPUAddressLatchIsHigh = true;
+                    this.addressLatchIsHigh = true;
                     this.UpdatePixelInfo();
 
                 }
                 break;
             case 6:
 
-                if (this.PPUAddressLatchIsHigh) {
+                if (this.addressLatchIsHigh) {
 
-                    this._PPUAddress = (this._PPUAddress & 0xFF) | ((data & 0x3F) << 8);
-                    this.PPUAddressLatchIsHigh = false;
+                    this.address = (this.address & 0xFF) | ((data & 0x3F) << 8);
+                    this.addressLatchIsHigh = false;
                 } else {
 
-                    this._PPUAddress = (this._PPUAddress & 0x7F00) | data & 0xFF;
-                    this.PPUAddressLatchIsHigh = true;
+                    this.address = (this.address & 0x7F00) | data & 0xFF;
+                    this.addressLatchIsHigh = true;
 
-                    this._hScroll = ((this._PPUAddress & 0x1f) << 3);
-                    this._vScroll = (((this._PPUAddress >> 5) & 0x1f) << 3);
-                    this._vScroll |= ((this._PPUAddress >> 12) & 3);
+                    this.hScroll = ((this.address & 0x1f) << 3);
+                    this.vScroll = (((this.address >> 5) & 0x1f) << 3);
+                    this.vScroll |= ((this.address >> 12) & 3);
 
                     if (this.frameOn) {
 
-                        this.lockedHScroll = this._hScroll;
-                        this.lockedVScroll = this._vScroll;
+                        this.lockedHScroll = this.hScroll;
+                        this.lockedVScroll = this.vScroll;
                         this.lockedVScroll = this.lockedVScroll - this.currentYPosition;
                     }
 
-                    this.nameTableBits = ((this._PPUAddress >> 10) & 3);
+                    this.nameTableBits = ((this.address >> 10) & 3);
                     this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 }
                 break;
             case 7:
 
-                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
+                if ((this.address & 0xFF00) === 0x3F00) {
 
-                    const palAddress = (this._PPUAddress) & 0x1F;
-                    this._palette[palAddress] = data;
+                    const palAddress = (this.address) & 0x1F;
+                    this.palette[palAddress] = data;
 
-                    if ((this._PPUAddress & 0xFFEF) === 0x3F00) {
-                        this._palette[(palAddress ^ 16) & 0x1F] = data;
+                    if ((this.address & 0xFFEF) === 0x3F00) {
+                        this.palette[(palAddress ^ 16) & 0x1F] = data;
                     }
                 } else {
                     // if ((this._PPUAddress & 0xF000) === 0x2000) {
                     //     this.memoryMap.setPPUByte(Clock, this._PPUAddress, data);
                     // }
                     
-                    this.memoryMap.setPPUByte(Clock, this._PPUAddress, data);
+                    this.memoryMap.setPPUByte(Clock, this.address, data);
                 }
                 // if controlbyte0.4, set ppuaddress + 32, else inc
-                if ((this._PPUControlByte0 & 4) === 4) {
-                    this._PPUAddress = (this._PPUAddress + 32);
+                if ((this.controlByte0 & 4) === 4) {
+                    this.address = (this.address + 32);
                 } else {
-                    this._PPUAddress = (this._PPUAddress + 1);
+                    this.address = (this.address + 1);
                 }
                 // reset the flag which makex xxx6 set the high byte of address
-                this.PPUAddressLatchIsHigh = true;
-                this._PPUAddress = (this._PPUAddress & 0x3FFF);
+                this.addressLatchIsHigh = true;
+                this.address = (this.address & 0x3FFF);
                 break;
         }
     }
@@ -357,38 +321,38 @@ export class ChiChiPPU implements IChiChiPPU {
             case 1:
             case 5:
             case 6:
-                return this._openBus;
+                return this.openBus;
             case 2:
                 let ret = 0;
-                this.PPUAddressLatchIsHigh = true;
-                ret = (this.ppuReadBuffer & 0x1F) | this._PPUStatus;
+                this.addressLatchIsHigh = true;
+                ret = (this.ppuReadBuffer & 0x1F) | this.status;
 
                 if ((ret & 0x80) === 0x80) {
-                    this._PPUStatus = this._PPUStatus & ~0x80;
+                    this.status = this.status & ~0x80;
                 }
                 return ret;
             case 4:
-                return this.spriteRAM[this._spriteAddress];
+                return this.spriteRAM[this.spriteAddress];
             case 7:
                 let tmp = 0;
-                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
-                    tmp = this._palette[this._PPUAddress & 0x1F];
+                if ((this.address & 0xFF00) === 0x3F00) {
+                    tmp = this.palette[this.address & 0x1F];
 
-                    this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress - 4096);
+                    this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this.address - 4096);
                 } else {
                     tmp = this.ppuReadBuffer;
-                    if (this._PPUAddress >= 0x2000 && this._PPUAddress <= 0x2FFF) {
-                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress);
+                    if (this.address >= 0x2000 && this.address <= 0x2FFF) {
+                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this.address);
                     } else {
-                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress & 0x3FFF);
+                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this.address & 0x3FFF);
                     }
                 }
-                if ((this._PPUControlByte0 & 4) === 4) {
-                    this._PPUAddress = this._PPUAddress + 32;
+                if ((this.controlByte0 & 4) === 4) {
+                    this.address = this.address + 32;
                 } else {
-                    this._PPUAddress = this._PPUAddress + 1;
+                    this.address = this.address + 1;
                 }
-                this._PPUAddress = (this._PPUAddress & 0x3FFF);
+                this.address = (this.address & 0x3FFF);
                 return tmp;
         }
         return 0;
@@ -397,7 +361,7 @@ export class ChiChiPPU implements IChiChiPPU {
 
     copySprites(copyFrom: number): void {
         for (var i = 0; i < 256; ++i) {
-            var spriteLocation = (this._spriteAddress + i) & 255;
+            var spriteLocation = (this.spriteAddress + i) & 255;
             if (this.spriteRAM[spriteLocation] !== this.memoryMap.Rams[copyFrom + i]) {
                 this.spriteRAM[spriteLocation] = this.memoryMap.Rams[copyFrom + i];
                 this.unpackedSprites[(spriteLocation >> 2) & 255].Changed = true;
@@ -434,7 +398,7 @@ export class ChiChiPPU implements IChiChiPPU {
             if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < currSprite.XPosition + 8) {
 
                 let spritePatternTable = 0;
-                if ((this._PPUControlByte0 & 8) === 8) {
+                if ((this.controlByte0 & 8) === 8) {
                     spritePatternTable = 4096;
                 }
                 xPos = this.currentXPosition - currSprite.XPosition;
@@ -444,7 +408,7 @@ export class ChiChiPPU implements IChiChiPPU {
 
                 tileIndex = currSprite.TileIndex;
 
-                if ((this._PPUControlByte0 & 32) === 32) {
+                if ((this.controlByte0 & 32) === 32) {
                     if ((tileIndex & 1) === 1) {
                         spritePatternTable = 4096;
                         tileIndex = tileIndex ^ 1;
@@ -507,7 +471,7 @@ export class ChiChiPPU implements IChiChiPPU {
         let yLine = this.currentYPosition - 1;
 
         for (let spriteNum = 0; spriteNum < 256; spriteNum += 4) {
-            const spriteID = ((spriteNum + this._spriteAddress) & 0xff) >> 2;
+            const spriteID = ((spriteNum + this.spriteAddress) & 0xff) >> 2;
 
             const y = this.unpackedSprites[spriteID].YPosition + 1;
 
@@ -534,7 +498,7 @@ export class ChiChiPPU implements IChiChiPPU {
             }
         }
         if (this.spritesOnThisScanline > 7) {
-            this._PPUStatus = this._PPUStatus | 32;
+            this.status = this.status | 32;
         }
 
     }
@@ -586,7 +550,7 @@ export class ChiChiPPU implements IChiChiPPU {
         }
         return 0;
     }
-    oddFrame: boolean = true;
+
 
     advanceClock(ticks: number) {
         let ppuTicks = ticks * 3;
@@ -606,11 +570,11 @@ export class ChiChiPPU implements IChiChiPPU {
                     this.vbufLocation = 0;
                     this.currentXPosition = 0;
                     this.currentYPosition = 0;
-
+                    
                     this.xNTXor = 0;
                     this.yNTXor = 0;
 
-                    if ((this._PPUControlByte1 & 0x18) !== 0) {
+                    if ((this.controlByte1 & 0x18) !== 0) {
                         this.oddFrame = !this.oddFrame;
                         this.isRendering = true;
                     }
@@ -626,16 +590,16 @@ export class ChiChiPPU implements IChiChiPPU {
                     this.setupVINT();
                     break;
                 case 89002: 
-                    this._PPUStatus = 0;
+                    this.status = 0;
                     this.hitSprite = false;
-                    this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
+                    this.spriteSize = ((this.controlByte0 & 0x20) === 0x20) ? 16 : 8;
                     if (this.spriteChanges) {
                         this.unpackSprites();
                         this.spriteChanges = false;
                     }
                     this.frameOn = true;
                     if (this.oddFrame) this.frameClock++;
-    
+                    
                     break;
             }
 
@@ -685,18 +649,14 @@ export class ChiChiPPU implements IChiChiPPU {
 
                     if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
                         this.hitSprite = true;
-                        this._PPUStatus = this._PPUStatus | 64;
+                        this.status = this.status | 64;
                     }
 
 
-                    this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+                    this.byteOutBuffer[this.vbufLocation * 4] = this.palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
                     this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
                     this.vbufLocation++;
                 }
-
-                // if (this.currentXPosition === 324) {
-                //     this.memoryMap.advanceScanline(1);
-                // }
 
                 this.currentXPosition++;
 
@@ -707,10 +667,11 @@ export class ChiChiPPU implements IChiChiPPU {
 
                     this.preloadSprites(this.currentYPosition);
                     if (this.spritesOnThisScanline >= 7) {
-                        this._PPUStatus = this._PPUStatus | 32;
+                        this.status = this.status | 32;
                     }
 
-                    this.lockedHScroll = this._hScroll;
+                    this.lockedHScroll = this.hScroll;
+                    this.memoryMap.advanceScanline(1);
 
                     this.UpdatePixelInfo();
                     //RunNewScanlineEvents 
@@ -741,51 +702,122 @@ export class ChiChiPPU implements IChiChiPPU {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;
     }
 
-    get state(): IChiChiPPUState {
-        return {
-            _PPUControlByte0:  this._PPUControlByte0,
-            _PPUControlByte1:  this._PPUControlByte1,
-            _PPUAddress: this._PPUAddress,
-            _PPUStatus: this._PPUStatus,
-            _spriteAddress: this._spriteAddress,
-            currentXPosition: this.currentXPosition,
-            currentYPosition: this.currentYPosition,
-            _hScroll: this._hScroll,
-            _vScroll: this._vScroll,
-            lockedHScroll: this.lockedHScroll,
-            lockedVScroll: this.lockedVScroll,           
-            spriteRAM:  this.spriteRAM.slice()
-        };
+    // get state(): IChiChiPPUState {
+    //     return {
+    //         controlByte0:  this.controlByte0,
+    //         controlByte1:  this.controlByte1,
+    //         address: this.address,
+    //         status: this.status,
+    //         spriteAddress: this.spriteAddress,
+    //         currentXPosition: this.currentXPosition,
+    //         currentYPosition: this.currentYPosition,
+    //         hScroll: this.hScroll,
+    //         vScroll: this.vScroll,
+    //         lockedHScroll: this.lockedHScroll,
+    //         lockedVScroll: this.lockedVScroll,           
+    //         spriteRAM:  this.spriteRAM.slice()
+    //     };
+    // }
+
+    // set state(value: IChiChiPPUState) {
+    //     this.controlByte0 = value.controlByte0;
+    //     this.controlByte1  = value.controlByte1;
+
+    //     this.address = value.address;
+    //     this.status = value.status;
+    //     this.spriteAddress = value.spriteAddress;
+    //     this.currentXPosition = value.currentXPosition;
+    //     this.currentYPosition = value.currentYPosition;
+    //     this.hScroll = value.hScroll;
+    //     this.vScroll = value.vScroll;
+    //     this.lockedHScroll = value.lockedHScroll;
+    //     this.lockedVScroll = value.lockedVScroll;
+
+    //     for (let i = 0; i < this.spriteRAM.length; ++i) {
+    //         this.spriteRAM[i] = value.spriteRAM[i];
+    //     }
+
+
+    //     this.nameTableBits = this.controlByte0 & 3;
+    //     this.backgroundPatternTableIndex = ((this.controlByte0 & 16) >> 4) * 0x1000;
+
+    //     this.greyScale = (this.controlByte1 & 0x1) === 0x1;
+    //     this.emphasisBits = (this.controlByte1 >> 5) & 7;
+    //     this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
+    //     this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
+    //     this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+    //     this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+
+    // }
+
+    setupStateBuffer(sb: StateBuffer) {
+        sb.onRestore.subscribe((buffer: StateBuffer) => {
+             this.attachStateBuffer(buffer);
+        })
+        sb.onSync.subscribe((buffer)=> {
+             this.updateStateBuffer(buffer);
+        })
+
+        sb  .pushSegment(256 * Uint8Array.BYTES_PER_ELEMENT, 'spriteram')
+            .pushSegment(2, 'ppuaddress')
+            .pushSegment(2, 'spriteaddress')
+            .pushSegment(2, 'ppucontrolbytes')
+            .pushSegment(2, 'ppustatus')
+            .pushSegment(2, 'hvscroll')
+            .pushSegment(2, 'lockedhvscroll')
+            ;
+        return sb;
+
     }
 
-    set state(value: IChiChiPPUState) {
-        this._PPUControlByte0 = value._PPUControlByte0;
-        this._PPUControlByte1  = value._PPUControlByte1;
+    attachStateBuffer(sb: StateBuffer) {
+        let seg = sb.getSegment('spriteram');
+        
+        this.spriteRAM = new Uint8Array(seg.buffer, seg.start, seg.size);
+        this.address = sb.getUint16Array('ppuaddress')[0];
+        this.spriteAddress = sb.getUint8Array('spriteaddress')[0]; 
+        
+        const cbytes = sb.getUint8Array('ppucontrolbytes');
+        this.controlByte0 = cbytes[0];
+        this.controlByte1 = cbytes[1];
+        this.status = sb.getUint8Array('ppustatus')[0];
 
-        this._PPUAddress = value._PPUAddress;
-        this._PPUStatus = value._PPUStatus;
-        this._spriteAddress = value._spriteAddress;
-        this.currentXPosition = value.currentXPosition;
-        this.currentYPosition = value.currentYPosition;
-        this._hScroll = value._hScroll;
-        this._vScroll = value._vScroll;
-        this.lockedHScroll = value.lockedHScroll;
-        this.lockedVScroll = value.lockedVScroll;
+        const scroll = sb.getUint8Array('hvscroll');
+        this.hScroll = scroll[0];
+        this.vScroll = scroll[1];
 
-        for (let i = 0; i < this.spriteRAM.length; ++i) {
-            this.spriteRAM[i] = value.spriteRAM[i];
-        }
+        const lscroll = sb.getUint8Array('lockedhvscroll');
+        this.lockedHScroll = lscroll[0];
+        this.lockedVScroll = lscroll[1];
 
+        this.nameTableBits = this.controlByte0 & 3;
+        this.backgroundPatternTableIndex = ((this.controlByte0 & 16) >> 4) * 0x1000;
 
-        this.nameTableBits = this._PPUControlByte0 & 3;
-        this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
+        this.greyScale = (this.controlByte1 & 0x1) === 0x1;
+        this.emphasisBits = (this.controlByte1 >> 5) & 7;
+        this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
+        this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
+        this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+        this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
 
-        this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
-        this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
-        this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
-        this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
-        this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
-        this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
+    }
+
+    updateStateBuffer(sb: StateBuffer) {
+        sb.getUint16Array('ppuaddress')[0] = this.address;
+        sb.getUint8Array('spriteaddress')[0] = this.spriteAddress; 
+        
+        const cbytes = sb.getUint8Array('ppucontrolbytes');
+        cbytes[0] = this.controlByte0;
+        cbytes[1] = this.controlByte1;
+        sb.getUint8Array('ppustatus')[0] = this.status;
+
+        const scroll = sb.getUint8Array('hvscroll');
+        scroll[0] = this.hScroll;
+        scroll[1] = this.vScroll;
+
+        const lscroll = sb.getUint8Array('lockedhvscroll');
+        lscroll[0] = this.lockedHScroll;
+        lscroll[1] = this.lockedVScroll;
 
     }
 

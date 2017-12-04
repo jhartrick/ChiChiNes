@@ -1,35 +1,35 @@
 import { BaseCart } from "./BaseCart";
 
 export class KonamiVRC1Cart extends BaseCart {
-    InitializeCart() {
+    initializeCart() {
         this.mapperName = 'KonamiVRC1';
         if (this.mapperId == 151) {
             this.mapperName = 'KonamiVRC1 (VS)';
             this.fourScreen = true;
             this.mirror(0,3);
         }
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.setupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);
     }
     chrLatches = [0,0,0,0,0,0,0,0];
 
-    SetByte(clock:number, address:number, data: number){
+    setByte(clock:number, address:number, data: number){
         switch(address & 0xF000) {
         case 0x8000:
             // 8kib prg rom at 8000
             let bank8 = data & 0xF;
-            this.SetupBankStarts(bank8, this.currentA, this.currentC, this.currentE);
+            this.setupBankStarts(bank8, this.currentA, this.currentC, this.currentE);
 
             break;
         case 0xA000:
             // 8kib prg rom at A000
             let bankA = data & 0xF;
-            this.SetupBankStarts(this.current8, bankA, this.currentC, this.currentE);
+            this.setupBankStarts(this.current8, bankA, this.currentC, this.currentE);
             break;
         case 0xC000:
             // 8kib prg rom at C000
             let bankC = data & 0xF;
-            this.SetupBankStarts(this.current8, this.currentA, bankC, this.currentE);
+            this.setupBankStarts(this.current8, this.currentA, bankC, this.currentE);
             break;
         case 0x9000:
             

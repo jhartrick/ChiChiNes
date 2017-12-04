@@ -102,12 +102,12 @@ export class TileDoodler {
                 }
             }
         }
-        return result.map((val) => ppu._palette[val]);
+        return result;
     }
 
     getAttributeTableEntry (ppuNameTableMemoryStart: number, i: number, j: number) : number {
-
-        const LookUp = this.ppu.VidRAM_GetNTByte((8192 + ppuNameTableMemoryStart)  + 960) + (i >> 2) + ((j >> 2) * 8);
+        
+        const LookUp = this.ppu.memoryMap.getPPUByte(0,(8192 + ppuNameTableMemoryStart)  + 960) + (i >> 2) + ((j >> 2) * 8);
 
         let AttribByte = 0;
         switch ((i & 2) | ((j & 2) * 2)) {

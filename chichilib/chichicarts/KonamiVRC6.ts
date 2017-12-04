@@ -173,26 +173,26 @@ export class Konami026Cart extends VRCIrqBase {
 
     }
 
-    InitializeCart() {
+    initializeCart() {
         this.mapperName = 'KonamiVRC6';
-        this.SetupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
+        this.setupBankStarts(0, 0, this.prgRomCount * 2 - 2, this.prgRomCount * 2 - 1);
         this.copyBanks4k(0, 0, 0, 2);
     }
 
-    SetByte(clock:number, address:number, data: number){
+    setByte(clock:number, address:number, data: number){
         switch(address & 0xF000) {
         case 0x8000:
             if (address <= 0x8003) { 
                 // 16kib prg rom at 8000
                 let bank8 = (data & 0xF) << 1;
-                this.SetupBankStarts(bank8, bank8+1, this.currentC, this.currentE);
+                this.setupBankStarts(bank8, bank8+1, this.currentC, this.currentE);
             }
             break;
         case 0xC000:
             if (address <= 0xC003) { 
             // 8kib prg rom at C000
                 let bankC = data & 0xF;
-                this.SetupBankStarts(this.current8, this.currentA, bankC, this.currentE);
+                this.setupBankStarts(this.current8, this.currentA, bankC, this.currentE);
             }
             break;
         case 0xB000: 

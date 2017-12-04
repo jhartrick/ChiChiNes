@@ -7,9 +7,11 @@ import { MemoryPatch } from '../chichi/ChiChiCheats';
 import { ChiChiStateManager, ChiChiState } from '../chichi/ChiChiState'; 
 
 import * as CCMessage from '../chichi/worker/worker.message';
+import { StateBuffer } from '../chichi/StateBuffer';
 
 
 class NesInfo {
+    stateBuffer: SharedArrayBuffer;
     bufferupdate = false;
     stateupdate = true;
     machine: any = {};
@@ -55,6 +57,7 @@ class CommandHandler<T extends CCMessage.WorkerMessage> {
 
 
 export class tendoWrapper {
+    stateBuffer: StateBuffer;
     
 
     interop: WorkerInterop;
@@ -184,6 +187,8 @@ export class tendoWrapper {
         info.bufferupdate = true;
         info.stateupdate = false;
         if (this.machine && this.machine.Cart) {
+            info.stateBuffer = this.stateBuffer.buffer;
+
             info.Cpu = {
                 Rams: this.machine.Cpu.memoryMap.Rams,
                 spriteRAM: this.machine.Cpu.ppu.spriteRAM
@@ -218,32 +223,12 @@ export class tendoWrapper {
                 status: this.machine.Cpu.GetStatus(),
                 ppuStatus: this.machine.Cpu.ppu.GetPPUStatus(),
                 backgroundPatternTableIndex: this.machine.Cpu.ppu.backgroundPatternTableIndex,
-                _PPUControlByte0: this.machine.Cpu.ppu._PPUControlByte0,
-                _PPUControlByte1:  this.machine.Cpu.ppu._PPUControlByte1
+                _PPUControlByte0: this.machine.Cpu.ppu.controlByte0,
+                _PPUControlByte1:  this.machine.Cpu.ppu.controlByte1
             }
-            info.cartInfo = {
-                mapperId: this.machine.Cart.MapperID,
-                name: this.cartName,
-                prgRomCount: this.machine.Cart.NumberOfPrgRoms,
-                chrRomCount: this.machine.Cart.NumberOfChrRoms
-            };
-            info.Cart = {
-                //buffers
-                //chrRom: (<any>this.machine.Cart).chrRom,
-                //prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
-                //ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
-                //bankStartCache: (<any>this.machine.Cart).bankStartCache,
 
-                CurrentBank: (<any>this.machine.Cart).CurrentBank,
-                // integers
-                current8: (<any>this.machine.Cart).current8,
-                currentA: (<any>this.machine.Cart).currentA,
-                currentC: (<any>this.machine.Cart).currentC,
-                currentE: (<any>this.machine.Cart).currentE,
-                bank8start: (<any>this.machine.Cart).bank8start,
-                bankAstart: (<any>this.machine.Cart).bankAstart,
-                bankCstart: (<any>this.machine.Cart).bankCstart,
-                bankEstart: (<any>this.machine.Cart).bankEstart
+            info.Cart = {
+
             }
         }
 
@@ -388,10 +373,19 @@ export class tendoWrapper {
                 const cart = romloader.loader.loadRom(cmd.rom, cmd.name);
                 
                 this.machine.Cpu.setupMemoryMap(cart);
+
+                this.stateBuffer = new StateBuffer();
+                this.machine.Cpu.memoryMap.setupStateBuffer(this.stateBuffer);
+                this.machine.Cpu.setupStateBuffer(this.stateBuffer);
+                this.machine.ppu.setupStateBuffer(this.stateBuffer);
+                cart.setupStateBuffer(this.stateBuffer);
+                this.stateBuffer.build();
+                
                 cart.installCart(this.machine.ppu, this.machine.Cpu);
                         
                 this.machine.Cpu.cheating = false;
                 this.machine.Cpu.genieCodes = new Array<MemoryPatch>();
+                
 
                 this.updateBuffers();
                 delete romloader.loader;

@@ -40,7 +40,7 @@ export class CreateCommand extends WorkerMessage {
 export class LoadRomCommand extends WorkerMessage {
     readonly command: string = CMD_LOADROM;
     constructor(
-        public  rom: number[],
+        public  rom: ArrayBuffer,
         public name: string
     ) {
         super();

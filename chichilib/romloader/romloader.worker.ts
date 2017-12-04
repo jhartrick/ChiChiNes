@@ -5,7 +5,7 @@ export class romLoader {
     constructor() {
     }
     loadRom(data: any, name: string) : IBaseCart {
-        let cart = iNESFileHandler.loadRomFile(data);
+        let cart = iNESFileHandler.loadBuffer(data);
 
         return cart;
     }

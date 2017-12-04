@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 9);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -195,6 +195,250 @@ exports.ChiChiSprite = ChiChiSprite;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/* WEBPACK VAR INJECTION */(function(global) {
+Object.defineProperty(exports, "__esModule", { value: true });
+// CommonJS / Node have global context exposed as "global" variable.
+// We don't want to include the whole node.d.ts this this compilation unit so we'll just fake
+// the global "global" var for now.
+var __window = typeof window !== 'undefined' && window;
+var __self = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' &&
+    self instanceof WorkerGlobalScope && self;
+var __global = typeof global !== 'undefined' && global;
+var _root = __window || __global || __self;
+exports.root = _root;
+// Workaround Closure Compiler restriction: The body of a goog.module cannot use throw.
+// This is needed when used with angular/tsickle which inserts a goog.module statement.
+// Wrap in IIFE
+(function () {
+    if (!_root) {
+        throw new Error('RxJS could not find any global context (window, self, global)');
+    }
+})();
+//# sourceMappingURL=root.js.map
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(25)))
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var isArray_1 = __webpack_require__(27);
+var isObject_1 = __webpack_require__(28);
+var isFunction_1 = __webpack_require__(6);
+var tryCatch_1 = __webpack_require__(29);
+var errorObject_1 = __webpack_require__(7);
+var UnsubscriptionError_1 = __webpack_require__(30);
+/**
+ * Represents a disposable resource, such as the execution of an Observable. A
+ * Subscription has one important method, `unsubscribe`, that takes no argument
+ * and just disposes the resource held by the subscription.
+ *
+ * Additionally, subscriptions may be grouped together through the `add()`
+ * method, which will attach a child Subscription to the current Subscription.
+ * When a Subscription is unsubscribed, all its children (and its grandchildren)
+ * will be unsubscribed as well.
+ *
+ * @class Subscription
+ */
+var Subscription = /** @class */ (function () {
+    /**
+     * @param {function(): void} [unsubscribe] A function describing how to
+     * perform the disposal of resources when the `unsubscribe` method is called.
+     */
+    function Subscription(unsubscribe) {
+        /**
+         * A flag to indicate whether this Subscription has already been unsubscribed.
+         * @type {boolean}
+         */
+        this.closed = false;
+        this._parent = null;
+        this._parents = null;
+        this._subscriptions = null;
+        if (unsubscribe) {
+            this._unsubscribe = unsubscribe;
+        }
+    }
+    /**
+     * Disposes the resources held by the subscription. May, for instance, cancel
+     * an ongoing Observable execution or cancel any other type of work that
+     * started when the Subscription was created.
+     * @return {void}
+     */
+    Subscription.prototype.unsubscribe = function () {
+        var hasErrors = false;
+        var errors;
+        if (this.closed) {
+            return;
+        }
+        var _a = this, _parent = _a._parent, _parents = _a._parents, _unsubscribe = _a._unsubscribe, _subscriptions = _a._subscriptions;
+        this.closed = true;
+        this._parent = null;
+        this._parents = null;
+        // null out _subscriptions first so any child subscriptions that attempt
+        // to remove themselves from this subscription will noop
+        this._subscriptions = null;
+        var index = -1;
+        var len = _parents ? _parents.length : 0;
+        // if this._parent is null, then so is this._parents, and we
+        // don't have to remove ourselves from any parent subscriptions.
+        while (_parent) {
+            _parent.remove(this);
+            // if this._parents is null or index >= len,
+            // then _parent is set to null, and the loop exits
+            _parent = ++index < len && _parents[index] || null;
+        }
+        if (isFunction_1.isFunction(_unsubscribe)) {
+            var trial = tryCatch_1.tryCatch(_unsubscribe).call(this);
+            if (trial === errorObject_1.errorObject) {
+                hasErrors = true;
+                errors = errors || (errorObject_1.errorObject.e instanceof UnsubscriptionError_1.UnsubscriptionError ?
+                    flattenUnsubscriptionErrors(errorObject_1.errorObject.e.errors) : [errorObject_1.errorObject.e]);
+            }
+        }
+        if (isArray_1.isArray(_subscriptions)) {
+            index = -1;
+            len = _subscriptions.length;
+            while (++index < len) {
+                var sub = _subscriptions[index];
+                if (isObject_1.isObject(sub)) {
+                    var trial = tryCatch_1.tryCatch(sub.unsubscribe).call(sub);
+                    if (trial === errorObject_1.errorObject) {
+                        hasErrors = true;
+                        errors = errors || [];
+                        var err = errorObject_1.errorObject.e;
+                        if (err instanceof UnsubscriptionError_1.UnsubscriptionError) {
+                            errors = errors.concat(flattenUnsubscriptionErrors(err.errors));
+                        }
+                        else {
+                            errors.push(err);
+                        }
+                    }
+                }
+            }
+        }
+        if (hasErrors) {
+            throw new UnsubscriptionError_1.UnsubscriptionError(errors);
+        }
+    };
+    /**
+     * Adds a tear down to be called during the unsubscribe() of this
+     * Subscription.
+     *
+     * If the tear down being added is a subscription that is already
+     * unsubscribed, is the same reference `add` is being called on, or is
+     * `Subscription.EMPTY`, it will not be added.
+     *
+     * If this subscription is already in an `closed` state, the passed
+     * tear down logic will be executed immediately.
+     *
+     * @param {TeardownLogic} teardown The additional logic to execute on
+     * teardown.
+     * @return {Subscription} Returns the Subscription used or created to be
+     * added to the inner subscriptions list. This Subscription can be used with
+     * `remove()` to remove the passed teardown logic from the inner subscriptions
+     * list.
+     */
+    Subscription.prototype.add = function (teardown) {
+        if (!teardown || (teardown === Subscription.EMPTY)) {
+            return Subscription.EMPTY;
+        }
+        if (teardown === this) {
+            return this;
+        }
+        var subscription = teardown;
+        switch (typeof teardown) {
+            case 'function':
+                subscription = new Subscription(teardown);
+            case 'object':
+                if (subscription.closed || typeof subscription.unsubscribe !== 'function') {
+                    return subscription;
+                }
+                else if (this.closed) {
+                    subscription.unsubscribe();
+                    return subscription;
+                }
+                else if (typeof subscription._addParent !== 'function' /* quack quack */) {
+                    var tmp = subscription;
+                    subscription = new Subscription();
+                    subscription._subscriptions = [tmp];
+                }
+                break;
+            default:
+                throw new Error('unrecognized teardown ' + teardown + ' added to Subscription.');
+        }
+        var subscriptions = this._subscriptions || (this._subscriptions = []);
+        subscriptions.push(subscription);
+        subscription._addParent(this);
+        return subscription;
+    };
+    /**
+     * Removes a Subscription from the internal list of subscriptions that will
+     * unsubscribe during the unsubscribe process of this Subscription.
+     * @param {Subscription} subscription The subscription to remove.
+     * @return {void}
+     */
+    Subscription.prototype.remove = function (subscription) {
+        var subscriptions = this._subscriptions;
+        if (subscriptions) {
+            var subscriptionIndex = subscriptions.indexOf(subscription);
+            if (subscriptionIndex !== -1) {
+                subscriptions.splice(subscriptionIndex, 1);
+            }
+        }
+    };
+    Subscription.prototype._addParent = function (parent) {
+        var _a = this, _parent = _a._parent, _parents = _a._parents;
+        if (!_parent || _parent === parent) {
+            // If we don't have a parent, or the new parent is the same as the
+            // current parent, then set this._parent to the new parent.
+            this._parent = parent;
+        }
+        else if (!_parents) {
+            // If there's already one parent, but not multiple, allocate an Array to
+            // store the rest of the parent Subscriptions.
+            this._parents = [parent];
+        }
+        else if (_parents.indexOf(parent) === -1) {
+            // Only add the new parent to the _parents list if it's not already there.
+            _parents.push(parent);
+        }
+    };
+    Subscription.EMPTY = (function (empty) {
+        empty.closed = true;
+        return empty;
+    }(new Subscription()));
+    return Subscription;
+}());
+exports.Subscription = Subscription;
+function flattenUnsubscriptionErrors(errors) {
+    return errors.reduce(function (errs, err) { return errs.concat((err instanceof UnsubscriptionError_1.UnsubscriptionError) ? err.errors : err); }, []);
+}
+//# sourceMappingURL=Subscription.js.map
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var root_1 = __webpack_require__(1);
+var Symbol = root_1.root.Symbol;
+exports.rxSubscriber = (typeof Symbol === 'function' && typeof Symbol.for === 'function') ?
+    Symbol.for('rxSubscriber') : '@@rxSubscriber';
+/**
+ * @deprecated use rxSubscriber instead
+ */
+exports.$$rxSubscriber = exports.rxSubscriber;
+//# sourceMappingURL=rxSubscriber.js.map
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 // shared buffer to get sound out
@@ -301,36 +545,9 @@ var Blip = /** @class */ (function () {
         this.blipBuffer.samples.fill(0, remain, remain + count);
         this.blipBuffer.arrayLength = count;
     };
-    Blip.prototype.ReadBytes = function (outbuf, count, stereo) {
-        if (count > this.blipBuffer.avail) {
-            count = this.blipBuffer.avail;
-        }
-        if (count !== 0) {
-            var step = 1;
-            var inPtr = 0, outPtr = 0;
-            var endPtr = inPtr + count;
-            var sum = this.blipBuffer.integrator;
-            do {
-                var st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
-                sum = sum + this.blipBuffer.samples[inPtr];
-                inPtr++;
-                if (st !== st) {
-                    st = (st >> 31) ^ 32767;
-                }
-                var f = st / 65536;
-                outbuf[outPtr] = f;
-                // outbuf[outPtr+ 1] = (byte)(st >> 8);
-                outPtr += step;
-                sum = sum - (st << (7));
-            } while (inPtr !== endPtr);
-            this.blipBuffer.integrator = sum;
-            this.remove_samples(count);
-        }
-        return count;
-    };
     // reads 'count' elements into array 'outbuf', beginning at 'start' and looping at array boundary if needed
     // returns number of elements written
-    Blip.prototype.ReadElementsLoop = function (wavSharer) {
+    Blip.prototype.readElementsLoop = function (wavSharer) {
         var outbuf = wavSharer.SharedBuffer;
         var start = wavSharer.sharedAudioBufferPos;
         var count = this.blipBuffer.avail;
@@ -340,19 +557,14 @@ var Blip = /** @class */ (function () {
         if (count !== 0) {
             var step = 1;
             do {
-                var st = sum >> Blip.delta_bits; /* assumes right shift preserves sign */
+                var st = sum >> Blip.delta_bits;
                 sum = sum + this.blipBuffer.samples[inPtr];
                 inPtr++;
-                if (st !== st) {
-                    st = (st >> 31) ^ 32767;
-                }
-                var f = st / 65536; // (st/0xFFFF) * 2 - 1;
                 outPtr += step;
                 if (outPtr >= outbuf.length) {
                     outPtr = 0;
                 }
-                outbuf[outPtr] = f;
-                // outbuf[outPtr+ 1] = (byte)(st >> 8);
+                outbuf[outPtr] = st / 65536;
                 sum = sum - (st << (7));
             } while (end-- > 0);
             this.blipBuffer.integrator = sum;
@@ -378,26 +590,10 @@ var Blip = /** @class */ (function () {
         var interp = (fixedTime >> (phase_shift - interp_bits) & ((1 << interp_bits) - 1));
         var delta2 = (delta * interp) >> interp_bits;
         delta -= delta2;
-        /* Fails if buffer size was exceeded */
-        //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
         for (var i = 0; i < 8; ++i) {
             this.blipBuffer.samples[outPtr + i] += (Blip.bl_step[inStep][i] * delta) + (Blip.bl_step[inStep][i] * delta2);
             this.blipBuffer.samples[outPtr + (15 - i)] += (Blip.bl_step[rev][i] * delta) + (Blip.bl_step[rev - 1][i] * delta2);
         }
-    };
-    Blip.prototype.blip_add_delta_fast = function (time, delta) {
-        var fixedTime = time * this.blipBuffer.factor + this.blipBuffer.offset;
-        var outPtr = this.blipBuffer.avail + (fixedTime >> Blip.time_bits);
-        var delta_unit = 1 << Blip.delta_bits;
-        var phase_shift = Blip.time_bits - Blip.delta_bits;
-        var phase = fixedTime >> phase_shift & (delta_unit - 1);
-        var delta2 = delta * phase;
-        /* Fails if buffer size was exceeded */
-        //assert( out <= &BLIP_SAMPLES( s ) [s->size] );
-        this.blipBuffer.samples[outPtr + 8] += delta * delta_unit - delta2;
-        this.blipBuffer.samples[outPtr + 9] += delta2;
-        //out [8] += delta * delta_unit - delta2;
-        //out [9] += delta2;
     };
     Blip.time_unit = 2097152;
     Blip.buf_extra = 18;
@@ -443,52 +639,338 @@ var Blip = /** @class */ (function () {
     return Blip;
 }());
 exports.Blip = Blip;
-var PortWriteEntry = /** @class */ (function () {
-    function PortWriteEntry(time, address, data) {
-        this.time = time;
-        this.address = address;
-        this.data = data;
-    }
-    return PortWriteEntry;
-}());
-exports.PortWriteEntry = PortWriteEntry;
-var QueuedPort = /** @class */ (function () {
-    function QueuedPort() {
-        this.array = new Array();
-    }
-    Object.defineProperty(QueuedPort.prototype, "Count", {
-        get: function () {
-            return this.array.length;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    QueuedPort.prototype.clear = function () {
-        this.array.length = 0;
-    };
-    QueuedPort.prototype.enqueue = function (item) {
-        this.array.push(item);
-    };
-    QueuedPort.prototype.dequeue = function () {
-        return this.array.pop();
-    };
-    return QueuedPort;
-}());
-exports.QueuedPort = QueuedPort;
 
 
 /***/ }),
-/* 2 */
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var isFunction_1 = __webpack_require__(6);
+var Subscription_1 = __webpack_require__(2);
+var Observer_1 = __webpack_require__(8);
+var rxSubscriber_1 = __webpack_require__(3);
+/**
+ * Implements the {@link Observer} interface and extends the
+ * {@link Subscription} class. While the {@link Observer} is the public API for
+ * consuming the values of an {@link Observable}, all Observers get converted to
+ * a Subscriber, in order to provide Subscription-like capabilities such as
+ * `unsubscribe`. Subscriber is a common type in RxJS, and crucial for
+ * implementing operators, but it is rarely used as a public API.
+ *
+ * @class Subscriber<T>
+ */
+var Subscriber = /** @class */ (function (_super) {
+    __extends(Subscriber, _super);
+    /**
+     * @param {Observer|function(value: T): void} [destinationOrNext] A partially
+     * defined Observer or a `next` callback function.
+     * @param {function(e: ?any): void} [error] The `error` callback of an
+     * Observer.
+     * @param {function(): void} [complete] The `complete` callback of an
+     * Observer.
+     */
+    function Subscriber(destinationOrNext, error, complete) {
+        var _this = _super.call(this) || this;
+        _this.syncErrorValue = null;
+        _this.syncErrorThrown = false;
+        _this.syncErrorThrowable = false;
+        _this.isStopped = false;
+        switch (arguments.length) {
+            case 0:
+                _this.destination = Observer_1.empty;
+                break;
+            case 1:
+                if (!destinationOrNext) {
+                    _this.destination = Observer_1.empty;
+                    break;
+                }
+                if (typeof destinationOrNext === 'object') {
+                    if (destinationOrNext instanceof Subscriber) {
+                        _this.destination = destinationOrNext;
+                        _this.destination.add(_this);
+                    }
+                    else {
+                        _this.syncErrorThrowable = true;
+                        _this.destination = new SafeSubscriber(_this, destinationOrNext);
+                    }
+                    break;
+                }
+            default:
+                _this.syncErrorThrowable = true;
+                _this.destination = new SafeSubscriber(_this, destinationOrNext, error, complete);
+                break;
+        }
+        return _this;
+    }
+    Subscriber.prototype[rxSubscriber_1.rxSubscriber] = function () { return this; };
+    /**
+     * A static factory for a Subscriber, given a (potentially partial) definition
+     * of an Observer.
+     * @param {function(x: ?T): void} [next] The `next` callback of an Observer.
+     * @param {function(e: ?any): void} [error] The `error` callback of an
+     * Observer.
+     * @param {function(): void} [complete] The `complete` callback of an
+     * Observer.
+     * @return {Subscriber<T>} A Subscriber wrapping the (partially defined)
+     * Observer represented by the given arguments.
+     */
+    Subscriber.create = function (next, error, complete) {
+        var subscriber = new Subscriber(next, error, complete);
+        subscriber.syncErrorThrowable = false;
+        return subscriber;
+    };
+    /**
+     * The {@link Observer} callback to receive notifications of type `next` from
+     * the Observable, with a value. The Observable may call this method 0 or more
+     * times.
+     * @param {T} [value] The `next` value.
+     * @return {void}
+     */
+    Subscriber.prototype.next = function (value) {
+        if (!this.isStopped) {
+            this._next(value);
+        }
+    };
+    /**
+     * The {@link Observer} callback to receive notifications of type `error` from
+     * the Observable, with an attached {@link Error}. Notifies the Observer that
+     * the Observable has experienced an error condition.
+     * @param {any} [err] The `error` exception.
+     * @return {void}
+     */
+    Subscriber.prototype.error = function (err) {
+        if (!this.isStopped) {
+            this.isStopped = true;
+            this._error(err);
+        }
+    };
+    /**
+     * The {@link Observer} callback to receive a valueless notification of type
+     * `complete` from the Observable. Notifies the Observer that the Observable
+     * has finished sending push-based notifications.
+     * @return {void}
+     */
+    Subscriber.prototype.complete = function () {
+        if (!this.isStopped) {
+            this.isStopped = true;
+            this._complete();
+        }
+    };
+    Subscriber.prototype.unsubscribe = function () {
+        if (this.closed) {
+            return;
+        }
+        this.isStopped = true;
+        _super.prototype.unsubscribe.call(this);
+    };
+    Subscriber.prototype._next = function (value) {
+        this.destination.next(value);
+    };
+    Subscriber.prototype._error = function (err) {
+        this.destination.error(err);
+        this.unsubscribe();
+    };
+    Subscriber.prototype._complete = function () {
+        this.destination.complete();
+        this.unsubscribe();
+    };
+    Subscriber.prototype._unsubscribeAndRecycle = function () {
+        var _a = this, _parent = _a._parent, _parents = _a._parents;
+        this._parent = null;
+        this._parents = null;
+        this.unsubscribe();
+        this.closed = false;
+        this.isStopped = false;
+        this._parent = _parent;
+        this._parents = _parents;
+        return this;
+    };
+    return Subscriber;
+}(Subscription_1.Subscription));
+exports.Subscriber = Subscriber;
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var SafeSubscriber = /** @class */ (function (_super) {
+    __extends(SafeSubscriber, _super);
+    function SafeSubscriber(_parentSubscriber, observerOrNext, error, complete) {
+        var _this = _super.call(this) || this;
+        _this._parentSubscriber = _parentSubscriber;
+        var next;
+        var context = _this;
+        if (isFunction_1.isFunction(observerOrNext)) {
+            next = observerOrNext;
+        }
+        else if (observerOrNext) {
+            next = observerOrNext.next;
+            error = observerOrNext.error;
+            complete = observerOrNext.complete;
+            if (observerOrNext !== Observer_1.empty) {
+                context = Object.create(observerOrNext);
+                if (isFunction_1.isFunction(context.unsubscribe)) {
+                    _this.add(context.unsubscribe.bind(context));
+                }
+                context.unsubscribe = _this.unsubscribe.bind(_this);
+            }
+        }
+        _this._context = context;
+        _this._next = next;
+        _this._error = error;
+        _this._complete = complete;
+        return _this;
+    }
+    SafeSubscriber.prototype.next = function (value) {
+        if (!this.isStopped && this._next) {
+            var _parentSubscriber = this._parentSubscriber;
+            if (!_parentSubscriber.syncErrorThrowable) {
+                this.__tryOrUnsub(this._next, value);
+            }
+            else if (this.__tryOrSetError(_parentSubscriber, this._next, value)) {
+                this.unsubscribe();
+            }
+        }
+    };
+    SafeSubscriber.prototype.error = function (err) {
+        if (!this.isStopped) {
+            var _parentSubscriber = this._parentSubscriber;
+            if (this._error) {
+                if (!_parentSubscriber.syncErrorThrowable) {
+                    this.__tryOrUnsub(this._error, err);
+                    this.unsubscribe();
+                }
+                else {
+                    this.__tryOrSetError(_parentSubscriber, this._error, err);
+                    this.unsubscribe();
+                }
+            }
+            else if (!_parentSubscriber.syncErrorThrowable) {
+                this.unsubscribe();
+                throw err;
+            }
+            else {
+                _parentSubscriber.syncErrorValue = err;
+                _parentSubscriber.syncErrorThrown = true;
+                this.unsubscribe();
+            }
+        }
+    };
+    SafeSubscriber.prototype.complete = function () {
+        var _this = this;
+        if (!this.isStopped) {
+            var _parentSubscriber = this._parentSubscriber;
+            if (this._complete) {
+                var wrappedComplete = function () { return _this._complete.call(_this._context); };
+                if (!_parentSubscriber.syncErrorThrowable) {
+                    this.__tryOrUnsub(wrappedComplete);
+                    this.unsubscribe();
+                }
+                else {
+                    this.__tryOrSetError(_parentSubscriber, wrappedComplete);
+                    this.unsubscribe();
+                }
+            }
+            else {
+                this.unsubscribe();
+            }
+        }
+    };
+    SafeSubscriber.prototype.__tryOrUnsub = function (fn, value) {
+        try {
+            fn.call(this._context, value);
+        }
+        catch (err) {
+            this.unsubscribe();
+            throw err;
+        }
+    };
+    SafeSubscriber.prototype.__tryOrSetError = function (parent, fn, value) {
+        try {
+            fn.call(this._context, value);
+        }
+        catch (err) {
+            parent.syncErrorValue = err;
+            parent.syncErrorThrown = true;
+            return true;
+        }
+        return false;
+    };
+    SafeSubscriber.prototype._unsubscribe = function () {
+        var _parentSubscriber = this._parentSubscriber;
+        this._context = null;
+        this._parentSubscriber = null;
+        _parentSubscriber.unsubscribe();
+    };
+    return SafeSubscriber;
+}(Subscriber));
+//# sourceMappingURL=Subscriber.js.map
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var worker_interop_1 = __webpack_require__(3);
+function isFunction(x) {
+    return typeof x === 'function';
+}
+exports.isFunction = isFunction;
+//# sourceMappingURL=isFunction.js.map
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+// typeof any so that it we don't have to cast when comparing a result to the error object
+exports.errorObject = { e: {} };
+//# sourceMappingURL=errorObject.js.map
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.empty = {
+    closed: true,
+    next: function (value) { },
+    error: function (err) { throw err; },
+    complete: function () { }
+};
+//# sourceMappingURL=Observer.js.map
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var worker_interop_1 = __webpack_require__(10);
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiMachine_1 = __webpack_require__(4);
-var ChiChiState_1 = __webpack_require__(13);
-var CCMessage = __webpack_require__(14);
+var ChiChiMachine_1 = __webpack_require__(11);
+var ChiChiState_1 = __webpack_require__(20);
+var CCMessage = __webpack_require__(21);
+var StateBuffer_1 = __webpack_require__(22);
 var NesInfo = /** @class */ (function () {
     function NesInfo() {
         this.bufferupdate = false;
@@ -629,6 +1111,7 @@ var tendoWrapper = /** @class */ (function () {
         info.bufferupdate = true;
         info.stateupdate = false;
         if (this.machine && this.machine.Cart) {
+            info.stateBuffer = this.stateBuffer.buffer;
             info.Cpu = {
                 Rams: this.machine.Cpu.memoryMap.Rams,
                 spriteRAM: this.machine.Cpu.ppu.spriteRAM
@@ -658,32 +1141,10 @@ var tendoWrapper = /** @class */ (function () {
                 status: this.machine.Cpu.GetStatus(),
                 ppuStatus: this.machine.Cpu.ppu.GetPPUStatus(),
                 backgroundPatternTableIndex: this.machine.Cpu.ppu.backgroundPatternTableIndex,
-                _PPUControlByte0: this.machine.Cpu.ppu._PPUControlByte0,
-                _PPUControlByte1: this.machine.Cpu.ppu._PPUControlByte1
+                _PPUControlByte0: this.machine.Cpu.ppu.controlByte0,
+                _PPUControlByte1: this.machine.Cpu.ppu.controlByte1
             };
-            info.cartInfo = {
-                mapperId: this.machine.Cart.MapperID,
-                name: this.cartName,
-                prgRomCount: this.machine.Cart.NumberOfPrgRoms,
-                chrRomCount: this.machine.Cart.NumberOfChrRoms
-            };
-            info.Cart = {
-                //buffers
-                //chrRom: (<any>this.machine.Cart).chrRom,
-                //prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
-                //ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
-                //bankStartCache: (<any>this.machine.Cart).bankStartCache,
-                CurrentBank: this.machine.Cart.CurrentBank,
-                // integers
-                current8: this.machine.Cart.current8,
-                currentA: this.machine.Cart.currentA,
-                currentC: this.machine.Cart.currentC,
-                currentE: this.machine.Cart.currentE,
-                bank8start: this.machine.Cart.bank8start,
-                bankAstart: this.machine.Cart.bankAstart,
-                bankCstart: this.machine.Cart.bankCstart,
-                bankEstart: this.machine.Cart.bankEstart
-            };
+            info.Cart = {};
         }
         if (machine) {
             if (machine.SoundBopper && machine.SoundBopper.audioSettings) {
@@ -799,6 +1260,12 @@ var tendoWrapper = /** @class */ (function () {
             var machine = _this.machine;
             var cart = romloader.loader.loadRom(cmd.rom, cmd.name);
             _this.machine.Cpu.setupMemoryMap(cart);
+            _this.stateBuffer = new StateBuffer_1.StateBuffer();
+            _this.machine.Cpu.memoryMap.setupStateBuffer(_this.stateBuffer);
+            _this.machine.Cpu.setupStateBuffer(_this.stateBuffer);
+            _this.machine.ppu.setupStateBuffer(_this.stateBuffer);
+            cart.setupStateBuffer(_this.stateBuffer);
+            _this.stateBuffer.build();
             cart.installCart(_this.machine.ppu, _this.machine.Cpu);
             _this.machine.Cpu.cheating = false;
             _this.machine.Cpu.genieCodes = new Array();
@@ -844,7 +1311,7 @@ exports.tendoWrapper = tendoWrapper;
 
 
 /***/ }),
-/* 3 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -918,17 +1385,17 @@ exports.WorkerInterop = WorkerInterop;
 
 
 /***/ }),
-/* 4 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiAudio_1 = __webpack_require__(5);
+var ChiChiAudio_1 = __webpack_require__(12);
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiPPU_1 = __webpack_require__(10);
-var CommonAudio_1 = __webpack_require__(1);
-var ChiChiCPU_1 = __webpack_require__(11);
+var ChiChiPPU_1 = __webpack_require__(17);
+var CommonAudio_1 = __webpack_require__(4);
+var ChiChiCPU_1 = __webpack_require__(18);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -990,7 +1457,7 @@ var ChiChiMachine = /** @class */ (function () {
     });
     ChiChiMachine.prototype.Reset = function () {
         if (this.Cpu && this.Cart && this.Cart.supported) {
-            this.Cart.InitializeCart(true);
+            this.Cart.initializeCart(true);
             this.Cpu.ResetCPU();
             this.SoundBopper.rebuildSound();
             //ClearGenieCodes();
@@ -1000,7 +1467,7 @@ var ChiChiMachine = /** @class */ (function () {
     };
     ChiChiMachine.prototype.PowerOn = function () {
         if (this.Cpu && this.Cart && this.Cart.supported) {
-            this.Cart.InitializeCart();
+            this.Cart.initializeCart();
             this.Cpu.ppu.Initialize();
             this.SoundBopper.rebuildSound();
             this.Cpu.PowerOn();
@@ -1015,7 +1482,7 @@ var ChiChiMachine = /** @class */ (function () {
             this.frameOn = true;
             this.frameJustEnded = false;
         }
-        this.Cpu.Step();
+        this.Cpu.step();
         if (!this.frameOn) {
             this.totalCPUClocks = 0;
             this.Cpu.Clock = 0;
@@ -1027,7 +1494,7 @@ var ChiChiMachine = /** @class */ (function () {
         this.frameOn = true;
         this.frameJustEnded = false;
         do {
-            this.Cpu.Step();
+            this.Cpu.step();
         } while (this.frameOn);
         this.totalCPUClocks = 0;
         this.Cpu.Clock = 0;
@@ -1051,30 +1518,26 @@ exports.ChiChiMachine = ChiChiMachine;
 
 
 /***/ }),
-/* 5 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var DMCChannel_1 = __webpack_require__(6);
-var SquareChannel_1 = __webpack_require__(7);
-var TriangleChannel_1 = __webpack_require__(8);
-var NoiseChannel_1 = __webpack_require__(9);
-var CommonAudio_1 = __webpack_require__(1);
+var DMCChannel_1 = __webpack_require__(13);
+var SquareChannel_1 = __webpack_require__(14);
+var TriangleChannel_1 = __webpack_require__(15);
+var NoiseChannel_1 = __webpack_require__(16);
+var CommonAudio_1 = __webpack_require__(4);
 var ChiChiAPU = /** @class */ (function () {
     function ChiChiAPU(writer) {
         this.writer = writer;
         this.frameMode = false;
+        this.pulseTable = [];
+        this.tndTable = [];
         this.throwingIRQs = false;
         this.reg15 = 0;
         this._sampleRate = 44100;
-        this.master_vol = 4369;
-        this.square0Gain = 873;
-        this.square1Gain = 873;
-        this.triangleGain = 1004;
-        this.noiseGain = 567;
-        this.dmcGain = 567;
         this.muted = false;
         this.lastFrameHit = 0;
         this.currentClock = 0;
@@ -1082,8 +1545,15 @@ var ChiChiAPU = /** @class */ (function () {
         //Muted: boolean;
         this._interruptRaised = false;
         this.sequence4 = [7457, 14913, 22371, 29828, 29829, 29831];
-        this.sequence5 = [7457, 14913, 22371, 37281, 37282, 37283];
+        this.sequence5 = [7457, 14913, 22371, 29828, 37282, 37283];
+        this.lastOutput = 0;
         this.rebuildSound();
+        for (var i = 0; i < 31; ++i) {
+            this.pulseTable.push(95.52 / (8128.0 / i + 100));
+        }
+        for (var i = 0; i < 203; ++i) {
+            this.tndTable.push(163.67 / (24329.0 / i + 100));
+        }
     }
     ChiChiAPU.prototype.irqHandler = function () {
     };
@@ -1092,21 +1562,21 @@ var ChiChiAPU = /** @class */ (function () {
             var settings = {
                 sampleRate: this._sampleRate,
                 master_volume: 1.0,
-                enableSquare0: this.enableSquare0,
-                enableSquare1: this.enableSquare1,
-                enableTriangle: this.enableTriangle,
-                enableNoise: this.enableNoise,
-                enableDMC: this.enableDMC,
+                enableSquare0: this.square0.playing,
+                enableSquare1: this.square1.playing,
+                enableTriangle: this.triangle.playing,
+                enableNoise: this.noise.playing,
+                enableDMC: this.dmc.playing,
                 synced: this.writer.synced
             };
             return settings;
         },
         set: function (value) {
-            this.enableNoise = value.enableNoise;
-            this.enableDMC = value.enableDMC;
-            this.enableSquare0 = value.enableSquare0;
-            this.enableSquare1 = value.enableSquare1;
-            this.enableTriangle = value.enableTriangle;
+            this.noise.playing = value.enableNoise;
+            this.dmc.playing = value.enableDMC;
+            this.square0.playing = value.enableSquare0;
+            this.square1.playing = value.enableSquare1;
+            this.triangle.playing = value.enableTriangle;
             this.writer.synced = value.synced;
             if (value.sampleRate != this._sampleRate) {
                 this._sampleRate = value.sampleRate;
@@ -1136,86 +1606,26 @@ var ChiChiAPU = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(ChiChiAPU.prototype, "enableSquare0", {
-        get: function () {
-            return this.square0.gain > 0;
-        },
-        set: function (value) {
-            this.square0.gain = value ? this.square0Gain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "enableSquare1", {
-        get: function () {
-            return this.square1.gain > 0;
-        },
-        set: function (value) {
-            this.square1.gain = value ? this.square1Gain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "enableTriangle", {
-        get: function () {
-            return this.triangle.gain > 0;
-        },
-        set: function (value) {
-            this.triangle.gain = value ? this.triangleGain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "enableNoise", {
-        get: function () {
-            return this.noise.gain > 0;
-        },
-        set: function (value) {
-            this.noise.gain = value ? this.noiseGain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiAPU.prototype, "enableDMC", {
-        get: function () {
-            return this.dmc.gain > 0;
-        },
-        set: function (value) {
-            this.dmc.gain = value ? this.dmcGain : 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
     ChiChiAPU.prototype.rebuildSound = function () {
         var _this = this;
         this.myBlipper = new CommonAudio_1.Blip(this._sampleRate / 5);
         this.myBlipper.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
         this.writer.audioBytesWritten = 0;
-        this.square0Gain = 873;
-        this.square1Gain = 873;
-        this.triangleGain = 1004;
-        this.noiseGain = 567;
-        this.dmcGain = 567;
-        this.square0 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
-        this.square0.gain = this.square0Gain;
+        this.square0 = new SquareChannel_1.SquareChannel(0, function (number) { return _this.writeAudio(number); });
         this.square0.period = 10;
         this.square0.sweepComplement = true;
-        this.square1 = new SquareChannel_1.SquareChannel(this.myBlipper, 0);
-        this.square1.gain = this.square1Gain;
+        this.square1 = new SquareChannel_1.SquareChannel(1, function (number) { return _this.writeAudio(number); });
         this.square1.period = 10;
         this.square1.sweepComplement = false;
-        this.triangle = new TriangleChannel_1.TriangleChannel(this.myBlipper, 2);
-        this.triangle.gain = this.triangleGain;
+        this.triangle = new TriangleChannel_1.TriangleChannel(2, function (number) { return _this.writeAudio(number); });
         this.triangle.period = 0;
-        this.noise = new NoiseChannel_1.NoiseChannel(this.myBlipper, 3);
-        this.noise.gain = this.noiseGain;
+        this.noise = new NoiseChannel_1.NoiseChannel(3, function (number) { return _this.writeAudio(number); });
         this.noise.period = 0;
-        this.dmc = new DMCChannel_1.DMCChannel(this.myBlipper, 4, function (address) {
-            _this.memoryMap.cpu.borrowedCycles = 4;
+        this.dmc = new DMCChannel_1.DMCChannel(4, function (number) { return _this.writeAudio(number); }, function (address) {
+            _this.memoryMap.cpu.borrowedCycles += 4;
             return _this.memoryMap.getByte(0, address);
         });
-        this.dmc.gain = this.dmcGain;
     };
     ChiChiAPU.prototype.GetByte = function (Clock, address) {
         if (address === 0x4000) {
@@ -1275,10 +1685,9 @@ var ChiChiAPU = /** @class */ (function () {
                 this.dmc.writeRegister(4, data & 0x10, clock);
                 break;
             case 0x4017:
-                // this.endFrame(clock);
-                // this.lastFrameHit ==0; // this.frameClocker = 0;
                 this.throwingIRQs = ((data & 64) !== 64);
                 this.frameMode = ((data & 128) == 128);
+                this.memoryMap.cpu.borrowedCycles += 2;
                 break;
         }
     };
@@ -1292,7 +1701,7 @@ var ChiChiAPU = /** @class */ (function () {
     };
     ChiChiAPU.prototype.updateFrame = function (time) {
         this.runFrameEvents(time, this.lastFrameHit);
-        if (this.lastFrameHit === (this.frameMode ? 4 : 3)) {
+        if (this.lastFrameHit >= (this.frameMode ? 4 : 3)) {
             this.lastFrameHit = 0;
             this.frameClocker = 0;
             this.endFrame(time);
@@ -1318,7 +1727,7 @@ var ChiChiAPU = /** @class */ (function () {
         this.noise.endFrame(time);
         this.dmc.endFrame(time);
         this.myBlipper.blip_end_frame(time);
-        this.myBlipper.ReadElementsLoop(this.writer);
+        this.myBlipper.readElementsLoop(this.writer);
         this.currentClock = 0;
     };
     Object.defineProperty(ChiChiAPU.prototype, "state", {
@@ -1327,24 +1736,31 @@ var ChiChiAPU = /** @class */ (function () {
                 audioSettings: this.audioSettings,
                 sampleRate: this.sampleRate,
                 interruptRaised: this._interruptRaised,
-                enableSquare0: this.enableSquare0,
-                enableSquare1: this.enableSquare1,
-                enableTriangle: this.enableTriangle,
-                enableNoise: this.enableNoise
+                enableSquare0: this.square0.playing,
+                enableSquare1: this.square1.playing,
+                enableTriangle: this.triangle.playing,
+                enableNoise: this.noise.playing
             };
         },
         set: function (value) {
             this.audioSettings = value.audioSettings;
             this.sampleRate = value.sampleRate;
             this._interruptRaised = value.interruptRaised;
-            this.enableSquare0 = value.enableSquare0;
-            this.enableSquare1 = value.enableSquare1;
-            this.enableTriangle = value.enableTriangle;
-            this.enableNoise = value.enableNoise;
+            this.square0.playing = value.enableSquare0;
+            this.square1.playing = value.enableSquare1;
+            this.triangle.playing = value.enableTriangle;
+            this.noise.playing = value.enableNoise;
         },
         enumerable: true,
         configurable: true
     });
+    ChiChiAPU.prototype.writeAudio = function (clock) {
+        var out = this.pulseTable[this.square0.output + this.square1.output];
+        out += this.tndTable[(3 * this.triangle.output) + (2 * this.noise.output) + this.dmc.output];
+        var delta = ((out - 0.5) * 0x10000) - this.lastOutput;
+        this.lastOutput += delta;
+        this.myBlipper.blip_add_delta(clock, delta);
+    };
     ChiChiAPU.clock_rate = 1789772.727;
     return ChiChiAPU;
 }());
@@ -1352,21 +1768,26 @@ exports.ChiChiAPU = ChiChiAPU;
 
 
 /***/ }),
-/* 6 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var DMCChannel = /** @class */ (function () {
-    function DMCChannel(bleeper, chan, doDma) {
+    function DMCChannel(chan, onWriteAudio, handleDma) {
+        this.onWriteAudio = onWriteAudio;
+        this.handleDma = handleDma;
+        this.playing = true;
+        this.output = 0;
+        this.interruptRaised = false;
         this.directLoad = false;
         this.amplitude = 0;
         this.time = 0;
         this.internalClock = 0;
-        this.fetching = false;
+        this.isFetching = false;
         this.buffer = 0;
-        this.bufempty = false;
+        this.bufferIsEmpty = false;
         this.outbits = 0;
         this.freqTable = [
             0x1AC, 0x17C, 0x154, 0x140, 0x11E, 0x0FE, 0x0E2, 0x0D6,
@@ -1376,47 +1797,33 @@ var DMCChannel = /** @class */ (function () {
         this.silenced = false;
         this.cycles = 0;
         this.curAddr = 0;
-        this.lengthCtr = 0;
+        this.lengthCounter = 0;
         this.length = 0;
-        this.addr = 0;
-        this.pos = 0;
-        this.pcmdata = 0;
-        this.doirq = 0;
+        this.address = 0;
+        this.interruptEnabled = 0;
         this.frequency = 0;
         this.loopFlag = 0;
         this._chan = 0;
         this.delta = 0;
-        this.gain = 503;
-        this.interruptRaised = false;
         this.bleeper = null;
-        this.bleeper = bleeper;
         this._chan = chan;
-        this.handleDma = function (address) {
-            return doDma(address);
-        };
     }
-    DMCChannel.prototype.handleIrq = function () {
-        this.interruptRaised = true;
-    };
-    DMCChannel.prototype.handleDma = function (address) {
-        return 0;
-    };
     DMCChannel.prototype.writeRegister = function (register, data, time) {
         switch (register) {
             case 0:
                 this.frequency = data & 0xf;
                 this.loopFlag = (data >> 6) & 0x1;
-                this.doirq = (data >> 7) & 1;
-                if (this.doirq === 0) {
+                this.interruptEnabled = (data >> 7) & 1;
+                if (this.interruptEnabled === 0) {
                     this.interruptRaised = false;
                 }
                 break;
             case 1:
-                this.pcmdata = data & 0x7f;
-                this.updateAmplitude(this.pcmdata);
+                this.output = data & 0x7f;
+                this.onWriteAudio(this.time);
                 break;
             case 2:
-                this.addr = data;
+                this.address = data;
                 break;
             case 3:
                 this.length = data;
@@ -1424,43 +1831,46 @@ var DMCChannel = /** @class */ (function () {
             case 4:
                 this.interruptRaised = false;
                 if (data) {
-                    if (!this.lengthCtr) {
-                        this.curAddr = 0xC000 | ((this.addr << 6) & 0xffff);
-                        this.lengthCtr = (this.length << 4) + 1;
+                    if (!this.lengthCounter) {
+                        this.curAddr = 0xC000 | ((this.address << 6) & 0xffff);
+                        this.lengthCounter = (this.length << 4) + 1;
                     }
                 }
                 else {
-                    this.lengthCtr = 0;
+                    this.lengthCounter = 0;
                 }
                 break;
         }
     };
-    DMCChannel.prototype.updateAmplitude = function (new_amp) {
-        var delta = new_amp * this.gain - this.amplitude;
-        this.amplitude += delta;
-        this.bleeper.blip_add_delta(this.time, delta);
-    };
     DMCChannel.prototype.run = function (end_time) {
+        if (!this.playing) {
+            this.time = end_time;
+            this.output = 0;
+            return;
+        }
         for (; this.time < end_time; this.time++) {
             if (--this.cycles <= 0) {
                 this.cycles = this.freqTable[this.frequency];
                 if (!this.silenced) {
                     if (this.shiftreg & 1) {
-                        if (this.pcmdata <= 0x7D)
-                            this.pcmdata += 2;
+                        if (this.output <= 0x7D) {
+                            this.output += 2;
+                            this.onWriteAudio(this.time);
+                        }
                     }
                     else {
-                        if (this.pcmdata >= 0x02)
-                            this.pcmdata -= 2;
+                        if (this.output >= 0x02) {
+                            this.output -= 2;
+                            this.onWriteAudio(this.time);
+                        }
                     }
                     this.shiftreg >>= 1;
-                    this.updateAmplitude(this.pcmdata);
                 }
                 if (--this.outbits <= 0) {
                     this.outbits = 8;
-                    if (!this.bufempty) {
+                    if (!this.bufferIsEmpty) {
                         this.shiftreg = this.buffer;
-                        this.bufempty = true;
+                        this.bufferIsEmpty = true;
                         this.silenced = false;
                     }
                     else {
@@ -1468,26 +1878,26 @@ var DMCChannel = /** @class */ (function () {
                     }
                 }
             }
-            if (this.bufempty && !this.fetching && this.lengthCtr) {
-                this.fetching = true;
+            if (this.bufferIsEmpty && !this.isFetching && this.lengthCounter) {
+                this.isFetching = true;
                 this.fetch();
-                this.lengthCtr--;
+                this.lengthCounter--;
             }
         }
     };
     DMCChannel.prototype.fetch = function () {
         this.buffer = this.handleDma(this.curAddr);
-        this.bufempty = false;
-        this.fetching = false;
+        this.bufferIsEmpty = false;
+        this.isFetching = false;
         if (++this.curAddr == 0x10000)
             this.curAddr = 0x8000;
-        if (!this.lengthCtr) {
+        if (!this.lengthCounter) {
             if (this.loopFlag) {
-                this.curAddr = 0xC000 | ((this.addr << 6) & 0xffff);
-                this.lengthCtr = (this.length << 4) + 1;
+                this.curAddr = 0xC000 | ((this.address << 6) & 0xffff);
+                this.lengthCounter = (this.length << 4) + 1;
             }
-            else if (this.doirq) {
-                this.handleIrq();
+            else if (this.interruptEnabled) {
+                this.interruptRaised = true;
             }
         }
     };
@@ -1501,16 +1911,18 @@ exports.DMCChannel = DMCChannel;
 
 
 /***/ }),
-/* 7 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var SquareChannel = /** @class */ (function () {
-    function SquareChannel(bleeper, chan) {
+    function SquareChannel(chan, onWriteAudio) {
+        this.onWriteAudio = onWriteAudio;
+        this.output = 0;
+        this.playing = true;
         this._chan = 0;
-        this._bleeper = null;
         this.lengthCounts = new Uint8Array([
             0x0A, 0xFE,
             0x14, 0x02,
@@ -1537,7 +1949,6 @@ var SquareChannel = /** @class */ (function () {
         this.envelope = 0;
         this.looping = false;
         this.enabled = false;
-        this._amplitude = 0;
         this.doodies = [2, 6, 30, 249];
         this._sweepShift = 0;
         this._sweepCounter = 0;
@@ -1551,10 +1962,8 @@ var SquareChannel = /** @class */ (function () {
         this._envStart = false;
         this._envConstantVolume = false;
         this._envVolume = 0;
-        this.gain = 0;
         this.sweepComplement = false;
         this.dutyCycle = 0;
-        this._bleeper = bleeper;
         this._chan = chan;
         this.enabled = true;
         this._sweepDivider = 1;
@@ -1603,28 +2012,30 @@ var SquareChannel = /** @class */ (function () {
         }
     };
     SquareChannel.prototype.run = function (end_time) {
+        if (!this.playing) {
+            this.time = end_time;
+            this.output = 0;
+            return;
+        }
         var period = this._sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
         if (period === 0) {
             this.time = end_time;
-            this.updateAmplitude(0);
+            this.output = 0;
+            this.onWriteAudio(this.time);
             return;
         }
         var volume = this._envConstantVolume ? this.volume : this._envVolume;
         if (this._length === 0 || volume === 0 || this._sweepInvalid) {
             this._phase += ((end_time - this.time) / period) & 7;
-            this.time = end_time;
-            this.updateAmplitude(0);
+            this.output = 0;
+            this.onWriteAudio(this.time);
             return;
         }
         for (; this.time < end_time; this.time += period, this._phase++) {
-            this.updateAmplitude((this.dutyCycle >> (this._phase & 7) & 1) * volume);
+            this.output = (this.dutyCycle >> (this._phase & 7) & 1) * volume;
+            this.onWriteAudio(this.time);
         }
         this._phase &= 7;
-    };
-    SquareChannel.prototype.updateAmplitude = function (new_amp) {
-        var delta = new_amp * this.gain - this._amplitude;
-        this._amplitude += delta;
-        this._bleeper.blip_add_delta(this.time, delta);
     };
     SquareChannel.prototype.endFrame = function (time) {
         this.run(time);
@@ -1686,14 +2097,17 @@ exports.SquareChannel = SquareChannel;
 
 
 /***/ }),
-/* 8 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var TriangleChannel = /** @class */ (function () {
-    function TriangleChannel(bleeper, chan) {
+    function TriangleChannel(chan, onWriteAudio) {
+        this.onWriteAudio = onWriteAudio;
+        this.playing = true;
+        this.output = 0;
         this._chan = 0;
         this.lengthCounts = new Uint8Array([
             0x0A, 0xFE,
@@ -1719,13 +2133,10 @@ var TriangleChannel = /** @class */ (function () {
         this.envelope = 0;
         this.looping = false;
         this.enabled = false;
-        this.amplitude = 0;
-        this.gain = 0;
         this.linCtr = 0;
         this._phase = 0;
         this._linVal = 0;
         this.linStart = false;
-        this._bleeper = bleeper;
         this._chan = chan;
         this.enabled = true;
     }
@@ -1743,7 +2154,7 @@ var TriangleChannel = /** @class */ (function () {
                 this.period |= data;
                 break;
             case 3:
-                this.period &= 0xFF;
+                this.period &= 0xff;
                 this.period |= (data & 7) << 8;
                 // setup lengthhave
                 if (this.enabled) {
@@ -1760,6 +2171,11 @@ var TriangleChannel = /** @class */ (function () {
         }
     };
     TriangleChannel.prototype.run = function (end_time) {
+        if (!this.playing) {
+            this.time = end_time;
+            this.output = 0;
+            return;
+        }
         var period = this.period + 1;
         if (this.linCtr === 0 || this.length === 0 || this.period < 4) {
             // leave it at it's current phase
@@ -1767,13 +2183,9 @@ var TriangleChannel = /** @class */ (function () {
             return;
         }
         for (; this.time < end_time; this.time += period, this._phase = (this._phase + 1) % 32) {
-            this.updateAmplitude(this._phase < 16 ? this._phase : 31 - this._phase);
+            this.output = this._phase < 16 ? this._phase : 31 - this._phase;
+            this.onWriteAudio(this.time);
         }
-    };
-    TriangleChannel.prototype.updateAmplitude = function (new_amp) {
-        var delta = new_amp * this.gain - this.amplitude;
-        this.amplitude += delta;
-        this._bleeper.blip_add_delta(this.time, delta);
     };
     TriangleChannel.prototype.endFrame = function (time) {
         this.run(time);
@@ -1807,32 +2219,31 @@ exports.TriangleChannel = TriangleChannel;
 
 
 /***/ }),
-/* 9 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var NoiseChannel = /** @class */ (function () {
-    function NoiseChannel(bleeper, chan) {
-        this.bleeper = null;
+    function NoiseChannel(chan, onWriteAudio) {
+        this.onWriteAudio = onWriteAudio;
+        this.playing = true;
+        this.output = 0;
+        this.period = 0;
+        this.enabled = false;
         this.chan = 0;
         this.noisePeriods = [4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068];
         this.lengthCounts = [10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30];
         this.time = 0;
         this.envConstantVolume = false;
         this.envVolume = 0;
-        this.amplitude = 0;
         this.phase = 0;
         this.envTimer = 0;
         this.envStart = false;
         this.length = 0;
-        this.period = 0;
         this.volume = 0;
         this.looping = false;
-        this.gain = 0;
-        this.enabled = true;
-        this.bleeper = bleeper;
         this.chan = chan;
         this.phase = 1;
         this.envTimer = 15;
@@ -1867,34 +2278,31 @@ var NoiseChannel = /** @class */ (function () {
         }
     };
     NoiseChannel.prototype.run = function (end_time) {
+        if (!this.playing) {
+            this.time = end_time;
+            this.output = 0;
+            return;
+        }
         var volume = this.envConstantVolume ? this.volume : this.envVolume;
         if (this.length === 0) {
             volume = 0;
         }
         if (this.period === 0) {
             this.time = end_time;
-            this.updateAmplitude(0);
+            this.output = 0;
+            this.onWriteAudio(this.time);
             return;
         }
         if (this.phase === 0) {
             this.phase = 1;
         }
         for (; this.time < end_time; this.time += this.period) {
-            var new15;
-            if (this.looping) {
-                new15 = ((this.phase & 1) ^ ((this.phase >> 6) & 1));
-            }
-            else {
-                new15 = ((this.phase & 1) ^ ((this.phase >> 1) & 1));
-            }
-            this.updateAmplitude(this.phase & 1 * volume);
+            var new15 = this.looping ? ((this.phase & 1) ^ ((this.phase >> 6) & 1))
+                : ((this.phase & 1) ^ ((this.phase >> 1) & 1));
+            this.output = this.phase & 1 * volume;
+            this.onWriteAudio(this.time);
             this.phase = ((this.phase >> 1) | (new15 << 14)) & 0xffff;
         }
-    };
-    NoiseChannel.prototype.updateAmplitude = function (amp) {
-        var delta = amp * this.gain - this.amplitude;
-        this.amplitude += delta;
-        this.bleeper.blip_add_delta(this.time, delta);
     };
     NoiseChannel.prototype.endFrame = function (time) {
         this.run(time);
@@ -1934,7 +2342,7 @@ exports.NoiseChannel = NoiseChannel;
 
 
 /***/ }),
-/* 10 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1968,34 +2376,28 @@ var ChiChiPPU = /** @class */ (function () {
         this.nameTableMemoryStart = 0;
         this.backgroundPatternTableIndex = 0;
         //PPU implementation
-        this._PPUAddress = 0;
-        this._PPUStatus = 0;
-        this._PPUControlByte0 = 0;
-        this._PPUControlByte1 = 0;
-        this._spriteAddress = 0;
+        this.address = 0;
+        this.status = 0;
+        this.controlByte0 = 0;
+        this.controlByte1 = 0;
+        this.spriteAddress = 0;
         this.currentXPosition = 0;
         this.currentYPosition = 0;
-        this._hScroll = 0;
-        this._vScroll = 0;
+        this.hScroll = 0;
+        this.vScroll = 0;
         this.lockedHScroll = 0;
         this.lockedVScroll = 0;
-        //private scanlineNum = 0;
-        //private scanlinePos = 0;
         this.shouldRender = false;
-        //private NMIHasBeenThrownThisFrame = false;
-        this._frames = 0;
+        this.framesRun = 0;
         this.hitSprite = false;
-        this.PPUAddressLatchIsHigh = true;
-        this.p32 = new Uint32Array(256); // System.Array.init(256, 0, System.Int32);
+        this.addressLatchIsHigh = true;
         this.isRendering = true;
         this.frameClock = 0;
-        this.FrameEnded = false;
+        this.oddFrame = true;
         this.frameOn = false;
-        //private framePalette = System.Array.init(256, 0, System.Int32);
         this.nameTableBits = 0;
-        this.vidRamIsRam = true;
-        this._palette = new Uint8Array(32); // System.Array.init(32, 0, System.Int32);
-        this._openBus = 0;
+        this.palette = new Uint8Array(32);
+        this.openBus = 0;
         this.sprite0scanline = 0;
         this.sprite0x = 0;
         this._maxSpritesPerScanline = 64;
@@ -2010,26 +2412,13 @@ var ChiChiPPU = /** @class */ (function () {
         this.patternEntry = 0;
         this.patternEntryByte2 = 0;
         this.byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
-        this.oddFrame = true;
         this.initSprites();
     }
-    Object.defineProperty(ChiChiPPU.prototype, "NextEventAt", {
-        get: function () {
-            if (this.frameClock < 6820) {
-                return (6820 - this.frameClock) / 3;
-            }
-            else {
-                return (((89345 - this.frameClock) / 341) / 3);
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
     ChiChiPPU.prototype.GetPPUStatus = function () {
         return {
-            status: this._PPUStatus,
-            controlByte0: this._PPUControlByte0,
-            controlByte1: this._PPUControlByte1,
+            status: this.status,
+            controlByte0: this.controlByte0,
+            controlByte1: this.controlByte1,
             nameTableStart: this.nameTableMemoryStart,
             currentTile: this.currentTileIndex,
             lockedVScroll: this.lockedVScroll,
@@ -2048,7 +2437,7 @@ var ChiChiPPU = /** @class */ (function () {
     Object.defineProperty(ChiChiPPU.prototype, "SpritePatternTableIndex", {
         get: function () {
             var spritePatternTable = 0;
-            if ((this._PPUControlByte0 & 32) === 32) {
+            if ((this.controlByte0 & 32) === 32) {
                 spritePatternTable = 4096;
             }
             return spritePatternTable;
@@ -2057,142 +2446,119 @@ var ChiChiPPU = /** @class */ (function () {
         configurable: true
     });
     ChiChiPPU.prototype.Initialize = function () {
-        this._PPUAddress = 0;
-        this._PPUStatus = 0;
-        this._PPUControlByte0 = 0;
-        this._PPUControlByte1 = 0;
-        this._hScroll = 0;
-        this._vScroll = 0;
+        this.address = 0;
+        this.status = 0;
+        this.controlByte0 = 0;
+        this.controlByte1 = 0;
+        this.hScroll = 0;
+        this.vScroll = 0;
         //this.scanlineNum = 0;
         //this.scanlinePos = 0;
-        this._spriteAddress = 0;
+        this.spriteAddress = 0;
         this.initSprites();
     };
-    ChiChiPPU.prototype.WriteState = function (writer) {
-        throw new Error('Method not implemented.');
-    };
-    ChiChiPPU.prototype.ReadState = function (state) {
-        throw new Error('Method not implemented.');
-    };
-    Object.defineProperty(ChiChiPPU.prototype, "NMIIsThrown", {
-        get: function () {
-            return (this._PPUControlByte0 & 128) === 128;
-        },
-        enumerable: true,
-        configurable: true
-    });
     ChiChiPPU.prototype.setupVINT = function () {
-        this._PPUStatus = this._PPUStatus | 128;
-        this._frames = this._frames + 1;
-        if (this._PPUControlByte0 & 128) {
+        this.status = this.status | 128;
+        this.framesRun = this.framesRun + 1;
+        if (this.controlByte0 & 128) {
             this.cpu._handleNMI = true;
         }
-    };
-    ChiChiPPU.prototype.VidRAM_GetNTByte = function (address) {
-        var result = 0;
-        if (address >= 8192 && address < 12288) {
-            result = this.memoryMap.getPPUByte(0, address);
-        }
-        else {
-            result = this.memoryMap.getPPUByte(0, address);
-        }
-        return result;
     };
     ChiChiPPU.prototype.SetByte = function (Clock, address, data) {
         switch (address & 7) {
             case 0:
-                this._PPUControlByte0 = data;
-                this._openBus = data;
-                this.nameTableBits = this._PPUControlByte0 & 3;
-                this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
+                this.controlByte0 = data;
+                this.openBus = data;
+                this.nameTableBits = this.controlByte0 & 3;
+                this.backgroundPatternTableIndex = ((this.controlByte0 & 16) >> 4) * 0x1000;
                 this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 break;
             case 1:
                 this.isRendering = (data & 0x18) !== 0;
-                this._PPUControlByte1 = data;
-                this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
-                this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
-                this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
-                this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
-                this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
-                this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
+                this.controlByte1 = data;
+                this.emphasisBits = (this.controlByte1 >> 5) & 7;
+                this.greyScale = (this.controlByte1 & 0x1) === 0x1;
+                this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+                this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+                this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
+                this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
                 break;
             case 2:
                 this.ppuReadBuffer = data;
-                this._openBus = data;
+                this.openBus = data;
                 break;
             case 3:
-                this._spriteAddress = data & 0xFF;
-                this._openBus = this._spriteAddress;
+                this.spriteAddress = data & 0xFF;
+                this.openBus = this.spriteAddress;
                 break;
             case 4:
-                this.spriteRAM[this._spriteAddress] = data;
-                this._spriteAddress = (this._spriteAddress + 1) & 255;
-                this.unpackedSprites[this._spriteAddress >> 2].Changed = true;
+                this.spriteRAM[this.spriteAddress] = data;
+                this.spriteAddress = (this.spriteAddress + 1) & 255;
+                this.unpackedSprites[this.spriteAddress >> 2].Changed = true;
                 this.spriteChanges = true;
                 break;
             case 5:
-                if (this.PPUAddressLatchIsHigh) {
-                    this._hScroll = data;
-                    this.lockedHScroll = this._hScroll & 7;
-                    this.PPUAddressLatchIsHigh = false;
+                if (this.addressLatchIsHigh) {
+                    this.hScroll = data;
+                    this.lockedHScroll = this.hScroll & 7;
+                    this.addressLatchIsHigh = false;
                 }
                 else {
-                    this._vScroll = data;
+                    this.vScroll = data;
                     if (data > 240) {
-                        this._vScroll = data - 256;
+                        this.vScroll = data - 256;
                     }
                     if (!this.frameOn || (this.frameOn && !this.isRendering)) {
-                        this.lockedVScroll = this._vScroll;
+                        this.lockedVScroll = this.vScroll;
                     }
-                    this.PPUAddressLatchIsHigh = true;
+                    this.addressLatchIsHigh = true;
                     this.UpdatePixelInfo();
                 }
                 break;
             case 6:
-                if (this.PPUAddressLatchIsHigh) {
-                    this._PPUAddress = (this._PPUAddress & 0xFF) | ((data & 0x3F) << 8);
-                    this.PPUAddressLatchIsHigh = false;
+                if (this.addressLatchIsHigh) {
+                    this.address = (this.address & 0xFF) | ((data & 0x3F) << 8);
+                    this.addressLatchIsHigh = false;
                 }
                 else {
-                    this._PPUAddress = (this._PPUAddress & 0x7F00) | data & 0xFF;
-                    this.PPUAddressLatchIsHigh = true;
-                    this._hScroll = ((this._PPUAddress & 0x1f) << 3);
-                    this._vScroll = (((this._PPUAddress >> 5) & 0x1f) << 3);
-                    this._vScroll |= ((this._PPUAddress >> 12) & 3);
+                    this.address = (this.address & 0x7F00) | data & 0xFF;
+                    this.addressLatchIsHigh = true;
+                    this.hScroll = ((this.address & 0x1f) << 3);
+                    this.vScroll = (((this.address >> 5) & 0x1f) << 3);
+                    this.vScroll |= ((this.address >> 12) & 3);
                     if (this.frameOn) {
-                        this.lockedHScroll = this._hScroll;
-                        this.lockedVScroll = this._vScroll;
+                        this.lockedHScroll = this.hScroll;
+                        this.lockedVScroll = this.vScroll;
                         this.lockedVScroll = this.lockedVScroll - this.currentYPosition;
                     }
-                    this.nameTableBits = ((this._PPUAddress >> 10) & 3);
+                    this.nameTableBits = ((this.address >> 10) & 3);
                     this.nameTableMemoryStart = this.nameTableBits * 0x400;
                 }
                 break;
             case 7:
-                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
-                    var palAddress = (this._PPUAddress) & 0x1F;
-                    this._palette[palAddress] = data;
-                    if ((this._PPUAddress & 0xFFEF) === 0x3F00) {
-                        this._palette[(palAddress ^ 16) & 0x1F] = data;
+                if ((this.address & 0xFF00) === 0x3F00) {
+                    var palAddress = (this.address) & 0x1F;
+                    this.palette[palAddress] = data;
+                    if ((this.address & 0xFFEF) === 0x3F00) {
+                        this.palette[(palAddress ^ 16) & 0x1F] = data;
                     }
                 }
                 else {
                     // if ((this._PPUAddress & 0xF000) === 0x2000) {
                     //     this.memoryMap.setPPUByte(Clock, this._PPUAddress, data);
                     // }
-                    this.memoryMap.setPPUByte(Clock, this._PPUAddress, data);
+                    this.memoryMap.setPPUByte(Clock, this.address, data);
                 }
                 // if controlbyte0.4, set ppuaddress + 32, else inc
-                if ((this._PPUControlByte0 & 4) === 4) {
-                    this._PPUAddress = (this._PPUAddress + 32);
+                if ((this.controlByte0 & 4) === 4) {
+                    this.address = (this.address + 32);
                 }
                 else {
-                    this._PPUAddress = (this._PPUAddress + 1);
+                    this.address = (this.address + 1);
                 }
                 // reset the flag which makex xxx6 set the high byte of address
-                this.PPUAddressLatchIsHigh = true;
-                this._PPUAddress = (this._PPUAddress & 0x3FFF);
+                this.addressLatchIsHigh = true;
+                this.address = (this.address & 0x3FFF);
                 break;
         }
     };
@@ -2203,46 +2569,46 @@ var ChiChiPPU = /** @class */ (function () {
             case 1:
             case 5:
             case 6:
-                return this._openBus;
+                return this.openBus;
             case 2:
                 var ret = 0;
-                this.PPUAddressLatchIsHigh = true;
-                ret = (this.ppuReadBuffer & 0x1F) | this._PPUStatus;
+                this.addressLatchIsHigh = true;
+                ret = (this.ppuReadBuffer & 0x1F) | this.status;
                 if ((ret & 0x80) === 0x80) {
-                    this._PPUStatus = this._PPUStatus & ~0x80;
+                    this.status = this.status & ~0x80;
                 }
                 return ret;
             case 4:
-                return this.spriteRAM[this._spriteAddress];
+                return this.spriteRAM[this.spriteAddress];
             case 7:
                 var tmp = 0;
-                if ((this._PPUAddress & 0xFF00) === 0x3F00) {
-                    tmp = this._palette[this._PPUAddress & 0x1F];
-                    this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress - 4096);
+                if ((this.address & 0xFF00) === 0x3F00) {
+                    tmp = this.palette[this.address & 0x1F];
+                    this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this.address - 4096);
                 }
                 else {
                     tmp = this.ppuReadBuffer;
-                    if (this._PPUAddress >= 0x2000 && this._PPUAddress <= 0x2FFF) {
-                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress);
+                    if (this.address >= 0x2000 && this.address <= 0x2FFF) {
+                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this.address);
                     }
                     else {
-                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this._PPUAddress & 0x3FFF);
+                        this.ppuReadBuffer = this.memoryMap.getPPUByte(Clock, this.address & 0x3FFF);
                     }
                 }
-                if ((this._PPUControlByte0 & 4) === 4) {
-                    this._PPUAddress = this._PPUAddress + 32;
+                if ((this.controlByte0 & 4) === 4) {
+                    this.address = this.address + 32;
                 }
                 else {
-                    this._PPUAddress = this._PPUAddress + 1;
+                    this.address = this.address + 1;
                 }
-                this._PPUAddress = (this._PPUAddress & 0x3FFF);
+                this.address = (this.address & 0x3FFF);
                 return tmp;
         }
         return 0;
     };
     ChiChiPPU.prototype.copySprites = function (copyFrom) {
         for (var i = 0; i < 256; ++i) {
-            var spriteLocation = (this._spriteAddress + i) & 255;
+            var spriteLocation = (this.spriteAddress + i) & 255;
             if (this.spriteRAM[spriteLocation] !== this.memoryMap.Rams[copyFrom + i]) {
                 this.spriteRAM[spriteLocation] = this.memoryMap.Rams[copyFrom + i];
                 this.unpackedSprites[(spriteLocation >> 2) & 255].Changed = true;
@@ -2272,14 +2638,14 @@ var ChiChiPPU = /** @class */ (function () {
             var currSprite = this.currentSprites[i];
             if (currSprite.XPosition > 0 && this.currentXPosition >= currSprite.XPosition && this.currentXPosition < currSprite.XPosition + 8) {
                 var spritePatternTable = 0;
-                if ((this._PPUControlByte0 & 8) === 8) {
+                if ((this.controlByte0 & 8) === 8) {
                     spritePatternTable = 4096;
                 }
                 xPos = this.currentXPosition - currSprite.XPosition;
                 yLine = this.currentYPosition - currSprite.YPosition - 1;
                 yLine = yLine & (this.spriteSize - 1);
                 tileIndex = currSprite.TileIndex;
-                if ((this._PPUControlByte0 & 32) === 32) {
+                if ((this.controlByte0 & 32) === 32) {
                     if ((tileIndex & 1) === 1) {
                         spritePatternTable = 4096;
                         tileIndex = tileIndex ^ 1;
@@ -2330,7 +2696,7 @@ var ChiChiPPU = /** @class */ (function () {
         this.sprite0scanline = -1;
         var yLine = this.currentYPosition - 1;
         for (var spriteNum = 0; spriteNum < 256; spriteNum += 4) {
-            var spriteID = ((spriteNum + this._spriteAddress) & 0xff) >> 2;
+            var spriteID = ((spriteNum + this.spriteAddress) & 0xff) >> 2;
             var y = this.unpackedSprites[spriteID].YPosition + 1;
             if (scanline >= y && scanline < y + this.spriteSize) {
                 if (spriteID === 0) {
@@ -2352,7 +2718,7 @@ var ChiChiPPU = /** @class */ (function () {
             }
         }
         if (this.spritesOnThisScanline > 7) {
-            this._PPUStatus = this._PPUStatus | 32;
+            this.status = this.status | 32;
         }
     };
     ChiChiPPU.prototype.unpackSprites = function () {
@@ -2418,7 +2784,7 @@ var ChiChiPPU = /** @class */ (function () {
                     this.currentYPosition = 0;
                     this.xNTXor = 0;
                     this.yNTXor = 0;
-                    if ((this._PPUControlByte1 & 0x18) !== 0) {
+                    if ((this.controlByte1 & 0x18) !== 0) {
                         this.oddFrame = !this.oddFrame;
                         this.isRendering = true;
                     }
@@ -2432,9 +2798,9 @@ var ChiChiPPU = /** @class */ (function () {
                     this.setupVINT();
                     break;
                 case 89002:
-                    this._PPUStatus = 0;
+                    this.status = 0;
                     this.hitSprite = false;
-                    this.spriteSize = ((this._PPUControlByte0 & 0x20) === 0x20) ? 16 : 8;
+                    this.spriteSize = ((this.controlByte0 & 0x20) === 0x20) ? 16 : 8;
                     if (this.spriteChanges) {
                         this.unpackSprites();
                         this.spriteChanges = false;
@@ -2475,24 +2841,22 @@ var ChiChiPPU = /** @class */ (function () {
                     var spritePixel = spriteVis ? this.getSpritePixel() : 0;
                     if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
                         this.hitSprite = true;
-                        this._PPUStatus = this._PPUStatus | 64;
+                        this.status = this.status | 64;
                     }
-                    this.byteOutBuffer[this.vbufLocation * 4] = this._palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+                    this.byteOutBuffer[this.vbufLocation * 4] = this.palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
                     this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
                     this.vbufLocation++;
                 }
-                // if (this.currentXPosition === 324) {
-                //     this.memoryMap.advanceScanline(1);
-                // }
                 this.currentXPosition++;
                 if (this.currentXPosition > 340) {
                     this.currentXPosition = 0;
                     this.currentYPosition++;
                     this.preloadSprites(this.currentYPosition);
                     if (this.spritesOnThisScanline >= 7) {
-                        this._PPUStatus = this._PPUStatus | 32;
+                        this.status = this.status | 32;
                     }
-                    this.lockedHScroll = this._hScroll;
+                    this.lockedHScroll = this.hScroll;
+                    this.memoryMap.advanceScanline(1);
                     this.UpdatePixelInfo();
                     //RunNewScanlineEvents 
                     this.yPosition = this.currentYPosition + this.lockedVScroll;
@@ -2517,50 +2881,101 @@ var ChiChiPPU = /** @class */ (function () {
     ChiChiPPU.prototype.UpdatePixelInfo = function () {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;
     };
-    Object.defineProperty(ChiChiPPU.prototype, "state", {
-        get: function () {
-            return {
-                _PPUControlByte0: this._PPUControlByte0,
-                _PPUControlByte1: this._PPUControlByte1,
-                _PPUAddress: this._PPUAddress,
-                _PPUStatus: this._PPUStatus,
-                _spriteAddress: this._spriteAddress,
-                currentXPosition: this.currentXPosition,
-                currentYPosition: this.currentYPosition,
-                _hScroll: this._hScroll,
-                _vScroll: this._vScroll,
-                lockedHScroll: this.lockedHScroll,
-                lockedVScroll: this.lockedVScroll,
-                spriteRAM: this.spriteRAM.slice()
-            };
-        },
-        set: function (value) {
-            this._PPUControlByte0 = value._PPUControlByte0;
-            this._PPUControlByte1 = value._PPUControlByte1;
-            this._PPUAddress = value._PPUAddress;
-            this._PPUStatus = value._PPUStatus;
-            this._spriteAddress = value._spriteAddress;
-            this.currentXPosition = value.currentXPosition;
-            this.currentYPosition = value.currentYPosition;
-            this._hScroll = value._hScroll;
-            this._vScroll = value._vScroll;
-            this.lockedHScroll = value.lockedHScroll;
-            this.lockedVScroll = value.lockedVScroll;
-            for (var i = 0; i < this.spriteRAM.length; ++i) {
-                this.spriteRAM[i] = value.spriteRAM[i];
-            }
-            this.nameTableBits = this._PPUControlByte0 & 3;
-            this.backgroundPatternTableIndex = ((this._PPUControlByte0 & 16) >> 4) * 0x1000;
-            this.greyScale = (this._PPUControlByte1 & 0x1) === 0x1;
-            this.emphasisBits = (this._PPUControlByte1 >> 5) & 7;
-            this._spritesAreVisible = (this._PPUControlByte1 & 0x10) === 0x10;
-            this._tilesAreVisible = (this._PPUControlByte1 & 0x08) === 0x08;
-            this._clipTiles = (this._PPUControlByte1 & 0x02) !== 0x02;
-            this._clipSprites = (this._PPUControlByte1 & 0x04) !== 0x04;
-        },
-        enumerable: true,
-        configurable: true
-    });
+    // get state(): IChiChiPPUState {
+    //     return {
+    //         controlByte0:  this.controlByte0,
+    //         controlByte1:  this.controlByte1,
+    //         address: this.address,
+    //         status: this.status,
+    //         spriteAddress: this.spriteAddress,
+    //         currentXPosition: this.currentXPosition,
+    //         currentYPosition: this.currentYPosition,
+    //         hScroll: this.hScroll,
+    //         vScroll: this.vScroll,
+    //         lockedHScroll: this.lockedHScroll,
+    //         lockedVScroll: this.lockedVScroll,           
+    //         spriteRAM:  this.spriteRAM.slice()
+    //     };
+    // }
+    // set state(value: IChiChiPPUState) {
+    //     this.controlByte0 = value.controlByte0;
+    //     this.controlByte1  = value.controlByte1;
+    //     this.address = value.address;
+    //     this.status = value.status;
+    //     this.spriteAddress = value.spriteAddress;
+    //     this.currentXPosition = value.currentXPosition;
+    //     this.currentYPosition = value.currentYPosition;
+    //     this.hScroll = value.hScroll;
+    //     this.vScroll = value.vScroll;
+    //     this.lockedHScroll = value.lockedHScroll;
+    //     this.lockedVScroll = value.lockedVScroll;
+    //     for (let i = 0; i < this.spriteRAM.length; ++i) {
+    //         this.spriteRAM[i] = value.spriteRAM[i];
+    //     }
+    //     this.nameTableBits = this.controlByte0 & 3;
+    //     this.backgroundPatternTableIndex = ((this.controlByte0 & 16) >> 4) * 0x1000;
+    //     this.greyScale = (this.controlByte1 & 0x1) === 0x1;
+    //     this.emphasisBits = (this.controlByte1 >> 5) & 7;
+    //     this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
+    //     this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
+    //     this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+    //     this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+    // }
+    ChiChiPPU.prototype.setupStateBuffer = function (sb) {
+        var _this = this;
+        sb.onRestore.subscribe(function (buffer) {
+            _this.attachStateBuffer(buffer);
+        });
+        sb.onSync.subscribe(function (buffer) {
+            _this.updateStateBuffer(buffer);
+        });
+        sb.pushSegment(256 * Uint8Array.BYTES_PER_ELEMENT, 'spriteram')
+            .pushSegment(2, 'ppuaddress')
+            .pushSegment(2, 'spriteaddress')
+            .pushSegment(2, 'ppucontrolbytes')
+            .pushSegment(2, 'ppustatus')
+            .pushSegment(2, 'hvscroll')
+            .pushSegment(2, 'lockedhvscroll');
+        return sb;
+    };
+    ChiChiPPU.prototype.attachStateBuffer = function (sb) {
+        var seg = sb.getSegment('spriteram');
+        this.spriteRAM = new Uint8Array(seg.buffer, seg.start, seg.size);
+        this.address = sb.getUint16Array('ppuaddress')[0];
+        this.spriteAddress = sb.getUint8Array('spriteaddress')[0];
+        var cbytes = sb.getUint8Array('ppucontrolbytes');
+        this.controlByte0 = cbytes[0];
+        this.controlByte1 = cbytes[1];
+        this.status = sb.getUint8Array('ppustatus')[0];
+        var scroll = sb.getUint8Array('hvscroll');
+        this.hScroll = scroll[0];
+        this.vScroll = scroll[1];
+        var lscroll = sb.getUint8Array('lockedhvscroll');
+        this.lockedHScroll = lscroll[0];
+        this.lockedVScroll = lscroll[1];
+        this.nameTableBits = this.controlByte0 & 3;
+        this.backgroundPatternTableIndex = ((this.controlByte0 & 16) >> 4) * 0x1000;
+        this.greyScale = (this.controlByte1 & 0x1) === 0x1;
+        this.emphasisBits = (this.controlByte1 >> 5) & 7;
+        this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
+        this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
+        this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+        this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+    };
+    ChiChiPPU.prototype.updateStateBuffer = function (sb) {
+        sb.getUint16Array('ppuaddress')[0] = this.address;
+        sb.getUint8Array('spriteaddress')[0] = this.spriteAddress;
+        var cbytes = sb.getUint8Array('ppucontrolbytes');
+        cbytes[0] = this.controlByte0;
+        cbytes[1] = this.controlByte1;
+        sb.getUint8Array('ppustatus')[0] = this.status;
+        var scroll = sb.getUint8Array('hvscroll');
+        scroll[0] = this.hScroll;
+        scroll[1] = this.vScroll;
+        var lscroll = sb.getUint8Array('lockedhvscroll');
+        lscroll[0] = this.lockedHScroll;
+        lscroll[1] = this.lockedVScroll;
+    };
     ChiChiPPU.pal = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     return ChiChiPPU;
 }());
@@ -2568,14 +2983,14 @@ exports.ChiChiPPU = ChiChiPPU;
 
 
 /***/ }),
-/* 11 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiControl_1 = __webpack_require__(12);
+var ChiChiControl_1 = __webpack_require__(19);
 //chichipig
 var ChiChiCPPU = /** @class */ (function () {
     function ChiChiCPPU(bopper, ppu) {
@@ -2760,12 +3175,7 @@ var ChiChiCPPU = /** @class */ (function () {
         this._programCounter = jumpTo;
         //nonOpCodeticks = 7;
     };
-    ChiChiCPPU.prototype.Step = function () {
-        //let tickCount = 0;
-        if (this.borrowedCycles) {
-            this.advanceClock(this.borrowedCycles);
-            this.borrowedCycles = 0;
-        }
+    ChiChiCPPU.prototype.step = function () {
         this._currentInstruction_ExtraTiming = 0;
         if (this._handleNMI) {
             this.advanceClock(7);
@@ -2781,15 +3191,17 @@ var ChiChiCPPU = /** @class */ (function () {
         this._programCounter = (this._programCounter + 1) & 0xffff;
         this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
         this.fetchInstructionParameters();
-        this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
         this.execute();
+        this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
         this.advanceClock(this._currentInstruction_ExtraTiming);
-        //("{0:x} {1:x} {2:x}", _currentInstruction_OpCode, _currentInstruction_AddressingMode, _currentInstruction_Address);
+        if (this.borrowedCycles) {
+            this.advanceClock(this.borrowedCycles);
+            this.borrowedCycles = 0;
+        }
         if (this._debugging) {
-            this.WriteInstructionHistoryAndUsage();
+            this.writeInstructionHistory();
             this._operationCounter++;
         }
-        //this.clock += ;
     };
     ChiChiCPPU.prototype.fetchInstructionParameters = function () {
         switch (this._currentInstruction_AddressingMode) {
@@ -2950,7 +3362,7 @@ var ChiChiCPPU = /** @class */ (function () {
             case 124:
             case 220:
             case 252:
-                //SKB, SKW, DOP, - undocumented noops
+                // SKB, SKW, DOP, - undocumented noops
                 this.decodeAddress();
                 break;
             case 105:
@@ -3054,28 +3466,19 @@ var ChiChiCPPU = /** @class */ (function () {
                 }
                 break;
             case 16:
-                //BPL();
+                // BPL();
                 if ((this._statusRegister & 128) !== 128) {
                     this.branch();
                 }
                 break;
             case 0:
-                //BRK();
-                //BRK causes a non-maskable interrupt and increments the program counter by one. 
-                //Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to replace a two-byte instruction 
-                // for debugging and the subsequent RTI will be correct. 
-                // push pc onto stack (high byte first)
+                // BRK();
                 this._programCounter = this._programCounter + 1;
                 this.pushStack(this._programCounter >> 8 & 0xFF);
                 this.pushStack(this._programCounter & 0xFF);
-                // push sr onto stack
-                //PHP and BRK push the current status with bits 4 and 5 set on the stack; 
                 data = this._statusRegister | 16 | 32;
                 this.pushStack(data);
-                // set interrupt disable, and break flags
-                // BRK then sets the I flag.
                 this._statusRegister = this._statusRegister | 20;
-                // point pc to interrupt service routine
                 this._addressBus = 65534;
                 lowByte = this.GetByte(this._addressBus);
                 this._addressBus = 65535;
@@ -3083,31 +3486,31 @@ var ChiChiCPPU = /** @class */ (function () {
                 this._programCounter = lowByte + highByte * 256;
                 break;
             case 80:
-                //BVC();
+                // BVC();
                 if ((this._statusRegister & 64) !== 64) {
                     this.branch();
                 }
                 break;
             case 112:
-                //BVS();
+                // BVS();
                 if ((this._statusRegister & 64) === 64) {
                     this.branch();
                 }
                 break;
             case 24:
-                //CLC();
+                // CLC();
                 this.setFlag(this.SRMasks_CarryMask, false);
                 break;
             case 216:
-                //CLD();
+                // CLD();
                 this.setFlag(this.SRMasks_DecimalModeMask, false);
                 break;
             case 88:
-                //CLI();
+                // CLI();
                 this.setFlag(this.SRMasks_InterruptDisableMask, false);
                 break;
             case 184:
-                //CLV();
+                // CLV();
                 this.setFlag(this.SRMasks_OverflowMask, false);
                 break;
             case 201:
@@ -3118,21 +3521,21 @@ var ChiChiCPPU = /** @class */ (function () {
             case 217:
             case 193:
             case 209:
-                //CMP();
+                // CMP();
                 data = (this._accumulator + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
             case 224:
             case 228:
             case 236:
-                //CPX();
+                // CPX();
                 data = (this._indexRegisterX + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
             case 192:
             case 196:
             case 204:
-                //CPY();
+                // CPY();
                 data = (this._indexRegisterY + 256 - this.decodeOperand());
                 this.compare(data);
                 break;
@@ -3140,14 +3543,14 @@ var ChiChiCPPU = /** @class */ (function () {
             case 214:
             case 206:
             case 222:
-                //DEC();
+                // DEC();
                 data = this.decodeOperand();
                 data = (data - 1) & 0xFF;
                 this.SetByte(this.decodeAddress(), data);
                 this.setZNFlags(data);
                 break;
             case 202:
-                //DEX();
+                // DEX();
                 this._indexRegisterX = this._indexRegisterX - 1;
                 this._indexRegisterX = this._indexRegisterX & 0xFF;
                 this.setZNFlags(this._indexRegisterX);
@@ -3166,7 +3569,7 @@ var ChiChiCPPU = /** @class */ (function () {
             case 89:
             case 65:
             case 81:
-                //EOR();
+                // EOR();
                 this._accumulator = (this._accumulator ^ this.decodeOperand());
                 this.setZNFlags(this._accumulator);
                 break;
@@ -3174,7 +3577,7 @@ var ChiChiCPPU = /** @class */ (function () {
             case 246:
             case 238:
             case 254:
-                //INC();
+                // INC();
                 data = this.decodeOperand();
                 data = (data + 1) & 0xFF;
                 this.SetByte(this.decodeAddress(), data);
@@ -3605,7 +4008,7 @@ var ChiChiCPPU = /** @class */ (function () {
         //_instructionHistory = new Instruction[0x100];
         this.instructionHistoryPointer = 0xFF;
     };
-    ChiChiCPPU.prototype.WriteInstructionHistoryAndUsage = function () {
+    ChiChiCPPU.prototype.writeInstructionHistory = function () {
         var inst = new ChiChiTypes_1.ChiChiInstruction();
         inst.time = this.systemClock;
         inst.A = this._accumulator;
@@ -3638,60 +4041,92 @@ var ChiChiCPPU = /** @class */ (function () {
             SR: this._statusRegister
         };
     };
-    Object.defineProperty(ChiChiCPPU.prototype, "state", {
-        get: function () {
-            return {
-                clock: this.clock,
-                _statusRegister: this._statusRegister,
-                _programCounter: this._programCounter,
-                _handleNMI: this._handleNMI,
-                _handleIRQ: this._handleIRQ,
-                _addressBus: this._addressBus,
-                _dataBus: this._dataBus,
-                _operationCounter: this._operationCounter,
-                _accumulator: this._accumulator,
-                _indexRegisterX: this._indexRegisterX,
-                _indexRegisterY: this._indexRegisterY,
-                _currentInstruction_AddressingMode: this._currentInstruction_AddressingMode,
-                _currentInstruction_Address: this._currentInstruction_Address,
-                _currentInstruction_OpCode: this._currentInstruction_OpCode,
-                _currentInstruction_Parameters0: this._currentInstruction_Parameters0,
-                _currentInstruction_Parameters1: this._currentInstruction_Parameters1,
-                _currentInstruction_ExtraTiming: this._currentInstruction_ExtraTiming,
-                systemClock: this.systemClock,
-                nextEvent: this.nextEvent,
-                Debugging: this.Debugging,
-                cheating: this.cheating,
-                genieCodes: this.genieCodes
-            };
-        },
-        set: function (value) {
-            this.clock = value.clock,
-                this._statusRegister = value._statusRegister,
-                this._programCounter = value._programCounter,
-                this._handleNMI = value._handleNMI,
-                this._handleIRQ = value._handleIRQ,
-                this._addressBus = value._addressBus,
-                this._dataBus = value._dataBus,
-                this._operationCounter = value._operationCounter,
-                this._accumulator = value._accumulator,
-                this._indexRegisterX = value._indexRegisterX,
-                this._indexRegisterY = value._indexRegisterY,
-                this._currentInstruction_AddressingMode = value._currentInstruction_AddressingMode,
-                this._currentInstruction_Address = value._currentInstruction_Address,
-                this._currentInstruction_OpCode = value._currentInstruction_OpCode,
-                this._currentInstruction_Parameters0 = value._currentInstruction_Parameters0,
-                this._currentInstruction_Parameters1 = value._currentInstruction_Parameters1,
-                this._currentInstruction_ExtraTiming = value._currentInstruction_ExtraTiming,
-                this.systemClock = value.systemClock,
-                this.nextEvent = value.nextEvent,
-                this.Debugging = value.Debugging,
-                this.cheating = value.cheating,
-                this.genieCodes = value.genieCodes;
-        },
-        enumerable: true,
-        configurable: true
-    });
+    // get state(): IChiChiCPPUState {
+    //     return {
+    //         clock: this.clock,
+    //         _statusRegister: this._statusRegister,
+    //         _programCounter: this._programCounter,
+    //         _handleNMI: this._handleNMI,
+    //         _handleIRQ: this._handleIRQ,
+    //         _addressBus: this._addressBus,
+    //         _dataBus: this._dataBus,
+    //         _operationCounter: this._operationCounter,
+    //         _accumulator: this._accumulator,
+    //         _indexRegisterX: this._indexRegisterX,
+    //         _indexRegisterY: this._indexRegisterY,
+    //         _currentInstruction_AddressingMode: this._currentInstruction_AddressingMode,
+    //         _currentInstruction_Address: this._currentInstruction_Address,
+    //         _currentInstruction_OpCode: this._currentInstruction_OpCode,
+    //         _currentInstruction_Parameters0: this._currentInstruction_Parameters0,
+    //         _currentInstruction_Parameters1: this._currentInstruction_Parameters1,
+    //         _currentInstruction_ExtraTiming: this._currentInstruction_ExtraTiming,
+    //         systemClock: this.systemClock,
+    //         nextEvent: this.nextEvent,
+    //         Debugging: this.Debugging,
+    //         cheating: this.cheating,
+    //         genieCodes: this.genieCodes
+    //     };
+    // }
+    // set state(value: IChiChiCPPUState) {
+    //     this.clock = value.clock,
+    //     this._statusRegister = value._statusRegister,
+    //     this._programCounter = value._programCounter,
+    //     this._handleNMI = value._handleNMI,
+    //     this._handleIRQ = value._handleIRQ,
+    //     this._addressBus = value._addressBus,
+    //     this._dataBus = value._dataBus,
+    //     this._operationCounter = value._operationCounter,
+    //     this._accumulator = value._accumulator,
+    //     this._indexRegisterX = value._indexRegisterX,
+    //     this._indexRegisterY = value._indexRegisterY,
+    //     this._currentInstruction_AddressingMode = value._currentInstruction_AddressingMode,
+    //     this._currentInstruction_Address = value._currentInstruction_Address,
+    //     this._currentInstruction_OpCode = value._currentInstruction_OpCode,
+    //     this._currentInstruction_Parameters0 = value._currentInstruction_Parameters0,
+    //     this._currentInstruction_Parameters1 = value._currentInstruction_Parameters1,
+    //     this._currentInstruction_ExtraTiming = value._currentInstruction_ExtraTiming,
+    //     this.systemClock = value.systemClock,
+    //     this.nextEvent = value.nextEvent,
+    //     this.Debugging = value.Debugging,
+    //     this.cheating = value.cheating,
+    //     this.genieCodes = value.genieCodes
+    // }
+    ChiChiCPPU.prototype.setupStateBuffer = function (sb) {
+        var _this = this;
+        sb.onRestore.subscribe(function (buffer) {
+            _this.attachStateBuffer(buffer);
+        });
+        sb.onSync.subscribe(function (buffer) {
+            _this.updateStateBuffer(buffer);
+        });
+        sb.pushSegment(1 * Uint16Array.BYTES_PER_ELEMENT, 'pc')
+            .pushSegment(2, 'acc')
+            .pushSegment(2, 'idx')
+            .pushSegment(2, 'idy')
+            .pushSegment(2, 'sp')
+            .pushSegment(2, 'sr');
+        return sb;
+    };
+    ChiChiCPPU.prototype.attachStateBuffer = function (sb) {
+        this._accumulator = sb.buffer[sb.getSegment('acc').start];
+        this._indexRegisterX = sb.buffer[sb.getSegment('idx').start];
+        this._indexRegisterY = sb.buffer[sb.getSegment('idy').start];
+        this._stackPointer = sb.buffer[sb.getSegment('sp').start];
+        this._statusRegister = sb.buffer[sb.getSegment('sr').start];
+        var seg = sb.getSegment('pc');
+        var pc = new Uint16Array(seg.buffer, seg.start, 1);
+        this._programCounter = pc[0];
+    };
+    ChiChiCPPU.prototype.updateStateBuffer = function (sb) {
+        sb.buffer[sb.getSegment('acc').start] = this._accumulator;
+        sb.buffer[sb.getSegment('idx').start] = this._indexRegisterX;
+        sb.buffer[sb.getSegment('idy').start] = this._indexRegisterY;
+        sb.buffer[sb.getSegment('sp').start] = this._stackPointer;
+        sb.buffer[sb.getSegment('sr').start] = this._statusRegister;
+        var seg = sb.getSegment('pc');
+        var pc = new Uint16Array(seg.buffer, seg.start, 1);
+        pc[0] = this._programCounter;
+    };
     // statics
     ChiChiCPPU.cpuTiming = [7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0];
     ChiChiCPPU.addressModes = [1, 12, 1, 0, 0, 4, 4, 0, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 4, 5, 5, 1, 1, 10, 1, 1, 8, 9, 9, 1, 8, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 9, 9, 9, 1, 1, 12, 1, 1, 1, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 1, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 11, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 15, 9, 9, 1, 7, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 1, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 8, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 9, 9, 10, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1];
@@ -3701,7 +4136,7 @@ exports.ChiChiCPPU = ChiChiCPPU;
 
 
 /***/ }),
-/* 12 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3762,7 +4197,7 @@ exports.ChiChiControlPad = ChiChiControlPad;
 
 
 /***/ }),
-/* 13 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3780,23 +4215,19 @@ var ChiChiStateManager = /** @class */ (function () {
     ChiChiStateManager.prototype.read = function (machine) {
         var state = new ChiChiState();
         state.apu = machine.SoundBopper.state;
-        state.ppu = machine.ppu.state;
-        state.cart = machine.Cart.state;
-        state.cpu = machine.Cpu.state;
+        // state.ppu = machine.ppu.state;
+        // state.cpu = machine.Cpu.state;
         return state;
     };
     ChiChiStateManager.prototype.write = function (machine, value) {
         if (value.ppu) {
-            machine.ppu.state = value.ppu;
+            // machine.ppu.state = value.ppu;
         }
         if (value.apu) {
             machine.SoundBopper.state = value.apu;
         }
-        if (value.cart) {
-            machine.Cart.state = value.cart;
-        }
         if (value.cpu) {
-            machine.Cpu.state = value.cpu;
+            // machine.Cpu.state = value.cpu;
         }
     };
     return ChiChiStateManager;
@@ -3805,7 +4236,7 @@ exports.ChiChiStateManager = ChiChiStateManager;
 
 
 /***/ }),
-/* 14 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3928,6 +4359,866 @@ var WorkerResponse = /** @class */ (function () {
 }());
 exports.WorkerResponse = WorkerResponse;
 
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Subject_1 = __webpack_require__(23);
+var BufferSegment = /** @class */ (function () {
+    function BufferSegment() {
+    }
+    return BufferSegment;
+}());
+exports.BufferSegment = BufferSegment;
+var StateBuffer = /** @class */ (function () {
+    function StateBuffer() {
+        this.segments = new Array();
+        this.bufferSize = 0;
+        this.onRestore = new Subject_1.Subject();
+        this.onSync = new Subject_1.Subject();
+    }
+    StateBuffer.prototype.pushSegment = function (size, name) {
+        var start = this.bufferSize;
+        this.segments.push({ name: name, start: start, size: size });
+        this.bufferSize += size;
+        return this;
+    };
+    StateBuffer.prototype.getSegment = function (name) {
+        var x = this.segments.find(function (seg) { return seg.name === name; });
+        return { buffer: this.buffer, start: x.start, size: x.size };
+    };
+    StateBuffer.prototype.getUint8Array = function (name) {
+        var x = this.segments.find(function (seg) { return seg.name === name; });
+        return new Uint8Array(this.buffer, x.start, x.size);
+    };
+    StateBuffer.prototype.getUint16Array = function (name) {
+        var x = this.segments.find(function (seg) { return seg.name === name; });
+        return new Uint16Array(this.buffer, x.start, x.size);
+    };
+    StateBuffer.prototype.build = function () {
+        this.buffer = new SharedArrayBuffer(this.bufferSize);
+        this.onRestore.next(this);
+        return this;
+    };
+    StateBuffer.prototype.syncBuffer = function (newBuf) {
+        this.buffer = newBuf;
+        this.onRestore.next(this);
+    };
+    return StateBuffer;
+}());
+exports.StateBuffer = StateBuffer;
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var Observable_1 = __webpack_require__(24);
+var Subscriber_1 = __webpack_require__(5);
+var Subscription_1 = __webpack_require__(2);
+var ObjectUnsubscribedError_1 = __webpack_require__(34);
+var SubjectSubscription_1 = __webpack_require__(35);
+var rxSubscriber_1 = __webpack_require__(3);
+/**
+ * @class SubjectSubscriber<T>
+ */
+var SubjectSubscriber = /** @class */ (function (_super) {
+    __extends(SubjectSubscriber, _super);
+    function SubjectSubscriber(destination) {
+        var _this = _super.call(this, destination) || this;
+        _this.destination = destination;
+        return _this;
+    }
+    return SubjectSubscriber;
+}(Subscriber_1.Subscriber));
+exports.SubjectSubscriber = SubjectSubscriber;
+/**
+ * @class Subject<T>
+ */
+var Subject = /** @class */ (function (_super) {
+    __extends(Subject, _super);
+    function Subject() {
+        var _this = _super.call(this) || this;
+        _this.observers = [];
+        _this.closed = false;
+        _this.isStopped = false;
+        _this.hasError = false;
+        _this.thrownError = null;
+        return _this;
+    }
+    Subject.prototype[rxSubscriber_1.rxSubscriber] = function () {
+        return new SubjectSubscriber(this);
+    };
+    Subject.prototype.lift = function (operator) {
+        var subject = new AnonymousSubject(this, this);
+        subject.operator = operator;
+        return subject;
+    };
+    Subject.prototype.next = function (value) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        if (!this.isStopped) {
+            var observers = this.observers;
+            var len = observers.length;
+            var copy = observers.slice();
+            for (var i = 0; i < len; i++) {
+                copy[i].next(value);
+            }
+        }
+    };
+    Subject.prototype.error = function (err) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        this.hasError = true;
+        this.thrownError = err;
+        this.isStopped = true;
+        var observers = this.observers;
+        var len = observers.length;
+        var copy = observers.slice();
+        for (var i = 0; i < len; i++) {
+            copy[i].error(err);
+        }
+        this.observers.length = 0;
+    };
+    Subject.prototype.complete = function () {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        this.isStopped = true;
+        var observers = this.observers;
+        var len = observers.length;
+        var copy = observers.slice();
+        for (var i = 0; i < len; i++) {
+            copy[i].complete();
+        }
+        this.observers.length = 0;
+    };
+    Subject.prototype.unsubscribe = function () {
+        this.isStopped = true;
+        this.closed = true;
+        this.observers = null;
+    };
+    Subject.prototype._trySubscribe = function (subscriber) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        else {
+            return _super.prototype._trySubscribe.call(this, subscriber);
+        }
+    };
+    Subject.prototype._subscribe = function (subscriber) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        else if (this.hasError) {
+            subscriber.error(this.thrownError);
+            return Subscription_1.Subscription.EMPTY;
+        }
+        else if (this.isStopped) {
+            subscriber.complete();
+            return Subscription_1.Subscription.EMPTY;
+        }
+        else {
+            this.observers.push(subscriber);
+            return new SubjectSubscription_1.SubjectSubscription(this, subscriber);
+        }
+    };
+    Subject.prototype.asObservable = function () {
+        var observable = new Observable_1.Observable();
+        observable.source = this;
+        return observable;
+    };
+    Subject.create = function (destination, source) {
+        return new AnonymousSubject(destination, source);
+    };
+    return Subject;
+}(Observable_1.Observable));
+exports.Subject = Subject;
+/**
+ * @class AnonymousSubject<T>
+ */
+var AnonymousSubject = /** @class */ (function (_super) {
+    __extends(AnonymousSubject, _super);
+    function AnonymousSubject(destination, source) {
+        var _this = _super.call(this) || this;
+        _this.destination = destination;
+        _this.source = source;
+        return _this;
+    }
+    AnonymousSubject.prototype.next = function (value) {
+        var destination = this.destination;
+        if (destination && destination.next) {
+            destination.next(value);
+        }
+    };
+    AnonymousSubject.prototype.error = function (err) {
+        var destination = this.destination;
+        if (destination && destination.error) {
+            this.destination.error(err);
+        }
+    };
+    AnonymousSubject.prototype.complete = function () {
+        var destination = this.destination;
+        if (destination && destination.complete) {
+            this.destination.complete();
+        }
+    };
+    AnonymousSubject.prototype._subscribe = function (subscriber) {
+        var source = this.source;
+        if (source) {
+            return this.source.subscribe(subscriber);
+        }
+        else {
+            return Subscription_1.Subscription.EMPTY;
+        }
+    };
+    return AnonymousSubject;
+}(Subject));
+exports.AnonymousSubject = AnonymousSubject;
+//# sourceMappingURL=Subject.js.map
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var root_1 = __webpack_require__(1);
+var toSubscriber_1 = __webpack_require__(26);
+var observable_1 = __webpack_require__(31);
+var pipe_1 = __webpack_require__(32);
+/**
+ * A representation of any set of values over any amount of time. This is the most basic building block
+ * of RxJS.
+ *
+ * @class Observable<T>
+ */
+var Observable = /** @class */ (function () {
+    /**
+     * @constructor
+     * @param {Function} subscribe the function that is called when the Observable is
+     * initially subscribed to. This function is given a Subscriber, to which new values
+     * can be `next`ed, or an `error` method can be called to raise an error, or
+     * `complete` can be called to notify of a successful completion.
+     */
+    function Observable(subscribe) {
+        this._isScalar = false;
+        if (subscribe) {
+            this._subscribe = subscribe;
+        }
+    }
+    /**
+     * Creates a new Observable, with this Observable as the source, and the passed
+     * operator defined as the new observable's operator.
+     * @method lift
+     * @param {Operator} operator the operator defining the operation to take on the observable
+     * @return {Observable} a new observable with the Operator applied
+     */
+    Observable.prototype.lift = function (operator) {
+        var observable = new Observable();
+        observable.source = this;
+        observable.operator = operator;
+        return observable;
+    };
+    /**
+     * Invokes an execution of an Observable and registers Observer handlers for notifications it will emit.
+     *
+     * <span class="informal">Use it when you have all these Observables, but still nothing is happening.</span>
+     *
+     * `subscribe` is not a regular operator, but a method that calls Observable's internal `subscribe` function. It
+     * might be for example a function that you passed to a {@link create} static factory, but most of the time it is
+     * a library implementation, which defines what and when will be emitted by an Observable. This means that calling
+     * `subscribe` is actually the moment when Observable starts its work, not when it is created, as it is often
+     * thought.
+     *
+     * Apart from starting the execution of an Observable, this method allows you to listen for values
+     * that an Observable emits, as well as for when it completes or errors. You can achieve this in two
+     * following ways.
+     *
+     * The first way is creating an object that implements {@link Observer} interface. It should have methods
+     * defined by that interface, but note that it should be just a regular JavaScript object, which you can create
+     * yourself in any way you want (ES6 class, classic function constructor, object literal etc.). In particular do
+     * not attempt to use any RxJS implementation details to create Observers - you don't need them. Remember also
+     * that your object does not have to implement all methods. If you find yourself creating a method that doesn't
+     * do anything, you can simply omit it. Note however, that if `error` method is not provided, all errors will
+     * be left uncaught.
+     *
+     * The second way is to give up on Observer object altogether and simply provide callback functions in place of its methods.
+     * This means you can provide three functions as arguments to `subscribe`, where first function is equivalent
+     * of a `next` method, second of an `error` method and third of a `complete` method. Just as in case of Observer,
+     * if you do not need to listen for something, you can omit a function, preferably by passing `undefined` or `null`,
+     * since `subscribe` recognizes these functions by where they were placed in function call. When it comes
+     * to `error` function, just as before, if not provided, errors emitted by an Observable will be thrown.
+     *
+     * Whatever style of calling `subscribe` you use, in both cases it returns a Subscription object.
+     * This object allows you to call `unsubscribe` on it, which in turn will stop work that an Observable does and will clean
+     * up all resources that an Observable used. Note that cancelling a subscription will not call `complete` callback
+     * provided to `subscribe` function, which is reserved for a regular completion signal that comes from an Observable.
+     *
+     * Remember that callbacks provided to `subscribe` are not guaranteed to be called asynchronously.
+     * It is an Observable itself that decides when these functions will be called. For example {@link of}
+     * by default emits all its values synchronously. Always check documentation for how given Observable
+     * will behave when subscribed and if its default behavior can be modified with a {@link Scheduler}.
+     *
+     * @example <caption>Subscribe with an Observer</caption>
+     * const sumObserver = {
+     *   sum: 0,
+     *   next(value) {
+     *     console.log('Adding: ' + value);
+     *     this.sum = this.sum + value;
+     *   },
+     *   error() { // We actually could just remove this method,
+     *   },        // since we do not really care about errors right now.
+     *   complete() {
+     *     console.log('Sum equals: ' + this.sum);
+     *   }
+     * };
+     *
+     * Rx.Observable.of(1, 2, 3) // Synchronously emits 1, 2, 3 and then completes.
+     * .subscribe(sumObserver);
+     *
+     * // Logs:
+     * // "Adding: 1"
+     * // "Adding: 2"
+     * // "Adding: 3"
+     * // "Sum equals: 6"
+     *
+     *
+     * @example <caption>Subscribe with functions</caption>
+     * let sum = 0;
+     *
+     * Rx.Observable.of(1, 2, 3)
+     * .subscribe(
+     *   function(value) {
+     *     console.log('Adding: ' + value);
+     *     sum = sum + value;
+     *   },
+     *   undefined,
+     *   function() {
+     *     console.log('Sum equals: ' + sum);
+     *   }
+     * );
+     *
+     * // Logs:
+     * // "Adding: 1"
+     * // "Adding: 2"
+     * // "Adding: 3"
+     * // "Sum equals: 6"
+     *
+     *
+     * @example <caption>Cancel a subscription</caption>
+     * const subscription = Rx.Observable.interval(1000).subscribe(
+     *   num => console.log(num),
+     *   undefined,
+     *   () => console.log('completed!') // Will not be called, even
+     * );                                // when cancelling subscription
+     *
+     *
+     * setTimeout(() => {
+     *   subscription.unsubscribe();
+     *   console.log('unsubscribed!');
+     * }, 2500);
+     *
+     * // Logs:
+     * // 0 after 1s
+     * // 1 after 2s
+     * // "unsubscribed!" after 2.5s
+     *
+     *
+     * @param {Observer|Function} observerOrNext (optional) Either an observer with methods to be called,
+     *  or the first of three possible handlers, which is the handler for each value emitted from the subscribed
+     *  Observable.
+     * @param {Function} error (optional) A handler for a terminal event resulting from an error. If no error handler is provided,
+     *  the error will be thrown as unhandled.
+     * @param {Function} complete (optional) A handler for a terminal event resulting from successful completion.
+     * @return {ISubscription} a subscription reference to the registered handlers
+     * @method subscribe
+     */
+    Observable.prototype.subscribe = function (observerOrNext, error, complete) {
+        var operator = this.operator;
+        var sink = toSubscriber_1.toSubscriber(observerOrNext, error, complete);
+        if (operator) {
+            operator.call(sink, this.source);
+        }
+        else {
+            sink.add(this.source ? this._subscribe(sink) : this._trySubscribe(sink));
+        }
+        if (sink.syncErrorThrowable) {
+            sink.syncErrorThrowable = false;
+            if (sink.syncErrorThrown) {
+                throw sink.syncErrorValue;
+            }
+        }
+        return sink;
+    };
+    Observable.prototype._trySubscribe = function (sink) {
+        try {
+            return this._subscribe(sink);
+        }
+        catch (err) {
+            sink.syncErrorThrown = true;
+            sink.syncErrorValue = err;
+            sink.error(err);
+        }
+    };
+    /**
+     * @method forEach
+     * @param {Function} next a handler for each value emitted by the observable
+     * @param {PromiseConstructor} [PromiseCtor] a constructor function used to instantiate the Promise
+     * @return {Promise} a promise that either resolves on observable completion or
+     *  rejects with the handled error
+     */
+    Observable.prototype.forEach = function (next, PromiseCtor) {
+        var _this = this;
+        if (!PromiseCtor) {
+            if (root_1.root.Rx && root_1.root.Rx.config && root_1.root.Rx.config.Promise) {
+                PromiseCtor = root_1.root.Rx.config.Promise;
+            }
+            else if (root_1.root.Promise) {
+                PromiseCtor = root_1.root.Promise;
+            }
+        }
+        if (!PromiseCtor) {
+            throw new Error('no Promise impl found');
+        }
+        return new PromiseCtor(function (resolve, reject) {
+            // Must be declared in a separate statement to avoid a RefernceError when
+            // accessing subscription below in the closure due to Temporal Dead Zone.
+            var subscription;
+            subscription = _this.subscribe(function (value) {
+                if (subscription) {
+                    // if there is a subscription, then we can surmise
+                    // the next handling is asynchronous. Any errors thrown
+                    // need to be rejected explicitly and unsubscribe must be
+                    // called manually
+                    try {
+                        next(value);
+                    }
+                    catch (err) {
+                        reject(err);
+                        subscription.unsubscribe();
+                    }
+                }
+                else {
+                    // if there is NO subscription, then we're getting a nexted
+                    // value synchronously during subscription. We can just call it.
+                    // If it errors, Observable's `subscribe` will ensure the
+                    // unsubscription logic is called, then synchronously rethrow the error.
+                    // After that, Promise will trap the error and send it
+                    // down the rejection path.
+                    next(value);
+                }
+            }, reject, resolve);
+        });
+    };
+    Observable.prototype._subscribe = function (subscriber) {
+        return this.source.subscribe(subscriber);
+    };
+    /**
+     * An interop point defined by the es7-observable spec https://github.com/zenparsing/es-observable
+     * @method Symbol.observable
+     * @return {Observable} this instance of the observable
+     */
+    Observable.prototype[observable_1.observable] = function () {
+        return this;
+    };
+    /* tslint:enable:max-line-length */
+    /**
+     * Used to stitch together functional operators into a chain.
+     * @method pipe
+     * @return {Observable} the Observable result of all of the operators having
+     * been called in the order they were passed in.
+     *
+     * @example
+     *
+     * import { map, filter, scan } from 'rxjs/operators';
+     *
+     * Rx.Observable.interval(1000)
+     *   .pipe(
+     *     filter(x => x % 2 === 0),
+     *     map(x => x + x),
+     *     scan((acc, x) => acc + x)
+     *   )
+     *   .subscribe(x => console.log(x))
+     */
+    Observable.prototype.pipe = function () {
+        var operations = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            operations[_i] = arguments[_i];
+        }
+        if (operations.length === 0) {
+            return this;
+        }
+        return pipe_1.pipeFromArray(operations)(this);
+    };
+    /* tslint:enable:max-line-length */
+    Observable.prototype.toPromise = function (PromiseCtor) {
+        var _this = this;
+        if (!PromiseCtor) {
+            if (root_1.root.Rx && root_1.root.Rx.config && root_1.root.Rx.config.Promise) {
+                PromiseCtor = root_1.root.Rx.config.Promise;
+            }
+            else if (root_1.root.Promise) {
+                PromiseCtor = root_1.root.Promise;
+            }
+        }
+        if (!PromiseCtor) {
+            throw new Error('no Promise impl found');
+        }
+        return new PromiseCtor(function (resolve, reject) {
+            var value;
+            _this.subscribe(function (x) { return value = x; }, function (err) { return reject(err); }, function () { return resolve(value); });
+        });
+    };
+    // HACK: Since TypeScript inherits static properties too, we have to
+    // fight against TypeScript here so Subject can have a different static create signature
+    /**
+     * Creates a new cold Observable by calling the Observable constructor
+     * @static true
+     * @owner Observable
+     * @method create
+     * @param {Function} subscribe? the subscriber function to be passed to the Observable constructor
+     * @return {Observable} a new cold observable
+     */
+    Observable.create = function (subscribe) {
+        return new Observable(subscribe);
+    };
+    return Observable;
+}());
+exports.Observable = Observable;
+//# sourceMappingURL=Observable.js.map
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Subscriber_1 = __webpack_require__(5);
+var rxSubscriber_1 = __webpack_require__(3);
+var Observer_1 = __webpack_require__(8);
+function toSubscriber(nextOrObserver, error, complete) {
+    if (nextOrObserver) {
+        if (nextOrObserver instanceof Subscriber_1.Subscriber) {
+            return nextOrObserver;
+        }
+        if (nextOrObserver[rxSubscriber_1.rxSubscriber]) {
+            return nextOrObserver[rxSubscriber_1.rxSubscriber]();
+        }
+    }
+    if (!nextOrObserver && !error && !complete) {
+        return new Subscriber_1.Subscriber(Observer_1.empty);
+    }
+    return new Subscriber_1.Subscriber(nextOrObserver, error, complete);
+}
+exports.toSubscriber = toSubscriber;
+//# sourceMappingURL=toSubscriber.js.map
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isArray = Array.isArray || (function (x) { return x && typeof x.length === 'number'; });
+//# sourceMappingURL=isArray.js.map
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function isObject(x) {
+    return x != null && typeof x === 'object';
+}
+exports.isObject = isObject;
+//# sourceMappingURL=isObject.js.map
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var errorObject_1 = __webpack_require__(7);
+var tryCatchTarget;
+function tryCatcher() {
+    try {
+        return tryCatchTarget.apply(this, arguments);
+    }
+    catch (e) {
+        errorObject_1.errorObject.e = e;
+        return errorObject_1.errorObject;
+    }
+}
+function tryCatch(fn) {
+    tryCatchTarget = fn;
+    return tryCatcher;
+}
+exports.tryCatch = tryCatch;
+;
+//# sourceMappingURL=tryCatch.js.map
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * An error thrown when one or more errors have occurred during the
+ * `unsubscribe` of a {@link Subscription}.
+ */
+var UnsubscriptionError = /** @class */ (function (_super) {
+    __extends(UnsubscriptionError, _super);
+    function UnsubscriptionError(errors) {
+        var _this = _super.call(this) || this;
+        _this.errors = errors;
+        var err = Error.call(_this, errors ?
+            errors.length + " errors occurred during unsubscription:\n  " + errors.map(function (err, i) { return i + 1 + ") " + err.toString(); }).join('\n  ') : '');
+        _this.name = err.name = 'UnsubscriptionError';
+        _this.stack = err.stack;
+        _this.message = err.message;
+        return _this;
+    }
+    return UnsubscriptionError;
+}(Error));
+exports.UnsubscriptionError = UnsubscriptionError;
+//# sourceMappingURL=UnsubscriptionError.js.map
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var root_1 = __webpack_require__(1);
+function getSymbolObservable(context) {
+    var $$observable;
+    var Symbol = context.Symbol;
+    if (typeof Symbol === 'function') {
+        if (Symbol.observable) {
+            $$observable = Symbol.observable;
+        }
+        else {
+            $$observable = Symbol('observable');
+            Symbol.observable = $$observable;
+        }
+    }
+    else {
+        $$observable = '@@observable';
+    }
+    return $$observable;
+}
+exports.getSymbolObservable = getSymbolObservable;
+exports.observable = getSymbolObservable(root_1.root);
+/**
+ * @deprecated use observable instead
+ */
+exports.$$observable = exports.observable;
+//# sourceMappingURL=observable.js.map
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var noop_1 = __webpack_require__(33);
+/* tslint:enable:max-line-length */
+function pipe() {
+    var fns = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        fns[_i] = arguments[_i];
+    }
+    return pipeFromArray(fns);
+}
+exports.pipe = pipe;
+/* @internal */
+function pipeFromArray(fns) {
+    if (!fns) {
+        return noop_1.noop;
+    }
+    if (fns.length === 1) {
+        return fns[0];
+    }
+    return function piped(input) {
+        return fns.reduce(function (prev, fn) { return fn(prev); }, input);
+    };
+}
+exports.pipeFromArray = pipeFromArray;
+//# sourceMappingURL=pipe.js.map
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/* tslint:disable:no-empty */
+function noop() { }
+exports.noop = noop;
+//# sourceMappingURL=noop.js.map
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * An error thrown when an action is invalid because the object has been
+ * unsubscribed.
+ *
+ * @see {@link Subject}
+ * @see {@link BehaviorSubject}
+ *
+ * @class ObjectUnsubscribedError
+ */
+var ObjectUnsubscribedError = /** @class */ (function (_super) {
+    __extends(ObjectUnsubscribedError, _super);
+    function ObjectUnsubscribedError() {
+        var _this = this;
+        var err = _this = _super.call(this, 'object unsubscribed') || this;
+        _this.name = err.name = 'ObjectUnsubscribedError';
+        _this.stack = err.stack;
+        _this.message = err.message;
+        return _this;
+    }
+    return ObjectUnsubscribedError;
+}(Error));
+exports.ObjectUnsubscribedError = ObjectUnsubscribedError;
+//# sourceMappingURL=ObjectUnsubscribedError.js.map
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var Subscription_1 = __webpack_require__(2);
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var SubjectSubscription = /** @class */ (function (_super) {
+    __extends(SubjectSubscription, _super);
+    function SubjectSubscription(subject, subscriber) {
+        var _this = _super.call(this) || this;
+        _this.subject = subject;
+        _this.subscriber = subscriber;
+        _this.closed = false;
+        return _this;
+    }
+    SubjectSubscription.prototype.unsubscribe = function () {
+        if (this.closed) {
+            return;
+        }
+        this.closed = true;
+        var subject = this.subject;
+        var observers = subject.observers;
+        this.subject = null;
+        if (!observers || observers.length === 0 || subject.isStopped || subject.closed) {
+            return;
+        }
+        var subscriberIndex = observers.indexOf(this.subscriber);
+        if (subscriberIndex !== -1) {
+            observers.splice(subscriberIndex, 1);
+        }
+    };
+    return SubjectSubscription;
+}(Subscription_1.Subscription));
+exports.SubjectSubscription = SubjectSubscription;
+//# sourceMappingURL=SubjectSubscription.js.map
 
 /***/ })
 /******/ ]);
