@@ -238,7 +238,7 @@ export class BaseCart implements IBaseCart {
     installCart(ppu: ChiChiPPU, cpu: ChiChiCPPU) {
         this.Whizzler = ppu;
         this.CPU = cpu;
-        this.NMIHandler = () => { this.CPU._handleIRQ = true; };
+        // this.NMIHandler = () => { this.CPU._handleIRQ = true; };
 
         this.mirror(0, this.romFile.mirroring);
 

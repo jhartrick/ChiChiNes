@@ -244,10 +244,9 @@ var BaseCart = /** @class */ (function () {
         this.fourScreen = file.fourScreen;
     };
     BaseCart.prototype.installCart = function (ppu, cpu) {
-        var _this = this;
         this.Whizzler = ppu;
         this.CPU = cpu;
-        this.NMIHandler = function () { _this.CPU._handleIRQ = true; };
+        // this.NMIHandler = () => { this.CPU._handleIRQ = true; };
         this.mirror(0, this.romFile.mirroring);
         this.prgRomBank6.fill(0);
         for (var i = 0; i < 16; i++) {
