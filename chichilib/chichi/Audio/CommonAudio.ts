@@ -48,37 +48,15 @@ export class WavSharer  {
             this.audioBytesWritten = this.chunkSize;
         }
     }
-
 }
 
-
-//apu classes
-class BlipBuffer  {
-    constructor(public size: number) {
-        this.samples = new Array<number>(size);
-        this.samples.fill(0);
-    }
-    factor: number = 0;
-    samples: Array<number>;
-    offset = 0;
-    avail = 0;
-    integrator = 0;
-    time_bits = 0;
-    arrayLength = 0;
-}
-
-export class Blip  {
+export class ChiChiWavSharer extends WavSharer {
+// blipper     
     static time_unit = 2097152;
     static buf_extra = 18;
     static phase_count = 32;
     static time_bits = 21;
-
-    private bass_shift = 8;
-    private end_frame_extra = 2;
-    private half_width = 8;
-    private phase_bits = 5;
     static delta_bits = 15;
-
     //sinc values
     static bl_step = [
         [43, -115, 350, -488, 1136, -914, 5861, 21022],
@@ -115,11 +93,16 @@ export class Blip  {
         [ 1, 40, -110, 350, -499, 1190, -1021, 6464], 
         [ 0, 43, -115, 350, -488, 1136, -914, 5861], 
     ];
-
-    // functions
-    constructor(size: number) {
-        this.blip_new(size);
+    
+    constructor() {
+        super()        
+        this.blip_new(44100 / 5);
     }
+
+    private bass_shift = 8;
+    private end_frame_extra = 2;
+    private half_width = 8;
+    private phase_bits = 5;
 
     private blipBuffer: BlipBuffer;
     blip_samples_avail: number;
@@ -132,30 +115,30 @@ export class Blip  {
     }
 
     blip_set_rates(clock_rate: number, sample_rate: number): void {
-        this.blipBuffer.factor = Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375);
+        this.blipBuffer.factor = ChiChiWavSharer.time_unit / clock_rate * sample_rate + (0.9999847412109375);
     }
 
     blip_clear(): void {
         this.blipBuffer.offset = 0;
         this.blipBuffer.avail = 0;
         this.blipBuffer.integrator = 0;
-        this.blipBuffer.samples = new Array<number>(this.blipBuffer.size + Blip.buf_extra);
+        this.blipBuffer.samples = new Array<number>(this.blipBuffer.size + ChiChiWavSharer.buf_extra);
         this.blipBuffer.samples.fill(0);
     }
 
     blip_clocks_needed(samples: number): number {
-        const needed = samples * Blip.time_unit - this.blipBuffer.offset;
+        const needed = samples * ChiChiWavSharer.time_unit - this.blipBuffer.offset;
         return ((needed + this.blipBuffer.factor - 1) / this.blipBuffer.factor) | 0;
     }
 
     blip_end_frame(t: number): void {
         let off = t * this.blipBuffer.factor + this.blipBuffer.offset;
-        this.blipBuffer.avail += off >> Blip.time_bits;
-        this.blipBuffer.offset = off & (Blip.time_unit - 1);
+        this.blipBuffer.avail += off >> ChiChiWavSharer.time_bits;
+        this.blipBuffer.offset = off & (ChiChiWavSharer.time_unit - 1);
     }
 
     remove_samples(count: number): void {
-        var remain = this.blipBuffer.avail + Blip.buf_extra - count;
+        let remain = this.blipBuffer.avail + ChiChiWavSharer.buf_extra - count;
         this.blipBuffer.avail -= count;
         this.blipBuffer.samples.copyWithin(0, count, count + remain);
         this.blipBuffer.samples.fill(0, remain, remain + count);
@@ -164,28 +147,33 @@ export class Blip  {
 
     // reads 'count' elements into array 'outbuf', beginning at 'start' and looping at array boundary if needed
     // returns number of elements written
-    readElementsLoop(wavSharer: WavSharer): number {
-        let outbuf = wavSharer.SharedBuffer;
-        let start = wavSharer.sharedAudioBufferPos;
+    readElementsLoop(): number {
+        let outbuf = this.SharedBuffer;
+        let start = this.sharedAudioBufferPos;
 
         let count = this.blipBuffer.avail;
         let inPtr = 0, outPtr = start;
         let end = count;
         let sum = this.blipBuffer.integrator;
 
+        const high = 1.0, low = -1.0;
+        let factor = 1.0;
+        let offset = low + 1.0 * factor;
+
+        factor *= 1.0 / ( 1 << 15 ); // (1 /(samplerange/2))
+
         if (count !== 0) {
-            const step = 1;
             do {
-                let st = sum >> Blip.delta_bits; 
+                let st = sum >> ChiChiWavSharer.delta_bits; 
                 sum = sum + this.blipBuffer.samples[inPtr];
                 inPtr++;
 
-                outPtr += step;
+                outPtr++;
                 if (outPtr >= outbuf.length) {
                     outPtr=0;
                 }
 
-                outbuf[outPtr] = st / 65536;
+                outbuf[outPtr] = st * factor + offset;
 
                 sum = sum - (st << (7));
             } while (end-- > 0);
@@ -193,9 +181,9 @@ export class Blip  {
             this.blipBuffer.integrator = sum;
             this.remove_samples(count);
         }
-        wavSharer.sharedAudioBufferPos = outPtr;
-        wavSharer.audioBytesWritten += count;
-        wavSharer.synchronize();
+        this.sharedAudioBufferPos = outPtr;
+        this.audioBytesWritten += count;
+        this.synchronize();
         return count;
     }
 
@@ -206,14 +194,14 @@ export class Blip  {
         }
         const fixedTime = (time * this.blipBuffer.factor + this.blipBuffer.offset) | 0;
 
-        const outPtr = (this.blipBuffer.avail + (fixedTime >> Blip.time_bits));
+        const outPtr = (this.blipBuffer.avail + (fixedTime >> ChiChiWavSharer.time_bits));
 
         const phase_shift = 16;
-        //const phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((Blip.phase_count - 1))));
-        const phase = (fixedTime >> phase_shift & (Blip.phase_count - 1)) >>> 0;
+        //const phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((ChiChiWavSharer.phase_count - 1))));
+        const phase = (fixedTime >> phase_shift & (ChiChiWavSharer.phase_count - 1)) >>> 0;
 
         const inStep = phase; // bl_step[phase];
-        const rev = Blip.phase_count - phase; // bl_step[phase_count - phase];
+        const rev = ChiChiWavSharer.phase_count - phase; // bl_step[phase_count - phase];
 
         const interp_bits = 15;
         const interp = (fixedTime >> (phase_shift - interp_bits) & ((1 << interp_bits) - 1));
@@ -221,11 +209,27 @@ export class Blip  {
         delta -= delta2;
 
         for (let i = 0; i < 8; ++i) {
-            this.blipBuffer.samples[outPtr + i] += (Blip.bl_step[inStep][i] * delta) + (Blip.bl_step[inStep][i] * delta2);
-            this.blipBuffer.samples[outPtr + (15 - i)] += (Blip.bl_step[rev][i] * delta) + (Blip.bl_step[rev - 1][i] * delta2);
+            this.blipBuffer.samples[outPtr + i] += (ChiChiWavSharer.bl_step[inStep][i] * delta) + (ChiChiWavSharer.bl_step[inStep][i] * delta2);
+            this.blipBuffer.samples[outPtr + (15 - i)] += (ChiChiWavSharer.bl_step[rev][i] * delta) + (ChiChiWavSharer.bl_step[rev - 1][i] * delta2);
         }
 
     }
 
 
 }
+
+//apu classes
+class BlipBuffer  {
+    constructor(public size: number) {
+        this.samples = new Array<number>(size);
+        this.samples.fill(0);
+    }
+    factor: number = 0;
+    samples: Array<number>;
+    offset = 0;
+    avail = 0;
+    integrator = 0;
+    time_bits = 0;
+    arrayLength = 0;
+}
+

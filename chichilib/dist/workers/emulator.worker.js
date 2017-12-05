@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ 	return __webpack_require__(__webpack_require__.s = 8);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -226,9 +226,9 @@ exports.root = _root;
 Object.defineProperty(exports, "__esModule", { value: true });
 var isArray_1 = __webpack_require__(27);
 var isObject_1 = __webpack_require__(28);
-var isFunction_1 = __webpack_require__(6);
+var isFunction_1 = __webpack_require__(5);
 var tryCatch_1 = __webpack_require__(29);
-var errorObject_1 = __webpack_require__(7);
+var errorObject_1 = __webpack_require__(6);
 var UnsubscriptionError_1 = __webpack_require__(30);
 /**
  * Represents a disposable resource, such as the execution of an Observable. A
@@ -440,213 +440,6 @@ exports.$$rxSubscriber = exports.rxSubscriber;
 
 "use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
-// shared buffer to get sound out
-var WavSharer = /** @class */ (function () {
-    function WavSharer() {
-        this.synced = true;
-        this.NES_BYTES_WRITTEN = 0;
-        this.WAVSHARER_BLOCKTHREAD = 1;
-        this.WAVSHARER_BUFFERPOS = 2;
-        this.controlBuffer = new Int32Array(new SharedArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
-        this.sharedAudioBufferPos = 0;
-        this.SharedBufferLength = 8192;
-        this.chunkSize = 1024;
-        this.SharedBuffer = new Float32Array(this.SharedBufferLength);
-    }
-    Object.defineProperty(WavSharer.prototype, "bufferPosition", {
-        get: function () {
-            return Atomics.load(this.controlBuffer, this.WAVSHARER_BUFFERPOS);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WavSharer.prototype, "audioBytesWritten", {
-        get: function () {
-            return Atomics.load(this.controlBuffer, this.NES_BYTES_WRITTEN);
-        },
-        set: function (value) {
-            Atomics.store(this.controlBuffer, this.NES_BYTES_WRITTEN, value);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    WavSharer.prototype.wakeSleepers = function () {
-        Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
-    };
-    WavSharer.prototype.synchronize = function () {
-        if (this.synced) {
-            while (this.audioBytesWritten >= this.chunkSize) {
-                Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
-                Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
-            }
-        }
-        else {
-            this.audioBytesWritten = this.chunkSize;
-        }
-    };
-    WavSharer.sample_size = 1;
-    return WavSharer;
-}());
-exports.WavSharer = WavSharer;
-//apu classes
-var BlipBuffer = /** @class */ (function () {
-    function BlipBuffer(size) {
-        this.size = size;
-        this.factor = 0;
-        this.offset = 0;
-        this.avail = 0;
-        this.integrator = 0;
-        this.time_bits = 0;
-        this.arrayLength = 0;
-        this.samples = new Array(size);
-        this.samples.fill(0);
-    }
-    return BlipBuffer;
-}());
-var Blip = /** @class */ (function () {
-    // functions
-    function Blip(size) {
-        this.bass_shift = 8;
-        this.end_frame_extra = 2;
-        this.half_width = 8;
-        this.phase_bits = 5;
-        this.blip_new(size);
-    }
-    Blip.prototype.blip_new = function (size) {
-        this.blipBuffer = new BlipBuffer(size);
-        this.blipBuffer.size = size;
-        this.blipBuffer.factor = 0;
-        this.blip_clear();
-    };
-    Blip.prototype.blip_set_rates = function (clock_rate, sample_rate) {
-        this.blipBuffer.factor = Blip.time_unit / clock_rate * sample_rate + (0.9999847412109375);
-    };
-    Blip.prototype.blip_clear = function () {
-        this.blipBuffer.offset = 0;
-        this.blipBuffer.avail = 0;
-        this.blipBuffer.integrator = 0;
-        this.blipBuffer.samples = new Array(this.blipBuffer.size + Blip.buf_extra);
-        this.blipBuffer.samples.fill(0);
-    };
-    Blip.prototype.blip_clocks_needed = function (samples) {
-        var needed = samples * Blip.time_unit - this.blipBuffer.offset;
-        return ((needed + this.blipBuffer.factor - 1) / this.blipBuffer.factor) | 0;
-    };
-    Blip.prototype.blip_end_frame = function (t) {
-        var off = t * this.blipBuffer.factor + this.blipBuffer.offset;
-        this.blipBuffer.avail += off >> Blip.time_bits;
-        this.blipBuffer.offset = off & (Blip.time_unit - 1);
-    };
-    Blip.prototype.remove_samples = function (count) {
-        var remain = this.blipBuffer.avail + Blip.buf_extra - count;
-        this.blipBuffer.avail -= count;
-        this.blipBuffer.samples.copyWithin(0, count, count + remain);
-        this.blipBuffer.samples.fill(0, remain, remain + count);
-        this.blipBuffer.arrayLength = count;
-    };
-    // reads 'count' elements into array 'outbuf', beginning at 'start' and looping at array boundary if needed
-    // returns number of elements written
-    Blip.prototype.readElementsLoop = function (wavSharer) {
-        var outbuf = wavSharer.SharedBuffer;
-        var start = wavSharer.sharedAudioBufferPos;
-        var count = this.blipBuffer.avail;
-        var inPtr = 0, outPtr = start;
-        var end = count;
-        var sum = this.blipBuffer.integrator;
-        if (count !== 0) {
-            var step = 1;
-            do {
-                var st = sum >> Blip.delta_bits;
-                sum = sum + this.blipBuffer.samples[inPtr];
-                inPtr++;
-                outPtr += step;
-                if (outPtr >= outbuf.length) {
-                    outPtr = 0;
-                }
-                outbuf[outPtr] = st / 65536;
-                sum = sum - (st << (7));
-            } while (end-- > 0);
-            this.blipBuffer.integrator = sum;
-            this.remove_samples(count);
-        }
-        wavSharer.sharedAudioBufferPos = outPtr;
-        wavSharer.audioBytesWritten += count;
-        wavSharer.synchronize();
-        return count;
-    };
-    Blip.prototype.blip_add_delta = function (time, delta) {
-        if (delta === 0) {
-            return;
-        }
-        var fixedTime = (time * this.blipBuffer.factor + this.blipBuffer.offset) | 0;
-        var outPtr = (this.blipBuffer.avail + (fixedTime >> Blip.time_bits));
-        var phase_shift = 16;
-        //const phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((Blip.phase_count - 1))));
-        var phase = (fixedTime >> phase_shift & (Blip.phase_count - 1)) >>> 0;
-        var inStep = phase; // bl_step[phase];
-        var rev = Blip.phase_count - phase; // bl_step[phase_count - phase];
-        var interp_bits = 15;
-        var interp = (fixedTime >> (phase_shift - interp_bits) & ((1 << interp_bits) - 1));
-        var delta2 = (delta * interp) >> interp_bits;
-        delta -= delta2;
-        for (var i = 0; i < 8; ++i) {
-            this.blipBuffer.samples[outPtr + i] += (Blip.bl_step[inStep][i] * delta) + (Blip.bl_step[inStep][i] * delta2);
-            this.blipBuffer.samples[outPtr + (15 - i)] += (Blip.bl_step[rev][i] * delta) + (Blip.bl_step[rev - 1][i] * delta2);
-        }
-    };
-    Blip.time_unit = 2097152;
-    Blip.buf_extra = 18;
-    Blip.phase_count = 32;
-    Blip.time_bits = 21;
-    Blip.delta_bits = 15;
-    //sinc values
-    Blip.bl_step = [
-        [43, -115, 350, -488, 1136, -914, 5861, 21022],
-        [44, -118, 348, -473, 1076, -799, 5274, 21001],
-        [45, -121, 344, -454, 1011, -677, 4706, 20936],
-        [46, -122, 336, -431, 942, -549, 4156, 20829],
-        [47, -123, 327, -404, 868, -418, 3629, 20679],
-        [47, -122, 316, -375, 792, -285, 3124, 20488],
-        [47, -120, 303, -344, 714, -151, 2644, 20256],
-        [46, -117, 289, -310, 634, -17, 2188, 19985],
-        [46, -114, 273, -275, 553, 117, 1758, 19675],
-        [44, -108, 255, -237, 471, 247, 1356, 19327],
-        [43, -103, 237, -199, 390, 373, 981, 18944],
-        [42, -98, 218, -160, 310, 495, 633, 18527],
-        [40, -91, 198, -121, 231, 611, 314, 18078],
-        [38, -84, 178, -81, 153, 722, 22, 17599],
-        [36, -76, 157, -43, 80, 824, -241, 17092],
-        [34, -68, 135, -3, 8, 919, -476, 16558],
-        [32, -61, 115, 34, -60, 1006, -683, 16001],
-        [29, -52, 94, 70, -123, 1083, -862, 15422],
-        [27, -44, 73, 106, -184, 1152, -1015, 14824],
-        [25, -36, 53, 139, -239, 1211, -1142, 14210],
-        [22, -27, 34, 170, -290, 1261, -1244, 13582],
-        [20, -20, 16, 199, -335, 1301, -1322, 12942],
-        [18, -12, -3, 226, -375, 1331, -1376, 12293],
-        [15, -4, -19, 250, -410, 1351, -1408, 11638],
-        [13, 3, -35, 272, -439, 1361, -1419, 10979],
-        [11, 9, -49, 292, -464, 1362, -1410, 10319],
-        [9, 16, -63, 309, -483, 1354, -1383, 9660],
-        [7, 22, -75, 322, -496, 1337, -1339, 9005],
-        [6, 26, -85, 333, -504, 1312, -1280, 8355],
-        [4, 31, -94, 341, -507, 1278, -1205, 7713],
-        [3, 35, -102, 347, -506, 1238, -1119, 7082],
-        [1, 40, -110, 350, -499, 1190, -1021, 6464],
-        [0, 43, -115, 350, -488, 1136, -914, 5861],
-    ];
-    return Blip;
-}());
-exports.Blip = Blip;
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -658,9 +451,9 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var isFunction_1 = __webpack_require__(6);
+var isFunction_1 = __webpack_require__(5);
 var Subscription_1 = __webpack_require__(2);
-var Observer_1 = __webpack_require__(8);
+var Observer_1 = __webpack_require__(7);
 var rxSubscriber_1 = __webpack_require__(3);
 /**
  * Implements the {@link Observer} interface and extends the
@@ -920,7 +713,7 @@ var SafeSubscriber = /** @class */ (function (_super) {
 //# sourceMappingURL=Subscriber.js.map
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -933,7 +726,7 @@ exports.isFunction = isFunction;
 //# sourceMappingURL=isFunction.js.map
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -944,7 +737,7 @@ exports.errorObject = { e: {} };
 //# sourceMappingURL=errorObject.js.map
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -959,15 +752,15 @@ exports.empty = {
 //# sourceMappingURL=Observer.js.map
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var worker_interop_1 = __webpack_require__(10);
+var worker_interop_1 = __webpack_require__(9);
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiMachine_1 = __webpack_require__(11);
+var ChiChiMachine_1 = __webpack_require__(10);
 var ChiChiState_1 = __webpack_require__(20);
 var CCMessage = __webpack_require__(21);
 var StateBuffer_1 = __webpack_require__(22);
@@ -1311,7 +1104,7 @@ exports.tendoWrapper = tendoWrapper;
 
 
 /***/ }),
-/* 10 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1385,16 +1178,16 @@ exports.WorkerInterop = WorkerInterop;
 
 
 /***/ }),
-/* 11 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiAudio_1 = __webpack_require__(12);
+var ChiChiAudio_1 = __webpack_require__(11);
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiPPU_1 = __webpack_require__(17);
-var CommonAudio_1 = __webpack_require__(4);
+var ChiChiPPU_1 = __webpack_require__(16);
+var CommonAudio_1 = __webpack_require__(17);
 var ChiChiCPU_1 = __webpack_require__(18);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
@@ -1405,7 +1198,7 @@ var ChiChiMachine = /** @class */ (function () {
         this.totalCPUClocks = 0;
         this._enableSound = false;
         this.evenFrame = true;
-        var wavSharer = new CommonAudio_1.WavSharer();
+        var wavSharer = new CommonAudio_1.ChiChiWavSharer();
         this.SoundBopper = new ChiChiAudio_1.ChiChiAPU(wavSharer);
         this.WaveForms = wavSharer;
         this.ppu = new ChiChiPPU_1.ChiChiPPU();
@@ -1518,17 +1311,16 @@ exports.ChiChiMachine = ChiChiMachine;
 
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var DMCChannel_1 = __webpack_require__(13);
-var SquareChannel_1 = __webpack_require__(14);
-var TriangleChannel_1 = __webpack_require__(15);
-var NoiseChannel_1 = __webpack_require__(16);
-var CommonAudio_1 = __webpack_require__(4);
+var DMCChannel_1 = __webpack_require__(12);
+var SquareChannel_1 = __webpack_require__(13);
+var TriangleChannel_1 = __webpack_require__(14);
+var NoiseChannel_1 = __webpack_require__(15);
 var ChiChiAPU = /** @class */ (function () {
     function ChiChiAPU(writer) {
         this.writer = writer;
@@ -1608,21 +1400,21 @@ var ChiChiAPU = /** @class */ (function () {
     });
     ChiChiAPU.prototype.rebuildSound = function () {
         var _this = this;
-        this.myBlipper = new CommonAudio_1.Blip(this._sampleRate / 5);
-        this.myBlipper.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
+        this.writer.blip_new(this._sampleRate / 5);
+        this.writer.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
         this.writer.audioBytesWritten = 0;
-        this.square0 = new SquareChannel_1.SquareChannel(0, function (number) { return _this.writeAudio(number); });
+        this.square0 = new SquareChannel_1.SquareChannel(0, function (number) { return _this.mixAndOutputAudio(number); });
         this.square0.period = 10;
         this.square0.sweepComplement = true;
-        this.square1 = new SquareChannel_1.SquareChannel(1, function (number) { return _this.writeAudio(number); });
+        this.square1 = new SquareChannel_1.SquareChannel(1, function (number) { return _this.mixAndOutputAudio(number); });
         this.square1.period = 10;
         this.square1.sweepComplement = false;
-        this.triangle = new TriangleChannel_1.TriangleChannel(2, function (number) { return _this.writeAudio(number); });
+        this.triangle = new TriangleChannel_1.TriangleChannel(2, function (number) { return _this.mixAndOutputAudio(number); });
         this.triangle.period = 0;
-        this.noise = new NoiseChannel_1.NoiseChannel(3, function (number) { return _this.writeAudio(number); });
+        this.noise = new NoiseChannel_1.NoiseChannel(3, function (number) { return _this.mixAndOutputAudio(number); });
         this.noise.period = 0;
-        this.dmc = new DMCChannel_1.DMCChannel(4, function (number) { return _this.writeAudio(number); }, function (address) {
+        this.dmc = new DMCChannel_1.DMCChannel(4, function (number) { return _this.mixAndOutputAudio(number); }, function (address) {
             _this.memoryMap.cpu.borrowedCycles += 4;
             return _this.memoryMap.getByte(0, address);
         });
@@ -1726,8 +1518,8 @@ var ChiChiAPU = /** @class */ (function () {
         this.triangle.endFrame(time);
         this.noise.endFrame(time);
         this.dmc.endFrame(time);
-        this.myBlipper.blip_end_frame(time);
-        this.myBlipper.readElementsLoop(this.writer);
+        this.writer.blip_end_frame(time);
+        this.writer.readElementsLoop();
         this.currentClock = 0;
     };
     Object.defineProperty(ChiChiAPU.prototype, "state", {
@@ -1754,12 +1546,12 @@ var ChiChiAPU = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    ChiChiAPU.prototype.writeAudio = function (clock) {
+    ChiChiAPU.prototype.mixAndOutputAudio = function (clock) {
         var out = this.pulseTable[this.square0.output + this.square1.output];
         out += this.tndTable[(3 * this.triangle.output) + (2 * this.noise.output) + this.dmc.output];
-        var delta = ((out - 0.5) * 0x10000) - this.lastOutput;
+        var delta = (out * 0x10000) - this.lastOutput;
         this.lastOutput += delta;
-        this.myBlipper.blip_add_delta(clock, delta);
+        this.writer.blip_add_delta(clock, delta);
     };
     ChiChiAPU.clock_rate = 1789772.727;
     return ChiChiAPU;
@@ -1768,7 +1560,7 @@ exports.ChiChiAPU = ChiChiAPU;
 
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1805,7 +1597,6 @@ var DMCChannel = /** @class */ (function () {
         this.loopFlag = 0;
         this._chan = 0;
         this.delta = 0;
-        this.bleeper = null;
         this._chan = chan;
     }
     DMCChannel.prototype.writeRegister = function (register, data, time) {
@@ -1911,7 +1702,7 @@ exports.DMCChannel = DMCChannel;
 
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2097,7 +1888,7 @@ exports.SquareChannel = SquareChannel;
 
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2219,7 +2010,7 @@ exports.TriangleChannel = TriangleChannel;
 
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2342,7 +2133,7 @@ exports.NoiseChannel = NoiseChannel;
 
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2980,6 +2771,229 @@ var ChiChiPPU = /** @class */ (function () {
     return ChiChiPPU;
 }());
 exports.ChiChiPPU = ChiChiPPU;
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+// shared buffer to get sound out
+var WavSharer = /** @class */ (function () {
+    function WavSharer() {
+        this.synced = true;
+        this.NES_BYTES_WRITTEN = 0;
+        this.WAVSHARER_BLOCKTHREAD = 1;
+        this.WAVSHARER_BUFFERPOS = 2;
+        this.controlBuffer = new Int32Array(new SharedArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
+        this.sharedAudioBufferPos = 0;
+        this.SharedBufferLength = 8192;
+        this.chunkSize = 1024;
+        this.SharedBuffer = new Float32Array(this.SharedBufferLength);
+    }
+    Object.defineProperty(WavSharer.prototype, "bufferPosition", {
+        get: function () {
+            return Atomics.load(this.controlBuffer, this.WAVSHARER_BUFFERPOS);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WavSharer.prototype, "audioBytesWritten", {
+        get: function () {
+            return Atomics.load(this.controlBuffer, this.NES_BYTES_WRITTEN);
+        },
+        set: function (value) {
+            Atomics.store(this.controlBuffer, this.NES_BYTES_WRITTEN, value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    WavSharer.prototype.wakeSleepers = function () {
+        Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
+    };
+    WavSharer.prototype.synchronize = function () {
+        if (this.synced) {
+            while (this.audioBytesWritten >= this.chunkSize) {
+                Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
+                Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
+            }
+        }
+        else {
+            this.audioBytesWritten = this.chunkSize;
+        }
+    };
+    WavSharer.sample_size = 1;
+    return WavSharer;
+}());
+exports.WavSharer = WavSharer;
+var ChiChiWavSharer = /** @class */ (function (_super) {
+    __extends(ChiChiWavSharer, _super);
+    function ChiChiWavSharer() {
+        var _this = _super.call(this) || this;
+        _this.bass_shift = 8;
+        _this.end_frame_extra = 2;
+        _this.half_width = 8;
+        _this.phase_bits = 5;
+        _this.blip_new(44100 / 5);
+        return _this;
+    }
+    ChiChiWavSharer.prototype.blip_new = function (size) {
+        this.blipBuffer = new BlipBuffer(size);
+        this.blipBuffer.size = size;
+        this.blipBuffer.factor = 0;
+        this.blip_clear();
+    };
+    ChiChiWavSharer.prototype.blip_set_rates = function (clock_rate, sample_rate) {
+        this.blipBuffer.factor = ChiChiWavSharer.time_unit / clock_rate * sample_rate + (0.9999847412109375);
+    };
+    ChiChiWavSharer.prototype.blip_clear = function () {
+        this.blipBuffer.offset = 0;
+        this.blipBuffer.avail = 0;
+        this.blipBuffer.integrator = 0;
+        this.blipBuffer.samples = new Array(this.blipBuffer.size + ChiChiWavSharer.buf_extra);
+        this.blipBuffer.samples.fill(0);
+    };
+    ChiChiWavSharer.prototype.blip_clocks_needed = function (samples) {
+        var needed = samples * ChiChiWavSharer.time_unit - this.blipBuffer.offset;
+        return ((needed + this.blipBuffer.factor - 1) / this.blipBuffer.factor) | 0;
+    };
+    ChiChiWavSharer.prototype.blip_end_frame = function (t) {
+        var off = t * this.blipBuffer.factor + this.blipBuffer.offset;
+        this.blipBuffer.avail += off >> ChiChiWavSharer.time_bits;
+        this.blipBuffer.offset = off & (ChiChiWavSharer.time_unit - 1);
+    };
+    ChiChiWavSharer.prototype.remove_samples = function (count) {
+        var remain = this.blipBuffer.avail + ChiChiWavSharer.buf_extra - count;
+        this.blipBuffer.avail -= count;
+        this.blipBuffer.samples.copyWithin(0, count, count + remain);
+        this.blipBuffer.samples.fill(0, remain, remain + count);
+        this.blipBuffer.arrayLength = count;
+    };
+    // reads 'count' elements into array 'outbuf', beginning at 'start' and looping at array boundary if needed
+    // returns number of elements written
+    ChiChiWavSharer.prototype.readElementsLoop = function () {
+        var outbuf = this.SharedBuffer;
+        var start = this.sharedAudioBufferPos;
+        var count = this.blipBuffer.avail;
+        var inPtr = 0, outPtr = start;
+        var end = count;
+        var sum = this.blipBuffer.integrator;
+        var high = 1.0, low = -1.0;
+        var factor = 1.0;
+        var offset = low + 1.0 * factor;
+        factor *= 1.0 / (1 << 15); // (1 /(samplerange/2))
+        if (count !== 0) {
+            do {
+                var st = sum >> ChiChiWavSharer.delta_bits;
+                sum = sum + this.blipBuffer.samples[inPtr];
+                inPtr++;
+                outPtr++;
+                if (outPtr >= outbuf.length) {
+                    outPtr = 0;
+                }
+                outbuf[outPtr] = st * factor + offset;
+                sum = sum - (st << (7));
+            } while (end-- > 0);
+            this.blipBuffer.integrator = sum;
+            this.remove_samples(count);
+        }
+        this.sharedAudioBufferPos = outPtr;
+        this.audioBytesWritten += count;
+        this.synchronize();
+        return count;
+    };
+    ChiChiWavSharer.prototype.blip_add_delta = function (time, delta) {
+        if (delta === 0) {
+            return;
+        }
+        var fixedTime = (time * this.blipBuffer.factor + this.blipBuffer.offset) | 0;
+        var outPtr = (this.blipBuffer.avail + (fixedTime >> ChiChiWavSharer.time_bits));
+        var phase_shift = 16;
+        //const phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((ChiChiWavSharer.phase_count - 1))));
+        var phase = (fixedTime >> phase_shift & (ChiChiWavSharer.phase_count - 1)) >>> 0;
+        var inStep = phase; // bl_step[phase];
+        var rev = ChiChiWavSharer.phase_count - phase; // bl_step[phase_count - phase];
+        var interp_bits = 15;
+        var interp = (fixedTime >> (phase_shift - interp_bits) & ((1 << interp_bits) - 1));
+        var delta2 = (delta * interp) >> interp_bits;
+        delta -= delta2;
+        for (var i = 0; i < 8; ++i) {
+            this.blipBuffer.samples[outPtr + i] += (ChiChiWavSharer.bl_step[inStep][i] * delta) + (ChiChiWavSharer.bl_step[inStep][i] * delta2);
+            this.blipBuffer.samples[outPtr + (15 - i)] += (ChiChiWavSharer.bl_step[rev][i] * delta) + (ChiChiWavSharer.bl_step[rev - 1][i] * delta2);
+        }
+    };
+    // blipper     
+    ChiChiWavSharer.time_unit = 2097152;
+    ChiChiWavSharer.buf_extra = 18;
+    ChiChiWavSharer.phase_count = 32;
+    ChiChiWavSharer.time_bits = 21;
+    ChiChiWavSharer.delta_bits = 15;
+    //sinc values
+    ChiChiWavSharer.bl_step = [
+        [43, -115, 350, -488, 1136, -914, 5861, 21022],
+        [44, -118, 348, -473, 1076, -799, 5274, 21001],
+        [45, -121, 344, -454, 1011, -677, 4706, 20936],
+        [46, -122, 336, -431, 942, -549, 4156, 20829],
+        [47, -123, 327, -404, 868, -418, 3629, 20679],
+        [47, -122, 316, -375, 792, -285, 3124, 20488],
+        [47, -120, 303, -344, 714, -151, 2644, 20256],
+        [46, -117, 289, -310, 634, -17, 2188, 19985],
+        [46, -114, 273, -275, 553, 117, 1758, 19675],
+        [44, -108, 255, -237, 471, 247, 1356, 19327],
+        [43, -103, 237, -199, 390, 373, 981, 18944],
+        [42, -98, 218, -160, 310, 495, 633, 18527],
+        [40, -91, 198, -121, 231, 611, 314, 18078],
+        [38, -84, 178, -81, 153, 722, 22, 17599],
+        [36, -76, 157, -43, 80, 824, -241, 17092],
+        [34, -68, 135, -3, 8, 919, -476, 16558],
+        [32, -61, 115, 34, -60, 1006, -683, 16001],
+        [29, -52, 94, 70, -123, 1083, -862, 15422],
+        [27, -44, 73, 106, -184, 1152, -1015, 14824],
+        [25, -36, 53, 139, -239, 1211, -1142, 14210],
+        [22, -27, 34, 170, -290, 1261, -1244, 13582],
+        [20, -20, 16, 199, -335, 1301, -1322, 12942],
+        [18, -12, -3, 226, -375, 1331, -1376, 12293],
+        [15, -4, -19, 250, -410, 1351, -1408, 11638],
+        [13, 3, -35, 272, -439, 1361, -1419, 10979],
+        [11, 9, -49, 292, -464, 1362, -1410, 10319],
+        [9, 16, -63, 309, -483, 1354, -1383, 9660],
+        [7, 22, -75, 322, -496, 1337, -1339, 9005],
+        [6, 26, -85, 333, -504, 1312, -1280, 8355],
+        [4, 31, -94, 341, -507, 1278, -1205, 7713],
+        [3, 35, -102, 347, -506, 1238, -1119, 7082],
+        [1, 40, -110, 350, -499, 1190, -1021, 6464],
+        [0, 43, -115, 350, -488, 1136, -914, 5861],
+    ];
+    return ChiChiWavSharer;
+}(WavSharer));
+exports.ChiChiWavSharer = ChiChiWavSharer;
+//apu classes
+var BlipBuffer = /** @class */ (function () {
+    function BlipBuffer(size) {
+        this.size = size;
+        this.factor = 0;
+        this.offset = 0;
+        this.avail = 0;
+        this.integrator = 0;
+        this.time_bits = 0;
+        this.arrayLength = 0;
+        this.samples = new Array(size);
+        this.samples.fill(0);
+    }
+    return BlipBuffer;
+}());
 
 
 /***/ }),
@@ -4474,7 +4488,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var Observable_1 = __webpack_require__(24);
-var Subscriber_1 = __webpack_require__(5);
+var Subscriber_1 = __webpack_require__(4);
 var Subscription_1 = __webpack_require__(2);
 var ObjectUnsubscribedError_1 = __webpack_require__(34);
 var SubjectSubscription_1 = __webpack_require__(35);
@@ -4985,9 +4999,9 @@ module.exports = g;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var Subscriber_1 = __webpack_require__(5);
+var Subscriber_1 = __webpack_require__(4);
 var rxSubscriber_1 = __webpack_require__(3);
-var Observer_1 = __webpack_require__(8);
+var Observer_1 = __webpack_require__(7);
 function toSubscriber(nextOrObserver, error, complete) {
     if (nextOrObserver) {
         if (nextOrObserver instanceof Subscriber_1.Subscriber) {
@@ -5035,7 +5049,7 @@ exports.isObject = isObject;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var errorObject_1 = __webpack_require__(7);
+var errorObject_1 = __webpack_require__(6);
 var tryCatchTarget;
 function tryCatcher() {
     try {

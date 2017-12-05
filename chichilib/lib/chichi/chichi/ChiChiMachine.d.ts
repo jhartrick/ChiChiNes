@@ -3,7 +3,7 @@ import { ChiChiAPU } from './ChiChiAudio';
 import { RunningStatuses } from './ChiChiTypes';
 import { ChiChiControlPad } from './ChiChiControl';
 import { IChiChiPPU } from "./ChiChiPPU";
-import { WavSharer } from './Audio/CommonAudio';
+import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
 export declare class ChiChiMachine {
     private frameJustEnded;
@@ -16,7 +16,7 @@ export declare class ChiChiMachine {
     Cpu: ChiChiCPPU;
     readonly Cart: BaseCart;
     SoundBopper: ChiChiAPU;
-    WaveForms: WavSharer;
+    WaveForms: ChiChiWavSharer;
     private _enableSound;
     EnableSound: boolean;
     FrameCount: number;

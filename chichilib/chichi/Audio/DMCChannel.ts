@@ -1,4 +1,3 @@
-import { Blip } from "./CommonAudio";
 import { ChiChiCPPU } from "../ChiChiCPU";
 import { IChannel } from "./IChannel";
 
@@ -34,9 +33,6 @@ export class DMCChannel implements IChannel {
     private _chan: number= 0;
     private delta = 0;
 
-
-    private bleeper: Blip = null;
-    
     constructor(chan: number, public onWriteAudio: (time: number)=> void, private handleDma: (address: number) => number) {
         this._chan = chan;
     }

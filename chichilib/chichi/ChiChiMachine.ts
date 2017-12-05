@@ -4,7 +4,7 @@ import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningSta
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
 import { ChiChiPPU, IChiChiPPU } from "./ChiChiPPU";
 import { GameGenieCode, MemoryPatch } from './ChiChiCheats';
-import { WavSharer } from './Audio/CommonAudio';
+import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
 
 
@@ -15,7 +15,7 @@ export class ChiChiMachine {
     private totalCPUClocks = 0;
 
     constructor(cpu? : ChiChiCPPU) {
-        var wavSharer = new WavSharer();
+        var wavSharer = new ChiChiWavSharer();
         this.SoundBopper = new ChiChiAPU(wavSharer);
         this.WaveForms = wavSharer;
         this.ppu = new ChiChiPPU();
@@ -41,7 +41,7 @@ export class ChiChiMachine {
     }
 
     SoundBopper: ChiChiAPU;
-    WaveForms: WavSharer;
+    WaveForms: ChiChiWavSharer;
 
     private _enableSound: boolean = false;
     
