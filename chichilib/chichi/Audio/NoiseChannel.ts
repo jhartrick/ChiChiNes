@@ -1,4 +1,3 @@
-import { Blip } from "./CommonAudio";
 import { IChannel } from "./IChannel";
 
 export class NoiseChannel implements IChannel {

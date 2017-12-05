@@ -1,6 +1,7 @@
 import { AudioSettings } from './ChiChiTypes';
-import { WavSharer } from './Audio/CommonAudio';
+import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { IMemoryMap } from './ChiChiMemoryMap';
+import { WavSharer } from './chichi';
 export interface IChiChiAPUState {
     audioSettings: AudioSettings;
     sampleRate: number;
@@ -24,7 +25,7 @@ export interface IChiChiAPU {
     state: IChiChiAPUState;
 }
 export declare class ChiChiAPU implements IChiChiAPU {
-    writer: WavSharer;
+    writer: ChiChiWavSharer;
     frameMode: boolean;
     irqHandler(): any;
     pulseTable: number[];
@@ -32,7 +33,6 @@ export declare class ChiChiAPU implements IChiChiAPU {
     lastClock: number;
     throwingIRQs: boolean;
     reg15: number;
-    private myBlipper;
     private square0;
     private square1;
     private triangle;
@@ -45,7 +45,7 @@ export declare class ChiChiAPU implements IChiChiAPU {
     memoryMap: IMemoryMap;
     currentClock: number;
     frameClocker: number;
-    constructor(writer: WavSharer);
+    constructor(writer: ChiChiWavSharer);
     audioSettings: AudioSettings;
     sampleRate: number;
     _interruptRaised: boolean;
@@ -61,5 +61,5 @@ export declare class ChiChiAPU implements IChiChiAPU {
     endFrame(time: number): void;
     state: IChiChiAPUState;
     private lastOutput;
-    private writeAudio(clock);
+    private mixAndOutputAudio(clock);
 }

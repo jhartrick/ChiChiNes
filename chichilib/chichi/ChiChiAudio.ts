@@ -4,9 +4,10 @@ import { SquareChannel } from './Audio/SquareChannel';
 import { TriangleChannel } from './Audio/TriangleChannel';
 import { NoiseChannel } from './Audio/NoiseChannel';
 
-import { Blip, WavSharer } from './Audio/CommonAudio';
+import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { IMemoryMap } from './ChiChiMemoryMap';
 import { isUndefined } from 'util';
+import { WavSharer } from './chichi';
 
 export interface IChiChiAPUState {
     audioSettings: AudioSettings;
@@ -49,8 +50,6 @@ export class ChiChiAPU implements IChiChiAPU {
     lastClock: number;
     throwingIRQs: boolean = false;
     reg15: number = 0;
-    // blipper
-    private myBlipper: Blip;
     // channels 
     private square0: SquareChannel;
     private square1: SquareChannel;
@@ -69,7 +68,7 @@ export class ChiChiAPU implements IChiChiAPU {
     currentClock = 0;
     frameClocker = 0;
 
-    constructor(public writer: WavSharer) {
+    constructor(public writer: ChiChiWavSharer) {
         this.rebuildSound();
 
         for(let i = 0; i < 31; ++i) {
@@ -129,28 +128,28 @@ export class ChiChiAPU implements IChiChiAPU {
 
 
     rebuildSound(): void {
-        this.myBlipper = new Blip(this._sampleRate / 5);
-        this.myBlipper.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
+        this.writer.blip_new(this._sampleRate / 5);
+        this.writer.blip_set_rates(ChiChiAPU.clock_rate, this._sampleRate);
         //this.writer = new ChiChiNES.BeepsBoops.WavSharer();
         this.writer.audioBytesWritten = 0;
 
        
-        this.square0 = new SquareChannel(0, number => this.writeAudio(number));
+        this.square0 = new SquareChannel(0, number => this.mixAndOutputAudio(number));
         this.square0.period = 10;
         this.square0.sweepComplement = true;
 
-        this.square1 = new SquareChannel(1, number => this.writeAudio(number));
+        this.square1 = new SquareChannel(1, number => this.mixAndOutputAudio(number));
         this.square1.period = 10;
         this.square1.sweepComplement = false;
 
-        this.triangle = new TriangleChannel(2, number => this.writeAudio(number));
+        this.triangle = new TriangleChannel(2, number => this.mixAndOutputAudio(number));
         this.triangle.period = 0;
 
-        this.noise = new NoiseChannel(3, number => this.writeAudio(number));
+        this.noise = new NoiseChannel(3, number => this.mixAndOutputAudio(number));
         this.noise.period = 0;
 
         this.dmc = new DMCChannel(4, 
-            number => this.writeAudio(number), 
+            number => this.mixAndOutputAudio(number), 
             (address) => {
                 this.memoryMap.cpu.borrowedCycles += 4;
                 return this.memoryMap.getByte(0, address);
@@ -275,8 +274,8 @@ export class ChiChiAPU implements IChiChiAPU {
         this.noise.endFrame(time);
         this.dmc.endFrame(time);
 
-        this.myBlipper.blip_end_frame(time);
-        this.myBlipper.readElementsLoop(this.writer);
+        this.writer.blip_end_frame(time);
+        this.writer.readElementsLoop();
 
         this.currentClock = 0;
         
@@ -306,15 +305,16 @@ export class ChiChiAPU implements IChiChiAPU {
 
 
     private lastOutput = 0;
-    private writeAudio(clock: number) {
+
+    private mixAndOutputAudio(clock: number) {
 
         let out = this.pulseTable[this.square0.output  +  this.square1.output];
         out += this.tndTable[(3 * this.triangle.output) + (2 * this.noise.output) + this.dmc.output];
-        const delta =  ((out - 0.5) * 0x10000) - this.lastOutput;
+        const delta = (out * 0x10000) - this.lastOutput;
         
         this.lastOutput += delta;
 
-        this.myBlipper.blip_add_delta(clock, delta);
+        this.writer.blip_add_delta(clock, delta);
     }
 
 }
