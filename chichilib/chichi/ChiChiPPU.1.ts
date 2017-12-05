@@ -620,7 +620,12 @@ export class ChiChiPPU2 implements IChiChiPPU {
                         case 1: // load nametable byte (2 clocks)
                             let ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
                             let xTilePosition = this.xPosition >> 3;
-                            // ntLatch = this.getNextNameTableByte
+
+                            const tileRow = (this.yPosition >> 3) % 30 << 5;
+
+                            const tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+
+                            let tileIndex = this.memoryMap.getPPUByte(this.LastcpuClock + ticks, tileNametablePosition);                            // ntLatch = this.getNextNameTableByte
                             break;
                         case 3: // load attribute byte
                             // ntLatch = this.getNextAttributeByte
@@ -778,7 +783,7 @@ export class ChiChiPPU2 implements IChiChiPPU {
         sb.onRestore.subscribe((buffer: StateBuffer) => {
              this.attachStateBuffer(buffer);
         })
-        sb.onSync.subscribe((buffer)=> {
+        sb.onUpdateBuffer.subscribe((buffer)=> {
              this.updateStateBuffer(buffer);
         })
 

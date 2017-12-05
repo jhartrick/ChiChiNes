@@ -66,7 +66,6 @@ export interface IBaseCart extends IBaseCartState {
 }
 
 export class BaseCart implements IBaseCart {
-    chrRam: Uint8Array;
     batterySRAM: boolean = false;
     customPalette: number[];
     ramMask = 0x1fff;
@@ -122,13 +121,15 @@ export class BaseCart implements IBaseCart {
     chrRamLength = 0;
     mapperId = 0;
 
-    prgRomBank6: Uint8Array; 
+    chrRam: Uint8Array = new Uint8Array(0x2000);
+    
+    prgRomBank6: Uint8Array = new Uint8Array(0x2000); 
 
     // starting locations of PPU 0x0000-0x3FFF in 1k blocks
-    ppuBankStarts: Uint32Array; 
+    ppuBankStarts: Uint32Array = new Uint32Array(16); 
 
     // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
-    prgBankStarts: Uint32Array; 
+    prgBankStarts: Uint32Array = new Uint32Array(10); 
 
     prgRom: Uint8Array;
     chrRom: Uint8Array;

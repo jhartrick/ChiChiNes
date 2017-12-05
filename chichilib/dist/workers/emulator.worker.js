@@ -1131,6 +1131,9 @@ var tendoWrapper = /** @class */ (function () {
     };
     tendoWrapper.prototype.updateState = function () {
         var machine = this.machine;
+        if (this.stateBuffer) {
+            this.stateBuffer.updateBuffer();
+        }
         var info = new NesInfo();
         if (this.machine && this.machine.Cart) {
             info.machine = {
@@ -2926,7 +2929,7 @@ var ChiChiPPU = /** @class */ (function () {
         sb.onRestore.subscribe(function (buffer) {
             _this.attachStateBuffer(buffer);
         });
-        sb.onSync.subscribe(function (buffer) {
+        sb.onUpdateBuffer.subscribe(function (buffer) {
             _this.updateStateBuffer(buffer);
         });
         sb.pushSegment(256 * Uint8Array.BYTES_PER_ELEMENT, 'spriteram')
@@ -3011,17 +3014,18 @@ var ChiChiCPPU = /** @class */ (function () {
         this._ticks = 0;
         // CPU Status
         this.cpuStatus16 = new Uint16Array(2);
-        // addressBus = 0;
+        this.programCounter = 0;
+        this.addressBus = 0;
         this._handleNMI = false;
         // CPU Op info
         this.cpuStatus = new Uint8Array(8);
         // system ram
-        // private stackPointer = 255;
-        //statusRegister = 0;
-        //accumulator = 0;
-        // indexRegisterX = 0;
-        // indexRegisterY = 0;
-        // dataBus = 0;
+        this.stackPointer = 255;
+        this.statusRegister = 0;
+        this.accumulator = 0;
+        this.indexRegisterX = 0;
+        this.indexRegisterY = 0;
+        this.dataBus = 0;
         this._operationCounter = 0;
         // Current Instruction
         this._currentInstruction_AddressingMode = ChiChiTypes_1.ChiChiCPPU_AddressingModes.Bullshit;
@@ -3065,87 +3069,6 @@ var ChiChiCPPU = /** @class */ (function () {
             this._clock += value;
         }
     };
-    Object.defineProperty(ChiChiCPPU.prototype, "programCounter", {
-        // programCounter = 0;
-        get: function () {
-            return this.cpuStatus16[PRG_CTR];
-        },
-        set: function (val) {
-            this.cpuStatus16[PRG_CTR] = val;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiCPPU.prototype, "addressBus", {
-        get: function () {
-            return this.cpuStatus16[PRG_ADR];
-        },
-        set: function (val) {
-            this.cpuStatus16[PRG_ADR] = val;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiCPPU.prototype, "statusRegister", {
-        get: function () {
-            return this.cpuStatus[0];
-        },
-        set: function (val) {
-            this.cpuStatus[0] = val;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiCPPU.prototype, "accumulator", {
-        get: function () {
-            return this.cpuStatus[1];
-        },
-        set: function (val) {
-            this.cpuStatus[1] = val;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiCPPU.prototype, "indexRegisterX", {
-        get: function () {
-            return this.cpuStatus[2];
-        },
-        set: function (val) {
-            this.cpuStatus[2] = val;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiCPPU.prototype, "indexRegisterY", {
-        get: function () {
-            return this.cpuStatus[3];
-        },
-        set: function (val) {
-            this.cpuStatus[3] = val;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiCPPU.prototype, "dataBus", {
-        get: function () {
-            return this.cpuStatus[4];
-        },
-        set: function (val) {
-            this.cpuStatus[4] = val;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ChiChiCPPU.prototype, "stackPointer", {
-        get: function () {
-            return this.cpuStatus[5];
-        },
-        set: function (val) {
-            this.cpuStatus[5] = val;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(ChiChiCPPU.prototype, "Debugging", {
         get: function () {
             return this._debugging;
@@ -4161,14 +4084,25 @@ var ChiChiCPPU = /** @class */ (function () {
     ChiChiCPPU.prototype.attachStateBuffer = function (sb) {
         this.cpuStatus = sb.getUint8Array('cpu_status');
         this.cpuStatus16 = sb.getUint16Array('cpu_status_16');
-        // this.accumulator       = sb.buffer[sb.getSegment('acc').start]; 
-        // this.indexRegisterX    = sb.buffer[sb.getSegment('idx').start];
-        // this.indexRegisterY    = sb.buffer[sb.getSegment('idy').start];
-        // this.stackPointer      = sb.buffer[sb.getSegment('sp').start];
-        // this.statusRegister    = sb.buffer[sb.getSegment('sr').start];
-        // let seg = sb.getSegment('pc');
-        // let pc = new Uint16Array(seg.buffer, seg.start, 1);
-        // this.programCounter    = pc[0];
+        this.programCounter = this.cpuStatus16[PRG_CTR];
+        this.addressBus = this.cpuStatus16[PRG_ADR];
+        // get statusRegister(): number {
+        this.statusRegister = this.cpuStatus[0];
+        this.accumulator = this.cpuStatus[1];
+        this.indexRegisterX = this.cpuStatus[2];
+        this.indexRegisterY = this.cpuStatus[3];
+        this.dataBus = this.cpuStatus[4];
+        this.stackPointer = this.cpuStatus[5];
+    };
+    ChiChiCPPU.prototype.updateStateBuffer = function (sb) {
+        this.cpuStatus16[PRG_CTR] = this.programCounter;
+        this.cpuStatus16[PRG_ADR] = this.addressBus;
+        this.cpuStatus[0] = this.statusRegister;
+        this.cpuStatus[1] = this.accumulator;
+        this.cpuStatus[2] = this.indexRegisterX;
+        this.cpuStatus[3] = this.indexRegisterY;
+        this.cpuStatus[4] = this.dataBus;
+        this.cpuStatus[5] = this.stackPointer;
     };
     // statics
     ChiChiCPPU.cpuTiming = [7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0];
@@ -4422,7 +4356,7 @@ var StateBuffer = /** @class */ (function () {
         this.segments = new Array();
         this.bufferSize = 0;
         this.onRestore = new Subject_1.Subject();
-        this.onSync = new Subject_1.Subject();
+        this.onUpdateBuffer = new Subject_1.Subject();
     }
     StateBuffer.prototype.pushSegment = function (size, name) {
         var start = this.bufferSize;
@@ -4442,6 +4376,14 @@ var StateBuffer = /** @class */ (function () {
         var x = this.segments.find(function (seg) { return seg.name === name; });
         return new Uint16Array(this.buffer, x.start, x.size);
     };
+    StateBuffer.prototype.getArray = function (name, arrayType) {
+        var x = this.segments.find(function (seg) { return seg.name === name; });
+        return new arrayType(this.buffer, x.start, x.size);
+    };
+    StateBuffer.prototype.getArrayEntry = function (name, index, arrayType) {
+        var x = this.segments.find(function (seg) { return seg.name === name; });
+        return new arrayType(this.buffer, x.start, x.size)[index];
+    };
     StateBuffer.prototype.build = function () {
         this.buffer = new SharedArrayBuffer(this.bufferSize);
         this.onRestore.next(this);
@@ -4450,6 +4392,9 @@ var StateBuffer = /** @class */ (function () {
     StateBuffer.prototype.syncBuffer = function (newBuf) {
         this.buffer = newBuf;
         this.onRestore.next(this);
+    };
+    StateBuffer.prototype.updateBuffer = function () {
+        this.onUpdateBuffer.next(this);
     };
     return StateBuffer;
 }());

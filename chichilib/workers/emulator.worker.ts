@@ -210,6 +210,9 @@ export class tendoWrapper {
 
     updateState() {
         const machine : ChiChiMachine = this.machine;    
+        if (this.stateBuffer) {
+            this.stateBuffer.updateBuffer();
+        }
 
         let info = new NesInfo();
 

@@ -125,72 +125,23 @@ export class ChiChiCPPU implements IChiChiCPPU {
 
     // CPU Status
     cpuStatus16: Uint16Array = new Uint16Array(2);
-    // programCounter = 0;
-    get programCounter(): number {
-        return this.cpuStatus16[PRG_CTR];
-    }
-    set programCounter(val: number) {
-        this.cpuStatus16[PRG_CTR] = val;
-    }
-    
-    get addressBus(): number {
-        return this.cpuStatus16[PRG_ADR];
-    }
-    set addressBus(val: number) {
-        this.cpuStatus16[PRG_ADR] = val;
-    }
-    // addressBus = 0;
+
+    programCounter = 0;
+    addressBus = 0;
     
     _handleNMI: boolean = false;
     // CPU Op info
     
     cpuStatus: Uint8Array = new Uint8Array(8);
-    get statusRegister(): number {
-        return this.cpuStatus[0];
-    }
-    set statusRegister(val: number) {
-        this.cpuStatus[0] = val;
-    }
-    get accumulator(): number {
-        return this.cpuStatus[1];
-    }
-    set accumulator(val: number) {
-        this.cpuStatus[1] = val;
-    }
-    get indexRegisterX(): number {
-        return this.cpuStatus[2];
-    }
-    set indexRegisterX(val: number) {
-        this.cpuStatus[2] = val;
-    }
-    get indexRegisterY(): number {
-        return this.cpuStatus[3];
-    }
-    set indexRegisterY(val: number) {
-        this.cpuStatus[3] = val;
-    } 
-    get dataBus(): number {
-        return this.cpuStatus[4];
-    }
-    set dataBus(val: number) {
-        this.cpuStatus[4] = val;
-    }
-
-    get stackPointer (): number {
-        return this.cpuStatus[5];
-    }
-    set stackPointer (val: number) {
-        this.cpuStatus[5] = val;
-    }
-
-    // system ram
-    // private stackPointer = 255;
     
-    //statusRegister = 0;
-    //accumulator = 0;
-    // indexRegisterX = 0;
-    // indexRegisterY = 0;
-    // dataBus = 0;
+    // system ram
+    
+    stackPointer = 255;
+    statusRegister = 0;
+    accumulator = 0;
+    indexRegisterX = 0;
+    indexRegisterY = 0;
+    dataBus = 0;
     _operationCounter = 0;
 
     // Current Instruction
@@ -1256,26 +1207,32 @@ export class ChiChiCPPU implements IChiChiCPPU {
     attachStateBuffer(sb: StateBuffer) {
         this.cpuStatus = sb.getUint8Array('cpu_status');
         this.cpuStatus16 = sb.getUint16Array('cpu_status_16');
-        // this.accumulator       = sb.buffer[sb.getSegment('acc').start]; 
-        // this.indexRegisterX    = sb.buffer[sb.getSegment('idx').start];
-        // this.indexRegisterY    = sb.buffer[sb.getSegment('idy').start];
-        // this.stackPointer      = sb.buffer[sb.getSegment('sp').start];
-        // this.statusRegister    = sb.buffer[sb.getSegment('sr').start];
-        // let seg = sb.getSegment('pc');
-        // let pc = new Uint16Array(seg.buffer, seg.start, 1);
-        // this.programCounter    = pc[0];
+
+        this.programCounter = this.cpuStatus16[PRG_CTR];
+        this.addressBus = this.cpuStatus16[PRG_ADR];
+
+    // get statusRegister(): number {
+        this.statusRegister = this.cpuStatus[0];
+        this.accumulator = this.cpuStatus[1];
+        this.indexRegisterX = this.cpuStatus[2];
+        this.indexRegisterY = this.cpuStatus[3];
+        this.dataBus = this.cpuStatus[4];
+        this.stackPointer = this.cpuStatus[5];
+
     }
     
-    // updateStateBuffer(sb: StateBuffer) {
-    //     sb.buffer[sb.getSegment('acc').start] = this.accumulator; 
-    //     sb.buffer[sb.getSegment('idx').start] = this.indexRegisterX;
-    //     sb.buffer[sb.getSegment('idy').start] = this.indexRegisterY;
-    //     sb.buffer[sb.getSegment('sp').start] = this.stackPointer;
-    //     sb.buffer[sb.getSegment('sr').start] = this.statusRegister;
-    //     let seg = sb.getSegment('pc');
-    //     let pc = new Uint16Array(seg.buffer, seg.start, 1);
-    //     pc[0] = this.programCounter;
-    // }
+    updateStateBuffer(sb: StateBuffer) {
+        this.cpuStatus16[PRG_CTR] = this.programCounter
+        this.cpuStatus16[PRG_ADR] = this.addressBus;
+
+        this.cpuStatus[0] = this.statusRegister;
+        this.cpuStatus[1] = this.accumulator;
+        this.cpuStatus[2] = this.indexRegisterX;
+        this.cpuStatus[3] = this.indexRegisterY;
+        this.cpuStatus[4] = this.dataBus;
+        this.cpuStatus[5] = this.stackPointer;
+
+    }
     
 }
 

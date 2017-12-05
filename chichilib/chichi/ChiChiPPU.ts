@@ -754,7 +754,7 @@ export class ChiChiPPU implements IChiChiPPU {
         sb.onRestore.subscribe((buffer: StateBuffer) => {
              this.attachStateBuffer(buffer);
         })
-        sb.onSync.subscribe((buffer)=> {
+        sb.onUpdateBuffer.subscribe((buffer)=> {
              this.updateStateBuffer(buffer);
         })
 

@@ -121,6 +121,12 @@ var BaseCart = /** @class */ (function () {
         this.chrRamStart = 0;
         this.chrRamLength = 0;
         this.mapperId = 0;
+        this.chrRam = new Uint8Array(0x2000);
+        this.prgRomBank6 = new Uint8Array(0x2000);
+        // starting locations of PPU 0x0000-0x3FFF in 1k blocks
+        this.ppuBankStarts = new Uint32Array(16);
+        // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
+        this.prgBankStarts = new Uint32Array(10);
         this.SRAMCanWrite = false;
         this.SRAMEnabled = false;
         this.SRAMCanSave = false;
