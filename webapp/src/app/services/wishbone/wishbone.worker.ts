@@ -70,7 +70,8 @@ export class WishboneWorker {
         }
 
         if (data.bufferupdate) {
-            wishbone.stateBuffer.syncBuffer(data.stateBuffer);
+            wishbone.setStateBuffer(data.stateBuffer);
+            console.log('statebuffer synced')
 
             if (data.sound) {
                 wishbone.WaveForms.controlBuffer = data.sound.waveForms_controlBuffer; 
@@ -78,15 +79,7 @@ export class WishboneWorker {
         }
 
         if (data.stateupdate) {
-            if (data.Cpu) {
-                wishbone.ppu.backgroundPatternTableIndex = data.Cpu.backgroundPatternTableIndex;
-                wishbone.cpuStatus = data.Cpu.status;
-                wishbone.ppuStatus = data.Cpu.ppuStatus;
-                wishbone.ppu.controlByte0 = data.Cpu.controlByte0;
-                wishbone.ppu.controlByte1 = data.Cpu.controlByte1;
-
-            }
-
+            wishbone.Cpu.pulse();
         }
         if (data.sound) {
             wishbone.SoundBopper.updateSettings(data.sound.settings);

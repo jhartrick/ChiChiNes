@@ -1,11 +1,68 @@
+import * as THREE from 'three';
 import { NESService } from '../services/NESService';
 
 export class NTSCEncoder {
-    private signal_levels = new Uint8Array(256 * 256 * 8);
+    material: THREE.ShaderMaterial;
+
+    private vertexShader = `
+    varying vec2 v_texCoord;
+    void main()
+    {
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        v_texCoord = uv.st;
+    }
+    `;
+
+    private fragmentShader = `
+    uniform sampler2D myTexture;
+    varying vec2 v_texCoord;
+
+    void main()	{
+      vec2 texCoord = vec2(v_texCoord.s, 1.0 - v_texCoord.t);
+      vec4 color = texture2D(myTexture, texCoord);
+
+      gl_FragColor = vec4(color.rgb, 1.0);
+    }
+    `;
+
+
+    private signal_levels = new Uint8Array(256 * 8);
     private ppuCycle = 0;
     constructor(private nesService: NESService) {
         this.signal_levels.fill(0);
     }
+
+    createScene(): THREE.Scene {
+        // debugger;
+        const vbuffer = this.nesService.videoBuffer;
+
+        const geometry = new THREE.PlaneGeometry(5, 5);
+        const text = new THREE.DataTexture(vbuffer, 256, 256, THREE.RGBAFormat);
+
+        this.material = new THREE.ShaderMaterial({
+            uniforms: {
+                myTexture: { value: text },
+                vertexShader: this.vertexShader,
+                fragmentShader: this.fragmentShader
+            }
+        });
+
+        this.render = () => {
+            this.ppuCycle = (this.ppuCycle++) & 3;
+            for (let i = 0; i < 240; ++i) {
+                for (let j = 0; j < 256; ++j) {
+                    this.renderPixel(j, i, vbuffer[(i * 256) + (j * 4)], this.ppuCycle, vbuffer);
+                }
+                // render scanline
+            }
+            text.needsUpdate = true;
+        };
+        const scene = new THREE.Scene();
+        scene.add(new THREE.Mesh(geometry, this.material));
+
+        return scene;
+    }
+
 
     private signal(pixel: number, phase: number): number {
         // Voltage levels, relative to synch voltage
@@ -51,7 +108,7 @@ export class NTSCEncoder {
         return signal;
     }
 
-    private renderPixel(x: number, y: number, pixel: number, PPU_cycle_counter: number) {
+    private renderPixel(x: number, y: number, pixel: number, PPU_cycle_counter: number, dest: Uint8Array) {
         const signal_levels = this.signal_levels;
         const phase = PPU_cycle_counter * 8;
         for (let p = 0; p < 8; ++p) {
@@ -64,19 +121,43 @@ export class NTSCEncoder {
 
             signal = (signal - black) / (white - black);
             // Save the signal for this pixel.
-            signal_levels[ (y * 256) +  (x * 8) + p ] = signal;
+            signal_levels[ (x * 8) + p ] = signal;
+
+            const width = 256; // Input: Screen width. Can be not only 256, but anything up to 2048.
+                           // Input: This should the value that was PPU_cycle_counter * 8 + 3.9
+                            // at the BEGINNING of this scanline. It should be modulo 12.
+                            // It can additionally include a floating-point hue offset.
+
+
+                // // Determine the region of scanline signal to sample. Take 12 samples.
+                // const center = x * (256 * 8) / width + 0;
+                // let begin = center - 6;
+
+                // if (begin < 0) {
+                //     begin = 0;
+                // }
+                // let end   = center + 6;
+                // if (end > 256 * 8) {
+                //      end = 256 * 8;
+                // }
+
+                // let cy = 0, ci = 0, cq = 0; // Calculate the color in YIQ.
+                // for (let p1 = begin; p1 < end; ++p1) {
+                //     const level = signal_levels[p1] / 12;
+                //     cy  =  cy + level;
+                //     ci  =  ci + level * Math.cos( Math.PI * (phase + p1) / 6 );
+                //     cq  =  cq + level * Math.sin( Math.PI * (phase + p1) / 6 );
+                // }
+
+                dest[(y * 256) + (x * 4)] = 0xff;
+                dest[(y * 256) + (x * 4) + 1]  = 0x45;
+                dest[(y * 256) + (x * 4) + 2]  = 0x30;
+                dest[(y * 256) + (x * 4) + 3]  = 0xFF;
+
         }
     }
 
     render() {
-        const vbuffer = this.nesService.videoBuffer;
-        this.ppuCycle = (this.ppuCycle++) & 3;
-        for (let i = 0; i < 256; ++i) {
-            for (let j = 0; j < 256; ++j) {
-                this.renderPixel(j, i, vbuffer[(i * 256) + (j * 4)], this.ppuCycle);
-            }
-            // render scanline
-        }
 
     }
 }

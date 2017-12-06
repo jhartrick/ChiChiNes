@@ -3,6 +3,7 @@ import { NESService } from '../services/NESService';
 import * as THREE from 'three';
 import { ChiChiThreeJSAudio } from '../services/wishbone/wishbone.audio.threejs';
 import { BasicEncoder } from './basicEncoder';
+import { NTSCEncoder } from './ntscEncoder';
 @Component({
     selector: 'chichi',
     templateUrl: './chichi.component.html',
@@ -52,7 +53,8 @@ export class ChiChiComponent implements AfterViewInit {
 
         this.camera.add( <any>this.nesService.audioSettings.listener);
 
-        const encoder = new BasicEncoder(this.nesService);
+        // const encoder = new BasicEncoder(this.nesService);
+        const encoder = new NTSCEncoder(this.nesService);
 
         this.scene =  encoder.createScene();
 

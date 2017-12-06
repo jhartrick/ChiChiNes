@@ -7,11 +7,11 @@ import { MemoryPatch } from '../chichi/ChiChiCheats';
 import { ChiChiStateManager, ChiChiState } from '../chichi/ChiChiState'; 
 
 import * as CCMessage from '../chichi/worker/worker.message';
-import { StateBuffer } from '../chichi/StateBuffer';
+import { StateBuffer, StateBufferConfig } from '../chichi/StateBuffer';
 
 
 class NesInfo {
-    stateBuffer: SharedArrayBuffer;
+    stateBuffer: StateBufferConfig;
     bufferupdate = false;
     stateupdate = true;
     machine: any = {};
@@ -126,7 +126,6 @@ export class tendoWrapper {
                     this.debugRunStep();
                 break;
             }
-            this.updateState();
         }),
     CommandHandler.bind<CCMessage.ResetCommand>(
         CCMessage.CMD_RESET, 
@@ -187,19 +186,20 @@ export class tendoWrapper {
         info.bufferupdate = true;
         info.stateupdate = false;
         if (this.machine && this.machine.Cart) {
-            info.stateBuffer = this.stateBuffer.buffer;
+            info.stateBuffer = this.stateBuffer.data;
 
-            info.Cpu = {
-                Rams: this.machine.Cpu.memoryMap.Rams,
-                spriteRAM: this.machine.Cpu.ppu.spriteRAM
-            }
-            info.Cart = {
-                //buffers
-                chrRom: (<any>this.machine.Cart).chrRom,
-                prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
-                ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
-                bankStartCache: (<any>this.machine.Cart).bankStartCache,
-            }
+            // info.Cpu = {
+            //     // Rams: this.machine.Cpu.memoryMap.Rams,
+            //     // spriteRAM: this.machine.Cpu.ppu.spriteRAM
+            // }
+            // info.Cart = {
+            //     //buffers
+            //     chrRom: (<any>this.machine.Cart).chrRom,
+            //     prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
+            //     ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
+            //     bankStartCache: (<any>this.machine.Cart).bankStartCache,
+            // }
+
             info.sound = {
                 waveForms_controlBuffer: this.machine.WaveForms.controlBuffer
             }
@@ -216,26 +216,11 @@ export class tendoWrapper {
 
         let info = new NesInfo();
 
-        if (this.machine && this.machine.Cart) {
+        if (this.machine ) {
             info.machine = {
                 runStatus: this.runStatus
             }
 
-            info.Cpu = {
-                //Rams: this.machine.Cpu.Rams,
-                status: this.machine.Cpu.GetStatus(),
-                ppuStatus: this.machine.Cpu.ppu.GetPPUStatus(),
-                backgroundPatternTableIndex: this.machine.Cpu.ppu.backgroundPatternTableIndex,
-                _PPUControlByte0: this.machine.Cpu.ppu.controlByte0,
-                _PPUControlByte1:  this.machine.Cpu.ppu.controlByte1
-            }
-
-            info.Cart = {
-
-            }
-        }
-
-        if (machine) {
             if (machine.SoundBopper && machine.SoundBopper.audioSettings){
                 info.sound = {
                     soundEnabled: machine.EnableSound,
@@ -430,6 +415,5 @@ export class tendoWrapper {
             default:
                 return;
         }
-       this.updateState();
     }
 }
