@@ -241,7 +241,6 @@ export class BaseCart implements IBaseCart {
         this.CPU = cpu;
         // this.NMIHandler = () => { this.CPU._handleIRQ = true; };
 
-        this.mirror(0, this.romFile.mirroring);
 
 
         this.prgRomBank6.fill(0);
@@ -252,8 +251,12 @@ export class BaseCart implements IBaseCart {
         for (let i = 0; i < 8; i++) {
             this.prgBankStarts[i] = i * 0x1000;
         }
+        this.mirroring = this.romFile.mirroring;
+
+        this.mirror(0, this.mirroring);
 
         this.initializeCart();
+        
 
     }
 
@@ -266,7 +269,7 @@ export class BaseCart implements IBaseCart {
         if (bank < 2) {
             if (this.usesSRAM) {
                 return this.prgRomBank6[address & this.ramMask];
-            }else {
+            } else {
                 return (address >> 8) & 0xff;
             }
         }

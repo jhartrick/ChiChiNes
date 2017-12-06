@@ -1,6 +1,10 @@
 import { IChiChiAPU, WavSharer, AudioSettings } from 'chichi';
 import * as THREE from 'three';
 import { LocalAudioSettings } from './wishbone.audio.localsettings';
+import { NESService } from '../NESService';
+import { WishboneMachine } from './wishbone';
+import { RunningStatuses } from 'chichi';
+import { Subject } from 'rxjs/Subject';
 
 export class ThreeJSAudioSettings implements LocalAudioSettings {
 	constructor(private gainNode: GainNode, public listener: THREE.AudioListener) {
@@ -27,11 +31,23 @@ export class ThreeJSAudioSettings implements LocalAudioSettings {
 	abuffer: Float32Array;
 }
 
+
 export class ChiChiThreeJSAudio {
 
-    constructor(private wavSharer: WavSharer) {
+	
+    constructor(private wishbone: WishboneMachine) {
+		wishbone.statusChanged.subscribe((status)=>{
+			if (status !== RunningStatuses.Running) {
+				this.settings.abuffer.fill(0);
+			}
+
+		});
 	}
 
+	settings: ThreeJSAudioSettings;
+
+	onRebuild: Subject<ThreeJSAudioSettings> = new Subject<ThreeJSAudioSettings>();
+	
 	getSound(options? : any): ThreeJSAudioSettings {
 		const bufferBlockSize = 4096;
 		const bufferBlockCountBits = 2;
@@ -60,12 +76,11 @@ export class ChiChiThreeJSAudio {
 		audioSource.connect(scriptNode);
 
 		const result = new ThreeJSAudioSettings(gainNode, listener);
-
+		const wavForms = this.wishbone.WaveForms;
+		
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {
-			const wavForms = this.wavSharer;
+			
 			let nesBytesAvailable = wavForms.audioBytesWritten;
-
-
 			lastReadPos = wavForms.bufferPosition - nesBytesAvailable;
 
 			if (lastReadPos < 0) {
@@ -94,11 +109,13 @@ export class ChiChiThreeJSAudio {
 		audioSource.loop = true;
 		audioSource.start();
 		
-		this.wavSharer.SharedBuffer = nesAudio;
+		this.wishbone.WaveForms.SharedBuffer = nesAudio;
 
 		
 		result.abuffer = nesAudio;
 		result.sampleRate = audioCtx.sampleRate;
+		this.settings = result;
+		this.onRebuild.next(this.settings);
 		return result;
 	}
 

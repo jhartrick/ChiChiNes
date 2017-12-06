@@ -253,7 +253,6 @@ var BaseCart = /** @class */ (function () {
         this.Whizzler = ppu;
         this.CPU = cpu;
         // this.NMIHandler = () => { this.CPU._handleIRQ = true; };
-        this.mirror(0, this.romFile.mirroring);
         this.prgRomBank6.fill(0);
         for (var i = 0; i < 16; i++) {
             this.ppuBankStarts[i] = i * 0x400;
@@ -261,6 +260,8 @@ var BaseCart = /** @class */ (function () {
         for (var i = 0; i < 8; i++) {
             this.prgBankStarts[i] = i * 0x1000;
         }
+        this.mirroring = this.romFile.mirroring;
+        this.mirror(0, this.mirroring);
         this.initializeCart();
     };
     BaseCart.prototype.createMemoryMap = function (cpu) {
