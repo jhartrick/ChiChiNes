@@ -13,6 +13,7 @@ import { WishboneAPU } from './wishbone.audio';
 import { Http } from '@angular/http';
 import { WishboneWorker } from './wishbone.worker';
 import { WishboneWorkerInterop } from './wishbone.worker.interop';
+import { StateBufferConfig } from '../../../../../chichilib/lib/chichi/chichi/StateBuffer';
 
 export class WishbonePPU extends ChiChiPPU {
 }
@@ -66,7 +67,6 @@ export class WishboneMachine  {
         return this.debugSubject.asObservable();
     }
 
-
     handleMessage(data: MessageEvent) {
         const d = data.data;
         if (d.debug) {
@@ -83,8 +83,6 @@ export class WishboneMachine  {
     }
 
     insertCart(cart: BaseCart) {
-
-
         this.tileDoodler = new TileDoodler(this.ppu);
         this.Cpu.setupMemoryMap(cart);
         cart.installCart(this.ppu, this.Cpu);
@@ -92,17 +90,15 @@ export class WishboneMachine  {
         this.Cart.realCart = cart;
         this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
         this.Cart.CartName = this.Cart.realCart.CartName;
-
-
     }
 
-    setStateBuffer(arr: SharedArrayBuffer) {
+    setStateBuffer(arr: StateBufferConfig) {
         this.stateBuffer = new StateBuffer();
         this.Cpu.memoryMap.setupStateBuffer(this.stateBuffer);
         this.Cpu.setupStateBuffer(this.stateBuffer);
         this.ppu.setupStateBuffer(this.stateBuffer);
         this.Cart.realCart.setupStateBuffer(this.stateBuffer);
-        this.stateBuffer.build();
+
         this.stateBuffer.syncBuffer(arr);
     }
 

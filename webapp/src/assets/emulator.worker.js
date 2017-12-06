@@ -903,7 +903,7 @@ var tendoWrapper = /** @class */ (function () {
         info.bufferupdate = true;
         info.stateupdate = false;
         if (this.machine && this.machine.Cart) {
-            info.stateBuffer = this.stateBuffer.buffer;
+            info.stateBuffer = this.stateBuffer.data;
             // info.Cpu = {
             //     // Rams: this.machine.Cpu.memoryMap.Rams,
             //     // spriteRAM: this.machine.Cpu.ppu.spriteRAM
@@ -4023,56 +4023,6 @@ var ChiChiCPPU = /** @class */ (function () {
             SR: this.statusRegister
         };
     };
-    // get state(): IChiChiCPPUState {
-    //     return {
-    //         clock: this.clock,
-    //         _statusRegister: this._statusRegister,
-    //         _programCounter: this._programCounter,
-    //         _handleNMI: this._handleNMI,
-    //         _handleIRQ: this._handleIRQ,
-    //         _addressBus: this._addressBus,
-    //         _dataBus: this._dataBus,
-    //         _operationCounter: this._operationCounter,
-    //         _accumulator: this._accumulator,
-    //         _indexRegisterX: this._indexRegisterX,
-    //         _indexRegisterY: this._indexRegisterY,
-    //         _currentInstruction_AddressingMode: this._currentInstruction_AddressingMode,
-    //         _currentInstruction_Address: this._currentInstruction_Address,
-    //         _currentInstruction_OpCode: this._currentInstruction_OpCode,
-    //         _currentInstruction_Parameters0: this._currentInstruction_Parameters0,
-    //         _currentInstruction_Parameters1: this._currentInstruction_Parameters1,
-    //         _currentInstruction_ExtraTiming: this._currentInstruction_ExtraTiming,
-    //         systemClock: this.systemClock,
-    //         nextEvent: this.nextEvent,
-    //         Debugging: this.Debugging,
-    //         cheating: this.cheating,
-    //         genieCodes: this.genieCodes
-    //     };
-    // }
-    // set state(value: IChiChiCPPUState) {
-    //     this.clock = value.clock,
-    //     this._statusRegister = value._statusRegister,
-    //     this._programCounter = value._programCounter,
-    //     this._handleNMI = value._handleNMI,
-    //     this._handleIRQ = value._handleIRQ,
-    //     this._addressBus = value._addressBus,
-    //     this._dataBus = value._dataBus,
-    //     this._operationCounter = value._operationCounter,
-    //     this._accumulator = value._accumulator,
-    //     this._indexRegisterX = value._indexRegisterX,
-    //     this._indexRegisterY = value._indexRegisterY,
-    //     this._currentInstruction_AddressingMode = value._currentInstruction_AddressingMode,
-    //     this._currentInstruction_Address = value._currentInstruction_Address,
-    //     this._currentInstruction_OpCode = value._currentInstruction_OpCode,
-    //     this._currentInstruction_Parameters0 = value._currentInstruction_Parameters0,
-    //     this._currentInstruction_Parameters1 = value._currentInstruction_Parameters1,
-    //     this._currentInstruction_ExtraTiming = value._currentInstruction_ExtraTiming,
-    //     this.systemClock = value.systemClock,
-    //     this.nextEvent = value.nextEvent,
-    //     this.Debugging = value.Debugging,
-    //     this.cheating = value.cheating,
-    //     this.genieCodes = value.genieCodes
-    // }
     ChiChiCPPU.prototype.setupStateBuffer = function (sb) {
         var _this = this;
         sb.onRestore.subscribe(function (buffer) {
@@ -4088,15 +4038,6 @@ var ChiChiCPPU = /** @class */ (function () {
     ChiChiCPPU.prototype.attachStateBuffer = function (sb) {
         this.cpuStatus = sb.getUint8Array('cpu_status');
         this.cpuStatus16 = sb.getUint16Array('cpu_status_16');
-        this.programCounter = this.cpuStatus16[PRG_CTR];
-        this.addressBus = this.cpuStatus16[PRG_ADR];
-        // get statusRegister(): number {
-        this.statusRegister = this.cpuStatus[0];
-        this.accumulator = this.cpuStatus[1];
-        this.indexRegisterX = this.cpuStatus[2];
-        this.indexRegisterY = this.cpuStatus[3];
-        this.dataBus = this.cpuStatus[4];
-        this.stackPointer = this.cpuStatus[5];
     };
     ChiChiCPPU.prototype.updateStateBuffer = function (sb) {
         this.cpuStatus16[PRG_CTR] = this.programCounter;
@@ -4349,6 +4290,13 @@ exports.WorkerResponse = WorkerResponse;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var Subject_1 = __webpack_require__(23);
+var StateBufferConfig = /** @class */ (function () {
+    function StateBufferConfig() {
+        this.segments = new Array();
+    }
+    return StateBufferConfig;
+}());
+exports.StateBufferConfig = StateBufferConfig;
 var BufferSegment = /** @class */ (function () {
     function BufferSegment() {
     }
@@ -4357,44 +4305,39 @@ var BufferSegment = /** @class */ (function () {
 exports.BufferSegment = BufferSegment;
 var StateBuffer = /** @class */ (function () {
     function StateBuffer() {
-        this.segments = new Array();
+        this.data = new StateBufferConfig();
         this.bufferSize = 0;
         this.onRestore = new Subject_1.Subject();
         this.onUpdateBuffer = new Subject_1.Subject();
     }
     StateBuffer.prototype.pushSegment = function (size, name) {
-        var start = this.bufferSize;
-        this.segments.push({ name: name, start: start, size: size });
-        this.bufferSize += size;
+        var seg = this.data.segments.findIndex(function (v, i) { return v.name == name; });
+        if (seg === -1) {
+            var start = this.bufferSize;
+            this.data.segments.push({ name: name, start: start, size: size });
+            this.bufferSize += size;
+        }
         return this;
     };
     StateBuffer.prototype.getSegment = function (name) {
-        var x = this.segments.find(function (seg) { return seg.name === name; });
-        return { buffer: this.buffer, start: x.start, size: x.size };
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return { buffer: this.data.buffer, start: x.start, size: x.size };
     };
     StateBuffer.prototype.getUint8Array = function (name) {
-        var x = this.segments.find(function (seg) { return seg.name === name; });
-        return new Uint8Array(this.buffer, x.start, x.size);
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return new Uint8Array(this.data.buffer, x.start, x.size);
     };
     StateBuffer.prototype.getUint16Array = function (name) {
-        var x = this.segments.find(function (seg) { return seg.name === name; });
-        return new Uint16Array(this.buffer, x.start, x.size);
-    };
-    StateBuffer.prototype.getArray = function (name, arrayType) {
-        var x = this.segments.find(function (seg) { return seg.name === name; });
-        return new arrayType(this.buffer, x.start, x.size);
-    };
-    StateBuffer.prototype.getArrayEntry = function (name, index, arrayType) {
-        var x = this.segments.find(function (seg) { return seg.name === name; });
-        return new arrayType(this.buffer, x.start, x.size)[index];
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return new Uint16Array(this.data.buffer, x.start, x.size / Uint16Array.BYTES_PER_ELEMENT);
     };
     StateBuffer.prototype.build = function () {
-        this.buffer = new SharedArrayBuffer(this.bufferSize);
+        this.data.buffer = new SharedArrayBuffer(this.bufferSize);
         this.onRestore.next(this);
         return this;
     };
-    StateBuffer.prototype.syncBuffer = function (newBuf) {
-        this.buffer = newBuf;
+    StateBuffer.prototype.syncBuffer = function (config) {
+        this.data = config;
         this.onRestore.next(this);
     };
     StateBuffer.prototype.updateBuffer = function () {

@@ -7,11 +7,11 @@ import { MemoryPatch } from '../chichi/ChiChiCheats';
 import { ChiChiStateManager, ChiChiState } from '../chichi/ChiChiState'; 
 
 import * as CCMessage from '../chichi/worker/worker.message';
-import { StateBuffer } from '../chichi/StateBuffer';
+import { StateBuffer, StateBufferConfig } from '../chichi/StateBuffer';
 
 
 class NesInfo {
-    stateBuffer: SharedArrayBuffer;
+    stateBuffer: StateBufferConfig;
     bufferupdate = false;
     stateupdate = true;
     machine: any = {};
@@ -186,7 +186,7 @@ export class tendoWrapper {
         info.bufferupdate = true;
         info.stateupdate = false;
         if (this.machine && this.machine.Cart) {
-            info.stateBuffer = this.stateBuffer.buffer;
+            info.stateBuffer = this.stateBuffer.data;
 
             // info.Cpu = {
             //     // Rams: this.machine.Cpu.memoryMap.Rams,

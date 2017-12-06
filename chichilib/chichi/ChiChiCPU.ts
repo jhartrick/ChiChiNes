@@ -1132,70 +1132,11 @@ export class ChiChiCPPU implements IChiChiCPPU {
         }
     }
 
-    // get state(): IChiChiCPPUState {
-    //     return {
-    //         clock: this.clock,
-            
-    //         _statusRegister: this._statusRegister,
-    //         _programCounter: this._programCounter,
-    //         _handleNMI: this._handleNMI,
-    //         _handleIRQ: this._handleIRQ,
-    //         _addressBus: this._addressBus,
-    //         _dataBus: this._dataBus,
-    //         _operationCounter: this._operationCounter,
-    //         _accumulator: this._accumulator,
-    //         _indexRegisterX: this._indexRegisterX,
-    //         _indexRegisterY: this._indexRegisterY,
-    //         _currentInstruction_AddressingMode: this._currentInstruction_AddressingMode,
-    //         _currentInstruction_Address: this._currentInstruction_Address,
-    //         _currentInstruction_OpCode: this._currentInstruction_OpCode,
-    //         _currentInstruction_Parameters0: this._currentInstruction_Parameters0,
-    //         _currentInstruction_Parameters1: this._currentInstruction_Parameters1,
-    //         _currentInstruction_ExtraTiming: this._currentInstruction_ExtraTiming,
-    //         systemClock: this.systemClock,
-    //         nextEvent: this.nextEvent,
-        
-    //         Debugging: this.Debugging,
-    //         cheating: this.cheating,
-    //         genieCodes: this.genieCodes
-
-    //     };
-    // }
-
-    // set state(value: IChiChiCPPUState) {
-    //     this.clock = value.clock,
-        
-    //     this._statusRegister = value._statusRegister,
-    //     this._programCounter = value._programCounter,
-    //     this._handleNMI = value._handleNMI,
-    //     this._handleIRQ = value._handleIRQ,
-    //     this._addressBus = value._addressBus,
-    //     this._dataBus = value._dataBus,
-    //     this._operationCounter = value._operationCounter,
-    //     this._accumulator = value._accumulator,
-    //     this._indexRegisterX = value._indexRegisterX,
-    //     this._indexRegisterY = value._indexRegisterY,
-    //     this._currentInstruction_AddressingMode = value._currentInstruction_AddressingMode,
-    //     this._currentInstruction_Address = value._currentInstruction_Address,
-    //     this._currentInstruction_OpCode = value._currentInstruction_OpCode,
-    //     this._currentInstruction_Parameters0 = value._currentInstruction_Parameters0,
-    //     this._currentInstruction_Parameters1 = value._currentInstruction_Parameters1,
-    //     this._currentInstruction_ExtraTiming = value._currentInstruction_ExtraTiming,
-    //     this.systemClock = value.systemClock,
-    //     this.nextEvent = value.nextEvent,
-
-    //     this.Debugging = value.Debugging,
-    //     this.cheating = value.cheating,
-    //     this.genieCodes = value.genieCodes
-
-                    
-        
-    // }
-
     setupStateBuffer(sb: StateBuffer) {
         sb.onRestore.subscribe((buffer: StateBuffer) => {
             this.attachStateBuffer(buffer);
         });
+
         sb.onUpdateBuffer.subscribe((buffer: StateBuffer) => {
             this.updateStateBuffer(buffer);
         })
@@ -1210,18 +1151,6 @@ export class ChiChiCPPU implements IChiChiCPPU {
     attachStateBuffer(sb: StateBuffer) {
         this.cpuStatus = sb.getUint8Array('cpu_status');
         this.cpuStatus16 = sb.getUint16Array('cpu_status_16');
-
-        this.programCounter = this.cpuStatus16[PRG_CTR];
-        this.addressBus = this.cpuStatus16[PRG_ADR];
-
-    // get statusRegister(): number {
-        this.statusRegister = this.cpuStatus[0];
-        this.accumulator = this.cpuStatus[1];
-        this.indexRegisterX = this.cpuStatus[2];
-        this.indexRegisterY = this.cpuStatus[3];
-        this.dataBus = this.cpuStatus[4];
-        this.stackPointer = this.cpuStatus[5];
-
     }
     
     updateStateBuffer(sb: StateBuffer) {
