@@ -83,10 +83,7 @@ export class WishboneMachine  {
     }
 
     insertCart(cart: BaseCart) {
-        this.stateBuffer = new StateBuffer();
-        this.Cpu.setupStateBuffer(this.stateBuffer);
-        cart.setupStateBuffer(this.stateBuffer);
-        this.stateBuffer.build();
+
 
         this.tileDoodler = new TileDoodler(this.ppu);
         this.Cpu.setupMemoryMap(cart);
@@ -96,14 +93,68 @@ export class WishboneMachine  {
         this.Cart.ROMHashFunction = this.Cart.realCart.ROMHashFunction;
         this.Cart.CartName = this.Cart.realCart.CartName;
 
+
+    }
+
+    setStateBuffer(arr: SharedArrayBuffer) {
+        this.stateBuffer = new StateBuffer();
+        this.Cpu.memoryMap.setupStateBuffer(this.stateBuffer);
+        this.Cpu.setupStateBuffer(this.stateBuffer);
+        this.ppu.setupStateBuffer(this.stateBuffer);
+        this.Cart.realCart.setupStateBuffer(this.stateBuffer);
+        this.stateBuffer.build();
+        this.stateBuffer.syncBuffer(arr);
     }
 
 }
 
-class WishboneCPPU extends ChiChiCPPU {
+export class WishboneCPPU extends ChiChiCPPU {
     constructor(soundBopper: WishboneAPU, ppu: WishbonePPU) {
         super(soundBopper, ppu);
     }
+
+    get programCounter() : number { return this.cpuStatus16[0]; }
+    get addressBus(): number { return this.cpuStatus16[1];}
+
+    get statusRegister(): number { return  this.cpuStatus[0]; }
+    get accumulator(): number { return  this.cpuStatus[1]; }
+    get indexRegisterX(): number { return  this.cpuStatus[2]; }
+    get indexRegisterY(): number { return  this.cpuStatus[3]; }
+    get dataBus(): number { return  this.cpuStatus[4]; }
+    get stackPointer(): number { return  this.cpuStatus[5]; }
+
+    set programCounter(val: number) { }
+    set addressBus(val: number) { }
+
+    set statusRegister(val: number) { }
+    set accumulator(val: number) { }
+    set indexRegisterX(val: number) { }
+    set indexRegisterY(val: number) { }
+    set dataBus(val: number) { }
+    set stackPointer(val: number) { }
+
+    private subject: Subject<WishboneCPPU> = new Subject<WishboneCPPU>();
+    pulse() {
+        this.subject.next(this);
+    }
+
+    asObservable() : Observable<WishboneCPPU> {
+        return this.subject.asObservable();
+    }
+
+    setupStateBuffer(sb: StateBuffer) {
+        
+        sb.onRestore.subscribe((buffer: StateBuffer) => {
+            this.attachStateBuffer(buffer);
+        });
+
+        sb  .pushSegment(2 * Uint16Array.BYTES_PER_ELEMENT, 'cpu_status_16')
+            .pushSegment(8, 'cpu_status')
+            ;
+        return sb;
+
+    }
+    
 
     Step(): void {}
     Execute(): void {}

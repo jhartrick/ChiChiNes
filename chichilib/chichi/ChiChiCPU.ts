@@ -1195,6 +1195,9 @@ export class ChiChiCPPU implements IChiChiCPPU {
     setupStateBuffer(sb: StateBuffer) {
         sb.onRestore.subscribe((buffer: StateBuffer) => {
             this.attachStateBuffer(buffer);
+        });
+        sb.onUpdateBuffer.subscribe((buffer: StateBuffer) => {
+            this.updateStateBuffer(buffer);
         })
 
         sb  .pushSegment(2 * Uint16Array.BYTES_PER_ELEMENT, 'cpu_status_16')

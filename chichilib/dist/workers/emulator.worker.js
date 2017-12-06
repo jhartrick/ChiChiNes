@@ -847,7 +847,6 @@ var tendoWrapper = /** @class */ (function () {
                         _this.debugRunStep();
                         break;
                 }
-                _this.updateState();
             }),
             CommandHandler.bind(CCMessage.CMD_RESET, function (val) {
                 _this.machine.Reset();
@@ -905,17 +904,17 @@ var tendoWrapper = /** @class */ (function () {
         info.stateupdate = false;
         if (this.machine && this.machine.Cart) {
             info.stateBuffer = this.stateBuffer.buffer;
-            info.Cpu = {
-                Rams: this.machine.Cpu.memoryMap.Rams,
-                spriteRAM: this.machine.Cpu.ppu.spriteRAM
-            };
-            info.Cart = {
-                //buffers
-                chrRom: this.machine.Cart.chrRom,
-                prgRomBank6: this.machine.Cart.prgRomBank6,
-                ppuBankStarts: this.machine.Cart.ppuBankStarts,
-                bankStartCache: this.machine.Cart.bankStartCache,
-            };
+            // info.Cpu = {
+            //     // Rams: this.machine.Cpu.memoryMap.Rams,
+            //     // spriteRAM: this.machine.Cpu.ppu.spriteRAM
+            // }
+            // info.Cart = {
+            //     //buffers
+            //     chrRom: (<any>this.machine.Cart).chrRom,
+            //     prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
+            //     ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
+            //     bankStartCache: (<any>this.machine.Cart).bankStartCache,
+            // }
             info.sound = {
                 waveForms_controlBuffer: this.machine.WaveForms.controlBuffer
             };
@@ -928,21 +927,10 @@ var tendoWrapper = /** @class */ (function () {
             this.stateBuffer.updateBuffer();
         }
         var info = new NesInfo();
-        if (this.machine && this.machine.Cart) {
+        if (this.machine) {
             info.machine = {
                 runStatus: this.runStatus
             };
-            info.Cpu = {
-                //Rams: this.machine.Cpu.Rams,
-                status: this.machine.Cpu.GetStatus(),
-                ppuStatus: this.machine.Cpu.ppu.GetPPUStatus(),
-                backgroundPatternTableIndex: this.machine.Cpu.ppu.backgroundPatternTableIndex,
-                _PPUControlByte0: this.machine.Cpu.ppu.controlByte0,
-                _PPUControlByte1: this.machine.Cpu.ppu.controlByte1
-            };
-            info.Cart = {};
-        }
-        if (machine) {
             if (machine.SoundBopper && machine.SoundBopper.audioSettings) {
                 info.sound = {
                     soundEnabled: machine.EnableSound,
@@ -1099,7 +1087,6 @@ var tendoWrapper = /** @class */ (function () {
             default:
                 return;
         }
-        this.updateState();
     };
     return tendoWrapper;
 }());
@@ -4090,6 +4077,9 @@ var ChiChiCPPU = /** @class */ (function () {
         var _this = this;
         sb.onRestore.subscribe(function (buffer) {
             _this.attachStateBuffer(buffer);
+        });
+        sb.onUpdateBuffer.subscribe(function (buffer) {
+            _this.updateStateBuffer(buffer);
         });
         sb.pushSegment(2 * Uint16Array.BYTES_PER_ELEMENT, 'cpu_status_16')
             .pushSegment(8, 'cpu_status');
