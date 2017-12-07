@@ -15,11 +15,6 @@ export class ChiChiComponent implements AfterViewInit {
     @ViewChild('chichiPig') canvasRef: ElementRef;
 
     private renderer: THREE.WebGLRenderer;
-    private canvasCtx: CanvasRenderingContext2D;
-
-    private scene: THREE.Scene;
-    private camera: THREE.PerspectiveCamera;
-
 
     public canvasLeft = '0px';
     public canvasTop = '0px';
@@ -49,26 +44,31 @@ export class ChiChiComponent implements AfterViewInit {
         this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
         this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
 
-        this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
 
-        this.camera.add( <any>this.nesService.audioSettings.listener);
+        camera.add(this.nesService.audioSettings.listener);
 
-        const encoder = new BasicEncoder(this.nesService);
-        // const encoder = new NTSCEncoder(this.nesService);
+        // const encoder = new BasicEncoder(this.nesService);
+        const encoder = new NTSCEncoder(this.nesService);
 
-        this.scene =  encoder.createScene();
+        const scene = new THREE.Scene();
+        const geometry = new THREE.PlaneGeometry(5, 5);
+        const material =  encoder.createMaterial();
 
-        this.updateScene = () => {
-            encoder.render();
+        scene.add(new THREE.Mesh(geometry, material));
+        this.drawFrame = () => {
+            requestAnimationFrame(() => {
+                encoder.render();
+                this.renderer.render(scene, camera);
+                this.drawFrame();
+            });
         };
-
-        this.camera.position.z = 5.8;
+        camera.position.z = 5.8;
 
         setTimeout(() => {
           this.onResize();
         }, 1);
 
-        this.updateScene();
     }
 
     ngAfterViewInit(): void {
@@ -81,16 +81,9 @@ export class ChiChiComponent implements AfterViewInit {
     }
 
     drawFrame(): void {
-        requestAnimationFrame(() => {
-            this.updateScene();
-            this.renderer.render(this.scene, this.camera);
-            this.drawFrame();
-        });
+
     }
 
     soundOver = true;
-
-    updateScene(): void {
-    }
 
 }

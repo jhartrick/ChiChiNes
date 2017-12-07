@@ -4297,8 +4297,10 @@ var StateBuffer = /** @class */ (function () {
         this.data = new StateBufferConfig();
         this.bufferSize = 0;
         this.onRestore = new Subject_1.Subject();
+        // thrown when writing clients should update the buffer
         this.onUpdateBuffer = new Subject_1.Subject();
     }
+    // pre-allocates a segment of <size> bytes in the StateBuffer, returns StateBuffer
     StateBuffer.prototype.pushSegment = function (size, name) {
         var seg = this.data.segments.findIndex(function (v, i) { return v.name == name; });
         if (seg === -1) {
@@ -4308,6 +4310,17 @@ var StateBuffer = /** @class */ (function () {
         }
         return this;
     };
+    // builds a new state buffer
+    StateBuffer.prototype.build = function () {
+        this.data.buffer = new SharedArrayBuffer(this.bufferSize);
+        this.onRestore.next(this);
+        return this;
+    };
+    // request buffer updates
+    StateBuffer.prototype.updateBuffer = function () {
+        this.onUpdateBuffer.next(this);
+    };
+    // helper functions to retrieve data from buffer
     StateBuffer.prototype.getSegment = function (name) {
         var x = this.data.segments.find(function (seg) { return seg.name === name; });
         return { buffer: this.data.buffer, start: x.start, size: x.size };
@@ -4320,17 +4333,9 @@ var StateBuffer = /** @class */ (function () {
         var x = this.data.segments.find(function (seg) { return seg.name === name; });
         return new Uint16Array(this.data.buffer, x.start, x.size / Uint16Array.BYTES_PER_ELEMENT);
     };
-    StateBuffer.prototype.build = function () {
-        this.data.buffer = new SharedArrayBuffer(this.bufferSize);
-        this.onRestore.next(this);
-        return this;
-    };
     StateBuffer.prototype.syncBuffer = function (config) {
         this.data = config;
         this.onRestore.next(this);
-    };
-    StateBuffer.prototype.updateBuffer = function () {
-        this.onUpdateBuffer.next(this);
     };
     return StateBuffer;
 }());
