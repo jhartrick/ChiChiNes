@@ -58,10 +58,10 @@ export declare class ChiChiPPU implements IChiChiPPU {
     private isForegroundPixel;
     private spriteChanges;
     private ppuReadBuffer;
-    private _clipSprites;
-    private _clipTiles;
-    private _tilesAreVisible;
-    private _spritesAreVisible;
+    private clipSprites;
+    private clipTiles;
+    private tilesVisible;
+    private spritesVisible;
     private nameTableMemoryStart;
     backgroundPatternTableIndex: number;
     address: number;

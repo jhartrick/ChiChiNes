@@ -939,15 +939,6 @@ var tendoWrapper = /** @class */ (function () {
             }
             if (this.machine.Cpu.Debugging) {
                 info.debug = {
-                    currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
-                        PC: 0,
-                        A: 0,
-                        X: 0,
-                        Y: 0,
-                        SP: 0,
-                        SR: 0
-                    },
-                    currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
                     InstructionHistory: {
                         Buffer: this.machine.Cpu.InstructionHistory.slice(0),
                         Index: this.machine.Cpu.InstructionHistoryPointer,
@@ -1578,7 +1569,7 @@ var DMCChannel = /** @class */ (function () {
         this.shiftreg = 0;
         this.silenced = false;
         this.cycles = 0;
-        this.curAddr = 0;
+        this.nextRead = 0;
         this.lengthCounter = 0;
         this.length = 0;
         this.address = 0;
@@ -1613,7 +1604,7 @@ var DMCChannel = /** @class */ (function () {
                 this.interruptRaised = false;
                 if (data) {
                     if (!this.lengthCounter) {
-                        this.curAddr = 0xC000 | ((this.address << 6) & 0xffff);
+                        this.nextRead = 0xC000 | ((this.address << 6) & 0xffff);
                         this.lengthCounter = (this.length << 4) + 1;
                     }
                 }
@@ -1623,13 +1614,13 @@ var DMCChannel = /** @class */ (function () {
                 break;
         }
     };
-    DMCChannel.prototype.run = function (end_time) {
+    DMCChannel.prototype.run = function (endTime) {
         if (!this.playing) {
-            this.time = end_time;
+            this.time = endTime;
             this.output = 0;
             return;
         }
-        for (; this.time < end_time; this.time++) {
+        for (; this.time < endTime; this.time++) {
             if (--this.cycles <= 0) {
                 this.cycles = this.freqTable[this.frequency];
                 if (!this.silenced) {
@@ -1667,14 +1658,14 @@ var DMCChannel = /** @class */ (function () {
         }
     };
     DMCChannel.prototype.fetch = function () {
-        this.buffer = this.handleDma(this.curAddr);
+        this.buffer = this.handleDma(this.nextRead);
         this.bufferIsEmpty = false;
         this.isFetching = false;
-        if (++this.curAddr == 0x10000)
-            this.curAddr = 0x8000;
+        if (++this.nextRead == 0x10000)
+            this.nextRead = 0x8000;
         if (!this.lengthCounter) {
             if (this.loopFlag) {
-                this.curAddr = 0xC000 | ((this.address << 6) & 0xffff);
+                this.nextRead = 0xC000 | ((this.address << 6) & 0xffff);
                 this.lengthCounter = (this.length << 4) + 1;
             }
             else if (this.interruptEnabled) {
@@ -1703,7 +1694,7 @@ var SquareChannel = /** @class */ (function () {
         this.onWriteAudio = onWriteAudio;
         this.output = 0;
         this.playing = true;
-        this._chan = 0;
+        this.channelNumber = 0;
         this.lengthCounts = new Uint8Array([
             0x0A, 0xFE,
             0x14, 0x02,
@@ -1722,72 +1713,72 @@ var SquareChannel = /** @class */ (function () {
             0x10, 0x1C,
             0x20, 0x1E
         ]);
-        this._length = 0;
+        this.latchedLength = 0;
         this.period = 0;
-        this._rawTimer = 0;
+        this.rawTimer = 0;
         this.volume = 0;
         this.time = 0;
         this.envelope = 0;
         this.looping = false;
         this.enabled = false;
         this.doodies = [2, 6, 30, 249];
-        this._sweepShift = 0;
-        this._sweepCounter = 0;
-        this._sweepDivider = 0;
-        this._sweepNegateFlag = false;
-        this._sweepEnabled = false;
-        this._startSweep = false;
-        this._sweepInvalid = false;
-        this._phase = 0;
-        this._envTimer = 0;
-        this._envStart = false;
-        this._envConstantVolume = false;
-        this._envVolume = 0;
+        this.sweepShift = 0;
+        this.sweepCounter = 0;
+        this.sweepDivider = 0;
+        this.sweepNegateFlag = false;
+        this.sweepEnabled = false;
+        this.startSweep = false;
+        this.sweepInvalid = false;
+        this.phase = 0;
+        this.envelopeTimer = 0;
+        this.envelopeStart = false;
+        this.envelopeConstantVolume = false;
+        this.envelopeVolume = 0;
         this.sweepComplement = false;
         this.dutyCycle = 0;
-        this._chan = chan;
+        this.channelNumber = chan;
         this.enabled = true;
-        this._sweepDivider = 1;
-        this._envTimer = 15;
+        this.sweepDivider = 1;
+        this.envelopeTimer = 15;
     }
     // functions
     SquareChannel.prototype.writeRegister = function (register, data, time) {
         switch (register) {
             case 0:
-                this._envConstantVolume = (data & 0x10) === 0x10;
+                this.envelopeConstantVolume = (data & 0x10) === 0x10;
                 this.volume = data & 15;
                 this.dutyCycle = this.doodies[(data >> 6) & 0x3];
                 this.looping = (data & 0x20) === 0x20;
-                this._sweepInvalid = false;
+                this.sweepInvalid = false;
                 break;
             case 1:
-                this._sweepShift = data & 7;
-                this._sweepNegateFlag = (data & 8) === 8;
-                this._sweepDivider = (data >> 4) & 7;
-                this._sweepEnabled = (data & 0x80) === 0x80;
-                this._startSweep = true;
-                this._sweepInvalid = false;
+                this.sweepShift = data & 7;
+                this.sweepNegateFlag = (data & 8) === 8;
+                this.sweepDivider = (data >> 4) & 7;
+                this.sweepEnabled = (data & 0x80) === 0x80;
+                this.startSweep = true;
+                this.sweepInvalid = false;
                 break;
             case 2:
                 this.period &= 0x700;
                 this.period |= data;
-                this._rawTimer = this.period;
+                this.rawTimer = this.period;
                 break;
             case 3:
                 this.period &= 0xFF;
                 this.period |= (data & 7) << 8;
-                this._rawTimer = this.period;
-                this._phase = 0;
+                this.rawTimer = this.period;
+                this.phase = 0;
                 // setup length
                 if (this.enabled) {
-                    this._length = this.lengthCounts[(data >> 3) & 0x1f];
+                    this.latchedLength = this.lengthCounts[(data >> 3) & 0x1f];
                 }
-                this._envStart = true;
+                this.envelopeStart = true;
                 break;
             case 4:
                 this.enabled = (data !== 0);
                 if (!this.enabled) {
-                    this._length = 0;
+                    this.latchedLength = 0;
                 }
                 break;
         }
@@ -1798,25 +1789,25 @@ var SquareChannel = /** @class */ (function () {
             this.output = 0;
             return;
         }
-        var period = this._sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
+        var period = this.sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this.rawTimer + 1) & 0x7FF) << 1;
         if (period === 0) {
             this.time = end_time;
             this.output = 0;
             this.onWriteAudio(this.time);
             return;
         }
-        var volume = this._envConstantVolume ? this.volume : this._envVolume;
-        if (this._length === 0 || volume === 0 || this._sweepInvalid) {
-            this._phase += ((end_time - this.time) / period) & 7;
+        var volume = this.envelopeConstantVolume ? this.volume : this.envelopeVolume;
+        if (this.latchedLength === 0 || volume === 0 || this.sweepInvalid) {
+            this.phase += ((end_time - this.time) / period) & 7;
             this.output = 0;
             this.onWriteAudio(this.time);
             return;
         }
-        for (; this.time < end_time; this.time += period, this._phase++) {
-            this.output = (this.dutyCycle >> (this._phase & 7) & 1) * volume;
+        for (; this.time < end_time; this.time += period, this.phase++) {
+            this.output = (this.dutyCycle >> (this.phase & 7) & 1) * volume;
             this.onWriteAudio(this.time);
         }
-        this._phase &= 7;
+        this.phase &= 7;
     };
     SquareChannel.prototype.endFrame = function (time) {
         this.run(time);
@@ -1824,50 +1815,50 @@ var SquareChannel = /** @class */ (function () {
     };
     SquareChannel.prototype.frameClock = function (time, step) {
         this.run(time);
-        if (!this._envStart) {
-            this._envTimer--;
-            if (this._envTimer === 0) {
-                this._envTimer = this.volume + 1;
-                if (this._envVolume > 0) {
-                    this._envVolume--;
+        if (!this.envelopeStart) {
+            this.envelopeTimer--;
+            if (this.envelopeTimer === 0) {
+                this.envelopeTimer = this.volume + 1;
+                if (this.envelopeVolume > 0) {
+                    this.envelopeVolume--;
                 }
                 else {
-                    this._envVolume = this.looping ? 15 : 0;
+                    this.envelopeVolume = this.looping ? 15 : 0;
                 }
             }
         }
         else {
-            this._envStart = false;
-            this._envTimer = this.volume + 1;
-            this._envVolume = 15;
+            this.envelopeStart = false;
+            this.envelopeTimer = this.volume + 1;
+            this.envelopeVolume = 15;
         }
         switch (step) {
             case 1:
             case 3:
-                --this._sweepCounter;
-                if (this._sweepCounter === 0) {
-                    this._sweepCounter = this._sweepDivider + 1;
-                    if (this._sweepEnabled && this._sweepShift > 0) {
-                        var sweep = this.period >> this._sweepShift;
+                --this.sweepCounter;
+                if (this.sweepCounter === 0) {
+                    this.sweepCounter = this.sweepDivider + 1;
+                    if (this.sweepEnabled && this.sweepShift > 0) {
+                        var sweep = this.period >> this.sweepShift;
                         if (this.sweepComplement) {
-                            this.period += this._sweepNegateFlag ? ~sweep : sweep;
+                            this.period += this.sweepNegateFlag ? ~sweep : sweep;
                         }
                         else {
-                            this.period += this._sweepNegateFlag ? ~sweep + 1 : sweep;
+                            this.period += this.sweepNegateFlag ? ~sweep + 1 : sweep;
                         }
-                        this._sweepInvalid = (this._rawTimer < 8 || (this.period & 2048) === 2048);
+                        this.sweepInvalid = (this.rawTimer < 8 || (this.period & 2048) === 2048);
                         //if (_sweepInvalid)
                         //{
                         //    _sweepInvalid = true;
                         //}
                     }
                 }
-                if (this._startSweep) {
-                    this._startSweep = false;
-                    this._sweepCounter = this._sweepDivider + 1;
+                if (this.startSweep) {
+                    this.startSweep = false;
+                    this.sweepCounter = this.sweepDivider + 1;
                 }
-                if (!this.looping && this._length > 0) {
-                    this._length--;
+                if (!this.looping && this.latchedLength > 0) {
+                    this.latchedLength--;
                 }
                 break;
         }
@@ -2150,10 +2141,10 @@ var ChiChiPPU = /** @class */ (function () {
         this.isForegroundPixel = false;
         this.spriteChanges = false;
         this.ppuReadBuffer = 0;
-        this._clipSprites = false;
-        this._clipTiles = false;
-        this._tilesAreVisible = false;
-        this._spritesAreVisible = false;
+        this.clipSprites = false;
+        this.clipTiles = false;
+        this.tilesVisible = false;
+        this.spritesVisible = false;
         this.nameTableMemoryStart = 0;
         this.backgroundPatternTableIndex = 0;
         //PPU implementation
@@ -2259,10 +2250,10 @@ var ChiChiPPU = /** @class */ (function () {
                 this.controlByte1 = data;
                 this.emphasisBits = (this.controlByte1 >> 5) & 7;
                 this.greyScale = (this.controlByte1 & 0x1) === 0x1;
-                this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
-                this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
-                this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
-                this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
+                this.clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+                this.clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+                this.tilesVisible = (this.controlByte1 & 0x08) === 0x08;
+                this.spritesVisible = (this.controlByte1 & 0x10) === 0x10;
                 break;
             case 2:
                 this.ppuReadBuffer = data;
@@ -2611,11 +2602,11 @@ var ChiChiPPU = /** @class */ (function () {
                         this.currentAttributeByte = this.getAttrEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
                         /* end fetch next tile */
                     }
-                    var tilesVis = this._tilesAreVisible;
-                    var spriteVis = this._spritesAreVisible;
+                    var tilesVis = this.tilesVisible;
+                    var spriteVis = this.spritesVisible;
                     if (this.currentXPosition < 8) {
-                        tilesVis = tilesVis && !this._clipTiles;
-                        spriteVis = tilesVis && !this._clipSprites;
+                        tilesVis = tilesVis && !this.clipTiles;
+                        spriteVis = tilesVis && !this.clipSprites;
                     }
                     this.spriteZeroHit = false;
                     var tilePixel = tilesVis ? this.getNameTablePixel() : 0;
@@ -2738,10 +2729,10 @@ var ChiChiPPU = /** @class */ (function () {
         this.backgroundPatternTableIndex = ((this.controlByte0 & 16) >> 4) * 0x1000;
         this.greyScale = (this.controlByte1 & 0x1) === 0x1;
         this.emphasisBits = (this.controlByte1 >> 5) & 7;
-        this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
-        this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
-        this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
-        this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+        this.spritesVisible = (this.controlByte1 & 0x10) === 0x10;
+        this.tilesVisible = (this.controlByte1 & 0x08) === 0x08;
+        this.clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+        this.clipSprites = (this.controlByte1 & 0x04) !== 0x04;
     };
     ChiChiPPU.prototype.updateStateBuffer = function (sb) {
         sb.getUint16Array('ppuaddress')[0] = this.address;
@@ -2840,7 +2831,7 @@ var ChiChiWavSharer = /** @class */ (function (_super) {
         return _this;
     }
     ChiChiWavSharer.prototype.blip_new = function (size) {
-        this.blipBuffer = new BlipBuffer(size);
+        this.blipBuffer = new BlipBuffer(size + ChiChiWavSharer.buf_extra);
         this.blipBuffer.size = size;
         this.blipBuffer.factor = 0;
         this.blip_clear();
@@ -2852,8 +2843,6 @@ var ChiChiWavSharer = /** @class */ (function (_super) {
         this.blipBuffer.offset = 0;
         this.blipBuffer.avail = 0;
         this.blipBuffer.integrator = 0;
-        this.blipBuffer.samples = new Array(this.blipBuffer.size + ChiChiWavSharer.buf_extra);
-        this.blipBuffer.samples.fill(0);
     };
     ChiChiWavSharer.prototype.blip_clocks_needed = function (samples) {
         var needed = samples * ChiChiWavSharer.time_unit - this.blipBuffer.offset;

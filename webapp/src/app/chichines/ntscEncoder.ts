@@ -129,30 +129,30 @@ export class NTSCEncoder {
                             // It can additionally include a floating-point hue offset.
 
 
-                // // Determine the region of scanline signal to sample. Take 12 samples.
-                // const center = x * (256 * 8) / width + 0;
-                // let begin = center - 6;
+            // // Determine the region of scanline signal to sample. Take 12 samples.
+            const center = x * (256 * 8) / width + 0;
+            let begin = center - 6;
 
-                // if (begin < 0) {
-                //     begin = 0;
-                // }
-                // let end   = center + 6;
-                // if (end > 256 * 8) {
-                //      end = 256 * 8;
-                // }
+            if (begin < 0) {
+                begin = 0;
+            }
+            let end   = center + 6;
+            if (end > 256 * 8) {
+                    end = 256 * 8;
+            }
 
-                // let cy = 0, ci = 0, cq = 0; // Calculate the color in YIQ.
-                // for (let p1 = begin; p1 < end; ++p1) {
-                //     const level = signal_levels[p1] / 12;
-                //     cy  =  cy + level;
-                //     ci  =  ci + level * Math.cos( Math.PI * (phase + p1) / 6 );
-                //     cq  =  cq + level * Math.sin( Math.PI * (phase + p1) / 6 );
-                // }
+            let cy = 0, ci = 0, cq = 0; // Calculate the color in YIQ.
+            for (let p1 = begin; p1 < end; ++p1) {
+                const level = signal_levels[p1] / 12;
+                cy  =  cy + level;
+                ci  =  ci + level * Math.cos( Math.PI * (phase + p1) / 6 );
+                cq  =  cq + level * Math.sin( Math.PI * (phase + p1) / 6 );
+            }
 
-                dest[(y * 256) + (x * 4)] = 0xff;
-                dest[(y * 256) + (x * 4) + 1]  = 0x45;
-                dest[(y * 256) + (x * 4) + 2]  = 0x30;
-                dest[(y * 256) + (x * 4) + 3]  = 0xFF;
+            dest[(y * 256) + (x * 4)] = cy;
+            dest[(y * 256) + (x * 4) + 1]  = ci;
+            dest[(y * 256) + (x * 4) + 2]  = cq;
+            dest[(y * 256) + (x * 4) + 3]  = 0xff;
 
         }
     }

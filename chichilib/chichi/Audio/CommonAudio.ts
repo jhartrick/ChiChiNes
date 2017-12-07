@@ -108,7 +108,7 @@ export class ChiChiWavSharer extends WavSharer {
     blip_samples_avail: number;
     
     blip_new(size: number): void {
-        this.blipBuffer = new BlipBuffer(size);
+        this.blipBuffer = new BlipBuffer(size + ChiChiWavSharer.buf_extra);
         this.blipBuffer.size = size;
         this.blipBuffer.factor = 0;
         this.blip_clear();
@@ -122,8 +122,6 @@ export class ChiChiWavSharer extends WavSharer {
         this.blipBuffer.offset = 0;
         this.blipBuffer.avail = 0;
         this.blipBuffer.integrator = 0;
-        this.blipBuffer.samples = new Array<number>(this.blipBuffer.size + ChiChiWavSharer.buf_extra);
-        this.blipBuffer.samples.fill(0);
     }
 
     blip_clocks_needed(samples: number): number {
@@ -221,6 +219,7 @@ export class ChiChiWavSharer extends WavSharer {
 //apu classes
 class BlipBuffer  {
     constructor(public size: number) {
+        
         this.samples = new Array<number>(size);
         this.samples.fill(0);
     }

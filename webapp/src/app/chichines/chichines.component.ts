@@ -53,8 +53,8 @@ export class ChiChiComponent implements AfterViewInit {
 
         this.camera.add( <any>this.nesService.audioSettings.listener);
 
-        // const encoder = new BasicEncoder(this.nesService);
-        const encoder = new NTSCEncoder(this.nesService);
+        const encoder = new BasicEncoder(this.nesService);
+        // const encoder = new NTSCEncoder(this.nesService);
 
         this.scene =  encoder.createScene();
 

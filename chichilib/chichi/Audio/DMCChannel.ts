@@ -23,7 +23,7 @@ export class DMCChannel implements IChannel {
     private shiftreg: number= 0;
     private silenced: boolean = false;
     private cycles: number = 0;
-    private curAddr: number = 0;
+    private nextRead: number = 0;
     private lengthCounter: number = 0;
     length: number = 0;
     private address: number = 0;
@@ -66,7 +66,7 @@ export class DMCChannel implements IChannel {
             {
                 if (!this.lengthCounter)
                 {
-                    this.curAddr = 0xC000 | ((this.address << 6) & 0xffff);
+                    this.nextRead = 0xC000 | ((this.address << 6) & 0xffff);
                     this.lengthCounter = (this.length << 4) + 1;
                 }
             }
@@ -81,14 +81,14 @@ export class DMCChannel implements IChannel {
     }
 
 
-    run(end_time: number): void {
+    run(endTime: number): void {
         if (!this.playing) {
-            this.time = end_time;
+            this.time = endTime;
             this.output = 0;
             return ;
         }
 
-        for (; this.time < end_time; this.time ++) {
+        for (; this.time < endTime; this.time ++) {
                 
             if (--this.cycles <= 0)
             {
@@ -140,17 +140,17 @@ export class DMCChannel implements IChannel {
 
 
     fetch () : void {
-        this.buffer = this.handleDma(this.curAddr);
+        this.buffer = this.handleDma(this.nextRead);
         this.bufferIsEmpty = false;
         this.isFetching = false;
-        if (++this.curAddr == 0x10000)
-            this.curAddr = 0x8000;
+        if (++this.nextRead == 0x10000)
+            this.nextRead = 0x8000;
 
         if (!this.lengthCounter)
         {
             if (this.loopFlag)
             {
-                this.curAddr = 0xC000 | ((this.address << 6) & 0xffff);
+                this.nextRead = 0xC000 | ((this.address << 6) & 0xffff);
                 this.lengthCounter = (this.length << 4) + 1;
             }
             else if (this.interruptEnabled) {

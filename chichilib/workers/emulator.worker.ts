@@ -229,15 +229,6 @@ export class tendoWrapper {
             }
             if (this.machine.Cpu.Debugging) {
                 info.debug = {
-                    currentCpuStatus: this.machine.Cpu.GetStatus ? this.machine.Cpu.GetStatus() : {
-                        PC: 0,
-                        A: 0,
-                        X: 0,
-                        Y: 0,
-                        SP: 0,
-                        SR: 0
-                    },
-                    currentPPUStatus: this.machine.ppu.GetPPUStatus ? this.machine.ppu.GetPPUStatus() : {},
                     InstructionHistory: {
                         Buffer: this.machine.Cpu.InstructionHistory.slice(0),
                         Index: this.machine.Cpu.InstructionHistoryPointer,

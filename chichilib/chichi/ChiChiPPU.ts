@@ -95,10 +95,10 @@ export class ChiChiPPU implements IChiChiPPU {
     private spriteChanges: boolean = false;
 
     private ppuReadBuffer: number = 0;
-    private _clipSprites: boolean = false;
-    private _clipTiles: boolean = false;
-    private _tilesAreVisible: boolean = false;
-    private _spritesAreVisible: boolean = false;
+    private clipSprites: boolean = false;
+    private clipTiles: boolean = false;
+    private tilesVisible: boolean = false;
+    private spritesVisible: boolean = false;
 
     private nameTableMemoryStart: number = 0;
 
@@ -218,10 +218,10 @@ export class ChiChiPPU implements IChiChiPPU {
                 this.emphasisBits = (this.controlByte1 >> 5) & 7;
 
                 this.greyScale = (this.controlByte1 & 0x1) === 0x1;
-                this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
-                this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
-                this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
-                this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
+                this.clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+                this.clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+                this.tilesVisible = (this.controlByte1 & 0x08) === 0x08;
+                this.spritesVisible = (this.controlByte1 & 0x10) === 0x10;
                 break;
             case 2:
                 this.ppuReadBuffer = data;
@@ -636,12 +636,12 @@ export class ChiChiPPU implements IChiChiPPU {
 
                     }
 
-                    let tilesVis = this._tilesAreVisible;
-                    let spriteVis = this._spritesAreVisible;
+                    let tilesVis = this.tilesVisible;
+                    let spriteVis = this.spritesVisible;
 
                     if (this.currentXPosition < 8 ) {
-                        tilesVis = tilesVis && !this._clipTiles;
-                        spriteVis = tilesVis && !this._clipSprites;
+                        tilesVis = tilesVis && !this.clipTiles;
+                        spriteVis = tilesVis && !this.clipSprites;
                     } 
                     this.spriteZeroHit = false;
                     const tilePixel = tilesVis ? this.getNameTablePixel() : 0;
@@ -795,10 +795,10 @@ export class ChiChiPPU implements IChiChiPPU {
 
         this.greyScale = (this.controlByte1 & 0x1) === 0x1;
         this.emphasisBits = (this.controlByte1 >> 5) & 7;
-        this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
-        this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
-        this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
-        this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
+        this.spritesVisible = (this.controlByte1 & 0x10) === 0x10;
+        this.tilesVisible = (this.controlByte1 & 0x08) === 0x08;
+        this.clipTiles = (this.controlByte1 & 0x02) !== 0x02;
+        this.clipSprites = (this.controlByte1 & 0x04) !== 0x04;
 
     }
 

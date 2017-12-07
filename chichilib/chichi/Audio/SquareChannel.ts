@@ -4,7 +4,7 @@ export class SquareChannel implements IChannel {
     output: number = 0;
     playing =  true;
     
-    private _chan = 0;
+    private channelNumber = 0;
     private lengthCounts = new Uint8Array(
         [
             0x0A,0xFE,
@@ -25,35 +25,35 @@ export class SquareChannel implements IChannel {
 	        0x20,0x1E
         ]);
 
-    private _length = 0;
+    private latchedLength = 0;
     period = 0;
-    private _rawTimer = 0;
+    private rawTimer = 0;
     private volume = 0;
     private time = 0;
     private envelope = 0;
     private looping = false;
     private enabled = false;
     private doodies: number[] = [2, 6, 30, 249];
-    private _sweepShift = 0;
-    private _sweepCounter = 0;
-    private _sweepDivider = 0;
-    private _sweepNegateFlag = false;
-    private _sweepEnabled = false;
-    private _startSweep = false;
-    private _sweepInvalid = false;
-    private _phase = 0;
-    private _envTimer = 0;
-    private _envStart = false;
-    private _envConstantVolume = false;
-    private _envVolume = 0;
+    private sweepShift = 0;
+    private sweepCounter = 0;
+    private sweepDivider = 0;
+    private sweepNegateFlag = false;
+    private sweepEnabled = false;
+    private startSweep = false;
+    private sweepInvalid = false;
+    private phase = 0;
+    private envelopeTimer = 0;
+    private envelopeStart = false;
+    private envelopeConstantVolume = false;
+    private envelopeVolume = 0;
 
 
     constructor(chan: number, public onWriteAudio: (x: number)=> void) {
-        this._chan = chan;
+        this.channelNumber = chan;
 
         this.enabled = true;
-        this._sweepDivider = 1;
-        this._envTimer = 15;
+        this.sweepDivider = 1;
+        this.envelopeTimer = 15;
     }
 
     // properties
@@ -65,40 +65,40 @@ export class SquareChannel implements IChannel {
     writeRegister(register: number, data: number, time: number): void {
         switch (register) {
             case 0:
-                this._envConstantVolume = (data & 0x10) === 0x10;
+                this.envelopeConstantVolume = (data & 0x10) === 0x10;
                 this.volume = data & 15;
                 this.dutyCycle = this.doodies[(data >> 6) & 0x3];
                 this.looping = (data & 0x20) === 0x20;
-                this._sweepInvalid = false;
+                this.sweepInvalid = false;
                 break;
             case 1:
-                this._sweepShift = data & 7;
-                this._sweepNegateFlag = (data & 8) === 8;
-                this._sweepDivider = (data >> 4) & 7;
-                this._sweepEnabled = (data & 0x80) === 0x80;
-                this._startSweep = true;
-                this._sweepInvalid = false;
+                this.sweepShift = data & 7;
+                this.sweepNegateFlag = (data & 8) === 8;
+                this.sweepDivider = (data >> 4) & 7;
+                this.sweepEnabled = (data & 0x80) === 0x80;
+                this.startSweep = true;
+                this.sweepInvalid = false;
                 break;
             case 2:
                 this.period &= 0x700;
                 this.period |= data;
-                this._rawTimer = this.period;
+                this.rawTimer = this.period;
                 break;
             case 3:
                 this.period &= 0xFF;
                 this.period |= (data & 7) << 8;
-                this._rawTimer = this.period;
-                this._phase = 0;
+                this.rawTimer = this.period;
+                this.phase = 0;
                 // setup length
                 if (this.enabled) {
-                    this._length = this.lengthCounts[(data >> 3) & 0x1f];
+                    this.latchedLength = this.lengthCounts[(data >> 3) & 0x1f];
                 }
-                this._envStart = true;
+                this.envelopeStart = true;
                 break;
             case 4:
                 this.enabled = (data !== 0);
                 if (!this.enabled) {
-                    this._length = 0;
+                    this.latchedLength = 0;
                 }
                 break;
         }
@@ -111,7 +111,7 @@ export class SquareChannel implements IChannel {
             return ;
         }
 
-        const period = this._sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this._rawTimer + 1) & 0x7FF) << 1;
+        const period = this.sweepEnabled ? ((this.period + 1) & 0x7FF) << 1 : ((this.rawTimer + 1) & 0x7FF) << 1;
 
         if (period === 0) {
             this.time = end_time;
@@ -120,19 +120,19 @@ export class SquareChannel implements IChannel {
             return;
         }
 
-        const volume = this._envConstantVolume ? this.volume : this._envVolume;
+        const volume = this.envelopeConstantVolume ? this.volume : this.envelopeVolume;
 
-        if (this._length === 0 || volume === 0 || this._sweepInvalid) {
-            this._phase += ((end_time - this.time) / period) & 7;
+        if (this.latchedLength === 0 || volume === 0 || this.sweepInvalid) {
+            this.phase += ((end_time - this.time) / period) & 7;
             this.output = 0;
             this.onWriteAudio(this.time);
             return;
         }
-        for (; this.time < end_time; this.time += period, this._phase++) {
-            this.output = (this.dutyCycle >> (this._phase & 7) & 1) * volume;
+        for (; this.time < end_time; this.time += period, this.phase++) {
+            this.output = (this.dutyCycle >> (this.phase & 7) & 1) * volume;
             this.onWriteAudio(this.time);
         }
-        this._phase &= 7;
+        this.phase &= 7;
     }
     
 
@@ -145,49 +145,49 @@ export class SquareChannel implements IChannel {
     frameClock(time: number, step: number): void {
         this.run(time);
 
-        if (!this._envStart) {
-            this._envTimer--;
-            if (this._envTimer === 0) {
-                this._envTimer = this.volume + 1;
-                if (this._envVolume > 0) {
-                    this._envVolume--;
+        if (!this.envelopeStart) {
+            this.envelopeTimer--;
+            if (this.envelopeTimer === 0) {
+                this.envelopeTimer = this.volume + 1;
+                if (this.envelopeVolume > 0) {
+                    this.envelopeVolume--;
                 } else {
-                    this._envVolume = this.looping ? 15 : 0;
+                    this.envelopeVolume = this.looping ? 15 : 0;
                 }
             }
         } else {
-            this._envStart = false;
-            this._envTimer = this.volume + 1;
-            this._envVolume = 15;
+            this.envelopeStart = false;
+            this.envelopeTimer = this.volume + 1;
+            this.envelopeVolume = 15;
         }
 
         switch (step) {
             case 1:
             case 3:
-                --this._sweepCounter;
-                if (this._sweepCounter === 0) {
-                    this._sweepCounter = this._sweepDivider + 1;
-                    if (this._sweepEnabled && this._sweepShift > 0) {
-                        var sweep = this.period >> this._sweepShift;
+                --this.sweepCounter;
+                if (this.sweepCounter === 0) {
+                    this.sweepCounter = this.sweepDivider + 1;
+                    if (this.sweepEnabled && this.sweepShift > 0) {
+                        var sweep = this.period >> this.sweepShift;
                         if (this.sweepComplement) {
-                            this.period += this._sweepNegateFlag ? ~sweep : sweep;
+                            this.period += this.sweepNegateFlag ? ~sweep : sweep;
                         } else {
-                            this.period += this._sweepNegateFlag ? ~sweep + 1 : sweep;
+                            this.period += this.sweepNegateFlag ? ~sweep + 1 : sweep;
                         }
-                        this._sweepInvalid = (this._rawTimer < 8 || (this.period & 2048) === 2048);
+                        this.sweepInvalid = (this.rawTimer < 8 || (this.period & 2048) === 2048);
                         //if (_sweepInvalid)
                         //{
                         //    _sweepInvalid = true;
                         //}
                     }
                 }
-                if (this._startSweep) {
-                    this._startSweep = false;
-                    this._sweepCounter = this._sweepDivider + 1;
+                if (this.startSweep) {
+                    this.startSweep = false;
+                    this.sweepCounter = this.sweepDivider + 1;
 
                 }
-                if (!this.looping && this._length > 0) {
-                    this._length--;
+                if (!this.looping && this.latchedLength > 0) {
+                    this.latchedLength--;
                 }
                 break;
         }
