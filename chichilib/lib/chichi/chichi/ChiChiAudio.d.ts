@@ -1,6 +1,6 @@
 import { AudioSettings } from './ChiChiTypes';
 import { ChiChiWavSharer } from './Audio/CommonAudio';
-import { IMemoryMap } from './ChiChiMemoryMap';
+import { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { WavSharer } from './chichi';
 export interface IChiChiAPUState {
     audioSettings: AudioSettings;

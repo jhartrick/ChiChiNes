@@ -2,7 +2,7 @@ import { ChiChiCPPU } from '../chichi/ChiChiCPU';
 import { ChiChiPPU, IChiChiPPU, IChiChiPPUState } from '../chichi/ChiChiPPU';
 import { NESFileDecoder } from './NESFileDecoder';
 import * as crc from 'crc';
-import { MemoryMap, IMemoryMap } from '../chichi/ChiChiMemoryMap';
+import { MemoryMap, IMemoryMap } from '../chichi/MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from '../chichi/StateBuffer';
 
 export enum NameTableMirroring {

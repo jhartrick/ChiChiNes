@@ -12,7 +12,7 @@ export { GameGenieCode, MemoryPatch, ChiChiCheats } from './ChiChiCheats';
 export { DebugHelpers } from './debugging/DebugHelpers';
 export { WorkerInterop } from './worker/worker.interop';
 
-export  { IMemoryMap } from './ChiChiMemoryMap';
+export  { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 
 import * as ChiChiMessages from './worker/worker.message';
 export { ChiChiMessages } 

@@ -1,9 +1,9 @@
-import { IChiChiCPPU } from "./ChiChiCPU";
-import { IChiChiPPU } from "./ChiChiPPU";
-import { IChiChiAPU } from "./ChiChiAudio";
-import { IBaseCart } from "../chichicarts/BaseCart";
-import { ChiChiInputHandler } from "./ChiChiControl";
-import { StateBuffer } from "./StateBuffer";
+import { IChiChiCPPU } from "../ChiChiCPU";
+import { IChiChiPPU } from "../ChiChiPPU";
+import { IChiChiAPU } from "../ChiChiAudio";
+import { IBaseCart } from "../../chichicarts/BaseCart";
+import { ChiChiInputHandler } from "../ChiChiControl";
+import { StateBuffer } from "../StateBuffer";
 
 export interface IMemoryMap {
     ppu: IChiChiPPU;

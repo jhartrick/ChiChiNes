@@ -63,25 +63,19 @@ export class NTSCEncoder {
         this.render = () => {
             this.ppuCycle = (this.ppuCycle + 1) & 3;
             let phase = (this.ppuCycle * 8) % 12;
-
             for (let y = 0; y < 256; y += 1) {
+                phase = (phase + 8) % 12;
                 for (let x = 0; x < 256; x += 1) {
-                    const vpos = ((y * 256) + (x)) << 2;
-                    this.renderNTSCPixel(this.ppuCycle, vbuffer[vpos] | vbuffer[vpos + 1] << 8, x, phase);
+                    const vpos = ((y * 256) + x) << 2;
+                    this.renderNTSCPixel(this.ppuCycle, vbuffer[vpos], x);
                 }
                 for (let x = 0; x < 256; x += 1) {
-                    phase = (phase + 8) % 12;
-                    const vpos = ((y * 256) + (x)) << 2;
+                    const vpos = ((y * 256) + x) << 2;
 
-                    const pixel  = this.renderPixel(x , y, this.ppuCycle, phase);
+                    const pixel  = this.renderPixel(x , y, phase, vpos );
                     // const pixel = 0xff00ff00;
-                    this.outBuf8[vpos + 0] = (pixel >> 24) & 0xff; // red
-                    this.outBuf8[vpos + 1] = (pixel >> 16) & 0xff; // green
-                    this.outBuf8[vpos + 2] = (pixel >> 8)  & 0xff; // blue;
-                    this.outBuf8[vpos + 3] = 0xff;
+
                 }
-                // this.genScanline(this.ppuCycle, i, vbuffer);
-                // const pixel = p32[vbuffer[vpos]];
             }
             // render scanline
             text.needsUpdate = true;
@@ -102,7 +96,7 @@ export class NTSCEncoder {
         // Decode the NES color.
         const color = (pixel & 0x0F);   // 0..15 "cccc"
         let level = (pixel >> 4) & 3;  // 0..3  "ll"
-        const emphasis = (pixel >> 8) & 0x7;   // 0..7  "eee"
+        const emphasis = 0;//(pixel >> 8) & 0x7;   // 0..7  "eee"
         if (color > 13) {
             level = 1;
         } // For colors 14..15, level 1 is forced.
@@ -134,8 +128,9 @@ export class NTSCEncoder {
         return signal;
     }
 
-    private renderNTSCPixel(PPU_cycle_counter: number, pixel: number, x: number, phase: number) {
+    private renderNTSCPixel(PPU_cycle_counter: number, pixel: number, x: number) {
         const signal_levels = this.signal_levels;
+        const phase = (PPU_cycle_counter * 8) % 12;
 
         for (let p = 0; p < 8; ++p) {
             // Each pixel produces distinct 8 samples of NTSC signal.
@@ -152,7 +147,7 @@ export class NTSCEncoder {
 
     }
 
-    private renderPixel(x: number, y: number, PPU_cycle_counter: number, phase: number) {
+    private renderPixel(x: number, y: number, phase: number, vpos: number) {
 
         const width = 256; // Input: Screen width. Can be not only 256, but anything up to 2048.
                         // Input: This should the value that was PPU_cycle_counter * 8 + 3.9
@@ -188,12 +183,15 @@ export class NTSCEncoder {
             return v > 255 ? 255 : v;
         };
 
-        const rgb =
-            0x1000000 * clamp(255.95 * gammafix(cy +  (0.946882 * ci) +  (0.623557 * cq)))
-          + 0x0010000 * clamp(255.95 * gammafix(cy + (-0.274788 * ci) + (-0.635691 * cq)))
-          + 0x0000100 * clamp(255.95 * gammafix(cy + (-1.108545 * ci) +  (1.709007 * cq)));
+        const r = (cy +  (0.946882 * ci) +  (0.623557 * cq)) * 255;
 
-        return rgb >>> 0;
+        const g =  255 * (cy + (-0.274788 * ci) + (-0.635691 * cq));
+        const b =  255 * (cy + (-1.108545 * ci) +  (1.709007 * cq));
+
+        this.outBuf8[vpos + 0] = r; // red
+        this.outBuf8[vpos + 1] = g; // green
+        this.outBuf8[vpos + 2] = b; // blue;
+        this.outBuf8[vpos + 3] = 0xff;
     }
 
     render() {

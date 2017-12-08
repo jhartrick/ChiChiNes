@@ -3,7 +3,7 @@ import { IChiChiPPU } from "../ChiChiPPU";
 import { IChiChiAPU } from "../ChiChiAudio";
 import { IBaseCart } from "../../chichicarts/BaseCart";
 import { ChiChiInputHandler } from "../ChiChiControl";
-import { MemoryMap } from "../ChiChiMemoryMap";
+import { MemoryMap } from "./ChiChiMemoryMap";
 
 export class VSMemoryMap extends MemoryMap {
 

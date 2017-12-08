@@ -1,6 +1,6 @@
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from './ChiChiCPU';
-import { IMemoryMap } from './ChiChiMemoryMap';
+import { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from './StateBuffer';
 export interface IChiChiPPUState {
     spriteRAM: Uint8Array;

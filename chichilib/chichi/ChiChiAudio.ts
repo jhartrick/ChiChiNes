@@ -5,7 +5,7 @@ import { TriangleChannel } from './Audio/TriangleChannel';
 import { NoiseChannel } from './Audio/NoiseChannel';
 
 import { ChiChiWavSharer } from './Audio/CommonAudio';
-import { IMemoryMap } from './ChiChiMemoryMap';
+import { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { isUndefined } from 'util';
 import { WavSharer } from './chichi';
 

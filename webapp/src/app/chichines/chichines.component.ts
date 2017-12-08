@@ -20,6 +20,9 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasTop = '0px';
 
     constructor(private nesService: NESService, private cd: ChangeDetectorRef, private zone: NgZone) {
+        nesService.wishbone.statusChanged.subscribe((bone)=> {
+            
+        })
     }
 
     @HostListener('window:resize', ['$event'])
@@ -48,8 +51,8 @@ export class ChiChiComponent implements AfterViewInit {
 
         camera.add(this.nesService.audioSettings.listener);
 
-        // const encoder = new BasicEncoder(this.nesService);
-        const encoder = new NTSCEncoder(this.nesService);
+        const encoder = new BasicEncoder(this.nesService);
+        // const encoder = new NTSCEncoder(this.nesService);
 
         const scene = new THREE.Scene();
         const geometry = new THREE.PlaneGeometry(5, 5);

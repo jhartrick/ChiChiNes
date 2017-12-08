@@ -4,7 +4,7 @@ import { IChiChiPPU } from "./ChiChiPPU";
 import { IChiChiAPU, IChiChiAPUState } from "./ChiChiAudio";
 import { IBaseCart } from '../chichicarts/BaseCart'
 import { MemoryPatch } from "./ChiChiCheats";
-import { MemoryMap, IMemoryMap } from "./ChiChiMemoryMap";
+import { MemoryMap, IMemoryMap } from "./MemoryMaps/ChiChiMemoryMap";
 import { StateBuffer } from "./StateBuffer";
 const PRG_CTR = 0;
 const PRG_ADR = 1;
