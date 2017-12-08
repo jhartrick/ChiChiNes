@@ -61,6 +61,17 @@ export class StateBuffer {
         return new Uint16Array(this.data.buffer, x.start, x.size / Uint16Array.BYTES_PER_ELEMENT );
     }
 
+    getUint32Array(name: string): Uint32Array {
+        const x = this.data.segments.find(seg => { return seg.name === name; });
+        return new Uint32Array(this.data.buffer, x.start, x.size / Uint32Array.BYTES_PER_ELEMENT );
+    }
+
+    getFloat32Array(name: string): Float32Array {
+        const x = this.data.segments.find(seg => { return seg.name === name; });
+        return new Float32Array(this.data.buffer, x.start, x.size / Float32Array.BYTES_PER_ELEMENT );
+    }
+
+
 
     syncBuffer(config: StateBufferConfig) {
         this.data = config;

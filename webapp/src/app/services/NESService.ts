@@ -2,7 +2,7 @@ import { Injectable, EventEmitter } from '@angular/core';
 import { Observable, Subscriber } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { WishboneMachine } from "./wishbone/wishbone";
-import { ChiChiCPPU, AudioSettings, ChiChiPPU, BaseCart, RunningStatuses } from 'chichi';
+import { ChiChiCPPU, AudioSettings, ChiChiPPU, BaseCart, RunningStatuses, StateBuffer } from 'chichi';
 import { Http } from '@angular/http';
 import * as crc from 'crc';
 import { WishboneWorker } from './wishbone/wishbone.worker';
@@ -22,27 +22,32 @@ export class NESService {
 
     onDebug: EventEmitter<any> = new EventEmitter<any>();
     
-    private vbuffer: Uint8Array = new Uint8Array(<any>new SharedArrayBuffer(256 * 256 * 4));
+    private vbuffer: Uint8Array;
     get videoBuffer(): Uint8Array {
         return this.vbuffer;
     }
     
+    private avStateBuffer: StateBuffer;
+
+
     private audioHandler: ChiChiThreeJSAudio;
 
     public defaultPalette: number[] = [7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     constructor(public wishbone: WishboneMachine, private worker: WishboneWorker) {
-        this.audioHandler = new ChiChiThreeJSAudio(this.wishbone);
-        this.audioSettings = this.audioHandler.settings;
+        
+        this.avStateBuffer = new StateBuffer();
+        
+        this.audioHandler = new ChiChiThreeJSAudio(this.wishbone, this.avStateBuffer);
         this.audioHandler.onRebuild.subscribe(settings=>this.audioSettings = settings);
-        this.audioHandler.getSound();
+        this.audioSettings = this.audioHandler.getSound();
 
-        wishbone.statusChanged.subscribe((status) => {
-            // if (!this.audioSettings.muted || this.audioSettings.volume > 0 ) {
-            //     this.audioSettings.muted = (status !== RunningStatuses.Running); 
-            // }
+        this.avStateBuffer.onRestore.subscribe((buffer)=> {
+            this.vbuffer = buffer.getUint8Array('vbuffer');
         });
 
+        this.avStateBuffer  .pushSegment(256 * 256 * 4, 'vbuffer')
+                            .build();
 
         const debugMsgs = this.worker.nesMessageData
             .filter( (data)=> data.debug ? true : false)

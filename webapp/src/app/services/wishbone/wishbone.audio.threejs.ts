@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { LocalAudioSettings } from './wishbone.audio.localsettings';
 import { NESService } from '../NESService';
 import { WishboneMachine } from './wishbone';
-import { RunningStatuses } from 'chichi';
+import { RunningStatuses, StateBuffer } from 'chichi';
 import { Subject } from 'rxjs/Subject';
 
 export class ThreeJSAudioSettings implements LocalAudioSettings {
@@ -29,13 +29,23 @@ export class ThreeJSAudioSettings implements LocalAudioSettings {
 	}
 
 	abuffer: Float32Array;
+	items: any;
 }
 
 
 export class ChiChiThreeJSAudio {
+	abuffer: Float32Array = new Float32Array(32);
 
 	
-    constructor(private wishbone: WishboneMachine) {
+    constructor(private wishbone: WishboneMachine, sb: StateBuffer) {
+        sb.onRestore.subscribe((buffer)=> {
+            this.abuffer = buffer.getFloat32Array('abuffer');
+		});
+		
+		sb	.pushSegment(4196 * 4 * Float32Array.BYTES_PER_ELEMENT, 'abuffer')
+			.build();
+
+
 		wishbone.statusChanged.subscribe((status)=>{
 			if (status !== RunningStatuses.Running) {
 				this.settings.abuffer.fill(0);
@@ -48,14 +58,23 @@ export class ChiChiThreeJSAudio {
 
 	onRebuild: Subject<ThreeJSAudioSettings> = new Subject<ThreeJSAudioSettings>();
 	
-	getSound(options? : any): ThreeJSAudioSettings {
+	teardown() {
+		const settings = this.settings;
+		if (this.settings.items) {
+			if (this.settings.items.audioSource) {
+				this.settings.items.audioSource.loop = false;
+				this.settings.items.audioSource.stop();
+			}
+		}
+	}
+
+	getSound( options? : any): ThreeJSAudioSettings {
 		const bufferBlockSize = 4096;
 		const bufferBlockCountBits = 2;
 		const chunkSize = 512;
 		const bufferSize: number = bufferBlockSize << bufferBlockCountBits;
 
-		const nesAudioBuffer = new SharedArrayBuffer(bufferSize * Float32Array.BYTES_PER_ELEMENT);
-		const nesAudio = new Float32Array(<any>nesAudioBuffer);
+		const nesAudio = this.abuffer;
 		
 		const listener = new THREE.AudioListener();
 		
@@ -114,6 +133,12 @@ export class ChiChiThreeJSAudio {
 		
 		result.abuffer = nesAudio;
 		result.sampleRate = audioCtx.sampleRate;
+		result.items = {
+			sound: sound,
+			source: audioSource,
+			scriptNode: scriptNode,
+			gainNode: gainNode
+		}
 		this.settings = result;
 		this.onRebuild.next(this.settings);
 		return result;

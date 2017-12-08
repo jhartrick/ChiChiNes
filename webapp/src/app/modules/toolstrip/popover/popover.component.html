@@ -1,9 +1,9 @@
-<div class='popover'  (mouseenter)="handleMouseEnter(true)" (mouseleave)="handleMouseEnter(false)">
-    <chichi-ui-segment style='z-index: 9999' cssClass='floater' width='64px' left='0px'>
+<div class='popover'  (click)="handleMouseEnter(true)" (mouseleave)="handleMouseEnter(false)">
+    <!-- <chichi-ui-segment style='z-index: 9999' cssClass='floater' width='64px' left='0px'>
         <ng-template chichi-popover></ng-template>
-    </chichi-ui-segment>
+    </chichi-ui-segment> -->
     <chichi-ui-segment style='z-index: 9999' cssClass='floater' width='64px' left='0px'>
-        <button *ngIf='!button' mat-fab (click)="clickHandler($event)">
+        <button mat-fab >
             <mat-icon svgIcon='{{ icon }}'></mat-icon>
         </button>
     </chichi-ui-segment>

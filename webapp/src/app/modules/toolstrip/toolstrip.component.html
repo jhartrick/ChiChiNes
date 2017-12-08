@@ -1,6 +1,9 @@
 <div class="flexcontainer">
 
-    <chichi-popover #filePopover [button]='fileHandlerButton()' icon='upload'>
+    <chichi-popover icon='upload'>
+        <chichi-ui-segment>
+            <controlpanel-cartloader></controlpanel-cartloader>
+        </chichi-ui-segment>
         <chichi-ui-segment>
             <controlpanel-powerbutton></controlpanel-powerbutton>
         </chichi-ui-segment>
@@ -12,14 +15,21 @@
         </chichi-ui-segment>
     </chichi-popover>
 
-    <chichi-popover [button]='muteButton()'>
+    <chichi-popover icon='amplifier'>
+        <chichi-ui-segment>
+            <controlpanel-mutebutton></controlpanel-mutebutton>
+        </chichi-ui-segment>
         <chichi-ui-segment>
             <controlpanel-volume></controlpanel-volume>
         </chichi-ui-segment>
     </chichi-popover>
     <controlpad-config></controlpad-config>
     
-    <chichi-popover *ngIf='cartSettings ? true : false' [button]='cartInfoButton()' [icon]='chip'>
+    <chichi-popover *ngIf='cartSettings ? true : false' icon='chip'>
+        <chichi-ui-segment>
+            <cartinfo-main>
+            </cartinfo-main>
+        </chichi-ui-segment>
         <chichi-ui-segment>
             <cheating-gamegenie></cheating-gamegenie>
         </chichi-ui-segment>
