@@ -3,39 +3,67 @@ import * as THREE from 'three';
 import { LocalAudioSettings } from './wishbone.audio.localsettings';
 import { NESService } from '../NESService';
 import { WishboneMachine } from './wishbone';
-import { RunningStatuses } from 'chichi';
+import { RunningStatuses, StateBuffer } from 'chichi';
 import { Subject } from 'rxjs/Subject';
+import { setInterval } from 'timers';
 
 export class ThreeJSAudioSettings implements LocalAudioSettings {
-	constructor(private gainNode: GainNode, public listener: THREE.AudioListener) {
+	constructor(private gainNode: GainNode, public listener: THREE.AudioListener, public audioContext: AudioContext, public scriptNode: ScriptProcessorNode) {
 	}
-	_muted: boolean = false;
-	_lastVol = 0;
+	
+	private isMuted: boolean = false;
+	private lastVolume = 1;
+	
 	sampleRate: number;
-    get volume(): number {
+	
+	get volume(): number {
 		return this.gainNode.gain.value;
 	}
+
     set volume(value: number) {
 		this.gainNode.gain.value = value;
 	}
 
 	get muted(): boolean {
-		return this._muted;
+		return this.isMuted;
 	}
+
 	set muted(value: boolean) {
-		this._muted = value;
-		this._lastVol = this._muted ? this.gainNode.gain.value : 1;
-		this.gainNode.gain.value = this._muted ? 0: this._lastVol;
+		this.isMuted = value;
+		if (this.isMuted) {
+			this.lastVolume = this.gainNode.gain.value;
+			this.gainNode.gain.value = 0; 
+		} else {
+			this.gainNode.gain.value = this.lastVolume; 
+		}
+	}
+
+	off() {
+		this.gainNode.disconnect();
+	}
+
+	on() {
+		this.gainNode.connect(this.audioContext.destination);
 	}
 
 	abuffer: Float32Array;
+	items: any;
 }
 
 
 export class ChiChiThreeJSAudio {
+	abuffer: Float32Array = new Float32Array(32);
 
 	
-    constructor(private wishbone: WishboneMachine) {
+    constructor(private wishbone: WishboneMachine, sb: StateBuffer) {
+        sb.onRestore.subscribe((buffer)=> {
+            this.abuffer = buffer.getFloat32Array('abuffer');
+		});
+		
+		sb	.pushSegment(4196 * 4 * Float32Array.BYTES_PER_ELEMENT, 'abuffer')
+			.build();
+
+
 		wishbone.statusChanged.subscribe((status)=>{
 			if (status !== RunningStatuses.Running) {
 				this.settings.abuffer.fill(0);
@@ -47,15 +75,14 @@ export class ChiChiThreeJSAudio {
 	settings: ThreeJSAudioSettings;
 
 	onRebuild: Subject<ThreeJSAudioSettings> = new Subject<ThreeJSAudioSettings>();
-	
-	getSound(options? : any): ThreeJSAudioSettings {
+
+	getSound( options? : any): ThreeJSAudioSettings {
 		const bufferBlockSize = 4096;
 		const bufferBlockCountBits = 2;
 		const chunkSize = 512;
 		const bufferSize: number = bufferBlockSize << bufferBlockCountBits;
 
-		const nesAudioBuffer = new SharedArrayBuffer(bufferSize * Float32Array.BYTES_PER_ELEMENT);
-		const nesAudio = new Float32Array(<any>nesAudioBuffer);
+		const nesAudio = this.abuffer;
 		
 		const listener = new THREE.AudioListener();
 		
@@ -75,7 +102,8 @@ export class ChiChiThreeJSAudio {
 		audioSource.connect(gainNode);
 		audioSource.connect(scriptNode);
 
-		const result = new ThreeJSAudioSettings(gainNode, listener);
+		const result = new ThreeJSAudioSettings(gainNode, listener, audioCtx, scriptNode);
+
 		const wavForms = this.wishbone.WaveForms;
 		
 		scriptNode.onaudioprocess = (audioProcessingEvent) => {
@@ -114,6 +142,13 @@ export class ChiChiThreeJSAudio {
 		
 		result.abuffer = nesAudio;
 		result.sampleRate = audioCtx.sampleRate;
+		
+		result.items = {
+			sound: sound,
+			source: audioSource,
+			scriptNode: scriptNode,
+			gainNode: gainNode
+		}
 		this.settings = result;
 		this.onRebuild.next(this.settings);
 		return result;

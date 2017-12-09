@@ -4333,6 +4333,14 @@ var StateBuffer = /** @class */ (function () {
         var x = this.data.segments.find(function (seg) { return seg.name === name; });
         return new Uint16Array(this.data.buffer, x.start, x.size / Uint16Array.BYTES_PER_ELEMENT);
     };
+    StateBuffer.prototype.getUint32Array = function (name) {
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return new Uint32Array(this.data.buffer, x.start, x.size / Uint32Array.BYTES_PER_ELEMENT);
+    };
+    StateBuffer.prototype.getFloat32Array = function (name) {
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return new Float32Array(this.data.buffer, x.start, x.size / Float32Array.BYTES_PER_ELEMENT);
+    };
     StateBuffer.prototype.syncBuffer = function (config) {
         this.data = config;
         this.onRestore.next(this);

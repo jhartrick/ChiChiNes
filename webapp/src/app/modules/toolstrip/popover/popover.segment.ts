@@ -22,7 +22,7 @@ animations: [
     state('floater',   style({
       transform: 'translateX(0%)'
     })),
-    transition('hidden => floater', animate('300ms 2ms ease-in', keyframes ([
+    transition('hidden => floater', animate('20ms 2ms ease-in', keyframes ([
         style({ transform: 'translateX(-500%)', offset: 0 }),
         style({ transform: 'translateX(15%)', offset: 0.7 }),
         style({ transform: 'translateX(0%)', offset: 1.0 })

@@ -16,15 +16,16 @@ import { NESService } from '../../services/NESService';
         }
 
         get muted(): boolean {
-            return this.nesService.audioSettings.volume == 0;
+            return this.nesService.audioSettings.muted;
         }
         set muted(value: boolean) {
-            if (value) {
-                this.lastvol = this.nesService.audioSettings.volume;
-                this.nesService.audioSettings.volume = 0;
-            } else {
-                this.nesService.audioSettings.volume = this.lastvol;
-            }
+            this.nesService.audioSettings.muted = value;
+            // if (value) {
+            //     this.lastvol = this.nesService.audioSettings.volume;
+            //     this.nesService.audioSettings.volume = 0;
+            // } else {
+            //     this.nesService.audioSettings.volume = this.lastvol;
+            // }
         }
         toggleMute() {
             this.muted = !this.muted;

@@ -731,54 +731,6 @@ export class ChiChiPPU2 implements IChiChiPPU {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;
     }
 
-    // get state(): IChiChiPPUState {
-    //     return {
-    //         controlByte0:  this.controlByte0,
-    //         controlByte1:  this.controlByte1,
-    //         address: this.address,
-    //         status: this.status,
-    //         spriteAddress: this.spriteAddress,
-    //         currentXPosition: this.currentXPosition,
-    //         currentYPosition: this.currentYPosition,
-    //         hScroll: this.hScroll,
-    //         vScroll: this.vScroll,
-    //         lockedHScroll: this.lockedHScroll,
-    //         lockedVScroll: this.lockedVScroll,           
-    //         spriteRAM:  this.spriteRAM.slice()
-    //     };
-    // }
-
-    // set state(value: IChiChiPPUState) {
-    //     this.controlByte0 = value.controlByte0;
-    //     this.controlByte1  = value.controlByte1;
-
-    //     this.address = value.address;
-    //     this.status = value.status;
-    //     this.spriteAddress = value.spriteAddress;
-    //     this.currentXPosition = value.currentXPosition;
-    //     this.currentYPosition = value.currentYPosition;
-    //     this.hScroll = value.hScroll;
-    //     this.vScroll = value.vScroll;
-    //     this.lockedHScroll = value.lockedHScroll;
-    //     this.lockedVScroll = value.lockedVScroll;
-
-    //     for (let i = 0; i < this.spriteRAM.length; ++i) {
-    //         this.spriteRAM[i] = value.spriteRAM[i];
-    //     }
-
-
-    //     this.nameTableBits = this.controlByte0 & 3;
-    //     this.backgroundPatternTableIndex = ((this.controlByte0 & 16) >> 4) * 0x1000;
-
-    //     this.greyScale = (this.controlByte1 & 0x1) === 0x1;
-    //     this.emphasisBits = (this.controlByte1 >> 5) & 7;
-    //     this._spritesAreVisible = (this.controlByte1 & 0x10) === 0x10;
-    //     this._tilesAreVisible = (this.controlByte1 & 0x08) === 0x08;
-    //     this._clipTiles = (this.controlByte1 & 0x02) !== 0x02;
-    //     this._clipSprites = (this.controlByte1 & 0x04) !== 0x04;
-
-    // }
-
     setupStateBuffer(sb: StateBuffer) {
         sb.onRestore.subscribe((buffer: StateBuffer) => {
              this.attachStateBuffer(buffer);

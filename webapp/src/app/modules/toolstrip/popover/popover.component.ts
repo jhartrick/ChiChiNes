@@ -1,4 +1,4 @@
-import { ComponentFactoryResolver, AfterViewInit,  Input, ViewChild, Component, ComponentRef, EventEmitter, Output, ChangeDetectorRef, ContentChildren, QueryList, ViewChildren } from '@angular/core';
+import { ComponentFactoryResolver, AfterViewInit, Input, ViewChild, Component, ComponentRef, EventEmitter, Output, ChangeDetectorRef, ContentChildren, QueryList, ViewChildren } from '@angular/core';
 import { PopoverDirective } from './popover.directive';
 import { PopoverContent } from './popover.content';
 import { ContentChild } from '@angular/core/src/metadata/di';
@@ -31,13 +31,19 @@ export class PopoverComponent implements AfterViewInit {
 
     private mouseEnter = new EventEmitter<boolean>(true);
 
+    private mouseLeave = new EventEmitter<boolean>(true);
+
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private cd: ChangeDetectorRef) {
 
     }
 
     ngAfterViewInit() {
-        this.mouseEnter.debounceTime(500).subscribe((f)=>{
-            this.float(f);
+        this.mouseEnter.debounceTime(100).subscribe((f) => {
+            this.float(true);
+        });
+
+        this.mouseEnter.debounceTime(2000).subscribe((f) => {
+            this.float(false);
         });
 
         this.floaters = new Array<PopoverSegmentComponent>();
@@ -55,22 +61,26 @@ export class PopoverComponent implements AfterViewInit {
         }
     }
 
-    clickHandler(event: any) {
-        this.buttonclick.emit(event);
-    }
+    // clickHandler(event: any) {
+    //     this.buttonclick.emit(event);
+    // }
 
     handleMouseEnter(floating: boolean) {
-        this.mouseEnter.next(floating);
+        if (!floating) {
+            this.mouseLeave.next(floating);
+        } else {
+            this.mouseEnter.next(floating);
+        }
     }
 
     private float(floating: boolean) {
-        
+
         this.floatClass = floating ? 'floater' : 'hidden';
         this.floaters.forEach((v, i) => {
             if (i > 0) {
                 setTimeout(() => {
                     v.cssClass = floating ? 'floater' : 'hidden';
-                    v.left = floating ? ((i + 1 ) * 64).toString() + 'px' : '0px';
+                    v.left = floating ? ((i + 1) * 64).toString() + 'px' : '0px';
                 }, i * 150);
             } else {
                 v.cssClass = 'floater';
