@@ -3701,26 +3701,19 @@ var AxROMCart = /** @class */ (function (_super) {
         this.mirror(0, 0);
     };
     AxROMCart.prototype.setByte = function (clock, address, val) {
-        if (address < 0x5000)
-            return;
-        if (address >= 24576 && address <= 32767) {
-            if (this.SRAMEnabled) {
-                this.prgRomBank6[address & 8191] = val & 255;
+        if (address >= 0x8000 && address <= 0xffff) {
+            var newbank8 = 0;
+            newbank8 = (val & 7) << 2;
+            this.setupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
+            // whizzler.DrawTo(clock);
+            if (val & 16) {
+                this.oneScreenOffset = 1024;
             }
-            return;
+            else {
+                this.oneScreenOffset = 0;
+            }
+            this.mirror(clock, 0);
         }
-        // val selects which bank to swap, 32k at a time
-        var newbank8 = 0;
-        newbank8 = (val & 15) << 2;
-        this.setupBankStarts(newbank8, newbank8 + 1, newbank8 + 2, newbank8 + 3);
-        // whizzler.DrawTo(clock);
-        if ((val & 16) === 16) {
-            this.oneScreenOffset = 1024;
-        }
-        else {
-            this.oneScreenOffset = 0;
-        }
-        this.mirror(clock, 0);
     };
     return AxROMCart;
 }(BaseCart_1.BaseCart));

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener,  NgZone } from '@angular/core';
 import { NESService } from '../services/NESService';
 import * as THREE from 'three';
 import { ChiChiThreeJSAudio } from '../services/wishbone/wishbone.audio.threejs';
@@ -20,7 +20,7 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasLeft = '0px';
     public canvasTop = '0px';
 
-    constructor(private nesService: NESService, private cd: ChangeDetectorRef, private zone: NgZone) {
+    constructor(private nesService: NESService, private zone: NgZone) {
         nesService.wishbone.statusChanged.subscribe(status => {
             switch (status) {
                 case RunningStatuses.Running:
@@ -108,7 +108,6 @@ export class ChiChiComponent implements AfterViewInit {
             this.canvasLeft = '0px';
             this.canvasTop = ((ccElem.offsetWidth - (canvElem.offsetWidth * 3 / 4)) / 2) + 'px';
         }
-        this.cd.detectChanges();
        // console.log("Width: " + event.target.innerWidth);
     }
 
@@ -126,7 +125,7 @@ export class ChiChiComponent implements AfterViewInit {
         this.zone.runOutsideAngular(() => {
           this.drawFrame();
         });
-        this.cd.detach();
+
     }
 
     drawFrame(): void {

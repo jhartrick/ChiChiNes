@@ -8,7 +8,8 @@ import { Observable } from 'rxjs/Observable';
 @Component({
     selector: 'chichi-popover',
     templateUrl: './popover.component.html',
-    styleUrls: ['./popover.component.css']
+    styleUrls: ['./popover.component.css'],
+
 })
 export class PopoverComponent implements AfterViewInit {
     @Input('button') button: PopoverContent;

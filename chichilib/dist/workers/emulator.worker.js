@@ -1460,6 +1460,9 @@ var ChiChiAPU = /** @class */ (function () {
             case 0x4017:
                 this.throwingIRQs = ((data & 64) !== 64);
                 this.frameMode = ((data & 128) == 128);
+                // if (!this.frameMode) {
+                //     this.endFrame(clock);
+                // }
                 this.memoryMap.cpu.borrowedCycles += 2;
                 break;
         }
@@ -2782,10 +2785,6 @@ var ChiChiWavSharer = /** @class */ (function (_super) {
     __extends(ChiChiWavSharer, _super);
     function ChiChiWavSharer() {
         var _this = _super.call(this) || this;
-        _this.bass_shift = 8;
-        _this.end_frame_extra = 2;
-        _this.half_width = 8;
-        _this.phase_bits = 5;
         _this.blip_new(44100 / 5);
         return _this;
     }
@@ -2802,11 +2801,12 @@ var ChiChiWavSharer = /** @class */ (function (_super) {
         this.blipBuffer.offset = 0;
         this.blipBuffer.avail = 0;
         this.blipBuffer.integrator = 0;
+        // this.blipBuffer.samples.fill(0);
     };
-    ChiChiWavSharer.prototype.blip_clocks_needed = function (samples) {
-        var needed = samples * ChiChiWavSharer.time_unit - this.blipBuffer.offset;
-        return ((needed + this.blipBuffer.factor - 1) / this.blipBuffer.factor) | 0;
-    };
+    // blip_clocks_needed(samples: number): number {
+    //     const needed = samples * ChiChiWavSharer.time_unit - this.blipBuffer.offset;
+    //     return ((needed + this.blipBuffer.factor - 1) / this.blipBuffer.factor) | 0;
+    // }
     ChiChiWavSharer.prototype.blip_end_frame = function (t) {
         var off = t * this.blipBuffer.factor + this.blipBuffer.offset;
         this.blipBuffer.avail += off >> ChiChiWavSharer.time_bits;

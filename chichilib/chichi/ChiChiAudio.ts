@@ -221,6 +221,9 @@ export class ChiChiAPU implements IChiChiAPU {
 
                 this.throwingIRQs = ((data & 64) !== 64);
                 this.frameMode  = ((data & 128) == 128);
+                // if (!this.frameMode) {
+                //     this.endFrame(clock);
+                // }
                 this.memoryMap.cpu.borrowedCycles+=2;
 
                 break;

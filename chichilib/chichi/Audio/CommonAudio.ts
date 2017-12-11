@@ -1,3 +1,5 @@
+import { StateBuffer } from "../StateBuffer";
+
 
 // shared buffer to get sound out
 export class WavSharer  {
@@ -22,6 +24,7 @@ export class WavSharer  {
     chunkSize: number = 1024;
 
     constructor() {
+
         this.SharedBuffer = new Float32Array(this.SharedBufferLength);
     }
 
@@ -94,19 +97,18 @@ export class ChiChiWavSharer extends WavSharer {
         [ 0, 43, -115, 350, -488, 1136, -914, 5861], 
     ];
     
-    constructor() {
+    constructor(sb: StateBuffer) {
+		
         super()        
+        sb.onRestore.subscribe((buffer)=> {
+            this.SharedBuffer = buffer.getFloat32Array('abuffer');
+		});
         this.blip_new(44100 / 5);
     }
 
-    private bass_shift = 8;
-    private end_frame_extra = 2;
-    private half_width = 8;
-    private phase_bits = 5;
 
     private blipBuffer: BlipBuffer;
-    blip_samples_avail: number;
-    
+
     blip_new(size: number): void {
         this.blipBuffer = new BlipBuffer(size + ChiChiWavSharer.buf_extra);
         this.blipBuffer.size = size;
@@ -122,12 +124,13 @@ export class ChiChiWavSharer extends WavSharer {
         this.blipBuffer.offset = 0;
         this.blipBuffer.avail = 0;
         this.blipBuffer.integrator = 0;
+        // this.blipBuffer.samples.fill(0);
     }
 
-    blip_clocks_needed(samples: number): number {
-        const needed = samples * ChiChiWavSharer.time_unit - this.blipBuffer.offset;
-        return ((needed + this.blipBuffer.factor - 1) / this.blipBuffer.factor) | 0;
-    }
+    // blip_clocks_needed(samples: number): number {
+    //     const needed = samples * ChiChiWavSharer.time_unit - this.blipBuffer.offset;
+    //     return ((needed + this.blipBuffer.factor - 1) / this.blipBuffer.factor) | 0;
+    // }
 
     blip_end_frame(t: number): void {
         let off = t * this.blipBuffer.factor + this.blipBuffer.offset;
