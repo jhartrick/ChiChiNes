@@ -23,8 +23,18 @@
             <controlpanel-volume></controlpanel-volume>
         </chichi-ui-segment>
     </chichi-popover>
-    <controlpad-config></controlpad-config>
-    
+
+    <chichi-popover icon='settings'>
+        <chichi-ui-segment>
+            <controlpad-config></controlpad-config>
+        </chichi-ui-segment>
+        <chichi-ui-segment>
+            <a mat-fab routerLink="/debug" routerLinkActive="active">
+                <mat-icon svgIcon='settings'></mat-icon>
+            </a>
+        </chichi-ui-segment>
+    </chichi-popover>
+                    
     <chichi-popover *ngIf='cartSettings ? true : false' icon='chip'>
         <chichi-ui-segment>
             <cartinfo-main>
@@ -35,7 +45,4 @@
         </chichi-ui-segment>
     </chichi-popover>
 
-    <a mat-fab routerLink="/debug" routerLinkActive="active">
-        <mat-icon svgIcon='settings'></mat-icon>
-    </a>
 </div>

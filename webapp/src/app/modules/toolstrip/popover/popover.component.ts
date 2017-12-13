@@ -1,15 +1,40 @@
-import { ComponentFactoryResolver, AfterViewInit, Input, ViewChild, Component, ComponentRef, EventEmitter, Output, ChangeDetectorRef, ContentChildren, QueryList, ViewChildren } from '@angular/core';
+import { ComponentFactoryResolver, AfterViewInit, Input, ViewChild, Component,
+    ComponentRef, EventEmitter, Output, ChangeDetectorRef, ContentChildren, QueryList, ViewChildren } from '@angular/core';
 import { PopoverDirective } from './popover.directive';
 import { PopoverContent } from './popover.content';
 import { ContentChild } from '@angular/core/src/metadata/di';
 import { PopoverSegmentComponent } from './popover.segment';
 import { Observable } from 'rxjs/Observable';
+import {
+    trigger,
+    state,
+    style,
+    animate,
+    transition,
+    keyframes
+  } from '@angular/animations';
 
 @Component({
     selector: 'chichi-popover',
     templateUrl: './popover.component.html',
     styleUrls: ['./popover.component.css'],
-
+    animations: [
+        trigger('hoverAnimation', [
+        state('*',   style({
+            transform: 'translateX(-32px)'
+        })),
+        state('hover',   style({
+            transform: 'translateX(0%)'
+        })),
+          transition('* => hover', animate('200ms 2ms ease-in', keyframes ([
+              style({ transform: 'translateX(-32px)', offset: 0 }),
+              style({ transform: 'translateX(16px)', offset: 0.7 }),
+              style({ transform: 'translateX(0%)', offset: 1.0 })
+            ])
+          )),
+          transition('hover => *', animate('200ms 100ms ease-out'))
+        ])
+      ]
 })
 export class PopoverComponent implements AfterViewInit {
     @Input('button') button: PopoverContent;
@@ -20,30 +45,31 @@ export class PopoverComponent implements AfterViewInit {
     @ViewChild(PopoverDirective) popSpot: PopoverDirective;
     @ContentChildren(PopoverSegmentComponent) segments: QueryList<PopoverSegmentComponent>;
     @ViewChildren(PopoverSegmentComponent) viewsegs: QueryList<PopoverSegmentComponent>;
-
     componentRef: ComponentRef<any>;
+
     show = false;
     loaded = false;
-    floatClass = 'floater';
+
+    hoverState = '';
 
     floaters: PopoverSegmentComponent[];
 
     buttonclick = new EventEmitter(true);
 
-    private mouseEnter = new EventEmitter<boolean>(true);
+    private showToolStrip = new EventEmitter<boolean>(true);
 
-    private mouseLeave = new EventEmitter<boolean>(true);
+    private hideToolStrip = new EventEmitter<boolean>(true);
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private cd: ChangeDetectorRef) {
 
     }
 
     ngAfterViewInit() {
-        this.mouseEnter.debounceTime(100).subscribe((f) => {
+        this.showToolStrip.debounceTime(100).subscribe((f) => {
             this.float(true);
         });
 
-        this.mouseEnter.debounceTime(2000).subscribe((f) => {
+        this.hideToolStrip.debounceTime(2000).subscribe((f) => {
             this.float(false);
         });
 
@@ -65,18 +91,8 @@ export class PopoverComponent implements AfterViewInit {
     // clickHandler(event: any) {
     //     this.buttonclick.emit(event);
     // }
-
-    handleMouseEnter(floating: boolean) {
-        if (!floating) {
-            this.mouseLeave.next(floating);
-        } else {
-            this.mouseEnter.next(floating);
-        }
-    }
-
     private float(floating: boolean) {
 
-        this.floatClass = floating ? 'floater' : 'hidden';
         this.floaters.forEach((v, i) => {
             if (i > 0) {
                 setTimeout(() => {

@@ -1,4 +1,4 @@
-<div class='popover'  (click)="handleMouseEnter(true)" (mouseleave)="handleMouseEnter(false)">
+<div class='popover' [@hoverAnimation]='hoverState' (mouseenter)="hoverState='hover'"  (click)="showToolStrip.next(true)" (mouseleave)="hideToolStrip.next(false); hoverState = ''">
     <!-- <chichi-ui-segment style='z-index: 9999' cssClass='floater' width='64px' left='0px'>
         <ng-template chichi-popover></ng-template>
     </chichi-ui-segment> -->

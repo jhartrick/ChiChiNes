@@ -6,6 +6,7 @@ import { ChiChiPPU, IChiChiPPU } from "./ChiChiPPU";
 import { GameGenieCode, MemoryPatch } from './ChiChiCheats';
 import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
+import { StateBuffer } from './StateBuffer';
 
 
     //machine wrapper
@@ -15,7 +16,9 @@ export class ChiChiMachine {
     private totalCPUClocks = 0;
 
     constructor(cpu? : ChiChiCPPU) {
-        var wavSharer = new ChiChiWavSharer();
+        
+        const sb = new StateBuffer();
+        const wavSharer = new ChiChiWavSharer(sb);
         this.SoundBopper = new ChiChiAPU(wavSharer);
         this.WaveForms = wavSharer;
         this.ppu = new ChiChiPPU();
