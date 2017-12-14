@@ -241,8 +241,6 @@ export class BaseCart implements IBaseCart {
         this.CPU = cpu;
         // this.NMIHandler = () => { this.CPU._handleIRQ = true; };
 
-
-
         this.prgRomBank6.fill(0);
 
         for (let i = 0; i < 16; i++) {
@@ -252,12 +250,8 @@ export class BaseCart implements IBaseCart {
             this.prgBankStarts[i] = i * 0x1000;
         }
         this.mirroring = this.romFile.mirroring;
-
         this.mirror(0, this.mirroring);
-
         this.initializeCart();
-        
-
     }
 
     createMemoryMap(cpu: ChiChiCPPU): IMemoryMap {

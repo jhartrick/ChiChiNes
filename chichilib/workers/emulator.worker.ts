@@ -185,20 +185,9 @@ export class tendoWrapper {
         let info = new NesInfo();
         info.bufferupdate = true;
         info.stateupdate = false;
-        if (this.machine && this.machine.Cart) {
-            info.stateBuffer = this.stateBuffer.data;
+        if (this.machine) {
+            info.stateBuffer = this.machine.StateBuffer.data;
 
-            // info.Cpu = {
-            //     // Rams: this.machine.Cpu.memoryMap.Rams,
-            //     // spriteRAM: this.machine.Cpu.ppu.spriteRAM
-            // }
-            // info.Cart = {
-            //     //buffers
-            //     chrRom: (<any>this.machine.Cart).chrRom,
-            //     prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
-            //     ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
-            //     bankStartCache: (<any>this.machine.Cart).bankStartCache,
-            // }
 
             info.sound = {
                 waveForms_controlBuffer: this.machine.WaveForms.controlBuffer
@@ -352,16 +341,11 @@ export class tendoWrapper {
                 const cart = romloader.loader.loadRom(cmd.rom, cmd.name);
                 
                 this.machine.Cpu.setupMemoryMap(cart);
-
-                this.stateBuffer = new StateBuffer();
-                this.machine.Cpu.memoryMap.setupStateBuffer(this.stateBuffer);
-                this.machine.Cpu.setupStateBuffer(this.stateBuffer);
-                this.machine.ppu.setupStateBuffer(this.stateBuffer);
-                cart.setupStateBuffer(this.stateBuffer);
-                this.stateBuffer.build();
                 
+                this.machine.RebuildStateBuffer();
+
                 cart.installCart(this.machine.ppu, this.machine.Cpu);
-                        
+                
                 this.machine.Cpu.cheating = false;
                 this.machine.Cpu.genieCodes = new Array<MemoryPatch>();
                 

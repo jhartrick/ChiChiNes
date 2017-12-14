@@ -5,11 +5,15 @@ import { ChiChiControlPad } from './ChiChiControl';
 import { IChiChiPPU } from "./ChiChiPPU";
 import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
+import { StateBuffer } from './StateBuffer';
 export declare class ChiChiMachine {
     private frameJustEnded;
     private frameOn;
     private totalCPUClocks;
+    private sb;
     constructor(cpu?: ChiChiCPPU);
+    readonly StateBuffer: StateBuffer;
+    RebuildStateBuffer(): void;
     Drawscreen(): void;
     RunState: RunningStatuses;
     ppu: IChiChiPPU;

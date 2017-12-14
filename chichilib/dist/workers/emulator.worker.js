@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ 	return __webpack_require__(__webpack_require__.s = 8);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -226,9 +226,9 @@ exports.root = _root;
 Object.defineProperty(exports, "__esModule", { value: true });
 var isArray_1 = __webpack_require__(25);
 var isObject_1 = __webpack_require__(26);
-var isFunction_1 = __webpack_require__(6);
+var isFunction_1 = __webpack_require__(5);
 var tryCatch_1 = __webpack_require__(27);
-var errorObject_1 = __webpack_require__(7);
+var errorObject_1 = __webpack_require__(6);
 var UnsubscriptionError_1 = __webpack_require__(28);
 /**
  * Represents a disposable resource, such as the execution of an Observable. A
@@ -440,85 +440,6 @@ exports.$$rxSubscriber = exports.rxSubscriber;
 
 "use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
-var Subject_1 = __webpack_require__(21);
-var StateBufferConfig = /** @class */ (function () {
-    function StateBufferConfig() {
-        this.segments = new Array();
-    }
-    return StateBufferConfig;
-}());
-exports.StateBufferConfig = StateBufferConfig;
-var BufferSegment = /** @class */ (function () {
-    function BufferSegment() {
-    }
-    return BufferSegment;
-}());
-exports.BufferSegment = BufferSegment;
-var StateBuffer = /** @class */ (function () {
-    function StateBuffer() {
-        this.data = new StateBufferConfig();
-        this.bufferSize = 0;
-        this.onRestore = new Subject_1.Subject();
-        // thrown when writing clients should update the buffer
-        this.onUpdateBuffer = new Subject_1.Subject();
-    }
-    // pre-allocates a segment of <size> bytes in the StateBuffer, returns StateBuffer
-    StateBuffer.prototype.pushSegment = function (size, name) {
-        var seg = this.data.segments.findIndex(function (v, i) { return v.name == name; });
-        if (seg === -1) {
-            var start = this.bufferSize;
-            this.data.segments.push({ name: name, start: start, size: size });
-            this.bufferSize += size;
-        }
-        return this;
-    };
-    // builds a new state buffer
-    StateBuffer.prototype.build = function () {
-        this.data.buffer = new SharedArrayBuffer(this.bufferSize);
-        this.onRestore.next(this);
-        return this;
-    };
-    // request buffer updates
-    StateBuffer.prototype.updateBuffer = function () {
-        this.onUpdateBuffer.next(this);
-    };
-    // helper functions to retrieve data from buffer
-    StateBuffer.prototype.getSegment = function (name) {
-        var x = this.data.segments.find(function (seg) { return seg.name === name; });
-        return { buffer: this.data.buffer, start: x.start, size: x.size };
-    };
-    StateBuffer.prototype.getUint8Array = function (name) {
-        var x = this.data.segments.find(function (seg) { return seg.name === name; });
-        return new Uint8Array(this.data.buffer, x.start, x.size);
-    };
-    StateBuffer.prototype.getUint16Array = function (name) {
-        var x = this.data.segments.find(function (seg) { return seg.name === name; });
-        return new Uint16Array(this.data.buffer, x.start, x.size / Uint16Array.BYTES_PER_ELEMENT);
-    };
-    StateBuffer.prototype.getUint32Array = function (name) {
-        var x = this.data.segments.find(function (seg) { return seg.name === name; });
-        return new Uint32Array(this.data.buffer, x.start, x.size / Uint32Array.BYTES_PER_ELEMENT);
-    };
-    StateBuffer.prototype.getFloat32Array = function (name) {
-        var x = this.data.segments.find(function (seg) { return seg.name === name; });
-        return new Float32Array(this.data.buffer, x.start, x.size / Float32Array.BYTES_PER_ELEMENT);
-    };
-    StateBuffer.prototype.syncBuffer = function (config) {
-        this.data = config;
-        this.onRestore.next(this);
-    };
-    return StateBuffer;
-}());
-exports.StateBuffer = StateBuffer;
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -530,9 +451,9 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var isFunction_1 = __webpack_require__(6);
+var isFunction_1 = __webpack_require__(5);
 var Subscription_1 = __webpack_require__(2);
-var Observer_1 = __webpack_require__(8);
+var Observer_1 = __webpack_require__(7);
 var rxSubscriber_1 = __webpack_require__(3);
 /**
  * Implements the {@link Observer} interface and extends the
@@ -792,7 +713,7 @@ var SafeSubscriber = /** @class */ (function (_super) {
 //# sourceMappingURL=Subscriber.js.map
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -805,7 +726,7 @@ exports.isFunction = isFunction;
 //# sourceMappingURL=isFunction.js.map
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -816,7 +737,7 @@ exports.errorObject = { e: {} };
 //# sourceMappingURL=errorObject.js.map
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -831,18 +752,17 @@ exports.empty = {
 //# sourceMappingURL=Observer.js.map
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var worker_interop_1 = __webpack_require__(10);
+var worker_interop_1 = __webpack_require__(9);
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiMachine_1 = __webpack_require__(11);
+var ChiChiMachine_1 = __webpack_require__(10);
 var ChiChiState_1 = __webpack_require__(34);
 var CCMessage = __webpack_require__(35);
-var StateBuffer_1 = __webpack_require__(4);
 var NesInfo = /** @class */ (function () {
     function NesInfo() {
         this.bufferupdate = false;
@@ -981,19 +901,8 @@ var tendoWrapper = /** @class */ (function () {
         var info = new NesInfo();
         info.bufferupdate = true;
         info.stateupdate = false;
-        if (this.machine && this.machine.Cart) {
-            info.stateBuffer = this.stateBuffer.data;
-            // info.Cpu = {
-            //     // Rams: this.machine.Cpu.memoryMap.Rams,
-            //     // spriteRAM: this.machine.Cpu.ppu.spriteRAM
-            // }
-            // info.Cart = {
-            //     //buffers
-            //     chrRom: (<any>this.machine.Cart).chrRom,
-            //     prgRomBank6: (<any>this.machine.Cart).prgRomBank6,
-            //     ppuBankStarts: (<any>this.machine.Cart).ppuBankStarts,
-            //     bankStartCache: (<any>this.machine.Cart).bankStartCache,
-            // }
+        if (this.machine) {
+            info.stateBuffer = this.machine.StateBuffer.data;
             info.sound = {
                 waveForms_controlBuffer: this.machine.WaveForms.controlBuffer
             };
@@ -1114,12 +1023,7 @@ var tendoWrapper = /** @class */ (function () {
             var machine = _this.machine;
             var cart = romloader.loader.loadRom(cmd.rom, cmd.name);
             _this.machine.Cpu.setupMemoryMap(cart);
-            _this.stateBuffer = new StateBuffer_1.StateBuffer();
-            _this.machine.Cpu.memoryMap.setupStateBuffer(_this.stateBuffer);
-            _this.machine.Cpu.setupStateBuffer(_this.stateBuffer);
-            _this.machine.ppu.setupStateBuffer(_this.stateBuffer);
-            cart.setupStateBuffer(_this.stateBuffer);
-            _this.stateBuffer.build();
+            _this.machine.RebuildStateBuffer();
             cart.installCart(_this.machine.ppu, _this.machine.Cpu);
             _this.machine.Cpu.cheating = false;
             _this.machine.Cpu.genieCodes = new Array();
@@ -1164,7 +1068,7 @@ exports.tendoWrapper = tendoWrapper;
 
 
 /***/ }),
-/* 10 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1238,18 +1142,18 @@ exports.WorkerInterop = WorkerInterop;
 
 
 /***/ }),
-/* 11 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var ChiChiAudio_1 = __webpack_require__(12);
+var ChiChiAudio_1 = __webpack_require__(11);
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiPPU_1 = __webpack_require__(17);
-var CommonAudio_1 = __webpack_require__(18);
-var ChiChiCPU_1 = __webpack_require__(19);
-var StateBuffer_1 = __webpack_require__(4);
+var ChiChiPPU_1 = __webpack_require__(16);
+var CommonAudio_1 = __webpack_require__(17);
+var ChiChiCPU_1 = __webpack_require__(18);
+var StateBuffer_1 = __webpack_require__(20);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -1259,8 +1163,8 @@ var ChiChiMachine = /** @class */ (function () {
         this.totalCPUClocks = 0;
         this._enableSound = false;
         this.evenFrame = true;
-        var sb = new StateBuffer_1.StateBuffer();
-        var wavSharer = new CommonAudio_1.ChiChiWavSharer(sb);
+        this.sb = new StateBuffer_1.StateBuffer();
+        var wavSharer = new CommonAudio_1.ChiChiWavSharer(this.sb);
         this.SoundBopper = new ChiChiAudio_1.ChiChiAPU(wavSharer);
         this.WaveForms = wavSharer;
         this.ppu = new ChiChiPPU_1.ChiChiPPU();
@@ -1269,6 +1173,22 @@ var ChiChiMachine = /** @class */ (function () {
         this.ppu.NMIHandler = function () { _this.Cpu.nmiHandler(); };
         this.ppu.frameFinished = function () { _this.frameFinished(); };
     }
+    Object.defineProperty(ChiChiMachine.prototype, "StateBuffer", {
+        get: function () {
+            return this.sb;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ChiChiMachine.prototype.RebuildStateBuffer = function () {
+        var stateBuffer = new StateBuffer_1.StateBuffer();
+        this.Cpu.memoryMap.setupStateBuffer(stateBuffer);
+        this.Cpu.setupStateBuffer(stateBuffer);
+        this.ppu.setupStateBuffer(stateBuffer);
+        this.Cart.setupStateBuffer(stateBuffer);
+        stateBuffer.build();
+        this.sb = stateBuffer;
+    };
     ChiChiMachine.prototype.Drawscreen = function () {
     };
     Object.defineProperty(ChiChiMachine.prototype, "Cart", {
@@ -1373,16 +1293,16 @@ exports.ChiChiMachine = ChiChiMachine;
 
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var DMCChannel_1 = __webpack_require__(13);
-var SquareChannel_1 = __webpack_require__(14);
-var TriangleChannel_1 = __webpack_require__(15);
-var NoiseChannel_1 = __webpack_require__(16);
+var DMCChannel_1 = __webpack_require__(12);
+var SquareChannel_1 = __webpack_require__(13);
+var TriangleChannel_1 = __webpack_require__(14);
+var NoiseChannel_1 = __webpack_require__(15);
 var ChiChiAPU = /** @class */ (function () {
     function ChiChiAPU(writer) {
         this.writer = writer;
@@ -1625,7 +1545,7 @@ exports.ChiChiAPU = ChiChiAPU;
 
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1767,7 +1687,7 @@ exports.DMCChannel = DMCChannel;
 
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1953,7 +1873,7 @@ exports.SquareChannel = SquareChannel;
 
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2075,7 +1995,7 @@ exports.TriangleChannel = TriangleChannel;
 
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2198,7 +2118,7 @@ exports.NoiseChannel = NoiseChannel;
 
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2798,7 +2718,7 @@ exports.ChiChiPPU = ChiChiPPU;
 
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3019,14 +2939,14 @@ var BlipBuffer = /** @class */ (function () {
 
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiTypes_1 = __webpack_require__(0);
-var ChiChiControl_1 = __webpack_require__(20);
+var ChiChiControl_1 = __webpack_require__(19);
 var PRG_CTR = 0;
 var PRG_ADR = 1;
 //chichipig
@@ -4090,7 +4010,7 @@ exports.ChiChiCPPU = ChiChiCPPU;
 
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4151,6 +4071,85 @@ exports.ChiChiControlPad = ChiChiControlPad;
 
 
 /***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Subject_1 = __webpack_require__(21);
+var StateBufferConfig = /** @class */ (function () {
+    function StateBufferConfig() {
+        this.segments = new Array();
+    }
+    return StateBufferConfig;
+}());
+exports.StateBufferConfig = StateBufferConfig;
+var BufferSegment = /** @class */ (function () {
+    function BufferSegment() {
+    }
+    return BufferSegment;
+}());
+exports.BufferSegment = BufferSegment;
+var StateBuffer = /** @class */ (function () {
+    function StateBuffer() {
+        this.data = new StateBufferConfig();
+        this.bufferSize = 0;
+        this.onRestore = new Subject_1.Subject();
+        // thrown when writing clients should update the buffer
+        this.onUpdateBuffer = new Subject_1.Subject();
+    }
+    // pre-allocates a segment of <size> bytes in the StateBuffer, returns StateBuffer
+    StateBuffer.prototype.pushSegment = function (size, name) {
+        var seg = this.data.segments.findIndex(function (v, i) { return v.name == name; });
+        if (seg === -1) {
+            var start = this.bufferSize;
+            this.data.segments.push({ name: name, start: start, size: size });
+            this.bufferSize += size;
+        }
+        return this;
+    };
+    // builds a new state buffer
+    StateBuffer.prototype.build = function () {
+        this.data.buffer = new SharedArrayBuffer(this.bufferSize);
+        this.onRestore.next(this);
+        return this;
+    };
+    // request buffer updates
+    StateBuffer.prototype.updateBuffer = function () {
+        this.onUpdateBuffer.next(this);
+    };
+    // helper functions to retrieve data from buffer
+    StateBuffer.prototype.getSegment = function (name) {
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return { buffer: this.data.buffer, start: x.start, size: x.size };
+    };
+    StateBuffer.prototype.getUint8Array = function (name) {
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return new Uint8Array(this.data.buffer, x.start, x.size);
+    };
+    StateBuffer.prototype.getUint16Array = function (name) {
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return new Uint16Array(this.data.buffer, x.start, x.size / Uint16Array.BYTES_PER_ELEMENT);
+    };
+    StateBuffer.prototype.getUint32Array = function (name) {
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return new Uint32Array(this.data.buffer, x.start, x.size / Uint32Array.BYTES_PER_ELEMENT);
+    };
+    StateBuffer.prototype.getFloat32Array = function (name) {
+        var x = this.data.segments.find(function (seg) { return seg.name === name; });
+        return new Float32Array(this.data.buffer, x.start, x.size / Float32Array.BYTES_PER_ELEMENT);
+    };
+    StateBuffer.prototype.syncBuffer = function (config) {
+        this.data = config;
+        this.onRestore.next(this);
+    };
+    return StateBuffer;
+}());
+exports.StateBuffer = StateBuffer;
+
+
+/***/ }),
 /* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -4168,7 +4167,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var Observable_1 = __webpack_require__(22);
-var Subscriber_1 = __webpack_require__(5);
+var Subscriber_1 = __webpack_require__(4);
 var Subscription_1 = __webpack_require__(2);
 var ObjectUnsubscribedError_1 = __webpack_require__(32);
 var SubjectSubscription_1 = __webpack_require__(33);
@@ -4679,9 +4678,9 @@ module.exports = g;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var Subscriber_1 = __webpack_require__(5);
+var Subscriber_1 = __webpack_require__(4);
 var rxSubscriber_1 = __webpack_require__(3);
-var Observer_1 = __webpack_require__(8);
+var Observer_1 = __webpack_require__(7);
 function toSubscriber(nextOrObserver, error, complete) {
     if (nextOrObserver) {
         if (nextOrObserver instanceof Subscriber_1.Subscriber) {
@@ -4729,7 +4728,7 @@ exports.isObject = isObject;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var errorObject_1 = __webpack_require__(7);
+var errorObject_1 = __webpack_require__(6);
 var tryCatchTarget;
 function tryCatcher() {
     try {

@@ -14,11 +14,11 @@ export class ChiChiMachine {
     private frameJustEnded = true;
     private frameOn = false;
     private totalCPUClocks = 0;
-
+    private sb: StateBuffer;
     constructor(cpu? : ChiChiCPPU) {
         
-        const sb = new StateBuffer();
-        const wavSharer = new ChiChiWavSharer(sb);
+        this.sb = new StateBuffer();
+        const wavSharer = new ChiChiWavSharer(this.sb);
         this.SoundBopper = new ChiChiAPU(wavSharer);
         this.WaveForms = wavSharer;
         this.ppu = new ChiChiPPU();
@@ -28,6 +28,21 @@ export class ChiChiMachine {
         this.ppu.frameFinished = () => { this.frameFinished(); };
     }
 
+
+    get StateBuffer(): StateBuffer {
+        return this.sb;
+    }
+
+    RebuildStateBuffer() {
+        const stateBuffer = new StateBuffer();
+
+        this.Cpu.memoryMap.setupStateBuffer(stateBuffer);
+        this.Cpu.setupStateBuffer(stateBuffer);
+        this.ppu.setupStateBuffer(stateBuffer);
+        this.Cart.setupStateBuffer(stateBuffer);
+        stateBuffer.build();
+        this.sb = stateBuffer;
+    }
 
     Drawscreen(): void {
     }
