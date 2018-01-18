@@ -1,8 +1,9 @@
-﻿import { BrowserModule } from '@angular/platform-browser';
+import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
+
 import { AppComponent } from './app.component';
-import { ChiChiNsfMachine } from 'chichi'
+
 
 @NgModule({
   declarations: [
@@ -11,7 +12,7 @@ import { ChiChiNsfMachine } from 'chichi'
   imports: [
     BrowserModule
   ],
-  providers: [ ChiChiNsfMachine ],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

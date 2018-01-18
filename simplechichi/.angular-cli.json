@@ -1,7 +1,7 @@
-﻿{
+{
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "project": {
-    "name": "nsfplayer"
+    "name": "simplechichi"
   },
   "apps": [
     {
@@ -21,9 +21,7 @@
       "styles": [
         "styles.css"
       ],
-      "scripts": [
-
-      ],
+      "scripts": [],
       "environmentSource": "environments/environment.ts",
       "environments": {
         "dev": "environments/environment.ts",

@@ -1,6 +1,6 @@
 import { AppPage } from './app.po';
 
-describe('nsfplayer App', () => {
+describe('simplechichi App', () => {
   let page: AppPage;
 
   beforeEach(() => {
