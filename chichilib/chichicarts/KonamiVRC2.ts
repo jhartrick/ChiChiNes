@@ -59,7 +59,7 @@ export class VRCIrqBase extends BaseCart {
 }
 
 // this base class contains the common irq functionality for a whole bunch of konami vrc mappers use
-class VRC2or4Cart extends VRCIrqBase {
+export class VRC2or4Cart extends VRCIrqBase {
     microwire: boolean = false;
     vrc2: boolean = false;
     swapMode: boolean = false;

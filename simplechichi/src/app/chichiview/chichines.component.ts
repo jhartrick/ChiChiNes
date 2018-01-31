@@ -9,6 +9,7 @@ import { iNESFileHandler } from 'chichi';
 import { loadRom } from '../wishbone/filehandler'
 import { setInterval } from 'timers';
 import { WishBoneControlPad } from '../wishbone/keyboard/wishbone.controlpad';
+import { AfterContentInit } from '@angular/core/src/metadata/lifecycle_hooks';
 
 @Component({
     selector: 'chichi-viewer',
@@ -42,21 +43,18 @@ export class ChiChiComponent implements AfterViewInit {
         
         this.nesService = new NESService(); 
         this.vbuffer = new Uint8Array(new ArrayBuffer(256 * 256 * 4));//this.nesService.videoBuffer;
-        this.p32 = new Uint8Array(new ArrayBuffer(32 * 256 * 4));;
-
-        this.rebuildNesScene();
-        this.loadRom = this.nesService.getWishbone()(this.vbuffer)(new Float32Array(new ArrayBuffer(256 * 256 * 4)));
+        this.p32 = new Uint8Array(new ArrayBuffer(32 * 256 * 4));
+        const abuffer = new Float32Array(new ArrayBuffer(2048 *  4 * Float32Array.BYTES_PER_ELEMENT));
+        this.loadRom = this.nesService.getWishbone()(this.vbuffer)(abuffer);
 
         this.padOne = new WishBoneControlPad("one");
 
-
     }
 
-    rebuildNesScene() {
+    rebuildNesScene(listener: THREE.AudioListener) {
 
         const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-        camera.add(this.listener);
-
+        camera.add(listener);
         const scene = new THREE.Scene();
 
         const encoder = new BasicEncoder();
@@ -73,9 +71,7 @@ export class ChiChiComponent implements AfterViewInit {
 
         camera.position.z = 5.8;
 
-        setTimeout(() => {
-            this.onResize();
-        }, 1);
+
 
     }
 
@@ -138,12 +134,14 @@ export class ChiChiComponent implements AfterViewInit {
         this.renderer = new THREE.WebGLRenderer();
         this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
         this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
-        this.rebuildNesScene();
 
     }
 
     ngAfterViewInit(): void {
         this.setupScene();
+        setTimeout(() => {
+            this.onResize();
+        }, 1);
 
 
     }
@@ -166,9 +164,10 @@ export class ChiChiComponent implements AfterViewInit {
 
         loadRom(files).subscribe((rom) => {
             this.zone.runOutsideAngular(() => {
-                const wishbone = this.loadRom(rom);
+                const wishbone = this.loadRom(<any>rom);
                 const chichi = wishbone.chichi;
                 chichi.PowerOn();
+                this.rebuildNesScene(wishbone.audio.listener);
 
                 this.interval = setInterval(p => {
                     chichi.PadOne.padOneState = this.padOne.padOneState;

@@ -1,4 +1,4 @@
-import { IChiChiCPPU } from "../ChiChiCPU";
+import { ChiChiCPPU } from "../ChiChiCPU";
 import { IChiChiPPU } from "../ChiChiPPU";
 import { IChiChiAPU } from "../ChiChiAudio";
 import { IBaseCart } from "../../chichicarts/BaseCart";
@@ -8,7 +8,7 @@ import { MemoryMap } from "./ChiChiMemoryMap";
 export class VSMemoryMap extends MemoryMap {
 
     constructor(
-        public cpu: IChiChiCPPU, 
+        public cpu: ChiChiCPPU, 
         public cart: IBaseCart
     ) {
             super(cpu, cart);

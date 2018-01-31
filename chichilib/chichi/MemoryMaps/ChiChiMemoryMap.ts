@@ -1,4 +1,4 @@
-import { IChiChiCPPU } from "../ChiChiCPU";
+import { ChiChiCPPU } from "../ChiChiCPU";
 import { IChiChiPPU } from "../ChiChiPPU";
 import { IChiChiAPU } from "../ChiChiAudio";
 import { IBaseCart } from "../../chichicarts/BaseCart";
@@ -10,7 +10,7 @@ export interface IMemoryMap {
     apu: IChiChiAPU;
     pad1: ChiChiInputHandler;
     pad2: ChiChiInputHandler;
-    cpu: IChiChiCPPU;
+    cpu: ChiChiCPPU;
     cart: IBaseCart;
     Rams: Uint8Array;
 
@@ -43,7 +43,7 @@ export class MemoryMap implements IMemoryMap {
 
 
     constructor(
-        public cpu: IChiChiCPPU, 
+        public cpu: ChiChiCPPU, 
         public cart: IBaseCart
     ) {
         this.apu = cpu.SoundBopper;

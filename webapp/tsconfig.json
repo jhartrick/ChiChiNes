@@ -10,9 +10,6 @@
     "target": "es5",
     "noImplicitAny": false,
     "suppressImplicitAnyIndexErrors": true,
-    "exclude": [
-      "src/assets/emulator.worker.js"
-    ],
     "typeRoots": [
       "node_modules/@types"
     ],

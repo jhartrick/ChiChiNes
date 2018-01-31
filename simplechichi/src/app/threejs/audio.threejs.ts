@@ -7,6 +7,7 @@ import { LocalAudioSettings } from './audio.localsettings';
 
 export interface ThreeJSAudioSettings extends LocalAudioSettings {
 	items: any;
+	listener: any;
 }
 
 export function buildSound(wavForms: WavSharer, options? : any): ThreeJSAudioSettings {
@@ -39,6 +40,7 @@ export function buildSound(wavForms: WavSharer, options? : any): ThreeJSAudioSet
 		volume: gainNode.gain,
 		sampleRate: audioCtx.sampleRate,
 		muted: false,
+		listener: listener,
 		items: {
 			sound: sound,
 			source: audioSource,

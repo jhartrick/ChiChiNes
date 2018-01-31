@@ -1,6 +1,6 @@
-export { ChiChiStateManager, ChiChiState } from './ChiChiState';
+// export { ChiChiStateManager, ChiChiState } from './ChiChiState';
 export { ChiChiMachine } from './ChiChiMachine';
-export { IChiChiCPPU, IChiChiCPPUState, ChiChiCPPU } from './ChiChiCPU';
+export { ChiChiCPPU } from './ChiChiCPU';
 export { ChiChiAPU, IChiChiAPUState, IChiChiAPU } from './ChiChiAudio';
 export { IChiChiPPU, IChiChiPPUState, ChiChiPPU } from './ChiChiPPU';
 export { IBaseCart, IBaseCartState, BaseCart } from '../chichicarts/BaseCart';
@@ -10,12 +10,12 @@ export { WavSharer } from './Audio/CommonAudio'
 export { RunningStatuses, DebugStepTypes, ChiChiCPPU_AddressingModes, CpuStatus, PpuStatus, ChiChiInstruction, ChiChiSprite, AudioSettings } from './ChiChiTypes';
 export { GameGenieCode, MemoryPatch, ChiChiCheats } from './ChiChiCheats';
 export { DebugHelpers } from './debugging/DebugHelpers';
-export { WorkerInterop } from './worker/worker.interop';
+// export { WorkerInterop } from './worker/worker.interop';
 
 export  { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 
-import * as ChiChiMessages from './worker/worker.message';
-export { ChiChiMessages } 
+// import * as ChiChiMessages from './worker/worker.message';
+// export { ChiChiMessages } 
 
 export { StateBuffer, BufferSegment, StateBufferConfig } from './StateBuffer';
 

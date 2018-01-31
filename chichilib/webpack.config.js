@@ -62,4 +62,4 @@ const configRomLoader = {
     }
 }
 
-module.exports = [configChiChi, configChiChiWorker, configRomLoader];
+module.exports = [configChiChi];

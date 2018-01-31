@@ -9,81 +9,81 @@ import { StateBuffer } from "./StateBuffer";
 const PRG_CTR = 0;
 const PRG_ADR = 1;
 
-export interface IChiChiCPPUState {
-    clock: number;
+// export interface IChiChiCPPUState {
+//     clock: number;
     
-    statusRegister: number;
-    programCounter: number;
-    _handleNMI: boolean;
-    addressBus: number;
-    dataBus: number;
-    _operationCounter: number;
-    accumulator: number;
-    indexRegisterX: number;
-    indexRegisterY: number;
+//     statusRegister: number;
+//     programCounter: number;
+//     _handleNMI: boolean;
+//     addressBus: number;
+//     dataBus: number;
+//     _operationCounter: number;
+//     accumulator: number;
+//     indexRegisterX: number;
+//     indexRegisterY: number;
     
-    _currentInstruction_AddressingMode: ChiChiCPPU_AddressingModes;
-    _currentInstruction_Address: number;
-    _currentInstruction_OpCode: number;
-    _currentInstruction_Parameters0: number;
-    _currentInstruction_Parameters1: number;
-    _currentInstruction_ExtraTiming: number;
-    systemClock: number;
+//     _currentInstruction_AddressingMode: ChiChiCPPU_AddressingModes;
+//     _currentInstruction_Address: number;
+//     _currentInstruction_OpCode: number;
+//     _currentInstruction_Parameters0: number;
+//     _currentInstruction_Parameters1: number;
+//     _currentInstruction_ExtraTiming: number;
+//     systemClock: number;
  
 
-    Debugging: boolean;
-    cheating: boolean;
-    genieCodes: MemoryPatch[];
-}
+//     Debugging: boolean;
+//     cheating: boolean;
+//     genieCodes: MemoryPatch[];
+// }
 
-export interface IChiChiCPPU extends IChiChiCPPUState {
+// export interface IChiChiCPPU extends IChiChiCPPUState {
 
-    borrowedCycles: number;
+//     borrowedCycles: number;
     
 
-    cheat(address: number, result: number): number;
-    instructionHistoryPointer: number;
-    _instructionHistory: ChiChiInstruction[];
+//     cheat(address: number, result: number): number;
+//     instructionHistoryPointer: number;
+//     _instructionHistory: ChiChiInstruction[];
 
-    ppu: IChiChiPPU;
-    PadOne: ChiChiInputHandler;
-    PadTwo: ChiChiInputHandler;
+//     ppu: IChiChiPPU;
+//     PadOne: ChiChiInputHandler;
+//     PadTwo: ChiChiInputHandler;
 
-    CurrentInstruction: ChiChiInstruction;
-    SoundBopper: IChiChiAPU;
-    FrameOn: boolean;
+//     CurrentInstruction: ChiChiInstruction;
+//     SoundBopper: IChiChiAPU;
+//     FrameOn: boolean;
 
-    step(): void;
+//     step(): void;
 
-    ResetCPU(): void;
-    PowerOn(): void;
+//     ResetCPU(): void;
+//     PowerOn(): void;
 
-    decodeAddress(): number;
-    HandleBadOperation(): void;
-    handleBreakpoint(): void;
-    decodeOperand(): number;
-    execute(): void;
-    setZNFlags(data: number): void;
-    compare(data: number): void;
-    branch(): void;
-    nmiHandler(): void;
+//     decodeAddress(): number;
+//     HandleBadOperation(): void;
+//     handleBreakpoint(): void;
+//     decodeOperand(): number;
+//     execute(): void;
+//     setZNFlags(data: number): void;
+//     compare(data: number): void;
+//     branch(): void;
+//     nmiHandler(): void;
 
-    GetByte(address: number): number;
-    SetByte(address: number, data: number): void;
+//     GetByte(address: number): number;
+//     SetByte(address: number, data: number): void;
 
-    memoryMap: IMemoryMap;
+//     memoryMap: IMemoryMap;
 
-    HandleNextEvent(): void;
-    ResetInstructionHistory(): void;
-    writeInstructionHistory(): void;
-    FireDebugEvent(s: string): void;
+//     HandleNextEvent(): void;
+//     ResetInstructionHistory(): void;
+//     writeInstructionHistory(): void;
+//     FireDebugEvent(s: string): void;
     
-    GetStatus(): CpuStatus;
+//     GetStatus(): CpuStatus;
 
-}
+// }
 
 //chichipig
-export class ChiChiCPPU implements IChiChiCPPU {
+export class ChiChiCPPU {
         
     readonly SRMasks_CarryMask = 0x01;
     readonly SRMasks_ZeroResultMask = 0x02;
