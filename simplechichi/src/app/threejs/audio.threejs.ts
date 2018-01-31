@@ -11,9 +11,10 @@ export interface ThreeJSAudioSettings extends LocalAudioSettings {
 }
 
 export function buildSound(wavForms: WavSharer, options? : any): ThreeJSAudioSettings {
-	const bufferBlockSize = 4096;
-	const bufferBlockCountBits = 2;
+
 	const chunkSize = 512;
+	const bufferBlockSize = 4096;
+	const bufferBlockCountBits = 2;	
 	const bufferSize: number = bufferBlockSize << bufferBlockCountBits;
 
 	const listener = new THREE.AudioListener();
