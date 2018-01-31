@@ -1,15 +1,6 @@
-import { Observable } from "rxjs/Observable";
-import { Subject } from "rxjs";
-
 import { KeyBindings } from "./wishbone.keybindings";
 
 export class WishBoneControlPad {
-
-    private controlByteSubject : Subject<number> = new Subject<number>();
-
-    public controlByteChange() : Observable<number> {
-        return this.controlByteSubject.asObservable();
-    }
 
     constructor(private controllerId: string) {
         const ctrl = localStorage.getItem(this.controllerId + 'KeyBindings');
@@ -64,7 +55,6 @@ export class WishBoneControlPad {
                 break;
         }
         // debugger;
-        this.controlByteSubject.next(this.padOneState);
     }
 
     handleKeyUpEvent(event: KeyboardEvent) {
@@ -94,6 +84,5 @@ export class WishBoneControlPad {
                 this.padOneState &= ~4 & 0xFF;
                 break;
         }
-        this.controlByteSubject.next(this.padOneState);
     }
 }

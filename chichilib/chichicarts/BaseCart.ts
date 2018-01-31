@@ -175,8 +175,6 @@ export class BaseCart implements IBaseCart {
 
     }
 
-
-    
     setupStateBuffer(sb: StateBuffer) {
         sb.onRestore.subscribe((buffer: StateBuffer) => {
             this.attachStateBuffer(buffer);

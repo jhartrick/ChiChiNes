@@ -23,10 +23,10 @@ export class NesCart extends BaseCart {
  
 
 
-            if (this.chrRomCount > 0) {
-                this.copyBanks(0, 0, 0, 1);
-            }
-            this.setupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
+        if (this.chrRomCount > 0) {
+            this.copyBanks(0, 0, 0, 1);
+        }
+        this.setupBankStarts(0, 1, (this.prgRomCount * 2) - 2, (this.prgRomCount * 2) - 1);
 
      }
 

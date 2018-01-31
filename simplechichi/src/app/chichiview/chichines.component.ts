@@ -8,14 +8,22 @@ import { iNESFileHandler } from 'chichi';
 
 import { loadRom } from '../wishbone/filehandler'
 import { setInterval } from 'timers';
+import { WishBoneControlPad } from '../wishbone/keyboard/wishbone.controlpad';
 
 @Component({
     selector: 'chichi-viewer',
     templateUrl: './chichi.component.html',
     styleUrls: ['./chichi.component.css'],
+    host: {
+        '(document:keydown)': 'onkeydown($event)',
+        '(document:keyup)': 'onkeyup($event)'
+      }
 })
 
 export class ChiChiComponent implements AfterViewInit {
+    padOne: WishBoneControlPad;
+    interval: NodeJS.Timer;
+    loadRom: (cart: BaseCart) => any;
     p32: Uint8Array;
     vbuffer: Uint8Array;
     nesService: NESService;
@@ -37,7 +45,11 @@ export class ChiChiComponent implements AfterViewInit {
         this.p32 = new Uint8Array(new ArrayBuffer(32 * 256 * 4));;
 
         this.rebuildNesScene();
-        
+        this.loadRom = this.nesService.getWishbone()(this.vbuffer)(new Float32Array(new ArrayBuffer(256 * 256 * 4)));
+
+        this.padOne = new WishBoneControlPad("one");
+
+
     }
 
     rebuildNesScene() {
@@ -55,10 +67,8 @@ export class ChiChiComponent implements AfterViewInit {
         scene.add(new THREE.Mesh(geometry, material));
 
         this.drawFrame = () => {
-            requestAnimationFrame(() => {
-                encoder.render();
-                this.renderer.render(scene, camera);
-            });
+            encoder.render();
+            this.renderer.render(scene, camera);
         };
 
         camera.position.z = 5.8;
@@ -115,6 +125,15 @@ export class ChiChiComponent implements AfterViewInit {
        // console.log("Width: " + event.target.innerWidth);
     }
 
+    onkeydown(event) {
+        this.padOne.handleKeyDownEvent(event);
+    }
+
+    onkeyup(event) {
+        this.padOne.handleKeyUpEvent(event);
+    }
+
+
     private setupScene(): void {
         this.renderer = new THREE.WebGLRenderer();
         this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
@@ -138,20 +157,29 @@ export class ChiChiComponent implements AfterViewInit {
 
     loadfile(e: Event) {
         const files: FileList = (<HTMLInputElement>e.target).files;
-        const buf = this.vbuffer;
+
+        this.runChiChi(files);
+    }
+    private runChiChi(files: FileList) {
+        clearInterval(this.interval);
+
+
         loadRom(files).subscribe((rom) => {
-            const wishbone = this.nesService.getWishbone()
-                                            (<any>buf)
-                                            (new Float32Array(new ArrayBuffer(256*256*4)))(<BaseCart>rom);
             this.zone.runOutsideAngular(() => {
-                    wishbone.chichi.PowerOn();
-                    setInterval(p=> {
-                        wishbone.chichi.RunFrame();
+                const wishbone = this.loadRom(rom);
+                const chichi = wishbone.chichi;
+                chichi.PowerOn();
+
+                this.interval = setInterval(p => {
+                    chichi.PadOne.padOneState = this.padOne.padOneState;
+                    
+                    requestAnimationFrame(() => {
+                        chichi.RunFrame();
                         this.drawFrame();
-            
-                },16);
+                    });
+                }, 16);
+                
             });
         });
     }
-
 }

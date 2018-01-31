@@ -36,12 +36,14 @@ const createWishbone = (wishbone: Wishbone) => (videoBuffer: Uint8Array ) => (au
     
     chichi.Cpu.Debugging = false;
     result.chichi = chichi;
-    result.audio = buildSound(chichi.SoundBopper.writer);
+    // result.audio = buildSound(chichi.SoundBopper.writer);
 
-    return (cart: IBaseCart): Wishbone => {
+    return (cart: BaseCart): Wishbone => {
         chichi.Cpu.setupMemoryMap(cart);
         cart.installCart(<ChiChiPPU>chichi.ppu, chichi.Cpu);
         chichi.RebuildStateBuffer();
+        chichi.PowerOn();
+        chichi.Reset();
         return result;
     };
 }

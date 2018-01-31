@@ -9,7 +9,6 @@ const loadNesFile = (filedata: File, name: string) : Observable<IBaseCart> => {
         const reader: FileReader = new FileReader();
         reader.onload = (ze) => {
             const rom = reader.result;
-            debugger;
             observer.next(iNESFileHandler.loadBuffer(rom));
         };
         reader.readAsArrayBuffer(filedata);
