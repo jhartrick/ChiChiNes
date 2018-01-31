@@ -1,10 +1,14 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener,  NgZone } from '@angular/core';
-import { NESService } from '../services/NESService';
+import { NESService } from '../wishbone/NESService';
 import * as THREE from 'three';
-import { ChiChiThreeJSAudio } from '../services/wishbone/wishbone.audio.threejs';
+
 import { BasicEncoder } from './basicEncoder';
-import { NTSCEncoder } from './ntscEncoder';
-import { RunningStatuses } from 'chichi';
+import { RunningStatuses, BaseCart } from 'chichi';
+import { iNESFileHandler } from 'chichi';
+
+import { loadRom } from '../wishbone/filehandler'
+import { setInterval } from 'timers';
+
 @Component({
     selector: 'chichi-viewer',
     templateUrl: './chichi.component.html',
@@ -12,6 +16,9 @@ import { RunningStatuses } from 'chichi';
 })
 
 export class ChiChiComponent implements AfterViewInit {
+    p32: Uint8Array;
+    vbuffer: Uint8Array;
+    nesService: NESService;
     @ViewChild('chichiHolder') chichiHolder: ElementRef;
     @ViewChild('chichiPig') canvasRef: ElementRef;
 
@@ -20,40 +27,37 @@ export class ChiChiComponent implements AfterViewInit {
     public canvasLeft = '0px';
     public canvasTop = '0px';
 
-    constructor(private nesService: NESService, private zone: NgZone) {
-        nesService.wishbone.statusChanged.subscribe(status => {
-            switch (status) {
-                case RunningStatuses.Running:
-                case RunningStatuses.Paused:
-                case RunningStatuses.Frozen:
-                    this.rebuildNesScene();
-                break;
-                default:
-                    this.rebuildNullScene();
-                    break;
-            }
-        });
+    listener: THREE.AudioListener;
+
+
+    constructor(private zone: NgZone) {
+        
+        this.nesService = new NESService(); 
+        this.vbuffer = new Uint8Array(new ArrayBuffer(256 * 256 * 4));//this.nesService.videoBuffer;
+        this.p32 = new Uint8Array(new ArrayBuffer(32 * 256 * 4));;
+
+        this.rebuildNesScene();
+        
     }
 
     rebuildNesScene() {
 
         const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-        camera.add(this.nesService.audioSettings.listener);
+        camera.add(this.listener);
 
         const scene = new THREE.Scene();
 
-        const encoder = new BasicEncoder(this.nesService);
+        const encoder = new BasicEncoder();
         // const encoder = new NTSCEncoder(this.nesService);
 
         const geometry = new THREE.PlaneGeometry(5, 5);
-        const material =  encoder.createMaterial();
+        const material =  encoder.createMaterial(this.vbuffer);
         scene.add(new THREE.Mesh(geometry, material));
 
         this.drawFrame = () => {
             requestAnimationFrame(() => {
                 encoder.render();
                 this.renderer.render(scene, camera);
-                this.drawFrame();
             });
         };
 
@@ -70,7 +74,7 @@ export class ChiChiComponent implements AfterViewInit {
         // this.nesService.audioHandler.noSound();
         const scene = new THREE.Scene();
 
-        const encoder = new BasicEncoder(this.nesService);
+        const encoder = new BasicEncoder();
         // const encoder = new NTSCEncoder(this.nesService);
 
         const geometry = new THREE.PlaneGeometry(5, 5);
@@ -115,16 +119,13 @@ export class ChiChiComponent implements AfterViewInit {
         this.renderer = new THREE.WebGLRenderer();
         this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
         this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
-        this.rebuildNullScene();
+        this.rebuildNesScene();
 
     }
 
     ngAfterViewInit(): void {
         this.setupScene();
 
-        this.zone.runOutsideAngular(() => {
-          this.drawFrame();
-        });
 
     }
 
@@ -133,5 +134,24 @@ export class ChiChiComponent implements AfterViewInit {
     }
 
     soundOver = true;
+
+
+    loadfile(e: Event) {
+        const files: FileList = (<HTMLInputElement>e.target).files;
+        const buf = this.vbuffer;
+        loadRom(files).subscribe((rom) => {
+            const wishbone = this.nesService.getWishbone()
+                                            (<any>buf)
+                                            (new Float32Array(new ArrayBuffer(256*256*4)))(<BaseCart>rom);
+            this.zone.runOutsideAngular(() => {
+                    wishbone.chichi.PowerOn();
+                    setInterval(p=> {
+                        wishbone.chichi.RunFrame();
+                        this.drawFrame();
+            
+                },16);
+            });
+        });
+    }
 
 }

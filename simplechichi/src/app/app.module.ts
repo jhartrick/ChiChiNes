@@ -3,11 +3,13 @@ import { NgModule } from '@angular/core';
 
 
 import { AppComponent } from './app.component';
+import { ChiChiComponent } from './chichiview/chichines.component';
 
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    ChiChiComponent
   ],
   imports: [
     BrowserModule

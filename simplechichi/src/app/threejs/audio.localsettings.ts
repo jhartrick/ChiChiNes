@@ -1,5 +1,5 @@
 export interface LocalAudioSettings {
 	sampleRate: number;
-	volume: number; 
+	volume: AudioParam; 
 	muted: boolean;
 }

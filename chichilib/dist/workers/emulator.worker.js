@@ -858,7 +858,7 @@ var tendoWrapper = /** @class */ (function () {
         // attach require.js "require" fn here in bootstrapper
         this.require = {};
         this.machine = new ChiChiMachine_1.ChiChiMachine();
-        this.interop = new worker_interop_1.WorkerInterop(new Int32Array((new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
+        this.interop = new worker_interop_1.WorkerInterop(new Int32Array((new ArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
     }
     tendoWrapper.prototype.createMachine = function (message) {
         var _this = this;
@@ -1023,8 +1023,8 @@ var tendoWrapper = /** @class */ (function () {
             var machine = _this.machine;
             var cart = romloader.loader.loadRom(cmd.rom, cmd.name);
             _this.machine.Cpu.setupMemoryMap(cart);
-            _this.machine.RebuildStateBuffer();
             cart.installCart(_this.machine.ppu, _this.machine.Cpu);
+            _this.machine.RebuildStateBuffer();
             _this.machine.Cpu.cheating = false;
             _this.machine.Cpu.genieCodes = new Array();
             _this.updateBuffers();
@@ -2179,7 +2179,7 @@ var ChiChiPPU = /** @class */ (function () {
         this._maxSpritesPerScanline = 64;
         this.xNTXor = 0;
         this.yNTXor = 0;
-        this.spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
+        this.spriteRAMBuffer = new ArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
         this.spriteRAM = new Uint8Array(this.spriteRAMBuffer); // System.Array.init(256, 0, System.Int32);
         this.spritesOnLine = new Array(512); // System.Array.init(512, 0, System.Int32);
         this.currentTileIndex = 0;
@@ -2741,7 +2741,7 @@ var WavSharer = /** @class */ (function () {
         this.NES_BYTES_WRITTEN = 0;
         this.WAVSHARER_BLOCKTHREAD = 1;
         this.WAVSHARER_BUFFERPOS = 2;
-        this.controlBuffer = new Int32Array(new SharedArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
+        this.controlBuffer = new Int32Array(new ArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
         this.sharedAudioBufferPos = 0;
         this.SharedBufferLength = 8192;
         this.chunkSize = 1024;
@@ -2749,29 +2749,29 @@ var WavSharer = /** @class */ (function () {
     }
     Object.defineProperty(WavSharer.prototype, "bufferPosition", {
         get: function () {
-            return Atomics.load(this.controlBuffer, this.WAVSHARER_BUFFERPOS);
+            return this.controlBuffer[this.WAVSHARER_BUFFERPOS];
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WavSharer.prototype, "audioBytesWritten", {
         get: function () {
-            return Atomics.load(this.controlBuffer, this.NES_BYTES_WRITTEN);
+            return this.controlBuffer[this.NES_BYTES_WRITTEN];
         },
         set: function (value) {
-            Atomics.store(this.controlBuffer, this.NES_BYTES_WRITTEN, value);
+            this.controlBuffer[this.NES_BYTES_WRITTEN] = value;
         },
         enumerable: true,
         configurable: true
     });
     WavSharer.prototype.wakeSleepers = function () {
-        Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
+        // <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
     };
     WavSharer.prototype.synchronize = function () {
         if (this.synced) {
-            while (this.audioBytesWritten >= this.chunkSize) {
-                Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
-                Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
+            if (this.audioBytesWritten >= this.chunkSize) {
+                this.controlBuffer[this.WAVSHARER_BUFFERPOS] = this.sharedAudioBufferPos;
+                // <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
             }
         }
         else {
@@ -4078,6 +4078,7 @@ exports.ChiChiControlPad = ChiChiControlPad;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var Subject_1 = __webpack_require__(21);
+exports.bufferType = "ArrayBuffer";
 var StateBufferConfig = /** @class */ (function () {
     function StateBufferConfig() {
         this.segments = new Array();
@@ -4111,7 +4112,7 @@ var StateBuffer = /** @class */ (function () {
     };
     // builds a new state buffer
     StateBuffer.prototype.build = function () {
-        this.data.buffer = new SharedArrayBuffer(this.bufferSize);
+        this.data.buffer = new ArrayBuffer(this.bufferSize);
         this.onRestore.next(this);
         return this;
     };

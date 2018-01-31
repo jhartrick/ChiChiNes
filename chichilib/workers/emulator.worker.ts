@@ -135,7 +135,7 @@ export class tendoWrapper {
 
     constructor() {
         this.machine = new ChiChiMachine();
-        this.interop = new WorkerInterop(new Int32Array(<any>(new SharedArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
+        this.interop = new WorkerInterop(new Int32Array(<any>(new ArrayBuffer(16 * Int32Array.BYTES_PER_ELEMENT))));
     }
 
     createMachine(message: CCMessage.CreateCommand): CCMessage.WorkerResponse {
@@ -341,10 +341,8 @@ export class tendoWrapper {
                 const cart = romloader.loader.loadRom(cmd.rom, cmd.name);
                 
                 this.machine.Cpu.setupMemoryMap(cart);
-                
-                this.machine.RebuildStateBuffer();
-
                 cart.installCart(this.machine.ppu, this.machine.Cpu);
+                this.machine.RebuildStateBuffer();
                 
                 this.machine.Cpu.cheating = false;
                 this.machine.Cpu.genieCodes = new Array<MemoryPatch>();

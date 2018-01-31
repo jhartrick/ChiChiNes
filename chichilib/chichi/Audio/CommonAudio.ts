@@ -9,11 +9,11 @@ export class WavSharer  {
     readonly WAVSHARER_BLOCKTHREAD = 1;
     readonly WAVSHARER_BUFFERPOS = 2;
 
-    controlBuffer = new Int32Array(<any>new SharedArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
+    controlBuffer = new Int32Array(<any>new ArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
     sharedAudioBufferPos: number = 0;
 
     get bufferPosition(): number {
-        return <any>Atomics.load(this.controlBuffer, this.WAVSHARER_BUFFERPOS); 
+        return this.controlBuffer[this.WAVSHARER_BUFFERPOS]; 
     }
 
     bufferWasRead: boolean;
@@ -29,23 +29,23 @@ export class WavSharer  {
     }
 
     get audioBytesWritten(): number {
-        return <any>Atomics.load(this.controlBuffer, this.NES_BYTES_WRITTEN);
+        return this.controlBuffer[this.NES_BYTES_WRITTEN];
     }
     
     set audioBytesWritten(value:number) {
-        <any>Atomics.store(this.controlBuffer, this.NES_BYTES_WRITTEN, value);
+        this.controlBuffer[this.NES_BYTES_WRITTEN] = value;
     }
 
     wakeSleepers() {
-        <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
+        // <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
     }
 
     synchronize(): void {
         if (this.synced) {
-            while (this.audioBytesWritten >= this.chunkSize)
+            if (this.audioBytesWritten >= this.chunkSize)
             {
-                <any>Atomics.store(this.controlBuffer, this.WAVSHARER_BUFFERPOS, this.sharedAudioBufferPos);
-                <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
+                this.controlBuffer[this.WAVSHARER_BUFFERPOS] = this.sharedAudioBufferPos;
+                // <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
             }
         } else {
             this.audioBytesWritten = this.chunkSize;

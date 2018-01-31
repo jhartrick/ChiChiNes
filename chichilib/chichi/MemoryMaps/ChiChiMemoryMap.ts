@@ -35,7 +35,7 @@ export class MemoryMap implements IMemoryMap {
     pad2: ChiChiInputHandler;
 
     // system ram
-    Rams = new Uint8Array(<any>new SharedArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));// System.Array.init(vv, 0, System.Int32);
+    Rams = new Uint8Array(<any>new ArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));// System.Array.init(vv, 0, System.Int32);
 
     get irqRaised(): boolean {
         return this.cart.irqRaised || this.apu.interruptRaised;

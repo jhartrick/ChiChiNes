@@ -98,6 +98,7 @@ class MapperFactory {
 
 export class iNESFileHandler  {
 
+    
     static loadBuffer(buffer: ArrayBuffer): IBaseCart {
          return new MapperFactory().createCart(new NESFileDecoder(buffer));
     }

@@ -17,4 +17,6 @@ export  { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import * as ChiChiMessages from './worker/worker.message';
 export { ChiChiMessages } 
 
-export { StateBuffer, BufferSegment, StateBufferConfig } from './StateBuffer'; 
+export { StateBuffer, BufferSegment, StateBufferConfig } from './StateBuffer';
+
+export { iNESFileHandler } from '../chichicarts/ChiChiCarts'

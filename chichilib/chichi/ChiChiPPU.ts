@@ -140,7 +140,7 @@ export class ChiChiPPU implements IChiChiPPU {
 
     private xNTXor = 0; private yNTXor = 0;
 
-    private spriteRAMBuffer = new SharedArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
+    private spriteRAMBuffer = new ArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
     spriteRAM = new Uint8Array(<any>this.spriteRAMBuffer); // System.Array.init(256, 0, System.Int32);
     private spritesOnLine = new Array<number>(512); // System.Array.init(512, 0, System.Int32);
     private currentTileIndex = 0;

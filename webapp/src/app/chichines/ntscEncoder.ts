@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { NESService } from '../services/NESService';
 
 export class NTSCEncoder {
-    private buf: SharedArrayBuffer = new SharedArrayBuffer(256 * 256 * 4);
+    private buf: ArrayBuffer = new ArrayBuffer(256 * 256 * 4);
     // private outBuffer: Uint32Array = new Uint32Array(<any>this.buf, 0, 256 * 256);
     private outBuf8: Uint8Array = new Uint8Array(<any>this.buf);
     private vertexShader = `

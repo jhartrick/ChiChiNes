@@ -70,10 +70,8 @@ export class BaseCart implements IBaseCart {
     customPalette: number[];
     ramMask = 0x1fff;
     
-    setupMapperStateBuffer(buffer: SharedArrayBuffer, start: number) {
+    setupMapperStateBuffer(buffer: ArrayBuffer, start: number) {
     }
-
-    cartState: ArrayBuffer = new ArrayBuffer(0);
 
     static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
         if (!dest) {

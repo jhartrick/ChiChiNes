@@ -1,7 +1,11 @@
 import { Subject } from 'rxjs/Subject';
 
+export const bufferType =  "ArrayBuffer";
+
+export type ChiChiBuffer =ArrayBuffer;
+
 export class StateBufferConfig {
-    buffer: SharedArrayBuffer;
+    buffer: ChiChiBuffer;
     segments: BufferSegment[] = new Array<BufferSegment>();
 }
 
@@ -20,7 +24,7 @@ export class StateBuffer {
 
     // thrown when writing clients should update the buffer
     onUpdateBuffer = new Subject<StateBuffer>();
-
+    
     // pre-allocates a segment of <size> bytes in the StateBuffer, returns StateBuffer
     pushSegment(size: number, name: string): StateBuffer {
         const seg = this.data.segments.findIndex((v,i) => v.name == name);
@@ -34,7 +38,7 @@ export class StateBuffer {
 
     // builds a new state buffer
     build() {
-        this.data.buffer = new SharedArrayBuffer(this.bufferSize);
+        this.data.buffer = new ArrayBuffer(this.bufferSize);
         this.onRestore.next(this);
         return this;
     }
@@ -75,7 +79,5 @@ export class StateBuffer {
         this.data = config;
         this.onRestore.next(this);
     }
-
-
 
 }
