@@ -6,12 +6,15 @@ import { IChiChiPPU } from "./ChiChiPPU";
 import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
 import { StateBuffer } from './StateBuffer';
+import { IMemoryMap } from './chichi';
 export declare class ChiChiMachine {
+    mapFactory: (cart: BaseCart) => IMemoryMap;
     private frameJustEnded;
     private frameOn;
     private totalCPUClocks;
     private sb;
     constructor(cpu?: ChiChiCPPU);
+    loadCart(cart: BaseCart): void;
     readonly StateBuffer: StateBuffer;
     RebuildStateBuffer(): void;
     Drawscreen(): void;

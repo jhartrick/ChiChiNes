@@ -1057,11 +1057,6 @@ export class ChiChiCPPU {
         return this.memoryMap.Rams[this.stackPointer + 256];
     }
 
-    public setupMemoryMap(cart: IBaseCart) {
-        
-        this.memoryMap = cart.createMemoryMap(this);
-    }
-
     GetByte(address: number): number {
         if (!this.memoryMap) { return 0; }
         let result = this.memoryMap.getByte(this.clock, address);
