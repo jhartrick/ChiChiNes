@@ -32,7 +32,7 @@ export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSett
     audioSource.buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
     const scriptNode = audioCtx.createScriptProcessor(chunkSize, 1, 1);
     const gainNode = audioCtx.createGain();
-    gainNode.gain.value = 0.0;
+    gainNode.gain.value = 1.0;
 
     audioSource.connect(gainNode);
     audioSource.connect(scriptNode);

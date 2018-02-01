@@ -1,9 +1,9 @@
-import { Observable } from "rxjs/Observable";
-import { RunningStatuses, ChiChiMachine, IBaseCart, BaseCart, ChiChiPPU } from "chichi";
+import { Observable } from 'rxjs/Observable';
+import { RunningStatuses, ChiChiMachine, IBaseCart, BaseCart, ChiChiPPU } from 'chichi';
 import * as Three from 'three';
-import { Wishbone } from "./wishbone";
-import { buildSound } from "../threejs/audio.threejs"
-import { iNESFileHandler } from 'chichi'
+import { Wishbone } from './wishbone';
+import { buildSound } from '../threejs/audio.threejs';
+import { iNESFileHandler } from 'chichi';
 
 export class NESService {
     wishbone: Wishbone;
@@ -35,11 +35,8 @@ const createWishbone = (wishbone: Wishbone) => (videoBuffer: Uint8Array ) => (au
     result.audio = buildSound(chichi.SoundBopper.writer);
 
     return (cart: BaseCart): Wishbone => {
-        chichi.Cpu.setupMemoryMap(cart);
-        chichi.RebuildStateBuffer();
-        cart.installCart(<ChiChiPPU>chichi.ppu, chichi.Cpu);
+        chichi.loadCart(cart);
         chichi.PowerOn();
-        chichi.Reset();
         return result;
     };
 }

@@ -7,10 +7,13 @@ import { GameGenieCode, MemoryPatch } from './ChiChiCheats';
 import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
 import { StateBuffer } from './StateBuffer';
+import { setupMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
+import { IMemoryMap } from './chichi';
 
 
     //machine wrapper
 export class ChiChiMachine {
+    mapFactory: (cart: BaseCart) => IMemoryMap;
     private frameJustEnded = true;
     private frameOn = false;
     private totalCPUClocks = 0;
@@ -26,8 +29,18 @@ export class ChiChiMachine {
         this.ppu.cpu = this.Cpu;
         this.ppu.NMIHandler = () => {  this.Cpu.nmiHandler(); }
         this.ppu.frameFinished = () => { this.frameFinished(); };
+        this.mapFactory = setupMemoryMap(this.Cpu)(<ChiChiPPU>this.ppu)(this.SoundBopper)(this.Cpu.PadOne)(this.Cpu.PadTwo);
     }
 
+    loadCart(cart: BaseCart) : void {
+        // chichi.Cpu.setupMemoryMap(cart);
+        // chichi.RebuildStateBuffer();
+        // cart.installCart(<ChiChiPPU>chichi.ppu, chichi.Cpu);
+
+        this.mapFactory(cart);
+        this.RebuildStateBuffer();
+        cart.installCart(<ChiChiPPU>this.ppu, this.Cpu);
+    }
 
     get StateBuffer(): StateBuffer {
         return this.sb;

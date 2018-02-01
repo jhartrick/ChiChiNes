@@ -1,9 +1,14 @@
 import { ChiChiCPPU } from "../ChiChiCPU";
-import { IChiChiPPU } from "../ChiChiPPU";
-import { IChiChiAPU } from "../ChiChiAudio";
-import { IBaseCart } from "../../chichicarts/BaseCart";
-import { ChiChiInputHandler } from "../ChiChiControl";
+import { IChiChiPPU, ChiChiPPU } from "../ChiChiPPU";
+import { IChiChiAPU, ChiChiAPU } from "../ChiChiAudio";
+import { IBaseCart, BaseCart } from "../../chichicarts/BaseCart";
+import { ChiChiInputHandler, ChiChiControlPad } from "../ChiChiControl";
 import { StateBuffer } from "../StateBuffer";
+
+export interface MemoryMappable {
+    getByte(clock: number, address: number): number;
+    setByte(clock: number, address: number, data: number): void;
+}
 
 export interface IMemoryMap {
     ppu: IChiChiPPU;
@@ -28,69 +33,88 @@ export interface IMemoryMap {
     setupStateBuffer(sb: StateBuffer): void;
 }
 
-export class MemoryMap implements IMemoryMap {
-    ppu: IChiChiPPU;
-    apu: IChiChiAPU;
-    pad1: ChiChiInputHandler;
-    pad2: ChiChiInputHandler;
+export const setupMemoryMap = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => {
+    let Rams = new Uint8Array(new ArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
+    const cpuBus = {
+        getByte: getByte(cpu)(ppu)(apu)(Rams)(pad1)(pad2),
+        setByte: setByte(cpu)(ppu)(apu)(Rams)(pad1)(pad2)
+    };
 
-    // system ram
-    Rams = new Uint8Array(<any>new ArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));// System.Array.init(vv, 0, System.Int32);
+    const clocked: Array<any> = [ppu,apu];
 
-    get irqRaised(): boolean {
-        return this.cart.irqRaised || this.apu.interruptRaised;
+    const setupStateBuffer = (sb: StateBuffer) => {
+        sb.onRestore.subscribe((buffer: StateBuffer) => {
+            Rams = buffer.getUint8Array('rams');
+        })
+
+        sb.pushSegment(8192 * Uint8Array.BYTES_PER_ELEMENT, 'rams');
+        return sb;
     }
+    
+    return function (cart: BaseCart): IMemoryMap {
+        
+        clocked.push(cart);
+        const result = {
+            ppu: ppu,
+            apu: apu,
+            pad1: pad1,
+            pad2: pad2,
+            cpu: cpu,
+            Rams: Rams,
+            cart: cart,
+            getByte: cpuBus.getByte(cart),
+            setByte: cpuBus.setByte(cart),
+            getPPUByte: (clock: number, address: number) => cart.getPPUByte(clock, address),
+            setPPUByte:  (clock: number, address: number, data: number) => cart.setPPUByte(clock, address, data),
+            irqRaised: cart.irqRaised || apu.interruptRaised,
+            advanceClock: (ticks: number) => clocked.forEach(p => p.advanceClock(ticks)),
+            advanceScanline: (ticks: number) =>  {  
+                                                    while (ticks-- >= 0) {
+                                                    cart.updateScanlineCounter();
+                                                }
+                                            },
+            setupStateBuffer: setupStateBuffer
+        }
+        cpu.memoryMap = apu.memoryMap = ppu.memoryMap = result;
+        return result;
 
-
-    constructor(
-        public cpu: ChiChiCPPU, 
-        public cart: IBaseCart
-    ) {
-        this.apu = cpu.SoundBopper;
-        this.ppu = cpu.ppu;
-        this.pad1 = cpu.PadOne;
-        this.pad2 = cpu.PadTwo;
-        this.cart = cart;
-
-        this.ppu.memoryMap = this;
-        this.apu.memoryMap = this;
     }
+}
 
-    private lastAddress = 0;
+const getByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Rams: Uint8Array) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => (cart: BaseCart) => {
 
-    getByte(clock: number, address: number): number {
-
+    return (clock: number, address: number): number => {
         let result: number = 0;
         // check high byte, find appropriate handler
         switch (address & 0xF000) {
             case 0:
             case 0x1000:
                 if (address < 2048) {
-                    result = this.Rams[address];
+                    result = Rams[address];
                 } else {
                     result = address >> 8;
                 }
                 break;
             case 0x2000:
             case 0x3000:
-                result = this.ppu.GetByte(clock, address);
+                result = ppu.GetByte(clock, address);
                 break;
             case 0x4000:
                 switch (address) {
 
                     case 0x4015:
-                        result = this.apu.GetByte(clock, address);
+                        result = apu.GetByte(clock, address);
                         break;
                     case 0x4016:
-                        result = this.pad1.GetByte(clock, address);
+                        result = pad1.GetByte(clock, address);
                         break;
                     case 0x4017:
-                        result = this.pad2.GetByte(clock, address);
+                        result = pad2.GetByte(clock, address);
                         break;
 
                     default:
-                        if (this.cart.mapsBelow6000)
-                            result = this.cart.getByte(clock, address);
+                        if (cart.mapsBelow6000)
+                            result = cart.getByte(clock, address);
                         else
                             result = address >> 8;
                         break;
@@ -111,7 +135,7 @@ export class MemoryMap implements IMemoryMap {
             case 0xe000:
             case 0xf000:
                 // cart 
-                result = this.cart.getByte(clock, address);
+                result = cart.getByte(clock, address);
                 break;
             default:
                 throw new Error("Bullshit!");
@@ -119,23 +143,24 @@ export class MemoryMap implements IMemoryMap {
 
         return result & 255;
     }
+}
 
-    setByte(clock: number, address: number, data: number): void {
 
-
+const setByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Rams: Uint8Array) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => (cart: BaseCart) => {
+    return (clock: number, address: number, data: number): void => {
         // check high byte, find appropriate handler
         if (address < 2048) {
-            this.Rams[address & 2047] = data;
+            Rams[address & 2047] = data;
             return;
         }
         switch (address & 61440) {
             case 0:
             case 0x1000:
                 // nes sram
-                this.Rams[address & 2047] = data;
+                Rams[address & 2047] = data;
                 break;
             case 20480:
-                this.cart.setByte(clock, address, data);
+                cart.setByte(clock, address, data);
                 break;
             case 24576:
             case 28672:
@@ -148,14 +173,14 @@ export class MemoryMap implements IMemoryMap {
             case 57344:
             case 61440:
                 // cart rom banks
-                this.cart.setByte(clock, address, data);
+                cart.setByte(clock, address, data);
                 break;
             case 8192:
             case 12288:
-                this.ppu.SetByte(clock, address, data);
+                ppu.SetByte(clock, address, data);
                 break;
             case 16384:
-            
+
                 switch (address) {
                     case 0x4000:
                     case 0x4001:
@@ -177,62 +202,27 @@ export class MemoryMap implements IMemoryMap {
                     case 0x4011:
                     case 0x4012:
                     case 0x4013:
-                    
+
                     case 0x4015:
                     case 0x4017:
-                        this.apu.SetByte(clock, address, data);
+                        apu.SetByte(clock, address, data);
                         break;
                     case 0x4014:
-                        this.ppu.copySprites(data * 256);
-                        this.cpu._currentInstruction_ExtraTiming = this.cpu._currentInstruction_ExtraTiming + 513;
+                        ppu.copySprites(data * 256);
+                        cpu._currentInstruction_ExtraTiming = cpu._currentInstruction_ExtraTiming + 513;
                         if (clock & 1) {
-                            this.cpu._currentInstruction_ExtraTiming++;
+                            cpu._currentInstruction_ExtraTiming++;
                         }
                         break;
                     case 0X4016:
-                        this.pad1.SetByte(clock, address, (data & 1) | 0x40);
-                        this.pad2.SetByte(clock, address,(data & 1) | 0x40);
+                        pad1.SetByte(clock, address, (data & 1) | 0x40);
+                        pad2.SetByte(clock, address, (data & 1) | 0x40);
                         break;
                     default:
-                        if (this.cart.mapsBelow6000)
-                            this.cart.setByte(clock, address, data);
+                        if (cart.mapsBelow6000)
+                            cart.setByte(clock, address, data);
                 }
                 break;
         }
     }
-
-    getPPUByte(clock: number, address: number): number {
-
-        return this.cart.getPPUByte(clock, address);
-    }
-
-    setPPUByte(clock: number, address: number, data: number): void {
-
-
-        this.cart.setPPUByte(clock, address, data);
-    }
-
-    advanceClock(value: number) {
-        this.apu.advanceClock(value);
-        this.ppu.advanceClock(value);
-        this.cart.advanceClock(value);
-    }
-
-    advanceScanline(value: number) {
-        while(value-- >= 0) {
-            this.cart.updateScanlineCounter();
-        }
-    }
-
-    setupStateBuffer(sb: StateBuffer) {
-        sb.onRestore.subscribe((buffer: StateBuffer) => {
-            this.Rams = buffer.getUint8Array('rams');
-        })
-
-        sb  .pushSegment(8192 * Uint8Array.BYTES_PER_ELEMENT, 'rams');
-        return sb;
-
-    }
-
-    
 }

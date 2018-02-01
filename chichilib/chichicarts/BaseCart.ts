@@ -2,7 +2,7 @@ import { ChiChiCPPU } from '../chichi/ChiChiCPU';
 import { ChiChiPPU, IChiChiPPU, IChiChiPPUState } from '../chichi/ChiChiPPU';
 import { NESFileDecoder } from './NESFileDecoder';
 import * as crc from 'crc';
-import { MemoryMap, IMemoryMap } from '../chichi/MemoryMaps/ChiChiMemoryMap';
+import { setupMemoryMap, MemoryMap, IMemoryMap } from '../chichi/MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from '../chichi/StateBuffer';
 
 export enum NameTableMirroring {
@@ -52,7 +52,6 @@ export interface IBaseCart extends IBaseCartState {
     Whizzler: IChiChiPPU;
     CPU: ChiChiCPPU;
 
-    createMemoryMap(cpu: ChiChiCPPU): IMemoryMap;
     installCart(ppu:ChiChiPPU, cpu: ChiChiCPPU) : void;
     initializeCart(): void;
 
@@ -248,10 +247,6 @@ export class BaseCart implements IBaseCart {
         this.mirroring = this.romFile.mirroring;
         this.mirror(0, this.mirroring);
         this.initializeCart();
-    }
-
-    createMemoryMap(cpu: ChiChiCPPU): IMemoryMap {
-        return new MemoryMap(cpu, this);
     }
 
     getByte(clock: number, address: number): number {
