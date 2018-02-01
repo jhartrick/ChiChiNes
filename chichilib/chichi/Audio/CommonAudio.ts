@@ -37,6 +37,7 @@ export class WavSharer  {
     }
 
     wakeSleepers() {
+        // this.audioBytesWritten = 0;
         // <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
     }
 

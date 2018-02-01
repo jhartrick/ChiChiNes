@@ -38,16 +38,18 @@ export class ChiChiComponent implements AfterViewInit {
 
     listener: THREE.AudioListener;
 
-
     constructor(private zone: NgZone) {
-        
-        this.nesService = new NESService(); 
-        this.vbuffer = new Uint8Array(new ArrayBuffer(256 * 256 * 4));//this.nesService.videoBuffer;
-        this.p32 = new Uint8Array(new ArrayBuffer(32 * 256 * 4));
-        const abuffer = new Float32Array(new ArrayBuffer((4096 << 2) * Float32Array.BYTES_PER_ELEMENT));
-        this.loadRom = this.nesService.getWishbone()(this.vbuffer)(abuffer);
 
-        this.padOne = new WishBoneControlPad("one");
+        this.nesService = new NESService();
+        this.vbuffer = new Uint8Array(new ArrayBuffer(256 * 256 * 4));
+        this.p32 = new Uint8Array(new ArrayBuffer(32 * 256 * 4));
+        const abuffer = new Float32Array(new ArrayBuffer(2048 *  4 * Float32Array.BYTES_PER_ELEMENT));
+
+        const getBone = this.nesService.getWishbone();
+        const setBbuffer = getBone(this.vbuffer);
+        this.loadRom = setBbuffer(abuffer);
+
+        this.padOne = new WishBoneControlPad('one');
 
     }
 
@@ -176,7 +178,7 @@ export class ChiChiComponent implements AfterViewInit {
                         chichi.RunFrame();
                         this.drawFrame();
                     });
-                }, 16);
+                }, 17);
                 
             });
         });

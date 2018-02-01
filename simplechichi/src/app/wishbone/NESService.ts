@@ -7,21 +7,18 @@ import { iNESFileHandler } from 'chichi'
 
 export class NESService {
     wishbone: Wishbone;
+    statusChanged: Observable<RunningStatuses> = new Observable<RunningStatuses>();
+
     constructor() {
         this.statusChanged = new Observable<RunningStatuses>();
-        
     }
 
     getWishbone() {
-        return createWishbone({ 
-            chichi: undefined, 
+        return createWishbone({
+            chichi: undefined,
             audio: undefined
         });
     }
-
-    statusChanged: Observable<RunningStatuses> = new Observable<RunningStatuses>();
-    
-
 }
 
 const createWishbone = (wishbone: Wishbone) => (videoBuffer: Uint8Array ) => (audioBuffer: Float32Array) =>  {
@@ -31,17 +28,16 @@ const createWishbone = (wishbone: Wishbone) => (videoBuffer: Uint8Array ) => (au
     chichi.SoundBopper.writer.SharedBuffer = audioBuffer;
 
     chichi.Cpu.FireDebugEvent = () => {
-        const info = {}; 
+        const info = {};
     };
-    
     chichi.Cpu.Debugging = false;
     result.chichi = chichi;
     result.audio = buildSound(chichi.SoundBopper.writer);
 
     return (cart: BaseCart): Wishbone => {
         chichi.Cpu.setupMemoryMap(cart);
-        cart.installCart(<ChiChiPPU>chichi.ppu, chichi.Cpu);
         chichi.RebuildStateBuffer();
+        cart.installCart(<ChiChiPPU>chichi.ppu, chichi.Cpu);
         chichi.PowerOn();
         chichi.Reset();
         return result;
