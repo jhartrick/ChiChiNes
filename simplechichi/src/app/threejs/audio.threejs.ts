@@ -6,81 +6,82 @@ import { Subject } from 'rxjs/Subject';
 import { LocalAudioSettings } from './audio.localsettings';
 
 export interface ThreeJSAudioSettings extends LocalAudioSettings {
-	items: any;
-	listener: any;
+    items: any;
+    listener: any;
 }
 
-export function buildSound(wavForms: WavSharer, options? : any): ThreeJSAudioSettings {
-	const bufferBlockSize = 4096;
-	const bufferBlockCountBits = 2;
-	const chunkSize = 512;
-	const bufferSize: number = bufferBlockSize << bufferBlockCountBits;
+export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSettings {
+    const bufferBlockSize = 4096;
+    const bufferBlockCountBits = 2;
+    const chunkSize = 512;
+    // tslint:disable-next-line:no-bitwise
+    const bufferSize: number = bufferBlockSize << bufferBlockCountBits;
 
-	const listener = new THREE.AudioListener();
-	const sound = new THREE.Audio(listener);
+    const listener = new THREE.AudioListener();
+    const sound = new THREE.Audio(listener);
 
-	const nesAudio = wavForms.SharedBuffer;
+    const nesAudio = wavForms.SharedBuffer;
 
-	const audioCtx = sound.context;
-	const audioSource = audioCtx.createBufferSource();
-	sound.setNodeSource(audioSource);
-	const sampleRate = audioCtx.sampleRate;
+    const audioCtx = sound.context;
+    const audioSource = audioCtx.createBufferSource();
+    sound.setNodeSource(audioSource);
+    const sampleRate = audioCtx.sampleRate;
 
-	let lastReadPos = 0;
+    let lastReadPos = 0;
 
-	audioSource.buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
-	const scriptNode = audioCtx.createScriptProcessor(chunkSize, 1, 1);
-	const gainNode = audioCtx.createGain();
-	gainNode.gain.value = 1.0;
+    audioSource.buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
+    const scriptNode = audioCtx.createScriptProcessor(chunkSize, 1, 1);
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0.0;
 
-	audioSource.connect(gainNode);
-	audioSource.connect(scriptNode);
+    audioSource.connect(gainNode);
+    audioSource.connect(scriptNode);
 
-	const result = {
-		volume: gainNode.gain,
-		sampleRate: audioCtx.sampleRate,
-		muted: false,
-		listener: listener,
-		items: {
-			sound: sound,
-			source: audioSource,
-			scriptNode: scriptNode,
-			gainNode: gainNode
-		}
-	}
-	
-	scriptNode.onaudioprocess = (audioProcessingEvent) => {
-		
-		let nesBytesAvailable = wavForms.audioBytesWritten;
-		lastReadPos = wavForms.bufferPosition - nesBytesAvailable;
+    const result = {
+        volume: gainNode.gain,
+        sampleRate: audioCtx.sampleRate,
+        muted: false,
+        listener: listener,
+        items: {
+            sound: sound,
+            source: audioSource,
+            scriptNode: scriptNode,
+            gainNode: gainNode
+        }
+    };
 
-		if (lastReadPos < 0) {
-			lastReadPos += nesAudio.length;
-		}
+    scriptNode.onaudioprocess = (audioProcessingEvent) => {
 
-		const outputBuffer = audioProcessingEvent.outputBuffer;
-		const outputData = outputBuffer.getChannelData(0);
+        let nesBytesAvailable = wavForms.audioBytesWritten;
+        lastReadPos = wavForms.bufferPosition - nesBytesAvailable;
 
-		for (let sample = 0; sample < outputData.length; sample++) {
-			outputData[sample] = nesAudio[lastReadPos++];
-			if (lastReadPos >= nesAudio.length) {
-				lastReadPos = 0;
-			}
-			nesBytesAvailable--;
-		}
+        if (lastReadPos < 0) {
+            lastReadPos += nesAudio.length;
+        }
 
-		wavForms.audioBytesWritten = nesBytesAvailable;
-	
-		wavForms.wakeSleepers(); // = nesBytesAvailable;
-	}
+        const outputBuffer = audioProcessingEvent.outputBuffer;
+        const outputData = outputBuffer.getChannelData(0);
 
-	scriptNode.connect(gainNode);
-	gainNode.connect(audioCtx.destination);
+        for (let sample = 0; sample < outputData.length; sample++) {
+            outputData[sample] = nesAudio[lastReadPos++];
+            if (lastReadPos >= nesAudio.length) {
+                lastReadPos = 0;
+            }
+            nesBytesAvailable--;
+        }
 
-	audioSource.loop = true;
-	audioSource.start();
+        wavForms.audioBytesWritten = nesBytesAvailable;
 
-	result.sampleRate = audioCtx.sampleRate;
+        wavForms.wakeSleepers(); // = nesBytesAvailable;
+    };
 
-	return result;
+    scriptNode.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    audioSource.loop = true;
+    audioSource.start();
+
+    result.sampleRate = audioCtx.sampleRate;
+
+    return result;
 }
