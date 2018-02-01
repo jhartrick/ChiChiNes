@@ -1,19 +1,62 @@
 import { StateBuffer } from "../StateBuffer";
+    
+const NES_BYTES_WRITTEN = 0;
+const WAVSHARER_BLOCKTHREAD = 1;
+const WAVSHARER_BUFFERPOS = 2;
+
+const time_unit = 2097152;
+const buf_extra = 18;
+const phase_count = 32;
+const time_bits = 21;
+const delta_bits = 15;
+//sinc values
+const bl_step = [
+    [43, -115, 350, -488, 1136, -914, 5861, 21022],
+    [44, -118, 348, -473, 1076, -799, 5274, 21001], 
+    [45, -121, 344, -454, 1011, -677, 4706, 20936], 
+    [46, -122, 336, -431, 942, -549, 4156, 20829], 
+    [47, -123, 327, -404, 868, -418, 3629, 20679], 
+    [47, -122, 316, -375, 792, -285, 3124, 20488], 
+    [47, -120, 303, -344, 714, -151, 2644, 20256], 
+    [46, -117, 289, -310, 634, -17, 2188, 19985], 
+    [46, -114, 273, -275, 553, 117, 1758, 19675], 
+    [ 44, -108, 255, -237, 471, 247, 1356, 19327], 
+    [ 43, -103, 237, -199, 390, 373, 981, 18944], 
+    [ 42, -98, 218, -160, 310, 495, 633, 18527], 
+    [ 40, -91, 198, -121, 231, 611, 314, 18078], 
+    [ 38, -84, 178, -81, 153, 722, 22, 17599], 
+    [ 36, -76, 157, -43, 80, 824, -241, 17092], 
+    [ 34, -68, 135, -3, 8, 919, -476, 16558], 
+    [ 32, -61, 115, 34, -60, 1006, -683, 16001], 
+    [ 29, -52, 94, 70, -123, 1083, -862, 15422], 
+    [ 27, -44, 73, 106, -184, 1152, -1015, 14824], 
+    [ 25, -36, 53, 139, -239, 1211, -1142, 14210], 
+    [ 22, -27, 34, 170, -290, 1261, -1244, 13582], 
+    [ 20, -20, 16, 199, -335, 1301, -1322, 12942], 
+    [ 18, -12, -3, 226, -375, 1331, -1376, 12293], 
+    [ 15, -4, -19, 250, -410, 1351, -1408, 11638], 
+    [ 13, 3, -35, 272, -439, 1361, -1419, 10979], 
+    [ 11, 9, -49, 292, -464, 1362, -1410, 10319], 
+    [ 9, 16, -63, 309, -483, 1354, -1383, 9660], 
+    [ 7, 22, -75, 322, -496, 1337, -1339, 9005], 
+    [ 6, 26, -85, 333, -504, 1312, -1280, 8355], 
+    [ 4, 31, -94, 341, -507, 1278, -1205, 7713], 
+    [ 3, 35, -102, 347, -506, 1238, -1119, 7082], 
+    [ 1, 40, -110, 350, -499, 1190, -1021, 6464], 
+    [ 0, 43, -115, 350, -488, 1136, -914, 5861], 
+];
+
 
 
 // shared buffer to get sound out
 export class WavSharer  {
     synced = true;
-    
-    readonly NES_BYTES_WRITTEN = 0;
-    readonly WAVSHARER_BLOCKTHREAD = 1;
-    readonly WAVSHARER_BUFFERPOS = 2;
 
     controlBuffer = new Int32Array(<any>new ArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
     sharedAudioBufferPos: number = 0;
 
     get bufferPosition(): number {
-        return this.controlBuffer[this.WAVSHARER_BUFFERPOS]; 
+        return this.controlBuffer[WAVSHARER_BUFFERPOS]; 
     }
 
     bufferWasRead: boolean;
@@ -29,11 +72,11 @@ export class WavSharer  {
     }
 
     get audioBytesWritten(): number {
-        return this.controlBuffer[this.NES_BYTES_WRITTEN];
+        return this.controlBuffer[NES_BYTES_WRITTEN];
     }
     
     set audioBytesWritten(value:number) {
-        this.controlBuffer[this.NES_BYTES_WRITTEN] = value;
+        this.controlBuffer[NES_BYTES_WRITTEN] = value;
     }
 
     wakeSleepers() {
@@ -44,7 +87,7 @@ export class WavSharer  {
         if (this.synced) {
             if (this.audioBytesWritten >= this.chunkSize)
             {
-                this.controlBuffer[this.WAVSHARER_BUFFERPOS] = this.sharedAudioBufferPos;
+                this.controlBuffer[WAVSHARER_BUFFERPOS] = this.sharedAudioBufferPos;
                 // <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
             }
         } else {
@@ -55,48 +98,7 @@ export class WavSharer  {
 
 export class ChiChiWavSharer extends WavSharer {
 // blipper     
-    static time_unit = 2097152;
-    static buf_extra = 18;
-    static phase_count = 32;
-    static time_bits = 21;
-    static delta_bits = 15;
-    //sinc values
-    static bl_step = [
-        [43, -115, 350, -488, 1136, -914, 5861, 21022],
-        [44, -118, 348, -473, 1076, -799, 5274, 21001], 
-        [45, -121, 344, -454, 1011, -677, 4706, 20936], 
-        [46, -122, 336, -431, 942, -549, 4156, 20829], 
-        [47, -123, 327, -404, 868, -418, 3629, 20679], 
-        [47, -122, 316, -375, 792, -285, 3124, 20488], 
-        [47, -120, 303, -344, 714, -151, 2644, 20256], 
-        [46, -117, 289, -310, 634, -17, 2188, 19985], 
-        [46, -114, 273, -275, 553, 117, 1758, 19675], 
-        [ 44, -108, 255, -237, 471, 247, 1356, 19327], 
-        [ 43, -103, 237, -199, 390, 373, 981, 18944], 
-        [ 42, -98, 218, -160, 310, 495, 633, 18527], 
-        [ 40, -91, 198, -121, 231, 611, 314, 18078], 
-        [ 38, -84, 178, -81, 153, 722, 22, 17599], 
-        [ 36, -76, 157, -43, 80, 824, -241, 17092], 
-        [ 34, -68, 135, -3, 8, 919, -476, 16558], 
-        [ 32, -61, 115, 34, -60, 1006, -683, 16001], 
-        [ 29, -52, 94, 70, -123, 1083, -862, 15422], 
-        [ 27, -44, 73, 106, -184, 1152, -1015, 14824], 
-        [ 25, -36, 53, 139, -239, 1211, -1142, 14210], 
-        [ 22, -27, 34, 170, -290, 1261, -1244, 13582], 
-        [ 20, -20, 16, 199, -335, 1301, -1322, 12942], 
-        [ 18, -12, -3, 226, -375, 1331, -1376, 12293], 
-        [ 15, -4, -19, 250, -410, 1351, -1408, 11638], 
-        [ 13, 3, -35, 272, -439, 1361, -1419, 10979], 
-        [ 11, 9, -49, 292, -464, 1362, -1410, 10319], 
-        [ 9, 16, -63, 309, -483, 1354, -1383, 9660], 
-        [ 7, 22, -75, 322, -496, 1337, -1339, 9005], 
-        [ 6, 26, -85, 333, -504, 1312, -1280, 8355], 
-        [ 4, 31, -94, 341, -507, 1278, -1205, 7713], 
-        [ 3, 35, -102, 347, -506, 1238, -1119, 7082], 
-        [ 1, 40, -110, 350, -499, 1190, -1021, 6464], 
-        [ 0, 43, -115, 350, -488, 1136, -914, 5861], 
-    ];
-    
+
     constructor(sb: StateBuffer) {
 		
         super()        
@@ -110,14 +112,21 @@ export class ChiChiWavSharer extends WavSharer {
     private blipBuffer: BlipBuffer;
 
     blip_new(size: number): void {
-        this.blipBuffer = new BlipBuffer(size + ChiChiWavSharer.buf_extra);
-        this.blipBuffer.size = size;
-        this.blipBuffer.factor = 0;
+        this.blipBuffer = {
+            samples: new Array<number>(size + buf_extra),
+            factor: 0,
+            size: size,
+            offset: 0,
+            avail: 0,
+            integrator: 0,
+            time_bits: 0,
+            arrayLength: size + buf_extra
+        };// new BlipBuffer(size + buf_extra);
         this.blip_clear();
     }
 
     blip_set_rates(clock_rate: number, sample_rate: number): void {
-        this.blipBuffer.factor = ChiChiWavSharer.time_unit / clock_rate * sample_rate + (0.9999847412109375);
+        this.blipBuffer.factor = time_unit / clock_rate * sample_rate + (0.9999847412109375);
     }
 
     blip_clear(): void {
@@ -134,12 +143,13 @@ export class ChiChiWavSharer extends WavSharer {
 
     blip_end_frame(t: number): void {
         let off = t * this.blipBuffer.factor + this.blipBuffer.offset;
-        this.blipBuffer.avail += off >> ChiChiWavSharer.time_bits;
-        this.blipBuffer.offset = off & (ChiChiWavSharer.time_unit - 1);
+        this.blipBuffer.avail += off >> time_bits;
+        this.blipBuffer.offset = off & (time_unit - 1);
     }
 
+    
     remove_samples(count: number): void {
-        let remain = this.blipBuffer.avail + ChiChiWavSharer.buf_extra - count;
+        let remain = this.blipBuffer.avail + buf_extra - count;
         this.blipBuffer.avail -= count;
         this.blipBuffer.samples.copyWithin(0, count, count + remain);
         this.blipBuffer.samples.fill(0, remain, remain + count);
@@ -165,7 +175,7 @@ export class ChiChiWavSharer extends WavSharer {
 
         if (count !== 0) {
             do {
-                let st = sum >> ChiChiWavSharer.delta_bits; 
+                let st = sum >> delta_bits; 
                 sum = sum + this.blipBuffer.samples[inPtr];
                 inPtr++;
 
@@ -195,14 +205,14 @@ export class ChiChiWavSharer extends WavSharer {
         }
         const fixedTime = (time * this.blipBuffer.factor + this.blipBuffer.offset) | 0;
 
-        const outPtr = (this.blipBuffer.avail + (fixedTime >> ChiChiWavSharer.time_bits));
+        const outPtr = (this.blipBuffer.avail + (fixedTime >> time_bits));
 
         const phase_shift = 16;
         //const phase = System.Int64.clip32(fixedTime.shr(phase_shift).and(System.Int64((ChiChiWavSharer.phase_count - 1))));
-        const phase = (fixedTime >> phase_shift & (ChiChiWavSharer.phase_count - 1)) >>> 0;
+        const phase = (fixedTime >> phase_shift & (phase_count - 1)) >>> 0;
 
         const inStep = phase; // bl_step[phase];
-        const rev = ChiChiWavSharer.phase_count - phase; // bl_step[phase_count - phase];
+        const rev = phase_count - phase; // bl_step[phase_count - phase];
 
         const interp_bits = 15;
         const interp = (fixedTime >> (phase_shift - interp_bits) & ((1 << interp_bits) - 1));
@@ -210,8 +220,8 @@ export class ChiChiWavSharer extends WavSharer {
         delta -= delta2;
 
         for (let i = 0; i < 8; ++i) {
-            this.blipBuffer.samples[outPtr + i] += (ChiChiWavSharer.bl_step[inStep][i] * delta) + (ChiChiWavSharer.bl_step[inStep][i] * delta2);
-            this.blipBuffer.samples[outPtr + (15 - i)] += (ChiChiWavSharer.bl_step[rev][i] * delta) + (ChiChiWavSharer.bl_step[rev - 1][i] * delta2);
+            this.blipBuffer.samples[outPtr + i] += (bl_step[inStep][i] * delta) + (bl_step[inStep][i] * delta2);
+            this.blipBuffer.samples[outPtr + (15 - i)] += (bl_step[rev][i] * delta) + (bl_step[rev - 1][i] * delta2);
         }
 
     }
@@ -220,18 +230,14 @@ export class ChiChiWavSharer extends WavSharer {
 }
 
 //apu classes
-class BlipBuffer  {
-    constructor(public size: number) {
-        
-        this.samples = new Array<number>(size);
-        this.samples.fill(0);
-    }
-    factor: number = 0;
+interface BlipBuffer  {
+    size: number;    
+    factor: number;
     samples: Array<number>;
-    offset = 0;
-    avail = 0;
-    integrator = 0;
-    time_bits = 0;
-    arrayLength = 0;
+    offset: number;
+    avail: number;
+    integrator: number;
+    time_bits: number;
+    arrayLength: number;
 }
 
