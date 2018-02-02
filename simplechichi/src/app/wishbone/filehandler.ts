@@ -1,23 +1,23 @@
 import { Observable } from "rxjs/Observable";
-import { IBaseCart, iNESFileHandler } from "chichi";
+import { BaseCart, iNESFileHandler } from "chichi";
 import * as JSZip from 'jszip';
 import * as crc from 'crc';
 
-const loadNesFile = (filedata: File, name: string) : Observable<IBaseCart> => {
+const loadNesFile = (filedata: File, name: string) : Observable<BaseCart> => {
     console.log('loading file ' + name);
-    const obs = new Observable<IBaseCart>((observer) => {
+    const obs = new Observable<BaseCart>((observer) => {
         const reader: FileReader = new FileReader();
         reader.onload = (ze) => {
             const rom = reader.result;
-            observer.next(iNESFileHandler.loadBuffer(rom));
+            observer.next(iNESFileHandler(rom));
         };
         reader.readAsArrayBuffer(filedata);
     });
     return obs;
 }
 
-const loadZipFile = (file: File): Observable<IBaseCart> => {
-    return new Observable<IBaseCart>(observer => {
+const loadZipFile = (file: File): Observable<BaseCart> => {
+    return new Observable<BaseCart>(observer => {
         const fileReader: FileReader = new FileReader();
         let name = file.name;
         fileReader.onload = (e) => {
@@ -38,8 +38,8 @@ const loadZipFile = (file: File): Observable<IBaseCart> => {
     });
 }
 
-export const loadRom = (files: FileList): Observable<IBaseCart> => {
-    return new Observable<IBaseCart>(observer => {
+export const loadRom = (files: FileList): Observable<BaseCart> => {
+    return new Observable<BaseCart>(observer => {
         const file = files[0];
         if (file.name.endsWith('.zip')) {
              loadZipFile(file).subscribe((cart) => {

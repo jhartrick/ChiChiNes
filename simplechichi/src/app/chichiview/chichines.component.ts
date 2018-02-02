@@ -10,6 +10,7 @@ import { loadRom } from '../wishbone/filehandler'
 import { setInterval } from 'timers';
 import { WishBoneControlPad } from '../wishbone/keyboard/wishbone.controlpad';
 import { AfterContentInit } from '@angular/core/src/metadata/lifecycle_hooks';
+import { Wishbone } from '../wishbone/wishbone';
 
 @Component({
     selector: 'chichi-viewer',
@@ -22,9 +23,9 @@ import { AfterContentInit } from '@angular/core/src/metadata/lifecycle_hooks';
 })
 
 export class ChiChiComponent implements AfterViewInit {
-    padOne: WishBoneControlPad;
+    padOne: WishBoneControlPad =new WishBoneControlPad('one');
+    
     interval: NodeJS.Timer;
-    loadRom: (cart: BaseCart) => any;
     p32: Uint8Array;
     vbuffer: Uint8Array;
     nesService: NESService;
@@ -40,20 +41,10 @@ export class ChiChiComponent implements AfterViewInit {
 
     constructor(private zone: NgZone) {
 
-        this.nesService = new NESService();
-        this.vbuffer = new Uint8Array(new ArrayBuffer(256 * 256 * 4));
-        this.p32 = new Uint8Array(new ArrayBuffer(32 * 256 * 4));
-        const abuffer = new Float32Array(new ArrayBuffer(2048 *  4 * Float32Array.BYTES_PER_ELEMENT));
-
-        const getBone = this.nesService.getWishbone();
-        const setBbuffer = getBone(this.vbuffer);
-        this.loadRom = setBbuffer(abuffer);
-
-        this.padOne = new WishBoneControlPad('one');
 
     }
 
-    rebuildNesScene(listener: THREE.AudioListener) {
+    rebuildNesScene(listener: THREE.AudioListener, vbuffer: Uint8Array): () => void {
 
         const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
         camera.add(listener);
@@ -63,21 +54,21 @@ export class ChiChiComponent implements AfterViewInit {
         // const encoder = new NTSCEncoder(this.nesService);
 
         const geometry = new THREE.PlaneGeometry(5, 5);
-        const material =  encoder.createMaterial(this.vbuffer);
+        const material =  encoder.createMaterial(vbuffer);
         scene.add(new THREE.Mesh(geometry, material));
 
-        this.drawFrame = () => {
+
+        camera.position.z = 5.8;
+
+        return  () => {
             encoder.render();
             this.renderer.render(scene, camera);
         };
 
-        camera.position.z = 5.8;
-
-
 
     }
 
-    rebuildNullScene() {
+    rebuildNullScene(): () => void {
         const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
         // this.nesService.audioHandler.noSound();
         const scene = new THREE.Scene();
@@ -89,22 +80,16 @@ export class ChiChiComponent implements AfterViewInit {
         const material =  new THREE.MeshBasicMaterial();
         material.color = new THREE.Color(0x111111);
         scene.add(new THREE.Mesh(geometry, material));
-
-        this.drawFrame = () => {
-            setTimeout(() => {
-                requestAnimationFrame(() => {
-                    encoder.render();
-                    this.renderer.render(scene, camera);
-                    this.drawFrame();
-                });
-            }, 160);
-        };
-
         camera.position.z = 5.8;
 
         setTimeout(() => {
             this.onResize();
         }, 1);
+
+        return  () => {
+            encoder.render();
+            this.renderer.render(scene, camera);
+        };
     }
 
     @HostListener('window:resize', ['$event'])
@@ -131,12 +116,10 @@ export class ChiChiComponent implements AfterViewInit {
         this.padOne.handleKeyUpEvent(event);
     }
 
-
     private setupScene(): void {
         this.renderer = new THREE.WebGLRenderer();
         this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
         this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
-
     }
 
     ngAfterViewInit(): void {
@@ -144,43 +127,59 @@ export class ChiChiComponent implements AfterViewInit {
         setTimeout(() => {
             this.onResize();
         }, 1);
-
-
-    }
-
-    drawFrame(): void {
-
     }
 
     soundOver = true;
 
-
     loadfile(e: Event) {
         const files: FileList = (<HTMLInputElement>e.target).files;
-
-        this.runChiChi(files);
-    }
-    private runChiChi(files: FileList) {
         clearInterval(this.interval);
-
-
         loadRom(files).subscribe((rom) => {
-            this.zone.runOutsideAngular(() => {
-                const wishbone = this.loadRom(<any>rom);
-                const chichi = wishbone.chichi;
-                chichi.PowerOn();
-                this.rebuildNesScene(wishbone.audio.listener);
-
-                this.interval = setInterval(p => {
-                    chichi.PadOne.padOneState = this.padOne.padOneState;
-                    
-                    requestAnimationFrame(() => {
-                        chichi.RunFrame();
-                        this.drawFrame();
-                    });
-                }, 17);
-                
-            });
+            const runchi = displayChiChi1(this);
+            const wishbone = makeAChiChi().loadRom(<any>rom) ;
+            this.zone.runOutsideAngular(() => runchi(wishbone));
         });
+    }
+}
+
+const makeAChiChi = () => {
+    const nesService = new NESService();
+    const vbuffer = new Uint8Array(new ArrayBuffer(256 * 256 * 4));
+    const abuffer = new Float32Array(new ArrayBuffer(8192 * Float32Array.BYTES_PER_ELEMENT));
+
+    const loadRom = (cart: BaseCart) => { 
+        const wishbone = nesService.getWishbone()(vbuffer)(abuffer)(cart);
+        wishbone.chichi.PowerOn();
+        return wishbone;
+    }
+
+
+    return {
+        nesService, abuffer, loadRom
+    }
+
+}
+
+const updatePadState = (dest: any) => (src: any) => () => dest.padOneState = src.padOneState;
+
+const displayChiChi1 = (comp: ChiChiComponent) => (wishbone: Wishbone) => {
+    {
+        const chichi = wishbone.chichi;
+        const drawFrame = comp.rebuildNesScene(wishbone.audio.listener, <Uint8Array>wishbone.vbuffer);
+
+        const setPadOne = updatePadState(chichi.Cpu.PadOne.ControlPad)(comp.padOne);
+        const runFrame = () => {
+            setPadOne();
+            requestAnimationFrame(() => {
+                chichi.RunFrame();
+                drawFrame();
+            });
+
+        }
+
+        comp.interval = setInterval(p => {
+                runFrame();
+        }, 17);
+        
     }
 }

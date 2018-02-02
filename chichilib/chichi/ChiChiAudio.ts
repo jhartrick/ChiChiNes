@@ -5,7 +5,7 @@ import { TriangleChannel } from './Audio/TriangleChannel';
 import { NoiseChannel } from './Audio/NoiseChannel';
 
 import { ChiChiWavSharer } from './Audio/CommonAudio';
-import { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
+import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { isUndefined } from 'util';
 import { WavSharer } from './chichi';
 
@@ -32,7 +32,7 @@ export interface IChiChiAPU  {
     SetByte(clock: number, address: number, data: number): void;
 
     rebuildSound(): void;
-    memoryMap: IMemoryMap;
+    memoryMap: MemoryMap;
     advanceClock(ticks: number): void;
 
     state: IChiChiAPUState;
@@ -63,7 +63,7 @@ export class ChiChiAPU implements IChiChiAPU {
     private muted = false;
     private lastFrameHit = 0;
 
-    memoryMap: IMemoryMap;
+    memoryMap: MemoryMap;
 
     currentClock = 0;
     frameClocker = 0;

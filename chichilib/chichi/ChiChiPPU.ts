@@ -1,61 +1,11 @@
-import { BaseCart, IBaseCart } from '../chichicarts/BaseCart';
+import { BaseCart  } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from './ChiChiCPU';
 import { ChiChiAPU, IChiChiAPUState } from './ChiChiAudio';
-import { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
+import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from './StateBuffer';
 
-export interface IChiChiPPUState {
-
-    spriteRAM: Uint8Array;
-    controlByte0: number;
-    controlByte1: number;
-
-    address: number;
-    status: number;
-    spriteAddress: number;
-    currentXPosition: number;
-    currentYPosition: number;
-
-    hScroll: number;
-    vScroll: number;
-
-    lockedHScroll: number;
-    lockedVScroll: number;
-
-}
-
-export interface IChiChiPPU extends IChiChiPPUState {
-    byteOutBuffer: Uint8Array;
-    
-    LastcpuClock: number;
-    
-    cpu: ChiChiCPPU;
-    
-    unpackedSprites: ChiChiSprite[];
-
-
-    NMIHandler: () => void;
-    frameFinished: () => void;
-
-    GetPPUStatus(): PpuStatus;
-    backgroundPatternTableIndex: number;
-    readonly SpritePatternTableIndex: number;
-
-    Initialize(): void;
-
-    setupVINT(): void;
-
-    memoryMap: IMemoryMap;
-    SetByte(Clock: number, address: number, data: number): void;
-    GetByte(Clock: number, address: number): number;
-    copySprites(copyFrom: number): void;
-    advanceClock(ticks: number): void;
-    setupStateBuffer(sb: StateBuffer): void;
-
-}
-
-export class ChiChiPPU implements IChiChiPPU {
+export class ChiChiPPU  {
     public static pal: Uint32Array = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
     public LastcpuClock: number = 0;
@@ -70,7 +20,7 @@ export class ChiChiPPU implements IChiChiPPU {
         this.initSprites();
     }
     
-    memoryMap: IMemoryMap;
+    memoryMap: MemoryMap;
 
     // private members
     // scanline position
@@ -197,7 +147,7 @@ export class ChiChiPPU implements IChiChiPPU {
         this.framesRun = this.framesRun + 1;
 
         if (this.controlByte0 & 128) {
-            this.cpu._handleNMI = true;
+            this.cpu.handleNMI = true;
         }
     }
 

@@ -1,110 +1,89 @@
-import * as crc from 'crc';
-
-export class NESFileDecoder {
-    rom: Uint8Array;
+export interface NesFile {
+    // rom: Uint8Array;
     magicNumber: Uint8Array;
-    chrRom: Uint8Array;
+    romCountArray: Uint8Array;
+    mapperBytes: Uint8Array;
+    ramCountArray: Uint8Array;
     prgRom: Uint8Array;
+    chrRom: Uint8Array;
+    // romCRC: string;
+    mapperId: number;
+    submapperId: number;
+    prgRomCount: number;
+    prgRomLength: number;
+    chrRomCount: number;
+    chrRomLength: number;
+    prgRamBanks: number;
+    prgRamBanksBatteryBacked: number;
+    chrRamBanks: number;
+    chrRamBanksBatteryBacked: number;
+    isPC10: boolean;
+    isVS: boolean;
+    usesSRAM: boolean;
+    batterySRAM: boolean;
+    mirroring: number;
+    fourScreen: boolean;
+}
 
-    private ramCountArray: Uint8Array;
-    private romCountArray: Uint8Array;
-    private mapperBytes: Uint8Array;
-    private _buffer: ArrayBuffer;
+export const decodeFile = (buffer = new ArrayBuffer(16)): NesFile => {
+    const mapperBytes = new Uint8Array(buffer, 6, 3);
+    const romCountArray = new Uint8Array(buffer, 4, 2);   
+    const ramCountArray = new Uint8Array(buffer, 10, 2);
 
-    constructor (buffer = new ArrayBuffer(16)) {
-        this._buffer = buffer;
-        this.rom = new Uint8Array(this._buffer, 16, this._buffer.byteLength - 16);
-        this.magicNumber = new Uint8Array(this._buffer,0, 3);
-        // [78, 69, 83]
-        this.romCountArray = new Uint8Array(this._buffer, 4, 2);
-        this.mapperBytes = new Uint8Array(this._buffer, 6, 3);
+    const prgRomCount = romCountArray[0];
+    const prgRomLength = prgRomCount * 0x4000;
+    const chrRomCount = romCountArray[1];
+    const chrRomLength = chrRomCount * 0x2000;
 
-        this.ramCountArray = new Uint8Array(this._buffer, 10, 2); 
-        this.prgRom = new Uint8Array(this._buffer, 16, this.prgRomLength);
-        this.chrRom = new Uint8Array(this._buffer, 16 + this.prgRomLength, this.chrRomLength);
+    const mirroring = (function () {
+            if ((mapperBytes[0] & 8) === 8) {
+                return 3;
+            }
 
-    }
+            if ((mapperBytes[0] & 1) === 1) {
+                return 1;
+            } else {
+                return 2;
+            }
+    })();
 
-    get romCRC(): string{
-        return crc.crc32(new Buffer(this.rom)).toString(16).toUpperCase();
-    }
-    
-    get mapperId(): number { 
-        const maps =this.mapperBytes;
+    const mapperId = (function() { 
+        const maps = mapperBytes;
         let id = (maps[0] & 240);
         id = id >> 4;
         id = id | (maps[1] & 0xf0);
         id |= (maps[2] & 0xF) << 8;
         return id;
-    }
-
-    get submapperId(): number {
-        return this.mapperBytes[2] >> 4;
-    }
-
-    get prgRomCount(): number {
-        return this.romCountArray[0];
-    }
-
-    get prgRomLength(): number {
-        return this.prgRomCount * 0x4000;
-    }
-
-    get chrRomCount(): number {
-        return this.romCountArray[1];
-    }
-
-    get chrRomLength(): number {
-        return this.chrRomCount * 0x2000;
-    }
-
-    get prgRamBanks(): number {
-        return this.ramCountArray[0] & 0xf;
-    }
-
-    get prgRamBanksBatteryBacked(): number {
-        return (this.ramCountArray[0] >> 4) & 0xf;
-    } 
-
-    get chrRamBanks(): number {
-        return this.ramCountArray[1] & 0xf;
-    }
-
-    get chrRamBanksBatteryBacked(): number {
-        return (this.ramCountArray[1] >> 4) & 0xf;
-    }
-
-    get isPC10(): boolean {
-        return (this.mapperBytes[1] & 0x2) == 0x02;
-    }
-
-    get isVS(): boolean {
-        return (this.mapperBytes[1] & 0x1) == 0x01;
-    }
-
-    get usesSRAM() : boolean { 
-        return (this.mapperBytes[0] & 2) === 2; 
-    }
+    })();
     
-    get batterySRAM() : boolean { 
-        return (this.mapperBytes[0] & 2) === 2; 
+    return {
+        magicNumber: new Uint8Array(buffer,0, 3),
+        // [78, 69, 83]
+        romCountArray,
+        mapperBytes,
+
+        ramCountArray,
+        prgRom: new Uint8Array(buffer, 16, prgRomLength),
+        chrRom: new Uint8Array(buffer, 16 + prgRomLength, chrRomLength),
+        
+        mapperId,
+        submapperId: mapperBytes[2] >> 4,
+        prgRomCount,
+        prgRomLength,
+    
+        chrRomCount,
+        chrRomLength,
+        prgRamBanks: ramCountArray[0] & 0xf,
+        prgRamBanksBatteryBacked: (ramCountArray[0] >> 4) & 0xf,
+        chrRamBanks: ramCountArray[1] & 0xf,
+        
+        chrRamBanksBatteryBacked: (ramCountArray[1] >> 4) & 0xf,
+        isPC10: (mapperBytes[1] & 0x2) == 0x02,
+        isVS: (mapperBytes[1] & 0x1) == 0x01,
+        usesSRAM: (mapperBytes[0] & 2) === 2,
+        
+        batterySRAM: (mapperBytes[0] & 2) === 2,
+        mirroring,
+        fourScreen: (mapperBytes[0] & 8) === 8
     }
-
-    get mirroring(): number {
-
-        if ((this.mapperBytes[0] & 8) === 8) {
-            return 3;
-        }
-
-        if ((this.mapperBytes[0] & 1) === 1) {
-            return 1;
-        } else {
-            return 2;
-        }
-    }
-
-    get fourScreen(): boolean {
-        return (this.mapperBytes[0] & 8) === 8; 
-    }
-
 }

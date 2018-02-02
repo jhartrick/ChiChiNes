@@ -1,6 +1,9 @@
-import { KeyBindings } from "./wishbone.keybindings";
+import * as Keys from "./wishbone.keybindings";
 
 export class WishBoneControlPad {
+    bindings: Keys.KeyBindings = Keys.defaultBindings;
+    padOneState  = 0;
+    enabled = true;
 
     constructor(private controllerId: string) {
         const ctrl = localStorage.getItem(this.controllerId + 'KeyBindings');
@@ -13,18 +16,12 @@ export class WishBoneControlPad {
 
     }
 
-    attach(bindings?: KeyBindings) {
+    attach(bindings?: Keys.KeyBindings) {
         if (bindings) {
             this.bindings = Object.assign({}, bindings);
             localStorage.setItem(this.controllerId + 'KeyBindings', JSON.stringify(this.bindings));
         }
     }
-
-    bindings: KeyBindings = new KeyBindings();
-
-    padOneState  = 0;
-
-    enabled = true;
 
     // control pad
     handleKeyDownEvent(event: KeyboardEvent) {

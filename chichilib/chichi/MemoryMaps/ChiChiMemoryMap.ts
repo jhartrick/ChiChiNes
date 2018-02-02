@@ -1,22 +1,23 @@
 import { ChiChiCPPU } from "../ChiChiCPU";
-import { IChiChiPPU, ChiChiPPU } from "../ChiChiPPU";
-import { IChiChiAPU, ChiChiAPU } from "../ChiChiAudio";
-import { IBaseCart, BaseCart } from "../../chichicarts/BaseCart";
+import { ChiChiPPU } from "../ChiChiPPU";
+import { ChiChiAPU } from "../ChiChiAudio";
+import { BaseCart } from "../../chichicarts/BaseCart";
 import { ChiChiInputHandler, ChiChiControlPad } from "../ChiChiControl";
 import { StateBuffer } from "../StateBuffer";
+import * as VSMaps from './VSMemoryMap';
 
 export interface MemoryMappable {
     getByte(clock: number, address: number): number;
     setByte(clock: number, address: number, data: number): void;
 }
 
-export interface IMemoryMap {
-    ppu: IChiChiPPU;
-    apu: IChiChiAPU;
+export interface MemoryMap {
+    ppu: ChiChiPPU;
+    apu: ChiChiAPU;
     pad1: ChiChiInputHandler;
     pad2: ChiChiInputHandler;
     cpu: ChiChiCPPU;
-    cart: IBaseCart;
+    cart: BaseCart;
     Rams: Uint8Array;
 
     readonly irqRaised: boolean;
@@ -33,53 +34,6 @@ export interface IMemoryMap {
     setupStateBuffer(sb: StateBuffer): void;
 }
 
-export const setupMemoryMap = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => {
-    let Rams = new Uint8Array(new ArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
-    const cpuBus = {
-        getByte: getByte(cpu)(ppu)(apu)(Rams)(pad1)(pad2),
-        setByte: setByte(cpu)(ppu)(apu)(Rams)(pad1)(pad2)
-    };
-
-    const clocked: Array<any> = [ppu,apu];
-
-    const setupStateBuffer = (sb: StateBuffer) => {
-        sb.onRestore.subscribe((buffer: StateBuffer) => {
-            Rams = buffer.getUint8Array('rams');
-        })
-
-        sb.pushSegment(8192 * Uint8Array.BYTES_PER_ELEMENT, 'rams');
-        return sb;
-    }
-    
-    return function (cart: BaseCart): IMemoryMap {
-        
-        clocked.push(cart);
-        const result = {
-            ppu: ppu,
-            apu: apu,
-            pad1: pad1,
-            pad2: pad2,
-            cpu: cpu,
-            Rams: Rams,
-            cart: cart,
-            getByte: cpuBus.getByte(cart),
-            setByte: cpuBus.setByte(cart),
-            getPPUByte: (clock: number, address: number) => cart.getPPUByte(clock, address),
-            setPPUByte:  (clock: number, address: number, data: number) => cart.setPPUByte(clock, address, data),
-            irqRaised: cart.irqRaised || apu.interruptRaised,
-            advanceClock: (ticks: number) => clocked.forEach(p => p.advanceClock(ticks)),
-            advanceScanline: (ticks: number) =>  {  
-                                                    while (ticks-- >= 0) {
-                                                    cart.updateScanlineCounter();
-                                                }
-                                            },
-            setupStateBuffer: setupStateBuffer
-        }
-        cpu.memoryMap = apu.memoryMap = ppu.memoryMap = result;
-        return result;
-
-    }
-}
 
 const getByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Rams: Uint8Array) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => (cart: BaseCart) => {
 
@@ -226,3 +180,60 @@ const setByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Ra
         }
     }
 }
+
+const cpuMap = {
+    getByte: getByte,
+    setByte: setByte
+}
+
+export const setupMemoryMap =  (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => {
+    let Rams = new Uint8Array(new ArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
+
+    const clocked: Array<any> = [ppu,apu];
+
+    const setupStateBuffer = (sb: StateBuffer) => {
+        sb.onRestore.subscribe((buffer: StateBuffer) => {
+            Rams = buffer.getUint8Array('rams');
+        })
+
+        sb.pushSegment(8192 * Uint8Array.BYTES_PER_ELEMENT, 'rams');
+        return sb;
+    }
+
+    return (cart: BaseCart): MemoryMap => {
+        clocked.push(cart);
+        
+        const cpuBus = {
+            getByte: getByte(cpu)(ppu)(apu)(Rams)(pad1)(pad2),
+            setByte: setByte(cpu)(ppu)(apu)(Rams)(pad1)(pad2)
+        };
+    
+        const result: MemoryMap = {
+            ppu: ppu,
+            apu: apu,
+            pad1: pad1,
+            pad2: pad2,
+            cpu: cpu,
+            Rams: Rams,
+            cart: cart,
+            setupStateBuffer: setupStateBuffer,
+            getByte : cpuBus.getByte(cart),
+            setByte : cpuBus.setByte(cart),
+            getPPUByte : (clock: number, address: number) => cart.getPPUByte(clock, address),
+            setPPUByte : (clock: number, address: number, data: number) => cart.setPPUByte(clock, address, data),
+            irqRaised: cart.irqRaised || apu.interruptRaised,
+            advanceClock: (ticks: number) => clocked.forEach(p => p.advanceClock(ticks)),
+            advanceScanline: (ticks: number) =>  {  
+                                                        while (ticks-- >= 0) {
+                                                        cart.updateScanlineCounter();
+                                                    }
+                                                },
+            
+        }
+        cpu.memoryMap = apu.memoryMap = ppu.memoryMap = result;
+
+        return result;
+
+    }
+}
+

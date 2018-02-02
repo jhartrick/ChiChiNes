@@ -1,4 +1,4 @@
-import { IChiChiAPU, WavSharer, AudioSettings } from 'chichi';
+import { ChiChiAPU, WavSharer, AudioSettings } from 'chichi';
 import * as THREE from 'three';
 
 import { RunningStatuses, StateBuffer } from 'chichi';
@@ -12,10 +12,9 @@ export interface ThreeJSAudioSettings extends LocalAudioSettings {
 
 export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSettings {
     const bufferBlockSize = 8192;
-    const bufferBlockCountBits = 2;
     const chunkSize = 1024;
     // tslint:disable-next-line:no-bitwise
-    const bufferSize: number = bufferBlockSize << bufferBlockCountBits;
+    const bufferSize: number = bufferBlockSize
 
     const listener = new THREE.AudioListener();
     const sound = new THREE.Audio(listener);
@@ -32,7 +31,7 @@ export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSett
     audioSource.buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
     const scriptNode = audioCtx.createScriptProcessor(chunkSize, 1, 1);
     const gainNode = audioCtx.createGain();
-    gainNode.gain.value = 1.0;
+    gainNode.gain.value = 0.3;
 
     audioSource.connect(gainNode);
     audioSource.connect(scriptNode);
@@ -51,9 +50,9 @@ export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSett
     };
 
     scriptNode.onaudioprocess = (audioProcessingEvent) => {
-		const outputData = audioProcessingEvent.outputBuffer.getChannelData(0);
+        const obuf = audioProcessingEvent.outputBuffer;
+        const outputData = obuf.getChannelData(0);
 		const loop = len => pos =>pos < 0 ? pos + len : pos;
-		const lerp = (first: number, second: number, at: number) => first + (second - first) * at;
 		
         let nesBytesAvailable = wavForms.audioBytesWritten;
 
@@ -62,7 +61,7 @@ export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSett
             lastReadPos += nesAudio.length;
 		}
 		
-		loop(nesAudio.length)(lastReadPos);
+		//loop(nesAudio.length)(lastReadPos);
 
         for (let sample = 0; sample < outputData.length; sample++) {
             outputData[sample] = nesAudio[lastReadPos++];
@@ -70,13 +69,15 @@ export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSett
                 lastReadPos = 0;
             }
 			nesBytesAvailable--;
+            // if (nesBytesAvailable <= 0) {
+            //     wavForms.wakeSleepers(); // = nesBytesAvailable;
+            // }
         }
-		if (nesBytesAvailable < 0) {
-			nesBytesAvailable = 0;
-		}
+        if (nesBytesAvailable <= 0) {
+            nesBytesAvailable = 0; // = nesBytesAvailable;
+        }
 		wavForms.audioBytesWritten = nesBytesAvailable;
 
-        // wavForms.wakeSleepers(); // = nesBytesAvailable;
     };
 
     scriptNode.connect(gainNode);

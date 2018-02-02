@@ -1,6 +1,6 @@
 import { AudioSettings } from './ChiChiTypes';
 import { ChiChiWavSharer } from './Audio/CommonAudio';
-import { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
+import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { WavSharer } from './chichi';
 export interface IChiChiAPUState {
     audioSettings: AudioSettings;
@@ -20,7 +20,7 @@ export interface IChiChiAPU {
     GetByte(clock: number, address: number): number;
     SetByte(clock: number, address: number, data: number): void;
     rebuildSound(): void;
-    memoryMap: IMemoryMap;
+    memoryMap: MemoryMap;
     advanceClock(ticks: number): void;
     state: IChiChiAPUState;
 }
@@ -42,7 +42,7 @@ export declare class ChiChiAPU implements IChiChiAPU {
     private static clock_rate;
     private muted;
     private lastFrameHit;
-    memoryMap: IMemoryMap;
+    memoryMap: MemoryMap;
     currentClock: number;
     frameClocker: number;
     constructor(writer: ChiChiWavSharer);

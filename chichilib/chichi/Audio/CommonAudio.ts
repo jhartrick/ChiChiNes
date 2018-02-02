@@ -1,4 +1,5 @@
 import { StateBuffer } from "../StateBuffer";
+import { fail } from "assert";
     
 const NES_BYTES_WRITTEN = 0;
 const WAVSHARER_BLOCKTHREAD = 1;
@@ -50,6 +51,7 @@ const bl_step = [
 
 // shared buffer to get sound out
 export class WavSharer  {
+    neswait = false;
     synced = true;
 
     controlBuffer = new Int32Array(<any>new ArrayBuffer(3 * Int32Array.BYTES_PER_ELEMENT));
@@ -81,6 +83,7 @@ export class WavSharer  {
 
     wakeSleepers() {
         // this.audioBytesWritten = 0;
+        this.neswait = false;
         // <any>Atomics.wake(this.controlBuffer, this.NES_BYTES_WRITTEN, 99999);
     }
 
@@ -88,7 +91,9 @@ export class WavSharer  {
         if (this.synced) {
             if (this.audioBytesWritten >= this.chunkSize)
             {
+
                 this.controlBuffer[WAVSHARER_BUFFERPOS] = this.sharedAudioBufferPos;
+                this.neswait = true;
                 // <any>Atomics.wait(this.controlBuffer, this.NES_BYTES_WRITTEN, this.audioBytesWritten);
             }
         } else {
@@ -113,16 +118,9 @@ export class ChiChiWavSharer extends WavSharer {
     private blipBuffer: BlipBuffer;
 
     blip_new(size: number): void {
-        this.blipBuffer = {
-            samples: new Array<number>(size + buf_extra),
-            factor: 0,
-            size: size,
-            offset: 0,
-            avail: 0,
-            integrator: 0,
-            time_bits: 0,
-            arrayLength: size + buf_extra
-        };// new BlipBuffer(size + buf_extra);
+        this.blipBuffer = new BlipBuffer(size + buf_extra);
+        this.blipBuffer.size = size;
+        this.blipBuffer.factor = 0;
         this.blip_clear();
     }
 
@@ -231,14 +229,19 @@ export class ChiChiWavSharer extends WavSharer {
 }
 
 //apu classes
-interface BlipBuffer  {
-    size: number;    
-    factor: number;
+class BlipBuffer  {
+    constructor(public size: number) {
+        
+        this.samples = new Array<number>(size);
+        this.samples.fill(0);
+    }
+    factor: number = 0;
     samples: Array<number>;
-    offset: number;
-    avail: number;
-    integrator: number;
-    time_bits: number;
-    arrayLength: number;
+    offset = 0;
+    avail = 0;
+    integrator = 0;
+    time_bits = 0;
+    arrayLength = 0;
 }
+
 

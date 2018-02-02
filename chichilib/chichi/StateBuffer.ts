@@ -4,19 +4,22 @@ export const bufferType =  "ArrayBuffer";
 
 export type ChiChiBuffer =ArrayBuffer;
 
-export class StateBufferConfig {
-    buffer: ChiChiBuffer;
-    segments: BufferSegment[] = new Array<BufferSegment>();
+export interface StateBufferConfig {
+    buffer: ArrayBuffer,
+    segments: Array<BufferSegment>;
 }
 
-export class BufferSegment {
+export interface BufferSegment {
     name: string;
     start: number;
     size: number;
 }
 
 export class StateBuffer {
-    data: StateBufferConfig = new StateBufferConfig();
+    data: StateBufferConfig = {
+        buffer: undefined,
+        segments: new Array<BufferSegment>()
+    };
 
     bufferSize: number = 0;
 

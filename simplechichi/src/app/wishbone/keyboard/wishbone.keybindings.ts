@@ -101,21 +101,31 @@ const KEYS = {
     '222': '\''
 };
 
-export class KeyBindings {
-    keyName(keyCode: number): string {
-        let keyName = '';
-        keyName = KEYS[keyCode.toString()];
-        return keyName;
-    }
+export interface KeyBindings {
+    left: number;
+    right: number;
+    up: number;
+    down: number;
+    b: number;
+    a: number;
+    select: number;
+    start: number;
+}
 
-    left = 37;
-    right = 39;
-    up = 38;
-    down = 40;
-    b = 90;
-    a = 88;
-    select = 65;
-    start = 83;
+export const defaultBindings: KeyBindings = {
     
+    left: 37,
+    right: 39,
+    up: 38,
+    down: 40,
+    b: 90,
+    a: 88,
+    select: 65,
+    start: 83
+}
 
+export function keyName(keyCode: number): string {
+    let keyName = '';
+    keyName = KEYS[keyCode.toString()];
+    return keyName;
 }

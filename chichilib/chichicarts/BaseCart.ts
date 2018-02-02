@@ -1,8 +1,7 @@
 import { ChiChiCPPU } from '../chichi/ChiChiCPU';
-import { ChiChiPPU, IChiChiPPU, IChiChiPPUState } from '../chichi/ChiChiPPU';
-import { NESFileDecoder } from './NESFileDecoder';
+import { ChiChiPPU } from '../chichi/ChiChiPPU';
+import * as FILE from './NESFileDecoder';
 import * as crc from 'crc';
-import { setupMemoryMap, MemoryMap, IMemoryMap } from '../chichi/MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from '../chichi/StateBuffer';
 
 export enum NameTableMirroring {
@@ -13,58 +12,7 @@ export enum NameTableMirroring {
     FourScreen = 3
 }
 
-export interface IBaseCartState  {
-
-    irqRaised: boolean;
-    
-    chrRamStart: number;
-    chrRamLength: number;
-
-    prgRomBank6: Uint8Array;
-
-    // starting locations of PPU 0x0000-0x3FFF in 1k blocks
-    ppuBankStarts: Uint32Array;
-    // starting locations of PRG rom 0x6000-0xFFFF in 4K blocks
-    prgBankStarts: Uint32Array; 
-
-}
-
-export interface IBaseCart extends IBaseCartState {
-
-    prgRom: Uint8Array;
-    chrRom: Uint8Array;
-
-    customPalette: number[];
-    mapperName: string;
-    supported: boolean;
-    submapperId: number;
-    ROMHashFunction: string;
-    usesSRAM: boolean;
-    batterySRAM: boolean;
-    
-    mapsBelow6000: boolean;
-    prgRomCount: number;
-    chrRomOffset: number;
-    chrRomCount: number;
-    mapperId: number;
-
-    advanceClock(clock: number): void;
-    Whizzler: IChiChiPPU;
-    CPU: ChiChiCPPU;
-
-    installCart(ppu:ChiChiPPU, cpu: ChiChiCPPU) : void;
-    initializeCart(): void;
-
-    updateScanlineCounter(): void;
-
-    getByte(clock: number, address: number): number;
-    setByte(clock: number, address: number, data: number): void;
-    getPPUByte(clock: number, address: number): number;
-    setPPUByte(clock: number, address: number, data: number): void;
-    
-}
-
-export class BaseCart implements IBaseCart {
+export class BaseCart {
     batterySRAM: boolean = false;
     customPalette: number[];
     ramMask = 0x1fff;
@@ -72,33 +20,6 @@ export class BaseCart implements IBaseCart {
     setupMapperStateBuffer(buffer: ArrayBuffer, start: number) {
     }
 
-    static arrayCopy(src: any, spos: number, dest: any, dpos: number, len: number) {
-        if (!dest) {
-            throw new Error("dest Value cannot be null");
-        }
-
-        if (!src) {
-            throw new Error("src Value cannot be null");
-        }
-
-        if (spos < 0 || dpos < 0 || len < 0) {
-            throw new Error("Number was less than the array's lower bound in the first dimension");
-        }
-
-        if (len > (src.length - spos) || len > (dest.length - dpos)) {
-            throw new Error("Destination array was not long enough. Check destIndex and length, and the array's lower bounds");
-        }
-
-        if (spos < dpos && src === dest) {
-            while (--len >= 0) {
-                dest[dpos + len] = src[spos + len];
-            }
-        } else {
-            for (var i = 0; i < len; i++) {
-                dest[dpos + i] = src[spos + i];
-            }
-        }
-    }
 
     advanceClock(clock: number){}
     oneScreenOffset = 0
@@ -169,7 +90,7 @@ export class BaseCart implements IBaseCart {
     usesSRAM: boolean = false;
     //ChrRamStart: number;
 
-    constructor(public romFile: NESFileDecoder) {
+    constructor(public romFile: FILE.NesFile) {
         this.loadFile(romFile);
 
     }
@@ -208,7 +129,7 @@ export class BaseCart implements IBaseCart {
         }
     }
 
-    private loadFile(file: NESFileDecoder) {
+    private loadFile(file: FILE.NesFile) {
             
         this.prgRomCount = file.prgRomCount;
         this.chrRomCount = file.chrRomCount;
@@ -226,7 +147,7 @@ export class BaseCart implements IBaseCart {
 
         this.usesSRAM = file.usesSRAM;
         this.batterySRAM = file.batterySRAM;
-        this.ROMHashFunction = file.romCRC;
+        this.ROMHashFunction = ''; // file.romCRC;
         this.mirroring = file.mirroring;
         this.fourScreen = file.fourScreen;
     }

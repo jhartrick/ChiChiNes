@@ -1,14 +1,13 @@
 import { BaseCart } from '../chichicarts/BaseCart';
 import { ChiChiAPU } from './ChiChiAudio';
 import { RunningStatuses } from './ChiChiTypes';
-import { ChiChiControlPad } from './ChiChiControl';
-import { IChiChiPPU } from "./ChiChiPPU";
+import { ChiChiPPU } from "./ChiChiPPU";
 import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
 import { StateBuffer } from './StateBuffer';
-import { IMemoryMap } from './chichi';
+import { MemoryMap } from './chichi';
 export declare class ChiChiMachine {
-    mapFactory: (cart: BaseCart) => IMemoryMap;
+    mapFactory: (cart: BaseCart) => MemoryMap;
     private frameJustEnded;
     private frameOn;
     private totalCPUClocks;
@@ -19,7 +18,7 @@ export declare class ChiChiMachine {
     RebuildStateBuffer(): void;
     Drawscreen(): void;
     RunState: RunningStatuses;
-    ppu: IChiChiPPU;
+    ppu: ChiChiPPU;
     Cpu: ChiChiCPPU;
     readonly Cart: BaseCart;
     SoundBopper: ChiChiAPU;
@@ -28,8 +27,6 @@ export declare class ChiChiMachine {
     EnableSound: boolean;
     FrameCount: number;
     IsRunning: boolean;
-    readonly PadOne: ChiChiControlPad;
-    readonly PadTwo: ChiChiControlPad;
     Reset(): void;
     PowerOn(): void;
     PowerOff(): void;

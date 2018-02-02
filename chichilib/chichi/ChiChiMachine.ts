@@ -1,19 +1,19 @@
-﻿import { BaseCart, IBaseCart } from '../chichicarts/BaseCart'
-import { ChiChiAPU, IChiChiAPU } from './ChiChiAudio'
+﻿import { BaseCart } from '../chichicarts/BaseCart'
+import { ChiChiAPU } from './ChiChiAudio'
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, ChiChiSprite, RunningStatuses, PpuStatus, CpuStatus } from './ChiChiTypes'
 import { ChiChiInputHandler, ChiChiControlPad } from './ChiChiControl'
-import { ChiChiPPU, IChiChiPPU } from "./ChiChiPPU";
+import { ChiChiPPU } from "./ChiChiPPU";
 import { GameGenieCode, MemoryPatch } from './ChiChiCheats';
 import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { ChiChiCPPU } from './ChiChiCPU';
 import { StateBuffer } from './StateBuffer';
 import { setupMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
-import { IMemoryMap } from './chichi';
+import { MemoryMap } from './chichi';
 
 
     //machine wrapper
 export class ChiChiMachine {
-    mapFactory: (cart: BaseCart) => IMemoryMap;
+    mapFactory: (cart: BaseCart) => MemoryMap;
     private frameJustEnded = true;
     private frameOn = false;
     private totalCPUClocks = 0;
@@ -33,10 +33,6 @@ export class ChiChiMachine {
     }
 
     loadCart(cart: BaseCart) : void {
-        // chichi.Cpu.setupMemoryMap(cart);
-        // chichi.RebuildStateBuffer();
-        // cart.installCart(<ChiChiPPU>chichi.ppu, chichi.Cpu);
-
         this.mapFactory(cart);
         this.RebuildStateBuffer();
         cart.installCart(<ChiChiPPU>this.ppu, this.Cpu);
@@ -61,7 +57,7 @@ export class ChiChiMachine {
     }
 
     RunState: RunningStatuses;
-    ppu: IChiChiPPU;
+    ppu: ChiChiPPU;
     Cpu: ChiChiCPPU;
     get Cart(): BaseCart {
         if (this.Cpu && this.Cpu.memoryMap && this.Cpu.memoryMap.cart) {
@@ -90,14 +86,6 @@ export class ChiChiMachine {
     FrameCount: number;
 
     IsRunning: boolean;
-
-    get PadOne(): ChiChiControlPad {
-        return this.Cpu.PadOne.ControlPad;
-    }
-
-    get PadTwo(): ChiChiControlPad {
-        return this.Cpu.PadTwo.ControlPad;
-    }
 
     Reset(): void {
         if (this.Cpu  && this.Cart && this.Cart.supported) {

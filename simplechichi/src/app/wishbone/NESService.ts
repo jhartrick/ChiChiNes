@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable';
-import { RunningStatuses, ChiChiMachine, IBaseCart, BaseCart, ChiChiPPU } from 'chichi';
+import { RunningStatuses, ChiChiMachine, BaseCart, ChiChiPPU } from 'chichi';
 import * as Three from 'three';
 import { Wishbone } from './wishbone';
 import { buildSound } from '../threejs/audio.threejs';
@@ -16,7 +16,8 @@ export class NESService {
     getWishbone() {
         return createWishbone({
             chichi: undefined,
-            audio: undefined
+            audio: undefined,
+            vbuffer: undefined
         });
     }
 }
@@ -26,14 +27,10 @@ const createWishbone = (wishbone: Wishbone) => (videoBuffer: Uint8Array ) => (au
     const chichi = new ChiChiMachine();
     chichi.Cpu.ppu.byteOutBuffer = videoBuffer;
     chichi.SoundBopper.writer.SharedBuffer = audioBuffer;
-
-    chichi.Cpu.FireDebugEvent = () => {
-        const info = {};
-    };
-    chichi.Cpu.Debugging = false;
     result.chichi = chichi;
     result.audio = buildSound(chichi.SoundBopper.writer);
-
+    result.vbuffer = videoBuffer;
+    
     return (cart: BaseCart): Wishbone => {
         chichi.loadCart(cart);
         chichi.PowerOn();

@@ -1,121 +1,37 @@
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, CpuStatus } from "./ChiChiTypes";
 import { ChiChiInputHandler } from "./ChiChiControl";
-import { IChiChiPPU } from "./ChiChiPPU";
-import { IChiChiAPU, IChiChiAPUState } from "./ChiChiAudio";
-import { IBaseCart } from '../chichicarts/BaseCart'
-import { MemoryPatch } from "./ChiChiCheats";
-import { MemoryMap, IMemoryMap } from "./MemoryMaps/ChiChiMemoryMap";
+import { ChiChiPPU } from "./ChiChiPPU";
+import { ChiChiAPU } from "./ChiChiAudio";
+import { BaseCart } from '../chichicarts/BaseCart'
+import { MemoryPatch, GameGenieCode } from "./ChiChiCheats";
+import { MemoryMap } from "./MemoryMaps/ChiChiMemoryMap";
 import { StateBuffer } from "./StateBuffer";
+
 const PRG_CTR = 0;
 const PRG_ADR = 1;
 
-// export interface IChiChiCPPUState {
-//     clock: number;
+const SRMasks_CarryMask = 0x01;
+const SRMasks_ZeroResultMask = 0x02;
+const SRMasks_InterruptDisableMask = 0x04;
+const SRMasks_DecimalModeMask = 0x08;
+const SRMasks_BreakCommandMask = 0x10;
+const SRMasks_ExpansionMask = 0x20;
+const SRMasks_OverflowMask = 0x40;
+const SRMasks_NegativeResultMask = 0x80;
+
+const cpuTiming: number[] = [7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0];
+const addressModes: number[] = [1, 12, 1, 0, 0, 4, 4, 0, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 4, 5, 5, 1, 1, 10, 1, 1, 8, 9, 9, 1, 8, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 9, 9, 9, 1, 1, 12, 1, 1, 1, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 1, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 11, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 15, 9, 9, 1, 7, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 1, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 8, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 9, 9, 10, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1];
     
-//     statusRegister: number;
-//     programCounter: number;
-//     _handleNMI: boolean;
-//     addressBus: number;
-//     dataBus: number;
-//     _operationCounter: number;
-//     accumulator: number;
-//     indexRegisterX: number;
-//     indexRegisterY: number;
-    
-//     _currentInstruction_AddressingMode: ChiChiCPPU_AddressingModes;
-//     _currentInstruction_Address: number;
-//     _currentInstruction_OpCode: number;
-//     _currentInstruction_Parameters0: number;
-//     _currentInstruction_Parameters1: number;
-//     _currentInstruction_ExtraTiming: number;
-//     systemClock: number;
- 
-
-//     Debugging: boolean;
-//     cheating: boolean;
-//     genieCodes: MemoryPatch[];
-// }
-
-// export interface IChiChiCPPU extends IChiChiCPPUState {
-
-//     borrowedCycles: number;
-    
-
-//     cheat(address: number, result: number): number;
-//     instructionHistoryPointer: number;
-//     _instructionHistory: ChiChiInstruction[];
-
-//     ppu: IChiChiPPU;
-//     PadOne: ChiChiInputHandler;
-//     PadTwo: ChiChiInputHandler;
-
-//     CurrentInstruction: ChiChiInstruction;
-//     SoundBopper: IChiChiAPU;
-//     FrameOn: boolean;
-
-//     step(): void;
-
-//     ResetCPU(): void;
-//     PowerOn(): void;
-
-//     decodeAddress(): number;
-//     HandleBadOperation(): void;
-//     handleBreakpoint(): void;
-//     decodeOperand(): number;
-//     execute(): void;
-//     setZNFlags(data: number): void;
-//     compare(data: number): void;
-//     branch(): void;
-//     nmiHandler(): void;
-
-//     GetByte(address: number): number;
-//     SetByte(address: number, data: number): void;
-
-//     memoryMap: IMemoryMap;
-
-//     HandleNextEvent(): void;
-//     ResetInstructionHistory(): void;
-//     writeInstructionHistory(): void;
-//     FireDebugEvent(s: string): void;
-    
-//     GetStatus(): CpuStatus;
-
-// }
-
 //chichipig
 export class ChiChiCPPU {
         
-    readonly SRMasks_CarryMask = 0x01;
-    readonly SRMasks_ZeroResultMask = 0x02;
-    readonly SRMasks_InterruptDisableMask = 0x04;
-    readonly SRMasks_DecimalModeMask = 0x08;
-    readonly SRMasks_BreakCommandMask = 0x10;
-    readonly SRMasks_ExpansionMask = 0x20;
-    readonly SRMasks_OverflowMask = 0x40;
-    readonly SRMasks_NegativeResultMask = 0x80;
-    public frameFinished: () => void;
-
-
-        // statics
-    private static cpuTiming: number[] = [7, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 6, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 3, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 6, 6, 0, 0, 3, 2, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0, 2, 5, 0, 0, 0, 3, 6, 0, 2, 4, 2, 0, 6, 4, 6, 0, 6, 6, 0, 0, 3, 3, 5, 0, 3, 2, 2, 0, 5, 4, 6, 0, 2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 3, 6, 3, 0, 3, 3, 3, 0, 2, 3, 2, 0, 4, 4, 4, 0, 2, 6, 0, 0, 4, 4, 4, 0, 2, 5, 2, 0, 0, 5, 0, 0, 2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, 2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, 2, 6, 3, 0, 3, 2, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0, 2, 6, 3, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, 2, 5, 0, 0, 3, 4, 6, 0, 2, 4, 2, 0, 6, 4, 7, 0];
-    private static addressModes: number[] = [1, 12, 1, 0, 0, 4, 4, 0, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 4, 5, 5, 1, 1, 10, 1, 1, 8, 9, 9, 1, 8, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 9, 9, 9, 1, 1, 12, 1, 1, 1, 4, 4, 1, 1, 3, 2, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 1, 12, 1, 1, 4, 4, 4, 1, 1, 3, 2, 3, 11, 8, 8, 1, 7, 13, 14, 1, 5, 5, 5, 1, 1, 10, 1, 1, 15, 9, 9, 1, 7, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 1, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 8, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 5, 5, 6, 1, 1, 10, 1, 1, 9, 9, 10, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1, 3, 12, 3, 1, 4, 4, 4, 1, 1, 3, 1, 3, 8, 8, 8, 1, 7, 13, 14, 1, 1, 5, 5, 1, 1, 10, 1, 1, 1, 9, 9, 1];
-    private _reset = false;
-
     //timing
-    private _clock =0;
+    clock = 0;
     
-    get clock() : number {
-        return this._clock;
-    }  
-    
-    set clock(value : number ){
-        this._clock = value;
-    }
-
     private advanceClock(value: number) {
         if (value) {
             this.memoryMap.advanceClock(value);
-            this._clock += value;
+            this.clock += value;
         }
     }
 
@@ -129,7 +45,7 @@ export class ChiChiCPPU {
     programCounter = 0;
     addressBus = 0;
     
-    _handleNMI: boolean = false;
+    handleNMI: boolean = false;
     // CPU Op info
     
     cpuStatus: Uint8Array = new Uint8Array(8);
@@ -157,37 +73,24 @@ export class ChiChiCPPU {
 
     // debug helpers
     private instructionUsage = new Uint32Array(256);//System.Array.init(256, 0, System.Int32);
-    private _debugging = false;
-
-    public get Debugging(): boolean {
-        return this._debugging;
-    }
-
-    public set Debugging(value: boolean) {
-        this._debugging = value;
-    }
+    private debugging = false;
 
     // #region Cheats
     cheating = false;
     
     genieCodes: MemoryPatch[] = new Array<MemoryPatch>();
 
-    cheat(address: number, result: number) : number 
-    {
-        
+    cheat(address: number, result: number) : number {
         let patch = this.genieCodes.find((v)=>{ return v.address == address; });
         if (!patch) return result;
-        if (patch.data > 0xFF)
-        {
+        if (patch.data > 0xFF) {
             // its a comparison
             const compare = patch.data  >> 8;
             if (compare == result)
             {
                 result = patch.data & 0xFF;
             }
-        }
-        else
-        {
+        } else {
             result = patch.data;
         }
         
@@ -208,53 +111,27 @@ export class ChiChiCPPU {
     }
 
 
-    private _padOne: ChiChiInputHandler;
-    private _padTwo: ChiChiInputHandler;
+    PadOne: ChiChiInputHandler  = new ChiChiInputHandler();
+    PadTwo: ChiChiInputHandler  = new ChiChiInputHandler();
 
-    ppu: IChiChiPPU;
+    ppu: ChiChiPPU;
+    SoundBopper: ChiChiAPU;
 
-    constructor(bopper: IChiChiAPU, ppu: IChiChiPPU) {
+    Cart: BaseCart;
 
+    constructor(bopper: ChiChiAPU, ppu: ChiChiPPU) {
         this.SoundBopper = bopper;
 
         // init PPU
         this.ppu = ppu;
 
-        this._padOne = new ChiChiInputHandler();
-        this._padTwo = new ChiChiInputHandler();
         for (let i = 0; i < this._instructionHistory.length; ++i) {
             this._instructionHistory[i] = new ChiChiInstruction();
         }
 
     }
 
-    public get PadOne(): ChiChiInputHandler {
-        return this._padOne;
-    }
-
-    public set PadOne(value: ChiChiInputHandler) {
-        this._padOne = value;
-    }
-
-    public get PadTwo(): ChiChiInputHandler {
-        return this._padTwo;
-    }
-
-    public set PadTwo(value: ChiChiInputHandler) {
-        this._padTwo = value;
-    }
-
-    memoryMap: IMemoryMap;
-
-    CurrentInstruction: ChiChiInstruction;
-
-    SoundBopper: IChiChiAPU;
-
-    Cart: IBaseCart;
-
-    FrameOn: boolean;
-
-    CurrentFrame: number[];
+    memoryMap: MemoryMap;
 
     get Clock(): number {
         return this.clock;
@@ -276,9 +153,9 @@ export class ChiChiCPPU {
     }
 
     interruptRequest(): void {
-        if (!this.GetFlag(this.SRMasks_InterruptDisableMask)) {
+        if (!this.GetFlag(SRMasks_InterruptDisableMask)) {
             this.advanceClock(7);
-            this.setFlag(this.SRMasks_InterruptDisableMask, true);
+            this.setFlag(SRMasks_InterruptDisableMask, true);
             
             const newStatusReg1 = this.statusRegister & ~0x10 | 0x20;
 
@@ -286,7 +163,7 @@ export class ChiChiCPPU {
             this.pushStack(this.programCounter);
             this.pushStack(this.statusRegister);
 
-            this.programCounter = this.GetByte(0xFFFE) + (this.GetByte(0xFFFF) << 8);
+            this.programCounter = this.getByte(0xFFFE) + (this.getByte(0xFFFF) << 8);
         }
 
     }
@@ -296,7 +173,7 @@ export class ChiChiCPPU {
         //  set is pushed on the stack, then the I flag is set. 
         const newStatusReg = this.statusRegister & ~0x10 | 0x20;
 
-        this.setFlag(this.SRMasks_InterruptDisableMask, true);
+        this.setFlag(SRMasks_InterruptDisableMask, true);
         // push pc onto stack (high byte first)
         this.pushStack(this.programCounter >> 8);
         this.pushStack(this.programCounter & 0xFF);
@@ -304,8 +181,8 @@ export class ChiChiCPPU {
         // push sr onto stack
         this.pushStack(newStatusReg);
         // point pc to interrupt service routine
-        const lowByte = this.GetByte(0xFFFA);
-        const highByte = this.GetByte(0xFFFB);
+        const lowByte = this.getByte(0xFFFA);
+        const highByte = this.getByte(0xFFFB);
         const jumpTo = lowByte | (highByte << 8);
         this.programCounter = jumpTo;
             //nonOpCodeticks = 7;
@@ -316,9 +193,9 @@ export class ChiChiCPPU {
 
         this._currentInstruction_ExtraTiming = 0;
 
-        if (this._handleNMI) {
+        if (this.handleNMI) {
             this.advanceClock(7);
-            this._handleNMI = false;
+            this.handleNMI = false;
             this.nonMaskableInterrupt();
         } else if (this.memoryMap.irqRaised) {
             this.interruptRequest();
@@ -326,15 +203,15 @@ export class ChiChiCPPU {
 
         //FetchNextInstruction();
         this._currentInstruction_Address = this.programCounter;
-        this._currentInstruction_OpCode = this.GetByte(this.programCounter );
+        this._currentInstruction_OpCode = this.getByte(this.programCounter );
         this.programCounter = (this.programCounter + 1) & 0xffff;
-        this._currentInstruction_AddressingMode = ChiChiCPPU.addressModes[this._currentInstruction_OpCode];
+        this._currentInstruction_AddressingMode = addressModes[this._currentInstruction_OpCode];
         
         this.fetchInstructionParameters();
         
         this.execute();
 
-        this.advanceClock(ChiChiCPPU.cpuTiming[this._currentInstruction_OpCode]);
+        this.advanceClock(cpuTiming[this._currentInstruction_OpCode]);
         this.advanceClock(this._currentInstruction_ExtraTiming);
 
         if (this.borrowedCycles) {
@@ -342,10 +219,10 @@ export class ChiChiCPPU {
             this.borrowedCycles = 0;
         }
 
-        if (this._debugging) {
-            this.writeInstructionHistory();
-            this._operationCounter++;
-        }
+        // if (this.debugging) {
+        //     this.writeInstructionHistory();
+        //     this._operationCounter++;
+        // }
     }
 
     fetchInstructionParameters(): any {
@@ -355,8 +232,8 @@ export class ChiChiCPPU {
             case ChiChiCPPU_AddressingModes.AbsoluteY:
             case ChiChiCPPU_AddressingModes.Indirect:
                 // case AddressingModes.IndirectAbsoluteX:
-                this._currentInstruction_Parameters0 = this.GetByte((this.programCounter++) & 0xFFFF);
-                this._currentInstruction_Parameters1 = this.GetByte((this.programCounter++) & 0xFFFF);
+                this._currentInstruction_Parameters0 = this.getByte((this.programCounter++) & 0xFFFF);
+                this._currentInstruction_Parameters1 = this.getByte((this.programCounter++) & 0xFFFF);
                 break;
             case ChiChiCPPU_AddressingModes.ZeroPage:
             case ChiChiCPPU_AddressingModes.ZeroPageX:
@@ -366,7 +243,7 @@ export class ChiChiCPPU {
             case ChiChiCPPU_AddressingModes.IndirectIndexed:
             case ChiChiCPPU_AddressingModes.IndirectZeroPage:
             case ChiChiCPPU_AddressingModes.Immediate:
-                this._currentInstruction_Parameters0 = this.GetByte((this.programCounter++) & 0xFFFF);
+                this._currentInstruction_Parameters0 = this.getByte((this.programCounter++) & 0xFFFF);
                 break;
             case ChiChiCPPU_AddressingModes.Accumulator:
             case ChiChiCPPU_AddressingModes.Implicit:
@@ -382,7 +259,7 @@ export class ChiChiCPPU {
         this.statusRegister = 52;
         this._operationCounter = 0;
         this.stackPointer = 253;
-        this.programCounter = this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
+        this.programCounter = this.getByte(0xFFFC) | (this.getByte(0xFFFD) << 8);
         this.advanceClock(4);
         this.genieCodes = [];
     }
@@ -395,7 +272,7 @@ export class ChiChiCPPU {
         this.advanceClock(4);
 
 
-        this.programCounter =  this.GetByte(0xFFFC) | (this.GetByte(0xFFFD) << 8);
+        this.programCounter =  this.getByte(0xFFFC) | (this.getByte(0xFFFD) << 8);
     }
 
     decodeAddress(): number {
@@ -437,23 +314,23 @@ export class ChiChiCPPU {
                 lowByte = this._currentInstruction_Parameters0;
                 highByte = this._currentInstruction_Parameters1 << 8;
                 let indAddr = (highByte | lowByte) & 65535;
-                let indirectAddr = (this.GetByte(indAddr));
+                let indirectAddr = (this.getByte(indAddr));
                 lowByte = (((lowByte + 1) | 0)) & 0xFF;
                 indAddr = (highByte | lowByte) & 65535;
-                indirectAddr = indirectAddr | (this.GetByte(indAddr) << 8);
+                indirectAddr = indirectAddr | (this.getByte(indAddr) << 8);
                 result = indirectAddr;
                 break;
             case ChiChiCPPU_AddressingModes.IndexedIndirect:
                 var addr = (((this._currentInstruction_Parameters0 + this.indexRegisterX) | 0)) & 0xFF;
-                lowByte = this.GetByte(addr);
+                lowByte = this.getByte(addr);
                 addr = (addr + 1) | 0;
-                highByte = this.GetByte(addr & 0xFF);
+                highByte = this.getByte(addr & 0xFF);
                 highByte = highByte << 8;
                 result = highByte | lowByte;
                 break;
             case ChiChiCPPU_AddressingModes.IndirectIndexed:
-                lowByte = this.GetByte(this._currentInstruction_Parameters0);
-                highByte = this.GetByte((((this._currentInstruction_Parameters0 + 1) | 0)) & 0xFF) << 8;
+                lowByte = this.getByte(this._currentInstruction_Parameters0);
+                highByte = this.getByte((((this._currentInstruction_Parameters0 + 1) | 0)) & 0xFF) << 8;
                 addr = (lowByte | highByte);
                 result = (addr + this.indexRegisterY) | 0;
                 if ((result & 0xFF) > this.indexRegisterY) {
@@ -487,7 +364,7 @@ export class ChiChiCPPU {
             case ChiChiCPPU_AddressingModes.Accumulator:
                 return this.accumulator;
             default:
-                this.dataBus = this.GetByte(this.decodeAddress());
+                this.dataBus = this.getByte(this.decodeAddress());
                 return this.dataBus;
         }
     }
@@ -512,9 +389,9 @@ export class ChiChiCPPU {
                 carryFlag = (this.statusRegister & 1);
                 result = (this.accumulator + data + carryFlag) | 0;
                 // carry flag
-                this.setFlag(this.SRMasks_CarryMask, result > 255);
+                this.setFlag(SRMasks_CarryMask, result > 255);
                 // overflow flag
-                this.setFlag(this.SRMasks_OverflowMask, ((this.accumulator ^ data) & 128) !== 128 && ((this.accumulator ^ result) & 128) === 128);
+                this.setFlag(SRMasks_OverflowMask, ((this.accumulator ^ data) & 128) !== 128 && ((this.accumulator ^ result) & 128) === 128);
                 // occurs when bit 7 is set
                 this.accumulator = result & 0xFF;
                 this.setZNFlags(this.accumulator);
@@ -528,12 +405,12 @@ export class ChiChiCPPU {
                 //ASL
                 data = this.decodeOperand();
                 // set carry flag
-                this.setFlag(this.SRMasks_CarryMask, ((data & 128) === 128));
+                this.setFlag(SRMasks_CarryMask, ((data & 128) === 128));
                 data = (data << 1) & 254;
                 if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Accumulator) {
                     this.accumulator = data;
                 } else {
-                    this.SetByte(this.decodeAddress(), data);
+                    this.setByte(this.decodeAddress(), data);
                 }
                 this.setZNFlags(data);
                 break;
@@ -559,7 +436,7 @@ export class ChiChiCPPU {
                 //BIT();
                 data = this.decodeOperand();
                 // overflow is bit 6
-                this.setFlag(this.SRMasks_OverflowMask, (data & 64) === 64);
+                this.setFlag(SRMasks_OverflowMask, (data & 64) === 64);
                 // negative is bit 7
                 if ((data & 128) === 128) {
                     this.statusRegister = this.statusRegister | 128;
@@ -603,10 +480,10 @@ export class ChiChiCPPU {
                 this.statusRegister = this.statusRegister | 20;
                 this.addressBus = 65534;
 
-                lowByte = this.GetByte(this.addressBus);
+                lowByte = this.getByte(this.addressBus);
                 this.addressBus = 65535;
 
-                highByte = this.GetByte(this.addressBus);
+                highByte = this.getByte(this.addressBus);
                 this.programCounter = lowByte + highByte * 256;
                 break;
             case 80:
@@ -623,19 +500,19 @@ export class ChiChiCPPU {
                 break;
             case 24:
                 // CLC();
-                this.setFlag(this.SRMasks_CarryMask, false);
+                this.setFlag(SRMasks_CarryMask, false);
                 break;
             case 216:
                 // CLD();
-                this.setFlag(this.SRMasks_DecimalModeMask, false);
+                this.setFlag(SRMasks_DecimalModeMask, false);
                 break;
             case 88:
                 // CLI();
-                this.setFlag(this.SRMasks_InterruptDisableMask, false);
+                this.setFlag(SRMasks_InterruptDisableMask, false);
                 break;
             case 184:
                 // CLV();
-                this.setFlag(this.SRMasks_OverflowMask, false);
+                this.setFlag(SRMasks_OverflowMask, false);
                 break;
             case 201: case 197: case 213: case 205: case 221: case 217: case 193: case 209:
                 // CMP();
@@ -656,7 +533,7 @@ export class ChiChiCPPU {
                 // DEC();
                 data = this.decodeOperand();
                 data = (data - 1) & 0xFF;
-                this.SetByte(this.decodeAddress(), data);
+                this.setByte(this.decodeAddress(), data);
                 this.setZNFlags(data);
                 break;
             case 202:
@@ -690,7 +567,7 @@ export class ChiChiCPPU {
                 // INC();
                 data = this.decodeOperand();
                 data = (data + 1) & 0xFF;
-                this.SetByte(this.decodeAddress(), data);
+                this.setByte(this.decodeAddress(), data);
                 this.setZNFlags(data);
                 break;
             case 232:
@@ -754,14 +631,14 @@ export class ChiChiCPPU {
                 //LSR();
                 data = this.decodeOperand();
                 //LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry. 
-                this.setFlag(this.SRMasks_CarryMask, (data & 1) === 1);
+                this.setFlag(SRMasks_CarryMask, (data & 1) === 1);
                 //target.SetFlag(CPUStatusBits.Carry, (rst & 1) == 1);
                 data = data >> 1 & 0xFF;
                 this.setZNFlags(data);
                 if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Accumulator) {
                     this.accumulator = data;
                 } else {
-                    this.SetByte(this.decodeAddress(), data);
+                    this.setByte(this.decodeAddress(), data);
                 }
                 break;
             case 234: case 26: case 58: case 90: case 122: case 218: case 250: case 137:
@@ -807,7 +684,7 @@ export class ChiChiCPPU {
                 data = this.decodeOperand();
                 // old carry bit shifted into bit 1
                 oldbit = (this.statusRegister & 1) === 1 ? 1 : 0;
-                this.setFlag(this.SRMasks_CarryMask, (data & 128) === 128);
+                this.setFlag(SRMasks_CarryMask, (data & 128) === 128);
                 data = ((data << 1) | oldbit) & 0xFF;
                 //data = data & 0xFF;
                 //data = data | oldbit;
@@ -815,7 +692,7 @@ export class ChiChiCPPU {
                 if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Accumulator) {
                     this.accumulator = data;
                 } else {
-                    this.SetByte(this.decodeAddress(), data);
+                    this.setByte(this.decodeAddress(), data);
                 }
                 break;
             case 106:
@@ -828,13 +705,13 @@ export class ChiChiCPPU {
                 // old carry bit shifted into bit 7
                 oldbit = (this.statusRegister & 1) === 1 ? 128 : 0;
                 // original bit 0 shifted to carry
-                this.setFlag(this.SRMasks_CarryMask, (data & 1) === 1);
+                this.setFlag(SRMasks_CarryMask, (data & 1) === 1);
                 data = (data >> 1) | oldbit;
                 this.setZNFlags(data);
                 if (this._currentInstruction_AddressingMode === ChiChiCPPU_AddressingModes.Accumulator) {
                     this.accumulator = data;
                 } else {
-                    this.SetByte(this.decodeAddress(), data);
+                    this.setByte(this.decodeAddress(), data);
                 }
                 break;
             case 64:
@@ -865,22 +742,22 @@ export class ChiChiCPPU {
                 carryFlag = ((this.statusRegister ^ 1) & 1);
                 result = (((this.accumulator - data) & 4095) - carryFlag) & 4095;
                 // set overflow flag if sign bit of accumulator changed
-                this.setFlag(this.SRMasks_OverflowMask, ((this.accumulator ^ result) & 128) === 128 && ((this.accumulator ^ data) & 128) === 128);
-                this.setFlag(this.SRMasks_CarryMask, (result < 256));
+                this.setFlag(SRMasks_OverflowMask, ((this.accumulator ^ result) & 128) === 128 && ((this.accumulator ^ data) & 128) === 128);
+                this.setFlag(SRMasks_CarryMask, (result < 256));
                 this.accumulator = (result) & 0xFF;
                 this.setZNFlags(this.accumulator);
                 break;
             case 56:
                 //SEC();
-                this.setFlag(this.SRMasks_CarryMask, true);
+                this.setFlag(SRMasks_CarryMask, true);
                 break;
             case 248:
                 //SED();
-                this.setFlag(this.SRMasks_DecimalModeMask, true);
+                this.setFlag(SRMasks_DecimalModeMask, true);
                 break;
             case 120:
                 //SEI();
-                this.setFlag(this.SRMasks_InterruptDisableMask, true);
+                this.setFlag(SRMasks_InterruptDisableMask, true);
                 break;
             case 133:
             case 149:
@@ -890,19 +767,19 @@ export class ChiChiCPPU {
             case 129:
             case 145:
                 //STA();
-                this.SetByte(this.decodeAddress(), this.accumulator);
+                this.setByte(this.decodeAddress(), this.accumulator);
                 break;
             case 134:
             case 150:
             case 142:
                 //STX();
-                this.SetByte(this.decodeAddress(), this.indexRegisterX);
+                this.setByte(this.decodeAddress(), this.indexRegisterX);
                 break;
             case 132:
             case 148:
             case 140:
                 //STY();
-                this.SetByte(this.decodeAddress(), this.indexRegisterY);
+                this.setByte(this.decodeAddress(), this.indexRegisterY);
                 break;
             case 170:
                 //TAX();
@@ -939,14 +816,14 @@ export class ChiChiCPPU {
                 //AND byte with accumulator. If result is negative then carry is set.
                 //Status flags: N,Z,C
                 this.accumulator = this.decodeOperand() & this.accumulator & 0xFF;
-                this.setFlag(this.SRMasks_CarryMask, (this.accumulator & 128) === 128);
+                this.setFlag(SRMasks_CarryMask, (this.accumulator & 128) === 128);
                 this.setZNFlags(this.accumulator);
                 break;
             case 75:
                 //AND byte with accumulator, then shift right one bit in accumu-lator.
                 //Status flags: N,Z,C
                 this.accumulator = this.decodeOperand() & this.accumulator;
-                this.setFlag(this.SRMasks_CarryMask, (this.accumulator & 1) === 1);
+                this.setFlag(SRMasks_CarryMask, (this.accumulator & 1) === 1);
                 this.accumulator = this.accumulator >> 1;
                 this.setZNFlags(this.accumulator);
                 break;
@@ -967,23 +844,23 @@ export class ChiChiCPPU {
                 }
                 // original bit 0 shifted to carry
                 //            target.SetFlag(CPUStatusBits.Carry, (); 
-                this.setFlag(this.SRMasks_CarryMask, (this.accumulator & 1) === 1);
+                this.setFlag(SRMasks_CarryMask, (this.accumulator & 1) === 1);
                 switch (this.accumulator & 48) {
                     case 48:
-                        this.setFlag(this.SRMasks_CarryMask, true);
-                        this.setFlag(this.SRMasks_InterruptDisableMask, false);
+                        this.setFlag(SRMasks_CarryMask, true);
+                        this.setFlag(SRMasks_InterruptDisableMask, false);
                         break;
                     case 0:
-                        this.setFlag(this.SRMasks_CarryMask, false);
-                        this.setFlag(this.SRMasks_InterruptDisableMask, false);
+                        this.setFlag(SRMasks_CarryMask, false);
+                        this.setFlag(SRMasks_InterruptDisableMask, false);
                         break;
                     case 16:
-                        this.setFlag(this.SRMasks_CarryMask, false);
-                        this.setFlag(this.SRMasks_InterruptDisableMask, true);
+                        this.setFlag(SRMasks_CarryMask, false);
+                        this.setFlag(SRMasks_InterruptDisableMask, true);
                         break;
                     case 32:
-                        this.setFlag(this.SRMasks_CarryMask, true);
-                        this.setFlag(this.SRMasks_InterruptDisableMask, true);
+                        this.setFlag(SRMasks_CarryMask, true);
+                        this.setFlag(SRMasks_InterruptDisableMask, true);
                         break;
                 }
                 break;
@@ -1015,7 +892,7 @@ export class ChiChiCPPU {
     }
 
     compare(data: number): void {
-        this.setFlag(this.SRMasks_CarryMask, data > 255);
+        this.setFlag(SRMasks_CarryMask, data > 255);
         this.setZNFlags(data & 255);
     }
 
@@ -1038,7 +915,7 @@ export class ChiChiCPPU {
     }
 
     nmiHandler(): void {
-        this._handleNMI = true;
+        this.handleNMI = true;
     }
 
     private pushStack(data: number): void {
@@ -1057,7 +934,7 @@ export class ChiChiCPPU {
         return this.memoryMap.Rams[this.stackPointer + 256];
     }
 
-    GetByte(address: number): number {
+    getByte(address: number): number {
         if (!this.memoryMap) { return 0; }
         let result = this.memoryMap.getByte(this.clock, address);
 
@@ -1076,7 +953,7 @@ export class ChiChiCPPU {
         return result & 255;
     }
 
-    SetByte(address: number, data: number): void {
+    setByte(address: number, data: number): void {
         if (!this.memoryMap) { return; }
         this.memoryMap.setByte(this.clock, address, data);
     }
@@ -1090,79 +967,86 @@ export class ChiChiCPPU {
         this.instructionHistoryPointer = 0xFF;
     }
 
-    writeInstructionHistory(): void {
-        const inst: ChiChiInstruction = new ChiChiInstruction();
-        inst.time = this.systemClock;
-        inst.A = this.accumulator;
-        inst.X = this.indexRegisterX;
-        inst.Y = this.indexRegisterY;
-        inst.SR = this.statusRegister;
-        inst.SP = this.stackPointer;
-        inst.frame = this.clock;
-        inst.OpCode = this._currentInstruction_OpCode;
-        inst.Parameters0 = this._currentInstruction_Parameters0;
-        inst.Parameters1 = this._currentInstruction_Parameters1;
-        inst.Address = this._currentInstruction_Address;
-        inst.AddressingMode = this._currentInstruction_AddressingMode;
-        inst.ExtraTiming = this._currentInstruction_ExtraTiming;
+    // writeInstructionHistory(): void {
+    //     const inst: ChiChiInstruction = new ChiChiInstruction();
+    //     inst.time = this.systemClock;
+    //     inst.A = this.accumulator;
+    //     inst.X = this.indexRegisterX;
+    //     inst.Y = this.indexRegisterY;
+    //     inst.SR = this.statusRegister;
+    //     inst.SP = this.stackPointer;
+    //     inst.frame = this.clock;
+    //     inst.OpCode = this._currentInstruction_OpCode;
+    //     inst.Parameters0 = this._currentInstruction_Parameters0;
+    //     inst.Parameters1 = this._currentInstruction_Parameters1;
+    //     inst.Address = this._currentInstruction_Address;
+    //     inst.AddressingMode = this._currentInstruction_AddressingMode;
+    //     inst.ExtraTiming = this._currentInstruction_ExtraTiming;
 
-        this._instructionHistory[(this.instructionHistoryPointer--) & 255] = inst;
-        this.instructionUsage[this._currentInstruction_OpCode]++;
-        if ((this.instructionHistoryPointer & 255) === 255) {
-            this.FireDebugEvent("instructionHistoryFull");
-        }
-    }
+    //     this._instructionHistory[(this.instructionHistoryPointer--) & 255] = inst;
+    //     this.instructionUsage[this._currentInstruction_OpCode]++;
+    //     if ((this.instructionHistoryPointer & 255) === 255) {
+    //         this.FireDebugEvent("instructionHistoryFull");
+    //     }
+    // }
 
-    FireDebugEvent(s: any): void {
-    }
+    // FireDebugEvent(s: any): void {
+    // }
 
-    GetStatus(): CpuStatus {
-        return {
-            PC: this.programCounter,
-            A: this.accumulator,
-            X: this.indexRegisterX,
-            Y: this.indexRegisterY,
-            SP: this.stackPointer,
-            SR: this.statusRegister
-        }
-    }
-
-    setupStateBuffer(sb: StateBuffer) {
-        sb.onRestore.subscribe((buffer: StateBuffer) => {
-            this.attachStateBuffer(buffer);
-        });
-
-        sb.onUpdateBuffer.subscribe((buffer: StateBuffer) => {
-            this.updateStateBuffer(buffer);
-        })
-
-        sb  .pushSegment(2 * Uint16Array.BYTES_PER_ELEMENT, 'cpu_status_16')
-            .pushSegment(8, 'cpu_status')
-            ;
-        return sb;
-
-    }
-    
-    attachStateBuffer(sb: StateBuffer) {
-        this.cpuStatus = sb.getUint8Array('cpu_status');
-        this.cpuStatus16 = sb.getUint16Array('cpu_status_16');
-    }
-    
-    updateStateBuffer(sb: StateBuffer) {
-        this.cpuStatus16[PRG_CTR] = this.programCounter
-        this.cpuStatus16[PRG_ADR] = this.addressBus;
-
-        this.cpuStatus[0] = this.statusRegister;
-        this.cpuStatus[1] = this.accumulator;
-        this.cpuStatus[2] = this.indexRegisterX;
-        this.cpuStatus[3] = this.indexRegisterY;
-        this.cpuStatus[4] = this.dataBus;
-        this.cpuStatus[5] = this.stackPointer;
-
-    }
-    
+    // GetStatus(): CpuStatus {
+    //     return {
+    //         PC: this.programCounter,
+    //         A: this.accumulator,
+    //         X: this.indexRegisterX,
+    //         Y: this.indexRegisterY,
+    //         SP: this.stackPointer,
+    //         SR: this.statusRegister
+    //     }
+    // }
+    setupStateBuffer = (sb: StateBuffer) => setupStateBuffer(this, sb);
 }
 
+function setupStateBuffer(cpu: ChiChiCPPU, sb: StateBuffer) {
+    sb.onRestore.subscribe((buffer: StateBuffer) => {
+        attachStateBuffer(cpu, buffer);
+    });
 
-        
-        
+    sb.onUpdateBuffer.subscribe((buffer: StateBuffer) => {
+        updateStateBuffer(cpu, buffer);
+    })
+
+    sb  .pushSegment(2 * Uint16Array.BYTES_PER_ELEMENT, 'cpu_status_16')
+        .pushSegment(8, 'cpu_status')
+        ;
+    return sb;
+}
+
+function attachStateBuffer(cpu: ChiChiCPPU, sb: StateBuffer) {
+    cpu.cpuStatus = sb.getUint8Array('cpu_status');
+    cpu.cpuStatus16 = sb.getUint16Array('cpu_status_16');
+}
+
+function updateStateBuffer(cpu: ChiChiCPPU, sb: StateBuffer) {
+    cpu.cpuStatus16[PRG_CTR] = cpu.programCounter
+    cpu.cpuStatus16[PRG_ADR] = cpu.addressBus;
+
+    cpu.cpuStatus[0] = cpu.statusRegister;
+    cpu.cpuStatus[1] = cpu.accumulator;
+    cpu.cpuStatus[2] = cpu.indexRegisterX;
+    cpu.cpuStatus[3] = cpu.indexRegisterY;
+    cpu.cpuStatus[4] = cpu.dataBus;
+    cpu.cpuStatus[5] = cpu.stackPointer;
+}
+
+export const getByte = (memoryMap: MemoryMap) => (clock: number, address: number): number =>  memoryMap.getByte(clock, address) & 0xff;
+
+const getCheatByte = (genieCodes: MemoryPatch[]) => (address: number, result: number): number => {
+    const patch = genieCodes.find(v => v.address === address);
+        if (patch && patch.active && patch.address == address) {
+            if (patch.compare > -1) {
+                return (patch.compare == result ? patch.data : result) & 0xFF;
+            } else {
+                return patch.data;
+            }
+        } 
+}

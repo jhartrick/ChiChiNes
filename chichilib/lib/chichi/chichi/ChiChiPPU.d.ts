@@ -1,41 +1,8 @@
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from './ChiChiCPU';
-import { IMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
+import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from './StateBuffer';
-export interface IChiChiPPUState {
-    spriteRAM: Uint8Array;
-    controlByte0: number;
-    controlByte1: number;
-    address: number;
-    status: number;
-    spriteAddress: number;
-    currentXPosition: number;
-    currentYPosition: number;
-    hScroll: number;
-    vScroll: number;
-    lockedHScroll: number;
-    lockedVScroll: number;
-}
-export interface IChiChiPPU extends IChiChiPPUState {
-    byteOutBuffer: Uint8Array;
-    LastcpuClock: number;
-    cpu: ChiChiCPPU;
-    unpackedSprites: ChiChiSprite[];
-    NMIHandler: () => void;
-    frameFinished: () => void;
-    GetPPUStatus(): PpuStatus;
-    backgroundPatternTableIndex: number;
-    readonly SpritePatternTableIndex: number;
-    Initialize(): void;
-    setupVINT(): void;
-    memoryMap: IMemoryMap;
-    SetByte(Clock: number, address: number, data: number): void;
-    GetByte(Clock: number, address: number): number;
-    copySprites(copyFrom: number): void;
-    advanceClock(ticks: number): void;
-    setupStateBuffer(sb: StateBuffer): void;
-}
-export declare class ChiChiPPU implements IChiChiPPU {
+export declare class ChiChiPPU {
     static pal: Uint32Array;
     LastcpuClock: number;
     NMIHandler: () => void;
@@ -43,7 +10,7 @@ export declare class ChiChiPPU implements IChiChiPPU {
     cpu: ChiChiCPPU;
     greyScale: boolean;
     constructor();
-    memoryMap: IMemoryMap;
+    memoryMap: MemoryMap;
     private yPosition;
     private xPosition;
     private vbufLocation;
