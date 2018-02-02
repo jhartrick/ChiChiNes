@@ -1,5 +1,4 @@
 import { StateBuffer } from "../StateBuffer";
-import { fail } from "assert";
     
 const NES_BYTES_WRITTEN = 0;
 const WAVSHARER_BLOCKTHREAD = 1;
@@ -244,4 +243,31 @@ class BlipBuffer  {
     arrayLength = 0;
 }
 
+const getElements = (blipBuffer: BlipBuffer, buffer: Float32Array): number[] => {   
+    const outbuf: number[] = [];
+    const start = 0;
 
+    const count = blipBuffer.avail;
+    let inPtr = 0, outPtr = start;
+    let end = count;
+    let sum = blipBuffer.integrator;
+
+    const high = 1.0, low = -1.0;
+    let offset = low + 1.0;
+
+    const factor = 1.0 / ( 1 << 15 ); // (1 /(samplerange/2))
+
+    if (count !== 0) {
+        do {
+            const st = sum >> delta_bits; 
+            sum = sum + blipBuffer.samples[inPtr];
+            inPtr++;
+            outbuf.push(st * factor + offset);
+
+            sum = sum - (st << (7));
+        } while (end-- > 0);
+
+        blipBuffer.integrator = sum;
+    }
+    return outbuf;
+}

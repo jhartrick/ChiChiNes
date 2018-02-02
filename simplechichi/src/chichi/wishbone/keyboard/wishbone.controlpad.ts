@@ -12,6 +12,7 @@ export class WishBoneControlPad {
         }
 
         this.attach(this.bindings);
+        console.log( JSON.stringify(this.bindings));
 
 
     }
