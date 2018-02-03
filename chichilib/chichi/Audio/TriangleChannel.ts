@@ -1,12 +1,12 @@
-import { IChannel } from "./IChannel";
+import { Channel } from "./IChannel";
 
-export class TriangleChannel implements IChannel {
+export class TriangleChannel implements Channel {
     playing = true;
     output: number = 0;
 
     private _chan = 0;
     
-    private lengthCounts = new Uint8Array([
+    private lengthCounts = [
         0x0A,0xFE,
         0x14,0x02,
         0x28,0x04,
@@ -22,7 +22,7 @@ export class TriangleChannel implements IChannel {
         0xC0,0x18,
         0x48,0x1A,
         0x10,0x1C,
-        0x20,0x1E]);
+        0x20,0x1E];
 
     length = 0;
     period = 0;

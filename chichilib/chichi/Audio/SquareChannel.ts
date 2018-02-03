@@ -1,6 +1,6 @@
-import { IChannel } from "./IChannel";
+import { Channel } from "./IChannel";
 
-export class SquareChannel implements IChannel {
+export class SquareChannel implements Channel {
     output: number = 0;
     playing =  true;
     

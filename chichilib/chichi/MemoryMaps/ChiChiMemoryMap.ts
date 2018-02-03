@@ -51,7 +51,7 @@ const getByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Ra
                 break;
             case 0x2000:
             case 0x3000:
-                result = ppu.GetByte(clock, address);
+                result = ppu.getByte(clock, address);
                 break;
             case 0x4000:
                 switch (address) {
@@ -131,7 +131,7 @@ const setByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Ra
                 break;
             case 8192:
             case 12288:
-                ppu.SetByte(clock, address, data);
+                ppu.setByte(clock, address, data);
                 break;
             case 16384:
 

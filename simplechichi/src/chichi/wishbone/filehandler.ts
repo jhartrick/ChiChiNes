@@ -40,17 +40,7 @@ const loadZipFile = (file: File): Observable<BaseCart> => {
     });
 };
 
-export const loadUrl = (url: string): any => {
-    return Observable.fromPromise(
-        fetch(url).then( (response) => {
-            return response.arrayBuffer();
-        }).then((buffer) => {
-            return iNESFileHandler(buffer);
-        })
-    );
-};
-
-export const loadRom = (files: FileList): Observable<BaseCart> => {
+export const loadCartFromFileList = (files: FileList): Observable<BaseCart> => {
     return new Observable<BaseCart>(observer => {
         const file = files[0];
         if (file.name.endsWith('.zip')) {
@@ -64,3 +54,13 @@ export const loadRom = (files: FileList): Observable<BaseCart> => {
         }
     });
 }
+
+export const loadCartFromUrl = (url: string): any => {
+    return Observable.fromPromise(
+        fetch(url).then((response) => {
+            return response.arrayBuffer();
+        }).then((buffer) => {
+            return iNESFileHandler(buffer);
+        })
+    );
+};

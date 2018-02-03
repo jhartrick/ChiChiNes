@@ -14,11 +14,11 @@ export const drawFrameWebGL = (renderer: THREE.WebGLRenderer) => (wishbone: Wish
 
     const geometry = new THREE.PlaneGeometry(5, 5);
     const material = encoder.createMaterial(<Uint8Array>vbuffer);
-    scene.add(new THREE.Mesh(geometry, material));
+    scene.add(new THREE.Mesh(geometry, material.material));
     camera.position.z = 5.8;
 
     return  () => {
-        encoder.render();
+        material.text.needsUpdate = true;
         renderer.render(scene, camera);
     };
 };

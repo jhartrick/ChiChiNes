@@ -1,6 +1,6 @@
-import { IChannel } from "./IChannel";
+import { Channel } from "./IChannel";
 
-export class NoiseChannel implements IChannel {
+export class NoiseChannel implements Channel {
     playing = true;
     output: number = 0;
     period = 0;

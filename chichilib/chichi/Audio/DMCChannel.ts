@@ -1,14 +1,12 @@
 import { ChiChiCPPU } from "../ChiChiCPU";
-import { IChannel } from "./IChannel";
+import { Channel } from "./IChannel";
 
-export class DMCChannel implements IChannel {
+export class DMCChannel implements Channel {
     playing = true;
     output: number = 0;
 
     interruptRaised = false;
     
-    private directLoad: boolean = false;
-    private amplitude: number = 0;
     private time: number = 0;
     private internalClock: number = 0;
     private isFetching: boolean = false;
@@ -31,7 +29,6 @@ export class DMCChannel implements IChannel {
     private frequency: number= 0;
     private loopFlag: number= 0;
     private _chan: number= 0;
-    private delta = 0;
 
     constructor(chan: number, public onWriteAudio: (time: number)=> void, private handleDma: (address: number) => number) {
         this._chan = chan;

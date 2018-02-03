@@ -3,12 +3,10 @@ export declare class GameGenieCode {
     description: string;
     active: boolean;
 }
-export declare class MemoryPatch {
+export interface MemoryPatch {
     address: number;
     data: number;
     compare: number;
     active: boolean;
 }
-export declare class ChiChiCheats {
-    gameGenieCodeToPatch(code: string): MemoryPatch;
-}
+export declare function gameGenieCodeToPatch(code: string): MemoryPatch;

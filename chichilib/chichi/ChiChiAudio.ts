@@ -9,36 +9,7 @@ import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { isUndefined } from 'util';
 import { WavSharer } from './chichi';
 
-export interface IChiChiAPUState {
-    audioSettings: AudioSettings;
-
-    sampleRate: number;
-    interruptRaised: boolean;
-    enableSquare0: boolean;
-    enableSquare1: boolean;
-    enableTriangle: boolean;
-    enableNoise: boolean;
-}
-
-export interface IChiChiAPU  {
-    writer: WavSharer;
-    sampleRate: number;
-    interruptRaised: boolean;
-    audioSettings: AudioSettings;
-    
-    irqHandler(): void;
-
-    GetByte(clock: number, address: number): number;
-    SetByte(clock: number, address: number, data: number): void;
-
-    rebuildSound(): void;
-    memoryMap: MemoryMap;
-    advanceClock(ticks: number): void;
-
-    state: IChiChiAPUState;
-}
-
-export class ChiChiAPU implements IChiChiAPU {
+export class ChiChiAPU {
     frameMode: boolean = false;
     irqHandler(): any {
     }
@@ -283,29 +254,6 @@ export class ChiChiAPU implements IChiChiAPU {
         this.currentClock = 0;
         
     }
-
-    get state(): IChiChiAPUState {
-        return {
-            audioSettings: this.audioSettings,
-            sampleRate: this.sampleRate,
-            interruptRaised: this._interruptRaised,
-            enableSquare0: this.square0.playing,
-            enableSquare1: this.square1.playing,
-            enableTriangle: this.triangle.playing,
-            enableNoise: this.noise.playing
-        };
-    }
-
-    set state(value: IChiChiAPUState) {
-        this.audioSettings = value.audioSettings;
-        this.sampleRate = value.sampleRate;
-        this._interruptRaised = value.interruptRaised;
-        this.square0.playing = value.enableSquare0;
-        this.square1.playing = value.enableSquare1;
-        this.triangle.playing = value.enableTriangle;
-        this.noise.playing = value.enableNoise;
-    }
-
 
     private lastOutput = 0;
 

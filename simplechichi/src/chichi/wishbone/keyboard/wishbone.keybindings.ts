@@ -101,28 +101,25 @@ const KEYS = {
     '222': '\''
 };
 
-export interface KeyBindings {
-    left: number;
-    right: number;
-    up: number;
-    down: number;
-    b: number;
-    a: number;
-    select: number;
-    start: number;
+export interface KeyBinding {
+        key: number;
+        value: number;
 }
 
-export const defaultBindings: KeyBindings = {
-    
-    left: 37,
-    right: 39,
-    up: 38,
-    down: 40,
-    b: 90,
-    a: 88,
-    select: 65,
-    start: 83
+enum buttonorder {
+  left, right, up, down, b, a, select, start  
 }
+
+export const defaultBindings: KeyBinding[] = [
+    { key: 37, value: 64 },
+    { key: 39, value: 128 },
+    { key: 38, value: 16 } ,
+    { key: 40, value: 32 },
+    { key: 90, value: 2 },
+    { key: 88, value: 1 },
+    { key: 65, value: 4 },
+    { key: 83, value: 8 }
+]
 
 export function keyName(keyCode: number): string {
     let keyName = '';

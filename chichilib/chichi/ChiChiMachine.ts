@@ -102,7 +102,7 @@ export class ChiChiMachine {
     PowerOn(): void {
         if (this.Cpu && this.Cart && this.Cart.supported) {
             this.Cart.initializeCart();
-            this.Cpu.ppu.Initialize();
+            this.Cpu.ppu.initialize();
             this.SoundBopper.rebuildSound();
             this.Cpu.PowerOn();
             this.RunState = RunningStatuses.Running;

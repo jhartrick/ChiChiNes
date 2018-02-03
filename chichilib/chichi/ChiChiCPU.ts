@@ -37,8 +37,6 @@ export class ChiChiCPPU {
 
     borrowedCycles = 0;
 
-    private _ticks = 0;
-
     // CPU Status
     cpuStatus16: Uint16Array = new Uint16Array(2);
 
@@ -341,13 +339,13 @@ export class ChiChiCPPU {
                 result = (((this.programCounter + this._currentInstruction_Parameters0) | 0));
                 break;
             default:
-                this.HandleBadOperation();
+                this.handleBadOperation();
                 break;
         }
         return result & 65535;
     }
 
-    HandleBadOperation(): void {
+    handleBadOperation(): void {
         
         //throw new Error('Method not implemented.');
     }
@@ -1036,17 +1034,4 @@ function updateStateBuffer(cpu: ChiChiCPPU, sb: StateBuffer) {
     cpu.cpuStatus[3] = cpu.indexRegisterY;
     cpu.cpuStatus[4] = cpu.dataBus;
     cpu.cpuStatus[5] = cpu.stackPointer;
-}
-
-export const getByte = (memoryMap: MemoryMap) => (clock: number, address: number): number =>  memoryMap.getByte(clock, address) & 0xff;
-
-const getCheatByte = (genieCodes: MemoryPatch[]) => (address: number, result: number): number => {
-    const patch = genieCodes.find(v => v.address === address);
-        if (patch && patch.active && patch.address == address) {
-            if (patch.compare > -1) {
-                return (patch.compare == result ? patch.data : result) & 0xFF;
-            } else {
-                return patch.data;
-            }
-        } 
 }

@@ -1,30 +1,7 @@
 import { AudioSettings } from './ChiChiTypes';
 import { ChiChiWavSharer } from './Audio/CommonAudio';
 import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
-import { WavSharer } from './chichi';
-export interface IChiChiAPUState {
-    audioSettings: AudioSettings;
-    sampleRate: number;
-    interruptRaised: boolean;
-    enableSquare0: boolean;
-    enableSquare1: boolean;
-    enableTriangle: boolean;
-    enableNoise: boolean;
-}
-export interface IChiChiAPU {
-    writer: WavSharer;
-    sampleRate: number;
-    interruptRaised: boolean;
-    audioSettings: AudioSettings;
-    irqHandler(): void;
-    GetByte(clock: number, address: number): number;
-    SetByte(clock: number, address: number, data: number): void;
-    rebuildSound(): void;
-    memoryMap: MemoryMap;
-    advanceClock(ticks: number): void;
-    state: IChiChiAPUState;
-}
-export declare class ChiChiAPU implements IChiChiAPU {
+export declare class ChiChiAPU {
     writer: ChiChiWavSharer;
     frameMode: boolean;
     irqHandler(): any;
@@ -59,7 +36,6 @@ export declare class ChiChiAPU implements IChiChiAPU {
     updateFrame(time: number): void;
     runFrameEvents(time: number, step: number): void;
     endFrame(time: number): void;
-    state: IChiChiAPUState;
     private lastOutput;
     private mixAndOutputAudio(clock);
 }

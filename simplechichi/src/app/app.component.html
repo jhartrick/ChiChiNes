@@ -1,2 +1,4 @@
-<chichi-viewer romUrl='assets/metroid.nes'></chichi-viewer>
-<!-- <input type=file (change)='loadfile($event)' /> -->
+<input type=file (change)='loadfile($event)' /> <input [(value)]='url' /> <button (click)="load()" >Load</button>
+<div>
+<chichi-viewer [cart]='cart'></chichi-viewer>
+</div>

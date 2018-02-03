@@ -1,86 +1,32 @@
 import * as Keys from "./wishbone.keybindings";
+import { defaultBindings, KeyBinding } from "./wishbone.keybindings";
 
-export class WishBoneControlPad {
-    bindings: Keys.KeyBindings = Keys.defaultBindings;
-    padOneState  = 0;
-    enabled = true;
+export interface WishBoneControlPad {
+    bindings: KeyBinding[];
+    padOneState: number;
+    controllerId: string;
+}
 
-    constructor(private controllerId: string) {
-        const ctrl = localStorage.getItem(this.controllerId + 'KeyBindings');
-        if (ctrl) {
-            this.bindings = JSON.parse(ctrl);
-        }
+export const createControlPad = (bindings: KeyBinding[]) => (controllerId: string): WishBoneControlPad => {
+    return {
+        bindings: bindings,
+        controllerId: controllerId,
+        padOneState: 0
+    };
+}
 
-        this.attach(this.bindings);
-        console.log( JSON.stringify(this.bindings));
+export const handleKeyUpEvent = (pad: WishBoneControlPad, event: KeyboardEvent) => {
+    
+    const x = pad.bindings.find(b =>  b.key === event.keyCode)
+    if (x) {
+        pad.padOneState &= ~x.value & 0xff;
+    }
+}
 
-
+export const handleKeyDownEvent = (pad: WishBoneControlPad, event: KeyboardEvent) => {
+    const x = pad.bindings.find(b =>  b.key === event.keyCode)
+    if (x) {
+        pad.padOneState |= x.value & 0xff;
     }
 
-    attach(bindings?: Keys.KeyBindings) {
-        if (bindings) {
-            this.bindings = Object.assign({}, bindings);
-            localStorage.setItem(this.controllerId + 'KeyBindings', JSON.stringify(this.bindings));
-        }
-    }
-
-    // control pad
-    handleKeyDownEvent(event: KeyboardEvent) {
-        switch (event.keyCode) {
-            case this.bindings.left: // left arrow
-                this.padOneState |= 64 & 0xFF;
-                break;
-            case this.bindings.up: // up arrow
-                this.padOneState |= 16 & 0xFF;
-                break;
-            case this.bindings.right: // right arrow	39
-                this.padOneState |= 128 & 0xFF;
-                break;
-            case this.bindings.down: // down arrow	40
-                this.padOneState |= 32 & 0xFF;
-                break;
-            case this.bindings.b: // z
-                this.padOneState |= 2 & 0xFF;
-                break;
-            case this.bindings.a: // x
-                this.padOneState |= 1 & 0xFF;
-                break;
-            case this.bindings.start:  // enter
-                this.padOneState |= 8 & 0xFF;
-                break;
-            case this.bindings.select: // tab
-                this.padOneState |= 4 & 0xFF;
-                break;
-        }
-        // debugger;
-    }
-
-    handleKeyUpEvent(event: KeyboardEvent) {
-        switch (event.keyCode) {
-            case this.bindings.left: // left arrow
-                this.padOneState &= ~64 & 0xFF;
-                break;
-            case this.bindings.up: // up arrow
-                this.padOneState &= ~16 & 0xFF;
-                break;
-            case this.bindings.right: // right arrow	39
-                this.padOneState &= ~128 & 0xFF;
-                break;
-            case this.bindings.down: // down arrow	40
-                this.padOneState &= ~32 & 0xFF;
-                break;
-            case this.bindings.b: // 	z
-                this.padOneState &= ~2 & 0xFF;
-                break;
-            case this.bindings.a: // x
-                this.padOneState &= ~1 & 0xFF;
-                break;
-            case this.bindings.start: // enter
-                this.padOneState &= ~8 & 0xFF;
-                break;
-            case this.bindings.select: // tab
-                this.padOneState &= ~4 & 0xFF;
-                break;
-        }
-    }
 }

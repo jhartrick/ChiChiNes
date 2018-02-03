@@ -1,9 +1,10 @@
 import { BaseCart  } from '../chichicarts/BaseCart';
 import { ChiChiSprite, PpuStatus } from './ChiChiTypes';
 import { ChiChiCPPU } from './ChiChiCPU';
-import { ChiChiAPU, IChiChiAPUState } from './ChiChiAudio';
+
 import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from './StateBuffer';
+const maxSpritesPerScanline = 64;
 
 export class ChiChiPPU  {
     public static pal: Uint32Array = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
@@ -22,35 +23,35 @@ export class ChiChiPPU  {
     
     memoryMap: MemoryMap;
 
-    // private members
+    // members
     // scanline position
-    private yPosition: number = 0;
-    private xPosition: number = 0;
+    yPosition: number = 0;
+    xPosition: number = 0;
     // current draw location in outbuffer    
-    private vbufLocation: number = 0;
+    vbufLocation: number = 0;
     
-    private currentAttributeByte: number = 0;
+    currentAttributeByte: number = 0;
 
     // sprite info
-    private spriteSize: number = 0;
-    private spritesOnThisScanline: number = 0;
-    private currentSprites: ChiChiSprite[];
-    private _spriteCopyHasHappened: boolean = false;
-    private spriteZeroHit: boolean = false;
+    spriteSize: number = 0;
+    spritesOnThisScanline: number = 0;
+    currentSprites: ChiChiSprite[];
+    _spriteCopyHasHappened: boolean = false;
+    spriteZeroHit: boolean = false;
     unpackedSprites: ChiChiSprite[];
     emphasisBits = 0;
     
-    private isForegroundPixel: boolean = false;
+    isForegroundPixel: boolean = false;
 
-    private spriteChanges: boolean = false;
+    spriteChanges: boolean = false;
 
-    private ppuReadBuffer: number = 0;
-    private clipSprites: boolean = false;
-    private clipTiles: boolean = false;
-    private tilesVisible: boolean = false;
-    private spritesVisible: boolean = false;
+    ppuReadBuffer: number = 0;
+    clipSprites: boolean = false;
+    clipTiles: boolean = false;
+    tilesVisible: boolean = false;
+    spritesVisible: boolean = false;
 
-    private nameTableMemoryStart: number = 0;
+    nameTableMemoryStart: number = 0;
 
     backgroundPatternTableIndex: number = 0;
 
@@ -67,37 +68,34 @@ export class ChiChiPPU  {
     vScroll = 0;
     lockedHScroll = 0;
     lockedVScroll = 0;
-    private shouldRender = false;
+    shouldRender = false;
 
     framesRun = 0;
     
-    private hitSprite = false;
-    private addressLatchIsHigh = true;
+    hitSprite = false;
+    addressLatchIsHigh = true;
 
-    private isRendering = true;
+    isRendering = true;
 
     public frameClock = 0;
-    private oddFrame: boolean = true;
-    private frameOn = false;
+    oddFrame: boolean = true;
+    frameOn = false;
 
-    private nameTableBits = 0;
+    nameTableBits = 0;
 
     palette = new Uint8Array(32); 
-    private openBus = 0;
-    private sprite0scanline = 0;
-    private sprite0x = 0;
-    private _maxSpritesPerScanline = 64;
+    openBus = 0;
 
-    private xNTXor = 0; private yNTXor = 0;
+    xNTXor = 0; yNTXor = 0;
 
-    private spriteRAMBuffer = new ArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
+    spriteRAMBuffer = new ArrayBuffer(256 * Uint8Array.BYTES_PER_ELEMENT);
     spriteRAM = new Uint8Array(<any>this.spriteRAMBuffer); // System.Array.init(256, 0, System.Int32);
-    private spritesOnLine = new Array<number>(512); // System.Array.init(512, 0, System.Int32);
-    private currentTileIndex = 0;
-    private fetchTile = true;
+    spritesOnLine = new Array<number>(512); // System.Array.init(512, 0, System.Int32);
+    currentTileIndex = 0;
+    fetchTile = true;
 
     // tile bytes currently latched in ppu
-    private patternEntry = 0; private patternEntryByte2 = 0;
+    patternEntry = 0; patternEntryByte2 = 0;
 
     public byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
 
@@ -127,7 +125,7 @@ export class ChiChiPPU  {
     }
 
 
-    Initialize(): void {
+    initialize(): void {
         this.address = 0;
         this.status = 0;
         this.controlByte0 = 0;
@@ -151,7 +149,7 @@ export class ChiChiPPU  {
         }
     }
 
-    SetByte(Clock: number, address: number, data: number): void {
+    setByte(Clock: number, address: number, data: number): void {
         switch (address & 7) {
             case 0:
 
@@ -203,7 +201,7 @@ export class ChiChiPPU  {
                     }
 
                     this.addressLatchIsHigh = true;
-                    this.UpdatePixelInfo();
+                    this.updatePixelInfo();
 
                 }
                 break;
@@ -263,7 +261,7 @@ export class ChiChiPPU  {
         }
     }
 
-    GetByte(Clock: number, address: number): number {
+    getByte(Clock: number, address: number): number {
 
         switch (address & 7) {
             case 3:
@@ -322,8 +320,8 @@ export class ChiChiPPU  {
     }
 
     initSprites(): void {
-        this.currentSprites = new Array<ChiChiSprite>(this._maxSpritesPerScanline); 
-        for (let i = 0; i < this._maxSpritesPerScanline; ++i) {
+        this.currentSprites = new Array<ChiChiSprite>(maxSpritesPerScanline); 
+        for (let i = 0; i < maxSpritesPerScanline; ++i) {
             this.currentSprites[i] = new ChiChiSprite();
         }
 
@@ -396,7 +394,6 @@ export class ChiChiPPU  {
     }
 
     decodeSpritePixel(patternTableIndex: number, x: number, y: number, sprite: { v: ChiChiSprite; }, tileIndex: number): number {
-        // 8x8 tile
         let patternEntry = 0;
         let patternEntryBit2 = 0;
 
@@ -416,7 +413,6 @@ export class ChiChiPPU  {
     
     preloadSprites(scanline: number): void {
         this.spritesOnThisScanline = 0;
-        this.sprite0scanline = -1;
 
         let yLine = this.currentYPosition - 1;
 
@@ -426,10 +422,6 @@ export class ChiChiPPU  {
             const y = this.unpackedSprites[spriteID].YPosition + 1;
 
             if (scanline >= y && scanline < y + this.spriteSize) {
-                if (spriteID === 0) {
-                    this.sprite0scanline = scanline;
-                    this.sprite0x = this.unpackedSprites[spriteID].XPosition;
-                }
 
                 // var spId = spriteNum >> 2;
                 // if (spId < 32) {
@@ -442,7 +434,7 @@ export class ChiChiPPU  {
                 this.currentSprites[this.spritesOnThisScanline].IsVisible = true;
 
                 this.spritesOnThisScanline++;
-                if (this.spritesOnThisScanline === this._maxSpritesPerScanline) {
+                if (this.spritesOnThisScanline === maxSpritesPerScanline) {
                     break;
                 }
             }
@@ -555,88 +547,7 @@ export class ChiChiPPU  {
 
             if (this.frameOn) {
 
-                if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
-                    /* update x position */
-                    this.xPosition = (this.currentXPosition + this.lockedHScroll);
-
-
-                    if ((this.xPosition & 7) === 0) {
-                        this.xNTXor = (this.xPosition & 0x100) ? 0x400 : 0;
-                        this.xPosition &= 0xFF;
-
-                        /* fetch next tile */
-                        let ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
-                        let xTilePosition = this.xPosition >> 3;
-
-                        const tileRow = (this.yPosition >> 3) % 30 << 5;
-
-                        const tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
-
-                        let tileIndex = this.memoryMap.getPPUByte(this.LastcpuClock + ticks, tileNametablePosition);
-
-                        let patternTableYOffset = this.yPosition & 7;
-
-                        let patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
-
-                        this.patternEntry = this.memoryMap.getPPUByte(this.LastcpuClock + ticks, patternID);
-                        this.patternEntryByte2 = this.memoryMap.getPPUByte(this.LastcpuClock + ticks, patternID + 8);
-
-                        this.currentAttributeByte = this.getAttrEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
-                        /* end fetch next tile */
-
-                    }
-
-                    let tilesVis = this.tilesVisible;
-                    let spriteVis = this.spritesVisible;
-
-                    if (this.currentXPosition < 8 ) {
-                        tilesVis = tilesVis && !this.clipTiles;
-                        spriteVis = tilesVis && !this.clipSprites;
-                    } 
-                    this.spriteZeroHit = false;
-                    const tilePixel = tilesVis ? this.getNameTablePixel() : 0;
-                    const spritePixel = spriteVis ? this.getSpritePixel() : 0;
-
-                    if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
-                        this.hitSprite = true;
-                        this.status = this.status | 64;
-                    }
-
-
-                    this.byteOutBuffer[this.vbufLocation * 4] = this.palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
-                    this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
-                    this.vbufLocation++;
-                }
-
-                this.currentXPosition++;
-
-                if (this.currentXPosition > 340) {
-
-                    this.currentXPosition = 0;
-                    this.currentYPosition++;
-
-                    this.preloadSprites(this.currentYPosition);
-                    if (this.spritesOnThisScanline >= 7) {
-                        this.status = this.status | 32;
-                    }
-
-                    this.lockedHScroll = this.hScroll;
-                    this.memoryMap.advanceScanline(1);
-
-                    this.UpdatePixelInfo();
-                    //RunNewScanlineEvents 
-                    this.yPosition = this.currentYPosition + this.lockedVScroll;
-
-                    if (this.yPosition < 0) {
-                        this.yPosition += 240;
-                    }
-                    if (this.yPosition >= 240) {
-                        this.yPosition -= 240;
-                        this.yNTXor = 2048;
-                    } else {
-                        this.yNTXor = 0;
-                    }
-                }
+                this.renderPixel(this.LastcpuClock + ticks);
             }
 
             this.frameClock++;
@@ -648,7 +559,70 @@ export class ChiChiPPU  {
         }
     }
 
-    UpdatePixelInfo(): void {
+    renderPixel(clock: number) {
+        if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
+            /* update x position */
+            this.xPosition = (this.currentXPosition + this.lockedHScroll);
+            if ((this.xPosition & 7) === 0) {
+                this.xNTXor = (this.xPosition & 0x100) ? 0x400 : 0;
+                this.xPosition &= 0xFF;
+                /* fetch next tile */
+                let ppuNameTableMemoryStart = this.nameTableMemoryStart ^ this.xNTXor ^ this.yNTXor;
+                let xTilePosition = this.xPosition >> 3;
+                const tileRow = (this.yPosition >> 3) % 30 << 5;
+                const tileNametablePosition = 0x2000 + ppuNameTableMemoryStart + xTilePosition + tileRow;
+                let tileIndex = this.memoryMap.getPPUByte(clock, tileNametablePosition);
+                let patternTableYOffset = this.yPosition & 7;
+                let patternID = this.backgroundPatternTableIndex + (tileIndex * 16) + patternTableYOffset;
+                this.patternEntry = this.memoryMap.getPPUByte(clock, patternID);
+                this.patternEntryByte2 = this.memoryMap.getPPUByte(clock, patternID + 8);
+                this.currentAttributeByte = this.getAttrEntry(ppuNameTableMemoryStart, xTilePosition, this.yPosition >> 3);
+                /* end fetch next tile */
+            }
+            let tilesVis = this.tilesVisible;
+            let spriteVis = this.spritesVisible;
+            if (this.currentXPosition < 8) {
+                tilesVis = tilesVis && !this.clipTiles;
+                spriteVis = tilesVis && !this.clipSprites;
+            }
+            this.spriteZeroHit = false;
+            const tilePixel = tilesVis ? this.getNameTablePixel() : 0;
+            const spritePixel = spriteVis ? this.getSpritePixel() : 0;
+            if (!this.hitSprite && this.spriteZeroHit && tilePixel !== 0) {
+                this.hitSprite = true;
+                this.status = this.status | 64;
+            }
+            this.byteOutBuffer[this.vbufLocation * 4] = this.palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+            this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
+            this.vbufLocation++;
+        }
+        this.currentXPosition++;
+        if (this.currentXPosition > 340) {
+            this.currentXPosition = 0;
+            this.currentYPosition++;
+            this.preloadSprites(this.currentYPosition);
+            if (this.spritesOnThisScanline >= 7) {
+                this.status = this.status | 32;
+            }
+            this.lockedHScroll = this.hScroll;
+            this.memoryMap.advanceScanline(1);
+            this.updatePixelInfo();
+            //RunNewScanlineEvents 
+            this.yPosition = this.currentYPosition + this.lockedVScroll;
+            if (this.yPosition < 0) {
+                this.yPosition += 240;
+            }
+            if (this.yPosition >= 240) {
+                this.yPosition -= 240;
+                this.yNTXor = 2048;
+            }
+            else {
+                this.yNTXor = 0;
+            }
+        }
+    }
+
+    updatePixelInfo(): void {
         this.nameTableMemoryStart = this.nameTableBits * 0x400;
     }
 
@@ -722,5 +696,5 @@ export class ChiChiPPU  {
         lscroll[1] = this.lockedVScroll;
 
     }
+}
 
-} 

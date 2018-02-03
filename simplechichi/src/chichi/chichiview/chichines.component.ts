@@ -1,15 +1,13 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener,  NgZone, Input } from '@angular/core';
-import { NESService } from '../wishbone/NESService';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, NgZone, Input } from '@angular/core';
 import * as THREE from 'three';
-import { RunningStatuses, BaseCart } from 'chichi';
-import { iNESFileHandler } from 'chichi';
 
-import { loadRom, loadUrl } from '../wishbone/filehandler';
-import { setInterval } from 'timers';
-import { WishBoneControlPad } from '../wishbone/keyboard/wishbone.controlpad';
-import { Wishbone } from '../wishbone/wishbone';
+import { loadCartFromFileList, loadCartFromUrl } from '../wishbone/filehandler';
+import * as Pads from '../wishbone/keyboard/wishbone.controlpad';
+import * as WB from '../wishbone/wishbone';
 import { drawFrameWebGL } from '../threejs/threejs.drawframe';
 import { ChiChiIO } from '../chichi.io';
+import { defaultBindings } from '../wishbone/keyboard/wishbone.keybindings';
+import { BaseCart } from 'chichi';
 
 @Component({
     selector: 'chichi-viewer',
@@ -18,29 +16,30 @@ import { ChiChiIO } from '../chichi.io';
     host: {
         '(document:keydown)': 'onkeydown($event)',
         '(document:keyup)': 'onkeyup($event)'
-      }
+    }
 })
 export class ChiChiComponent implements AfterViewInit {
-    interval: NodeJS.Timer;
-    p32: Uint8Array;
-    vbuffer: Uint8Array;
-    nesService: NESService;
+    teardown: () => void;
     @ViewChild('chichiHolder') chichiHolder: ElementRef;
     @ViewChild('chichiPig') canvasRef: ElementRef;
 
-    @Input('romUrl')
-    set romUrl(value: string)  {
-        loadUrl(value).subscribe(cart => {
-            this.runCart()(cart);
-        });
+    @Input('cart')
+    set cart(value: BaseCart) {
+        this.zone.runOutsideAngular(()=>{
+            if (this.teardown !== undefined) {
+                this.teardown();
+            }
+            if (value !== undefined) {
+                this.runCart()(value);
+            }
+    
+        })
     }
 
     private renderer: THREE.WebGLRenderer;
 
     public canvasLeft = '0px';
     public canvasTop = '0px';
-
-    listener: THREE.AudioListener;
 
     constructor(private zone: NgZone) {
     }
@@ -50,15 +49,15 @@ export class ChiChiComponent implements AfterViewInit {
         const ccElem = this.chichiHolder.nativeElement;
         const canvElem = this.canvasRef.nativeElement;
         if (canvElem.offsetHeight < canvElem.offsetWidth) {
-            this.renderer.setSize(canvElem.offsetHeight * 4 / 3, canvElem.offsetHeight );
+            this.renderer.setSize(canvElem.offsetHeight * 4 / 3, canvElem.offsetHeight);
             this.canvasLeft = ((ccElem.offsetWidth - (canvElem.offsetHeight * 4 / 3)) / 2) + 'px';
             this.canvasTop = '0px';
         } else {
-            this.renderer.setSize(canvElem.offsetWidth , canvElem.offsetWidth * 3 / 4);
+            this.renderer.setSize(canvElem.offsetWidth, canvElem.offsetWidth * 3 / 4);
             this.canvasLeft = '0px';
             this.canvasTop = ((ccElem.offsetWidth - (canvElem.offsetWidth * 3 / 4)) / 2) + 'px';
         }
-       // console.log("Width: " + event.target.innerWidth);
+        // console.log("Width: " + event.target.innerWidth);
     }
 
     onkeydown(event) {
@@ -80,74 +79,31 @@ export class ChiChiComponent implements AfterViewInit {
         }, 1);
     }
 
-    loadfile(e: Event) {
-        const files: FileList = (<HTMLInputElement>e.target).files;
-        clearInterval(this.interval);
-        loadRom(files).subscribe(this.runCart());
-    }
-
     private runCart(): (value: BaseCart) => void {
         return (rom) => {
-            const io: ChiChiIO = {
-                keydown: (val: (e: any) => void) => this.onkeydown = val,
-                keyup: (val: (e: any) => void) => this.onkeyup = val,
-                getDrawFrame: drawFrameWebGL(this.renderer)
-            };
-            const runchi = runEmulation(io);
-            const wishbone = makeAChiChi().loadRom(<any>rom);
-            this.zone.runOutsideAngular(() => runchi(wishbone));
+            this.zone.runOutsideAngular(() => {
+                
+                const runchi = setupIO({
+                    keydown: (val: (e: any) => void) => this.onkeydown = val,
+                    keyup: (val: (e: any) => void) => this.onkeyup = val,
+                    getDrawFrame: drawFrameWebGL(this.renderer)
+                });
+
+                this.teardown = runchi(WB.createWishboneFromCart(rom))
+            });
         };
     }
 }
 
-const makeAChiChi = () => {
-    const nesService = new NESService();
-    const vbuffer = new Uint8Array(new ArrayBuffer(256 * 256 * 4));
-    const abuffer = new Float32Array(new ArrayBuffer(8192 * Float32Array.BYTES_PER_ELEMENT));
-
-    const lr = (cart: BaseCart) => {
-        const wishbone = nesService.getWishbone()(vbuffer)(abuffer)(cart);
-        wishbone.chichi.PowerOn();
-        return wishbone;
-    };
-    return {
-        nesService, abuffer, loadRom: lr
-    };
-};
-
-const updatePadState = (dest: any) => (src: any) => () => dest.padOneState = src.padOneState;
-
-const runEmulation = (io: ChiChiIO) => (wishbone: Wishbone) => {
+const setupIO = (io: ChiChiIO) => {
     {
-        const chichi = wishbone.chichi;
-        const drawFrame = io.getDrawFrame(wishbone);
-        const padOne: WishBoneControlPad = new WishBoneControlPad('one');
-        const padTwo: WishBoneControlPad = new WishBoneControlPad('two');
+        const padOne: Pads.WishBoneControlPad = Pads.createControlPad(defaultBindings)('one');
 
-        io.keydown((event) => {
-            padOne.handleKeyDownEvent(event);
-            padTwo.handleKeyDownEvent(event);
-        });
-        io.keyup((event) => {
-            padOne.handleKeyUpEvent(event);
-            padTwo.handleKeyUpEvent(event);
-        });
+        io.keydown((event) => Pads.handleKeyDownEvent(padOne, event));
+        io.keyup((event) => Pads.handleKeyUpEvent(padOne, event));
 
-        const setPadOne = updatePadState(chichi.Cpu.PadOne.ControlPad)(padOne);
-       // const setPadTwo = updatePadState(chichi.Cpu.PadTwo.ControlPad)(padTwo);
-
-        const runFrame = () => {
-            setPadOne(); // setPadTwo();
-            chichi.RunFrame();
-            requestAnimationFrame(() => {
-                drawFrame();
-            });
-        };
-
-        setInterval(p => {
-            runFrame();
-        }, 17);
-
+        return (wishbone: WB.Wishbone) => {
+            return WB.runAChichi(wishbone, io, padOne);
+        }
     }
 };
-

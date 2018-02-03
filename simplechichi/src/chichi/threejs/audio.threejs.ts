@@ -8,18 +8,20 @@ import { LocalAudioSettings } from './audio.localsettings';
 export interface ThreeJSAudioSettings extends LocalAudioSettings {
     items: any;
     listener: any;
+    teardown: () => void;
 }
 
 export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSettings {
-    const bufferBlockSize = 8192;
-    const chunkSize = 512;
+    const nesAudio = wavForms.SharedBuffer;
+
+    const bufferBlockSize = nesAudio.length << 1;
+    const chunkSize = nesAudio.length >> 1;
     // tslint:disable-next-line:no-bitwise
     const bufferSize: number = bufferBlockSize;
 
     const listener = new THREE.AudioListener();
     const sound = new THREE.Audio(listener);
 
-    const nesAudio = wavForms.SharedBuffer;
 
     const audioCtx = sound.context;
     const audioSource = audioCtx.createBufferSource();
@@ -35,6 +37,12 @@ export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSett
 
     audioSource.connect(gainNode);
     audioSource.connect(scriptNode);
+    const teardown = () => {
+        audioSource.stop();
+        scriptNode.disconnect();
+        gainNode.disconnect();
+        audioSource.disconnect();
+    }
 
     const result = {
 		volume: 0,
@@ -46,8 +54,10 @@ export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSett
             source: audioSource,
             scriptNode: scriptNode,
             gainNode: gainNode
-        }
+        },
+        teardown: teardown.bind(this)
     };
+
 
     scriptNode.onaudioprocess = (audioProcessingEvent) => {
         const obuf = audioProcessingEvent.outputBuffer;
@@ -85,6 +95,8 @@ export function buildSound(wavForms: WavSharer, options?: any): ThreeJSAudioSett
 
     audioSource.loop = true;
     audioSource.start();
+
+
 
     result.sampleRate = audioCtx.sampleRate;
 
