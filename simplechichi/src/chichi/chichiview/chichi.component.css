@@ -10,6 +10,6 @@
   background-size: 16px 16px;
 }
 
-div.chichiPig {
+.chichiPig {
   position:absolute;float:left;display:block; height:100%;width:100%;
 }

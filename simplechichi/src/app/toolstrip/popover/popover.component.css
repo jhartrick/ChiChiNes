@@ -1,0 +1,10 @@
+.popover{
+    display: inline-block;
+    width: 100%;
+}
+
+chichi-ui-segment {
+    position: relative;
+    float: left;
+    top: 0px;
+}

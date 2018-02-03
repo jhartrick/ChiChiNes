@@ -7,7 +7,9 @@ import * as WB from '../wishbone/wishbone';
 import { drawFrameWebGL } from '../threejs/threejs.drawframe';
 import { ChiChiIO } from '../chichi.io';
 import { defaultBindings } from '../wishbone/keyboard/wishbone.keybindings';
-import { BaseCart } from 'chichi';
+import { BaseCart, WavSharer } from 'chichi';
+import { ThreeJSAudioSettings, chichiPlayer } from '../threejs/audio.threejs';
+import { WishboneRuntime } from '../wishbone/wishbone';
 
 @Component({
     selector: 'chichi-viewer',
@@ -19,21 +21,38 @@ import { BaseCart } from 'chichi';
     }
 })
 export class ChiChiComponent implements AfterViewInit {
-    teardown: () => void;
+    wishboneRuntime: WishboneRuntime;
+
+    chichiDrawer: (wishbone: WB.Wishbone) => () => void;
+    chichiPlayer: (wavForms: WavSharer) => ThreeJSAudioSettings;
+    audio: ThreeJSAudioSettings;
+    teardown: () => Promise<void> = () => new Promise<void>(resolve => { resolve(); });;
     @ViewChild('chichiHolder') chichiHolder: ElementRef;
     @ViewChild('chichiPig') canvasRef: ElementRef;
 
     @Input('cart')
     set cart(value: BaseCart) {
-        this.zone.runOutsideAngular(()=>{
-            if (this.teardown !== undefined) {
-                this.teardown();
+        if (value !== undefined) {
+            this.runCart()(value);
+        }
+    }
+
+    @Input('mute')
+    set mute(value: boolean) {
+       if (this.audio !== undefined) {
+            if (value) {
+                this.audio.mute();
+            } else {
+                this.audio.unmute();
             }
-            if (value !== undefined) {
-                this.runCart()(value);
-            }
-    
-        })
+        }
+    }
+
+    @Input('paused') 
+    set paused(value: boolean) {
+        if (this.wishboneRuntime) {
+            this.wishboneRuntime.pause(value);
+        }
     }
 
     private renderer: THREE.WebGLRenderer;
@@ -70,6 +89,12 @@ export class ChiChiComponent implements AfterViewInit {
         this.renderer = new THREE.WebGLRenderer();
         this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
         this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
+
+        const listener = new THREE.AudioListener();
+        // create function to play nes audio
+        this.chichiPlayer = chichiPlayer(listener);
+        // create function to render nes video
+        this.chichiDrawer = drawFrameWebGL(this.renderer, listener);
     }
 
     ngAfterViewInit(): void {
@@ -82,14 +107,19 @@ export class ChiChiComponent implements AfterViewInit {
     private runCart(): (value: BaseCart) => void {
         return (rom) => {
             this.zone.runOutsideAngular(() => {
-                
                 const runchi = setupIO({
                     keydown: (val: (e: any) => void) => this.onkeydown = val,
                     keyup: (val: (e: any) => void) => this.onkeyup = val,
-                    getDrawFrame: drawFrameWebGL(this.renderer)
+                    drawFrame: this.chichiDrawer
                 });
 
-                this.teardown = runchi(WB.createWishboneFromCart(rom))
+                this.teardown().then(p=>{
+                    const wishbone = WB.createWishboneFromCart(rom);
+                    this.audio = this.chichiPlayer(wishbone.wavSharer);
+                    this.wishboneRuntime = runchi(wishbone);
+                    this.teardown = this.wishboneRuntime.teardown;
+                });
+
             });
         };
     }
