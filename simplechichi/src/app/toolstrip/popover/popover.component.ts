@@ -57,9 +57,9 @@ export class PopoverComponent implements AfterViewInit {
 
     buttonclick = new EventEmitter(true);
 
-    private showToolStrip = new EventEmitter<boolean>(true);
+    showToolStrip = new EventEmitter<boolean>(true);
 
-    private hideToolStrip = new EventEmitter<boolean>(true);
+    hideToolStrip = new EventEmitter<boolean>(true);
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private cd: ChangeDetectorRef) {
 
@@ -92,7 +92,7 @@ export class PopoverComponent implements AfterViewInit {
     // clickHandler(event: any) {
     //     this.buttonclick.emit(event);
     // }
-    private float(floating: boolean) {
+    float(floating: boolean) {
 
         this.floaters.forEach((v, i) => {
             if (i > 0) {

@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { loadCartFromFileList, loadCartFromUrl } from '../chichi/wishbone/filehandler';
+import {  loadCartFromUrl, loadCartFromFile } from '../chichi/wishbone/filehandler';
 
 @Component({
   selector: 'app-root',
@@ -12,22 +12,17 @@ export class AppComponent {
   cart: any;
   title = 'app';
   url='assets/metroid.nes';
-  mute: false;
+  mute = false;
 
   constructor() {
 
   }
   
-  pause() {
-    this.paused = !this.paused;
-  }
-
   load() {
-    loadCartFromUrl(this.url).subscribe(cart => this.cart = cart);
+    loadCartFromUrl(this.url).then(cart => this.cart = cart);
   }
-
 
   loadfile(e: Event) {
-      loadCartFromFileList((<HTMLInputElement>e.target).files).subscribe(cart => this.cart = cart);
+    loadCartFromFile((<HTMLInputElement>e.target).files[0]).then(cart => this.cart = cart);
   }
 }

@@ -1,7 +1,6 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, NgZone, Input } from '@angular/core';
 import * as THREE from 'three';
 
-import { loadCartFromFileList, loadCartFromUrl } from '../wishbone/filehandler';
 import * as Pads from '../wishbone/keyboard/wishbone.controlpad';
 import * as WB from '../wishbone/wishbone';
 import { drawFrameWebGL } from '../threejs/threejs.drawframe';

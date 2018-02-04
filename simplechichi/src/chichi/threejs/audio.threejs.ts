@@ -17,27 +17,23 @@ const nesAudioLength = 8192;
 export const chichiPlayer = (listener: THREE.AudioListener) =>  {
 
     const sound = new THREE.Audio(listener);
-
     const audioCtx = sound.context;
-    
     const audioSource = audioCtx.createBufferSource();
-    sound.setNodeSource(audioSource);
-    const sampleRate = audioCtx.sampleRate;
 
+    sound.setNodeSource(audioSource);
+
+    const sampleRate = audioCtx.sampleRate;
     const bufferSize = nesAudioLength << 1;
     const chunkSize = nesAudioLength >> 1;
-
-    let lastReadPos = 0;
 
     audioSource.buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
     const scriptNode = audioCtx.createScriptProcessor(chunkSize, 1, 1);
     const gainNode = audioCtx.createGain();
 
-    gainNode.gain.value = 0.3;
+    gainNode.gain.value = 0.5;
 
     audioSource.connect(gainNode);
     audioSource.connect(scriptNode);
-
 
     scriptNode.connect(gainNode);
     gainNode.connect(audioCtx.destination);
@@ -75,7 +71,6 @@ const streamChiChiAudio = (wavForms: WavSharer) => (audioProcessingEvent: AudioP
 
     const obuf = audioProcessingEvent.outputBuffer;
     const outputData = obuf.getChannelData(0);
-    const loop = len => pos =>pos < 0 ? pos + len : pos;
     
     let nesBytesAvailable = wavForms.audioBytesWritten;
 
@@ -88,8 +83,6 @@ const streamChiChiAudio = (wavForms: WavSharer) => (audioProcessingEvent: AudioP
         lastReadPos += nesAudio.length;
     }
     
-    //loop(nesAudio.length)(lastReadPos);
-
     for (let sample = 0; sample < outputData.length; sample++) {
         outputData[sample] = nesAudio[lastReadPos++];
         if (lastReadPos >= nesAudio.length) {

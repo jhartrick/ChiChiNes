@@ -25,8 +25,10 @@ const createWishboneLoader = (cart: BaseCart) => {
     const chichi = new ChiChiMachine();
 
     const result: Wishbone = {
+
         wavSharer: chichi.SoundBopper.writer,
         vbuffer:  chichi.Cpu.ppu.byteOutBuffer,
+
         padOne:  chichi.Cpu.PadOne,
         padTwo:  chichi.Cpu.PadOne,
         poweron:  chichi.PowerOn.bind(chichi),
@@ -67,16 +69,16 @@ export const runAChichi = (wishbone: Wishbone, io: ChiChiIO, padOne: WishBoneCon
 
     const teardown =  (): Promise<void> => {
         clearInterval(interval);
-        return new Promise((resolve, reject) => {
+        return (async function() {
             setTimeout(()=> {
                 drawFrame = null,
                 wishbone.setpads = null,
                 wishbone.wavSharer = null,
                 wishbone.poweroff();
-                resolve();
             }, 60);
-        });
+        }())
     }
+    
 
     const pause = (val: boolean) => { 
         paused = val;

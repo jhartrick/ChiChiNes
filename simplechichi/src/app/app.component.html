@@ -1,11 +1,11 @@
 
 <div>
-<chichi-viewer [cart]='cart' [mute]='mute' [paused]='paused' ></chichi-viewer>
+    <chichi-viewer [cart]='cart' [mute]='mute' [paused]='paused' ></chichi-viewer>
 </div>
 <div>
     <input #fileInput type=file ng-hide (change)='loadfile($event)' style='display:none' />
     <chichi-popover icon='upload' (click)="fileInput.click()" ></chichi-popover>
-    <chichi-popover [icon]='mute ? "volume-off" : "volume-high"' (click)="mute = ! mute" ></chichi-popover>
-    <chichi-popover [icon]='paused ? "play" : "pause" ' (click)="pause()" ></chichi-popover>
+    <chichi-popover [icon]='mute ? "volume-off" : "volume-high"' (click)="mute = !mute" ></chichi-popover>
+    <chichi-popover [icon]='paused ? "play" : "pause" ' (click)="paused = !paused" ></chichi-popover>
 
 </div>

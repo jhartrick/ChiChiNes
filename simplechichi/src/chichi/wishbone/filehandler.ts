@@ -5,62 +5,73 @@ import { BaseCart, iNESFileHandler } from 'chichi';
 import * as JSZip from 'jszip';
 import * as crc from 'crc';
 
-const loadNesFile = (filedata: File, name: string): Observable<BaseCart> => {
-    console.log('loading file ' + name);
-    const obs = new Observable<BaseCart>((observer) => {
-        const reader: FileReader = new FileReader();
+const loadFile = (filedata: File) => {
+    const reader: FileReader = new FileReader();
+    const promise = new Promise<BaseCart>((resolve, reject)=>{ 
         reader.onload = (ze) => {
-            const rom = reader.result;
-            observer.next(iNESFileHandler(rom));
+            const ab = reader.result;
+            resolve(iNESFileHandler(ab));
         };
-        reader.readAsArrayBuffer(filedata);
     });
-    return obs;
+    reader.readAsArrayBuffer(filedata);
+    return promise;
+} 
+
+const loadNesFile = async (filedata: File, name: string) => {
+    const reader: FileReader = new FileReader();
+    return await loadFile(filedata);
 };
 
-const loadZipFile = (file: File): Observable<BaseCart> => {
-    return new Observable<BaseCart>(observer => {
-        const fileReader: FileReader = new FileReader();
-        const name = file.name;
-        fileReader.onload = (e) => {
-            const rom: number[] = Array.from(new Uint8Array(fileReader.result));
-            // zip file
-            JSZip.loadAsync(rom).then((zip: any) => {
-                zip.forEach((relativePath, zipEntry) => {  // 2) print entries
-                    if (zipEntry.name.endsWith('.nes')) {
-                        zipEntry.async('blob').then((fileData) => {
-                            loadNesFile(fileData, zipEntry.name).subscribe((cart) => observer.next(cart));
-                        });
-                    }
-                });
-            });
-
-        };
-        fileReader.readAsArrayBuffer(file);
-    });
-};
-
-export const loadCartFromFileList = (files: FileList): Observable<BaseCart> => {
-    return new Observable<BaseCart>(observer => {
-        const file = files[0];
-        if (file.name.endsWith('.zip')) {
-             loadZipFile(file).subscribe((cart) => {
-                 observer.next(cart);
-             });
-        } else if (file.name.endsWith('.nes')) {
-            loadNesFile(file, file.name).subscribe((cart) => observer.next(cart));
-        } else {
-            observer.error('invalid file type')
-        }
-    });
+const blobToFile = (theBlob: Blob, fileName:string): File => {
+    Object.assign(theBlob, { lastModifiedDate: new Date, name: fileName });
+    return <File>theBlob;
 }
 
-export const loadCartFromUrl = (url: string): any => {
-    return Observable.fromPromise(
-        fetch(url).then((response) => {
-            return response.arrayBuffer();
-        }).then((buffer) => {
-            return iNESFileHandler(buffer);
-        })
-    );
+const loadZipFile = async (file: File) => {
+    const fileReader: FileReader = new FileReader();
+    const name = file.name;
+    return new Promise<BaseCart>((r,x) => { 
+
+        fileReader.onload = (e) => {
+            (async ()=>{
+                const rom: number[] = Array.from(new Uint8Array(fileReader.result));
+                // zip file
+                const zip = await JSZip.loadAsync(rom);
+                const list = zip.filter((relativePath, zipEntry) => zipEntry.name.endsWith('.nes'));
+                if (list.length > 0) {
+                    const zipEntry = list[0];
+                    const blob = await zipEntry.async('blob');
+                    r(await loadFile(blobToFile(blob, zipEntry.name)));
+                } else {
+                    x('no nes file found in zip.')
+                }
+            })();
+        }
+        fileReader.readAsArrayBuffer(file);
+    })
+};
+
+export const loadCartFromFile = async (file: File) => {
+    let cart: BaseCart = undefined;
+    return (async () => {
+        try {
+            if (file.name.endsWith('.zip')) {
+                cart = await loadZipFile(file);
+           } else if (file.name.endsWith('.nes')) {
+                cart = await loadNesFile(file, file.name);
+           } else {
+               throw new Error(`invalid file type ${file.name}`);
+           }
+        } catch (e) {
+            console.log(e);
+        }
+        return cart;
+    })();
+}
+
+export const loadCartFromUrl = async (url: string)=> {
+    return (async () => {
+        const response = await fetch(url);
+        return loadFile(blobToFile(await response.blob(), url));
+    })();
 };
