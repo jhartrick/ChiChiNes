@@ -1,11 +1,12 @@
-
-<div>
-    <chichi-viewer [cart]='cart' [mute]='mute' [paused]='paused' ></chichi-viewer>
-</div>
-<div>
-    <input #fileInput type=file ng-hide (change)='loadfile($event)' style='display:none' />
-    <chichi-popover icon='upload' (click)="fileInput.click()" ></chichi-popover>
-    <chichi-popover [icon]='mute ? "volume-off" : "volume-high"' (click)="mute = !mute" ></chichi-popover>
-    <chichi-popover [icon]='paused ? "play" : "pause" ' (click)="paused = !paused" ></chichi-popover>
-
+<div class='chichi'>
+    <chichi-canvasviewer [wishbone]='wishbone'></chichi-canvasviewer>
+    <!-- <chichi-viewer [wishbone]='wishbone'></chichi-viewer> -->
+    <div class='menu' >
+        <input #fileInput type=file ng-hide (change)='loadfile($event)' style='display:none' />
+        <chichi-popover icon='upload' (click)="fileInput.click()"></chichi-popover>
+        <chichi-popover [icon]='muted ? "volume-off" : "volume-high"' (click)="muted = !muted; mute(muted);"></chichi-popover>
+        <chichi-popover [icon]='paused ? "play" : "pause" ' (click)="paused = !paused; pause(paused);"></chichi-popover>
+        <chichi-popover icon='chip' *ngIf="cart" (click)='dialogService.showCartInfo(cart)' >
+        </chichi-popover>
+    </div>
 </div>

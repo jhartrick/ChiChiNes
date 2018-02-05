@@ -3,7 +3,6 @@ import { ChiChiCPPU } from './ChiChiCPU';
 import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from './StateBuffer';
 export declare class ChiChiPPU {
-    static pal: Uint32Array;
     LastcpuClock: number;
     NMIHandler: () => void;
     frameFinished: () => void;
@@ -13,7 +12,6 @@ export declare class ChiChiPPU {
     memoryMap: MemoryMap;
     yPosition: number;
     xPosition: number;
-    vbufLocation: number;
     currentAttributeByte: number;
     spriteSize: number;
     spritesOnThisScanline: number;
@@ -62,7 +60,7 @@ export declare class ChiChiPPU {
     fetchTile: boolean;
     patternEntry: number;
     patternEntryByte2: number;
-    byteOutBuffer: Uint8Array;
+    pixelBuffer: PixelBuffer;
     GetPPUStatus(): PpuStatus;
     readonly PatternTableIndex: number;
     readonly SpritePatternTableIndex: number;
@@ -82,9 +80,18 @@ export declare class ChiChiPPU {
     getNameTablePixel(): number;
     getAttrEntry(ppuNameTableMemoryStart: number, i: number, j: number): number;
     advanceClock(ticks: number): void;
-    private renderPixel(clock);
-    UpdatePixelInfo(): void;
+    renderPixel(clock: number): void;
+    updatePixelInfo(): void;
     setupStateBuffer(sb: StateBuffer): StateBuffer;
     attachStateBuffer(sb: StateBuffer): void;
     updateStateBuffer(sb: StateBuffer): void;
 }
+export interface PixelBuffer {
+    reset: () => void;
+    buffer: ArrayBuffer;
+    draw: (pixel: number) => void;
+}
+export declare const PixelBuffers: {
+    createRawPixelBuffer: (buffer: ArrayBuffer) => PixelBuffer;
+    createDecodedPixelBuffer: (palette?: Uint32Array) => (buffer: ArrayBuffer) => PixelBuffer;
+};

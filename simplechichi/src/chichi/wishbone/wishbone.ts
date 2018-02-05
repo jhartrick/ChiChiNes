@@ -1,34 +1,46 @@
-import { ChiChiMachine, BaseCart, WavSharer, ChiChiInputHandler } from "chichi";
+import { ChiChiMachine, BaseCart, WavSharer, ChiChiInputHandler, PixelBuffer, ChiChiPPU } from "chichi";
 import { ChiChiIO } from "../chichi.io";
 import { WishBoneControlPad } from "./keyboard/wishbone.controlpad";
+import { ChiChiCPPU } from "../../../../chichilib/lib/chichi/chichi/ChiChiCPU";
 export interface Wishbone
 {
     wavSharer: WavSharer;
-    vbuffer: Uint8Array | Uint8ClampedArray;
     padOne: ChiChiInputHandler;
     padTwo: ChiChiInputHandler;
+
+    io: ChiChiIO;
     
     poweron: () => void;
     poweroff: () => void;
     reset: () => void;
     runframe: () => void;
     setpads: () => void;
+
+    getPixelBuffer: ()=> PixelBuffer;
+    setPixelBuffer: (buffer: any) => void;
 }
 
 export interface WishboneRuntime {
      teardown: () => Promise<void>; 
      pause: (val: boolean) => void; 
+     setFrameTime: (n: number) => void; 
      wishbone: Wishbone;
 }
 
 const createWishboneLoader = (cart: BaseCart) => {
     const chichi = new ChiChiMachine();
 
+    const setPixelBuffer = (ppu: ChiChiPPU) => (buffer: any) => {
+        ppu.pixelBuffer = buffer;
+    }
+    const getPixelBuffer = (ppu: ChiChiPPU) => (): PixelBuffer => ppu.pixelBuffer;
+
+
     const result: Wishbone = {
 
         wavSharer: chichi.SoundBopper.writer,
-        vbuffer:  chichi.Cpu.ppu.byteOutBuffer,
-
+        getPixelBuffer: getPixelBuffer(chichi.Cpu.ppu),
+        setPixelBuffer: setPixelBuffer(chichi.Cpu.ppu),
         padOne:  chichi.Cpu.PadOne,
         padTwo:  chichi.Cpu.PadOne,
         poweron:  chichi.PowerOn.bind(chichi),
@@ -36,6 +48,7 @@ const createWishboneLoader = (cart: BaseCart) => {
         reset:  chichi.Reset.bind(chichi),
         runframe:  chichi.RunFrame.bind(chichi),
         setpads: () => undefined,
+        io: undefined
     }
     chichi.loadCart(cart);
     chichi.PowerOn();
@@ -52,33 +65,37 @@ export const createWishboneFromCart = (cart: BaseCart) => {
 
 // returns options for running emulator
 export const runAChichi = (wishbone: Wishbone, io: ChiChiIO, padOne: WishBoneControlPad): WishboneRuntime => {
-    let drawFrame = io.drawFrame(wishbone);
+
+
     wishbone.setpads = updatePadState(wishbone.padOne.ControlPad, padOne);
     let paused = false;
+    let frameTime = 1000.0/60;
     const run = () => {        
         wishbone.setpads();
         wishbone.runframe();
-        drawFrame();
+        io.drawFrame();
     }
+    let interval;
 
-    let interval = setInterval(p => {
-        if (!paused) { 
-            run(); 
-        }
-    }, 1000.0/60);
+    const runInterval = () => {
+        interval = setInterval(p => {
+            if (!paused) { 
+                run(); 
+            }
+        }, frameTime);
+    };
+    runInterval();
 
     const teardown =  (): Promise<void> => {
         clearInterval(interval);
         return (async function() {
             setTimeout(()=> {
-                drawFrame = null,
                 wishbone.setpads = null,
                 wishbone.wavSharer = null,
                 wishbone.poweroff();
             }, 60);
         }())
     }
-    
 
     const pause = (val: boolean) => { 
         paused = val;
@@ -87,5 +104,12 @@ export const runAChichi = (wishbone: Wishbone, io: ChiChiIO, padOne: WishBoneCon
         }
     }
 
-    return { teardown, pause, wishbone };
+    const setFrameTime = (time: number) => {
+        
+        clearInterval(interval);
+        frameTime = time;
+        runInterval();
+    }
+
+    return { teardown, pause, wishbone, setFrameTime };
 }

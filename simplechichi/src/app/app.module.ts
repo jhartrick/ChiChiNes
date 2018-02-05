@@ -5,7 +5,9 @@ import { ChiChiModule } from '../chichi/chichi.module';
 import {MatButtonModule, MatCheckboxModule, MatIconRegistry} from '@angular/material';
 import { ToolStripComponent } from './toolstrip/toolstrip.component';
 import { ToolStripModule } from './toolstrip/toolstrip.module';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { CartInfoModule } from '../cartinfo/cartinfo.module';
+import { DialogService } from './dialog.service';
 
 @NgModule({
   declarations: [
@@ -17,9 +19,11 @@ import { HttpClientModule } from '@angular/common/http';
     MatButtonModule,
     ToolStripModule,
     HttpClientModule,
+    CartInfoModule,
+    HttpClientModule,
     ChiChiModule
   ],
-  providers: [MatIconRegistry],
+  providers: [MatIconRegistry, HttpClient, DialogService],
   bootstrap: [AppComponent]
 })
 export class AppModule {

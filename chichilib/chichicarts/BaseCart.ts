@@ -16,7 +16,7 @@ export class BaseCart {
     batterySRAM: boolean = false;
     customPalette: number[];
     ramMask = 0x1fff;
-    
+    fileName: string = '';
     setupMapperStateBuffer(buffer: ArrayBuffer, start: number) {
     }
 
@@ -147,7 +147,7 @@ export class BaseCart {
 
         this.usesSRAM = file.usesSRAM;
         this.batterySRAM = file.batterySRAM;
-        this.ROMHashFunction = ''; // file.romCRC;
+        this.ROMHashFunction = file.romCRC;
         this.mirroring = file.mirroring;
         this.fourScreen = file.fourScreen;
     }
@@ -255,7 +255,6 @@ export class BaseCart {
         }
     }
 
-
     maskBankAddress(bank: number): number {
         return bank % (this.prgRomCount * 2);
     }
@@ -307,7 +306,6 @@ export class BaseCart {
 
         for (var i = 0; i < (numberOf8kBanks << 3); i++) {
             this.ppuBankStarts[oneKdest + i] = (oneKsrc + i) * 1024;
-
         }
     }
 

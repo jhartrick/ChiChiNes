@@ -5,9 +5,9 @@ import { ChiChiCPPU } from './ChiChiCPU';
 import { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { StateBuffer } from './StateBuffer';
 const maxSpritesPerScanline = 64;
+const nesPallette = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
 export class ChiChiPPU  {
-    public static pal: Uint32Array = new Uint32Array([7961465, 10626572, 11407400, 10554206, 7733552, 2753820, 725017, 271983, 278855, 284436, 744967, 3035906, 7161605, 0, 131586, 131586, 12566719, 14641430, 15614283, 14821245, 12196292, 6496468, 2176980, 875189, 293472, 465210, 1597716, 5906953, 11090185, 2961197, 197379, 197379, 16316149, 16298569, 16588080, 16415170, 15560682, 12219892, 7115511, 4563694, 2277591, 2151458, 4513360, 1957181, 14604331, 6579811, 263172, 263172, 16447992, 16441012, 16634316, 16500447, 16236786, 14926838, 12831991, 11393781, 2287340, 5500370, 11858360, 14283440, 15921318, 13158344, 328965, 328965, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
     public LastcpuClock: number = 0;
 
@@ -27,8 +27,6 @@ export class ChiChiPPU  {
     // scanline position
     yPosition: number = 0;
     xPosition: number = 0;
-    // current draw location in outbuffer    
-    vbufLocation: number = 0;
     
     currentAttributeByte: number = 0;
 
@@ -97,7 +95,10 @@ export class ChiChiPPU  {
     // tile bytes currently latched in ppu
     patternEntry = 0; patternEntryByte2 = 0;
 
-    public byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
+    // pixelBuffer = createRawPixelBuffer(new ArrayBuffer(256*256*4));
+    pixelBuffer = createDecodedPixelBuffer()(new ArrayBuffer(256*256*4));
+
+//    public byteOutBuffer = new Uint8Array(256 * 256 * 4); // System.Array.init(262144, 0, System.Int32);
 
     GetPPUStatus(): PpuStatus {
         return {
@@ -509,7 +510,7 @@ export class ChiChiPPU  {
             switch (this.frameClock) {
                 case 0: // start of rendering
                     this.shouldRender = true;
-                    this.vbufLocation = 0;
+                    this.pixelBuffer.reset();
                     this.currentXPosition = 0;
                     this.currentYPosition = 0;
                     
@@ -560,7 +561,7 @@ export class ChiChiPPU  {
     }
 
     renderPixel(clock: number) {
-        if (this.currentXPosition < 256 && this.vbufLocation < 61440) {
+        if (this.currentXPosition < 256 && this.currentYPosition <= 240) {
             /* update x position */
             this.xPosition = (this.currentXPosition + this.lockedHScroll);
             if ((this.xPosition & 7) === 0) {
@@ -592,9 +593,13 @@ export class ChiChiPPU  {
                 this.hitSprite = true;
                 this.status = this.status | 64;
             }
-            this.byteOutBuffer[this.vbufLocation * 4] = this.palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
-            this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
-            this.vbufLocation++;
+
+            const pixel =  this.palette[(this.isForegroundPixel || (tilePixel === 0 && spritePixel !== 0)) ? spritePixel : tilePixel];
+            this.pixelBuffer.draw(pixel);
+
+            // this.byteOutBuffer[this.vbufLocation * 4] = this.palette[];
+            // this.byteOutBuffer[(this.vbufLocation * 4) + 1] = this.emphasisBits;
+            // this.vbufLocation++;
         }
         this.currentXPosition++;
         if (this.currentXPosition > 340) {
@@ -698,3 +703,53 @@ export class ChiChiPPU  {
     }
 }
 
+export interface PixelBuffer {
+    reset: () => void;
+    buffer: ArrayBuffer;
+    draw: (pixel: number) => void;
+}
+
+const createRawPixelBuffer = (buffer: ArrayBuffer): PixelBuffer => {
+    let vbufLocation = 0;
+    const byteOutBuffer = new Uint8Array(buffer);
+
+    const draw = (pixel: number) => {
+        byteOutBuffer[vbufLocation * 4] = pixel;
+        vbufLocation++;
+    }
+
+    const reset = () => {
+        vbufLocation = 0;
+    }
+    
+    return {
+        reset,
+        buffer,
+        draw
+    }
+}
+
+const createDecodedPixelBuffer = (palette = nesPallette) => (buffer: ArrayBuffer): PixelBuffer => {
+    let vbufLocation = 0;
+    const byteOutBuffer = new Uint8Array(buffer);
+    const intArray = new Uint32Array(buffer);
+
+    const draw = (pixel: number) => {
+        intArray[vbufLocation++] = palette[pixel & 63] | 0xff000000;
+    }
+
+    const reset = () => {
+        vbufLocation = 0;
+    }
+
+    return {
+        reset,
+        buffer,
+        draw
+    }
+}
+
+export const PixelBuffers = {
+    createRawPixelBuffer,
+    createDecodedPixelBuffer
+};

@@ -85,6 +85,6 @@ const MapperFactory = {
 
 }
 
-const createCart = (file: NESFile.NesFile) => (MapperFactory[file.mapperId] !== undefined) ? new MapperFactory[file.mapperId](file) : new UnsupportedCart(file);
+const createCart = (file: NESFile.NesFile): BaseCart => (MapperFactory[file.mapperId] !== undefined) ? new MapperFactory[file.mapperId](file) : new UnsupportedCart(file);
 
 export const iNESFileHandler = (buffer: ArrayBuffer) =>  createCart(NESFile.decodeFile(buffer));

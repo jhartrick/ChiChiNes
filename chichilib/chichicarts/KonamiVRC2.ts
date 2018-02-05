@@ -65,16 +65,7 @@ export class VRC2or4Cart extends VRCIrqBase {
     swapMode: boolean = false;
     microwireLatch: number = 0;
 
-    latches:number[] =[
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-        ] ;
+    latches:number[] =[ 0, 0, 0, 0, 0, 0, 0, 0 ];
     
     regNums = [
         0x00,

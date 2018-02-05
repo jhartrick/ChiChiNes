@@ -28,7 +28,6 @@ export const basicEncoder = () => {
 
     return (vbuffer: Uint8Array) => {
         const text = new THREE.DataTexture(vbuffer, 256, 256, THREE.RGBAFormat);
-
         const pal =  new Uint8Array(256 * 4);
         for (let i = 0; i < 256; i++) {
             const color = defaultPalette[i & 0x3f];
@@ -38,7 +37,6 @@ export const basicEncoder = () => {
             pal[(i * 4) + 3] =  0xFF;
         }
         const paltext = new THREE.DataTexture(pal, 256, 1, THREE.RGBAFormat);
-
         const material = new THREE.ShaderMaterial({
             uniforms: {
                 myTexture: { value: text },

@@ -184,7 +184,7 @@ export const setupVSMemoryMap =  (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: 
             setByte : cpuBus.setByte(cart),
             getPPUByte : (clock: number, address: number) => cart.getPPUByte(clock, address),
             setPPUByte : (clock: number, address: number, data: number) => cart.setPPUByte(clock, address, data),
-            irqRaised: cart.irqRaised || apu.interruptRaised,
+            irqRaised: () => cart.irqRaised || apu.interruptRaised,
             advanceClock: (ticks: number) => clocked.forEach(p => p.advanceClock(ticks)),
             advanceScanline: (ticks: number) =>  {  
                                                         while (ticks-- >= 0) {

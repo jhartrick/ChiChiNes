@@ -1,3 +1,5 @@
+import * as crc from 'crc';
+
 export interface NesFile {
     // rom: Uint8Array;
     magicNumber: Uint8Array;
@@ -23,9 +25,11 @@ export interface NesFile {
     batterySRAM: boolean;
     mirroring: number;
     fourScreen: boolean;
+    romCRC: string;
 }
 
-export const decodeFile = (buffer = new ArrayBuffer(16)): NesFile => {
+export const decodeFile = (buffer: ArrayBuffer): NesFile => {
+    const rom = new Uint8Array(buffer, 16);
     const mapperBytes = new Uint8Array(buffer, 6, 3);
     const romCountArray = new Uint8Array(buffer, 4, 2);   
     const ramCountArray = new Uint8Array(buffer, 10, 2);
@@ -84,6 +88,8 @@ export const decodeFile = (buffer = new ArrayBuffer(16)): NesFile => {
         
         batterySRAM: (mapperBytes[0] & 2) === 2,
         mirroring,
-        fourScreen: (mapperBytes[0] & 8) === 8
+        fourScreen: (mapperBytes[0] & 8) === 8,
+        romCRC: crc.crc32(new Buffer(rom)).toString(16).toUpperCase()
+
     }
 }

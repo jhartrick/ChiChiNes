@@ -195,7 +195,7 @@ export class ChiChiCPPU {
             this.advanceClock(7);
             this.handleNMI = false;
             this.nonMaskableInterrupt();
-        } else if (this.memoryMap.irqRaised) {
+        } else if (this.memoryMap.irqRaised()) {
             this.interruptRequest();
         }
 

@@ -1,4 +1,3 @@
-import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/fromPromise';
 
 import { BaseCart, iNESFileHandler } from 'chichi';
@@ -31,7 +30,6 @@ const loadZipFile = async (file: File) => {
     const fileReader: FileReader = new FileReader();
     const name = file.name;
     return new Promise<BaseCart>((r,x) => { 
-
         fileReader.onload = (e) => {
             (async ()=>{
                 const rom: number[] = Array.from(new Uint8Array(fileReader.result));
@@ -65,6 +63,7 @@ export const loadCartFromFile = async (file: File) => {
         } catch (e) {
             console.log(e);
         }
+        cart.fileName = file.name;
         return cart;
     })();
 }

@@ -2,7 +2,7 @@
 export { ChiChiMachine } from './ChiChiMachine';
 export { ChiChiCPPU } from './ChiChiCPU';
 export { ChiChiAPU } from './ChiChiAudio';
-export { ChiChiPPU } from './ChiChiPPU';
+export { PixelBuffer, PixelBuffers, ChiChiPPU } from './ChiChiPPU';
 export { BaseCart } from '../chichicarts/BaseCart';
 
 export { ChiChiInputHandler } from './ChiChiControl';
