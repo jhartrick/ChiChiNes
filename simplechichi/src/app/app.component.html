@@ -1,7 +1,7 @@
 <div class='chichi'>
     <!-- <chichi-canvasviewer [wishbone]='wishbone'></chichi-canvasviewer> -->
     <chichi-viewer [wishbone]='wishbone'></chichi-viewer>
-    <div class='menu' >
+    <chichi-toolstrip class='menu' >
         <input #fileInput type=file ng-hide (change)='loadfile($event)' style='display:none' />
         <chichi-popover icon='upload' (click)="fileInput.click()"></chichi-popover>
         <div *ngIf="cart" >
@@ -10,5 +10,5 @@
             <chichi-popover icon='chip' (click)='dialogService.showCartInfo(cart)' ></chichi-popover>
             <chichi-popover icon='baby-buggy'  (click)='dialogService.showCheats(wishbone)'></chichi-popover>
         </div>
-    </div>
+    </chichi-toolstrip>>
 </div>

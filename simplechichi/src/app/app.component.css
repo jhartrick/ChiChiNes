@@ -11,3 +11,8 @@ width:100%;
     position:absolute;
     top:0%;
 }
+
+chichi-toolstrip {
+  position: absolute;
+  height: 100%;
+}

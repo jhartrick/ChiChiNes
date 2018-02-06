@@ -31,7 +31,8 @@ import { PopoverSegmentComponent } from './popover/popover.segment';
   ],
   exports: [
     PopoverComponent,
-    PopoverSegmentComponent
+    PopoverSegmentComponent,
+    ToolStripComponent
   ]
 })
 export class ToolStripModule { }

@@ -1,9 +1,10 @@
+
 <div class='popover' [@hoverAnimation]='hoverState' >
     <!-- <chichi-ui-segment style='z-index: 9999' cssClass='floater' width='64px' left='0px'>
         <ng-template chichi-popover></ng-template>
     </chichi-ui-segment> -->
     <chichi-ui-segment style='z-index: 9999' cssClass='floater' width='64px' left='0px' (mouseenter)="hoverState='hover'"  (click)="showToolStrip.next(true)" (mouseleave)="hideToolStrip.next(false); hoverState = ''"  >
-        <button mat-fab >
+        <button class='circlebutton' >
             <mat-icon svgIcon='{{ icon }}'></mat-icon>
         </button>
     </chichi-ui-segment>
