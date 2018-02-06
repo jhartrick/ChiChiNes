@@ -1,7 +1,16 @@
 import { ChiChiMachine, BaseCart, WavSharer, ChiChiInputHandler, PixelBuffer, ChiChiPPU } from "chichi";
 import { ChiChiIO } from "../chichi.io";
 import { WishBoneControlPad } from "./keyboard/wishbone.controlpad";
-import { ChiChiCPPU } from "../../../../chichilib/lib/chichi/chichi/ChiChiCPU";
+import { ChiChiCPPU } from "chichi";
+
+
+export interface WishboneRuntime {
+    teardown: () => Promise<void>; 
+    pause: (val: boolean) => void; 
+    setFrameTime: (n: number) => void; 
+    wishbone: Wishbone;
+}
+
 export interface Wishbone
 {
     wavSharer: WavSharer;
@@ -9,7 +18,10 @@ export interface Wishbone
     padTwo: ChiChiInputHandler;
 
     io: ChiChiIO;
-    
+    chichi?: ChiChiMachine;
+    cart?: BaseCart;
+    runtime?: WishboneRuntime;
+
     poweron: () => void;
     poweroff: () => void;
     reset: () => void;
@@ -18,13 +30,7 @@ export interface Wishbone
 
     getPixelBuffer: ()=> PixelBuffer;
     setPixelBuffer: (buffer: any) => void;
-}
 
-export interface WishboneRuntime {
-     teardown: () => Promise<void>; 
-     pause: (val: boolean) => void; 
-     setFrameTime: (n: number) => void; 
-     wishbone: Wishbone;
 }
 
 const createWishboneLoader = (cart: BaseCart) => {
@@ -35,9 +41,9 @@ const createWishboneLoader = (cart: BaseCart) => {
     }
     const getPixelBuffer = (ppu: ChiChiPPU) => (): PixelBuffer => ppu.pixelBuffer;
 
-
     const result: Wishbone = {
-
+        chichi: chichi,
+        cart: cart,
         wavSharer: chichi.SoundBopper.writer,
         getPixelBuffer: getPixelBuffer(chichi.Cpu.ppu),
         setPixelBuffer: setPixelBuffer(chichi.Cpu.ppu),
@@ -59,6 +65,7 @@ const updatePadState = (dest: any, src: any) => () => dest.padOneState = src.pad
 
 export const createWishboneFromCart = (cart: BaseCart) => {
     const wishbone = createWishboneLoader(cart);
+    wishbone.cart = cart;
     wishbone.poweron();
     return wishbone;
 };
@@ -110,6 +117,6 @@ export const runAChichi = (wishbone: Wishbone, io: ChiChiIO, padOne: WishBoneCon
         frameTime = time;
         runInterval();
     }
-
+    wishbone.runtime = { teardown, pause, wishbone, setFrameTime };
     return { teardown, pause, wishbone, setFrameTime };
 }

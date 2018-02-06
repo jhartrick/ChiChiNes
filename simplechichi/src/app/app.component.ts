@@ -82,6 +82,7 @@ export class AppComponent {
           };
           const runchi = setupIO(wishbone.io);
           this.wishbone = wishbone;
+          wishbone.cart = value;
           this.runtime = runchi(wishbone);
 
           this.runtime.setFrameTime(1000/60);

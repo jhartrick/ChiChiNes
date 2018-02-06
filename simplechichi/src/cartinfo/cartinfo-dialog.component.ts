@@ -23,13 +23,11 @@ export class CartInfoDialogComponent implements AfterContentInit {
         private elementRef: ElementRef
     ) {
         this.romInfo = data.cart;
-
         this.cartInfo = data.info;
         if (this.data.info && this.data.info.cartridge) {
             this.cartridge = this.data.info.cartridge;
             if (this.cartridge.board) {
                 this.board = this.cartridge.board;
-                console.log(JSON.stringify(this.board));
             }
             if (this.cartridge.game) {
                 this.game = this.cartridge.game;

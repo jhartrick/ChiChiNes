@@ -27,8 +27,8 @@ export const drawFrameWebGL = (renderer: THREE.WebGLRenderer) =>  (wishbone: Wis
 
     return  () => {
         nesEncoder.text.needsUpdate = true;
-        renderer.render(bufferScene, camera, nesRenderTarget);
-        renderer.render(scene, camera );
+        // renderer.render(bufferScene, camera, nesRenderTarget);
+        renderer.render(bufferScene, camera );
     };
 };
 

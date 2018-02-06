@@ -3,28 +3,48 @@ import { BaseCart } from "chichi";
 import { CartInfoDialogComponent } from "../cartinfo/cartinfo-dialog.component";
 import { MatDialog } from "@angular/material";
 import { Injectable } from "@angular/core";
+import { Wishbone } from "../chichi/wishbone/wishbone";
+import { WishboneCheats } from "../cartinfo/cheating/wishbone.cheats";
+import { GameGenieDialogComponent } from "../cartinfo/cheating/gamegenie.dialog.component";
 
 @Injectable()
 export class DialogService {
-    constructor(private http: HttpClient, private dialog: MatDialog) {
-        
+    constructor(private dialog: MatDialog) {
     }
 
     showCartInfo (cart: BaseCart) {
+        (async ()=> {
+            try {
+                const response = await fetch(`assets/carts/${cart.ROMHashFunction}.json`);
+                const info = await response.json();
+                const dialogRef = this.dialog.open(CartInfoDialogComponent, {
+                    height: '80%',
+                    width: '60%',
+                    data: { cart: cart, info: info }
+                });
+            } catch(e) {
+                console.log('', e.message);
+                const dialogRef = this.dialog.open(CartInfoDialogComponent, {
+                        height: '80%',
+                        width: '60%',
+                        data: { cart: cart, info: {} }
+                    });
+                }
+        })();
+    }
 
-        this.http.get(`assets/carts/${cart.ROMHashFunction}.json`)
-        .subscribe((info) => {
-            const dialogRef = this.dialog.open(CartInfoDialogComponent, {
+    showCheats (wishbone: Wishbone) {
+   
+        (async () => {
+            const cheats = await  WishboneCheats.fetchCheats(wishbone.cart.ROMHashFunction);
+            const dialogRef = this.dialog.open(GameGenieDialogComponent, {
                 height: '80%',
                 width: '60%',
-                data: { cart: cart, info: info }
+                data: { codes: cheats }
             });
-        }, (err) => {
-            const dialogRef = this.dialog.open(CartInfoDialogComponent, {
-                height: '80%',
-                width: '60%',
-                data: { cart: cart, info: {} }
+            dialogRef.afterClosed().subscribe(() => {
+                WishboneCheats.applyCheats(wishbone.chichi.Cpu)(cheats);
             });
-        });
+        })();
     }
 }

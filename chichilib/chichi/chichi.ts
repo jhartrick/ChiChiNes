@@ -8,7 +8,7 @@ export { BaseCart } from '../chichicarts/BaseCart';
 export { ChiChiInputHandler } from './ChiChiControl';
 export { WavSharer } from './Audio/CommonAudio'
 export { RunningStatuses, DebugStepTypes, ChiChiCPPU_AddressingModes, CpuStatus, PpuStatus, ChiChiInstruction, ChiChiSprite, AudioSettings } from './ChiChiTypes';
-// export { GameGenieCode, MemoryPatch,   } from './ChiChiCheats';
+export { GameGenieCode, MemoryPatch, ChiChiCheats } from './ChiChiCheats';
 export { DebugHelpers } from './debugging/DebugHelpers';
 // export { WorkerInterop } from './worker/worker.interop';
 

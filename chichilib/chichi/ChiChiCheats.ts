@@ -1,9 +1,9 @@
 const ggDigits = ['A','P','Z','L','G','I','T','Y','E','O','X','U','K','S','V','N'];
 
-export class GameGenieCode {
+export interface GameGenieCode {
     code: string;
     description: string;
-    active = false;
+    active : boolean;
 }
 
 export interface MemoryPatch {
@@ -13,11 +13,8 @@ export interface MemoryPatch {
     active: boolean;
 }
 
-class XmlHolder {
-    static ggXML = ``;
-    }
-    
-export function gameGenieCodeToPatch(code: string) : MemoryPatch {
+function gameGenieCodeToPatch(code: string) : MemoryPatch {
+
         
         let patch: MemoryPatch = null;
         const hexCode = code.split('').map(c =>  {
@@ -62,3 +59,7 @@ export function gameGenieCodeToPatch(code: string) : MemoryPatch {
         }
         return patch;
     }
+
+export const ChiChiCheats = {
+    gameGenieCodeToPatch
+}

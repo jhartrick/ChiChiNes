@@ -1,4 +1,4 @@
-export declare class GameGenieCode {
+export interface GameGenieCode {
     code: string;
     description: string;
     active: boolean;
@@ -9,4 +9,6 @@ export interface MemoryPatch {
     compare: number;
     active: boolean;
 }
-export declare function gameGenieCodeToPatch(code: string): MemoryPatch;
+export declare const ChiChiCheats: {
+    gameGenieCodeToPatch: (code: string) => MemoryPatch;
+};

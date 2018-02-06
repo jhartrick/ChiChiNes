@@ -6,7 +6,7 @@
             <p>CRC: {{ romInfo.ROMHashFunction }} </p>
             <p>Prg Roms: {{ romInfo.prgRomCount }}</p>
             <p>Chr Roms: {{ romInfo.chrRomCount }}</p>
-            <button mat-button *ngIf='romInfo.wram?.batteryBacked' (click)='romInfo.wram.clear()' >Clear Work Ram</button>
+            
         </mat-tab>
         <mat-tab *ngIf="game" label="Game Info">
             <table >

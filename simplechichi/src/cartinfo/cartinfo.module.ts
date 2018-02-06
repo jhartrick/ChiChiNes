@@ -6,13 +6,11 @@ import { MatExpansionModule } from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { CartInfoButtonComponent } from './cartinfo-button.component';
 
 @NgModule({
   declarations: [
-      CartInfoDialogComponent,
-      CartInfoDialogComponent,
-      CartInfoButtonComponent
+      CartInfoDialogComponent
+
   ],
   entryComponents: [
     CartInfoDialogComponent
@@ -28,8 +26,8 @@ import { CartInfoButtonComponent } from './cartinfo-button.component';
 
   ],
   exports: [
-    CartInfoDialogComponent,
-    CartInfoButtonComponent
+    CartInfoDialogComponent
+    
   ]
 })
 export class CartInfoModule { }

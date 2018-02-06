@@ -8,6 +8,7 @@ import { ToolStripModule } from './toolstrip/toolstrip.module';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { CartInfoModule } from '../cartinfo/cartinfo.module';
 import { DialogService } from './dialog.service';
+import { CheatingModule } from '../cartinfo/cheating/cheating.module';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,7 @@ import { DialogService } from './dialog.service';
     ToolStripModule,
     HttpClientModule,
     CartInfoModule,
-    HttpClientModule,
+    CheatingModule,
     ChiChiModule
   ],
   providers: [MatIconRegistry, HttpClient, DialogService],
