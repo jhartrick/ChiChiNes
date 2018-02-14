@@ -960,6 +960,7 @@ export class ChiChiCPPU {
         // this.ppu.HandleEvent(this.clock);
         // this.FindNextEvent();
     }
+    
     ResetInstructionHistory(): void {
         //_instructionHistory = new Instruction[0x100];
         this.instructionHistoryPointer = 0xFF;

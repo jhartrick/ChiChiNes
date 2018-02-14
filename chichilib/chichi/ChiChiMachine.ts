@@ -18,6 +18,7 @@ export class ChiChiMachine {
     private frameOn = false;
     private totalCPUClocks = 0;
     private sb: StateBuffer;
+    
     constructor(cpu? : ChiChiCPPU) {
         
         this.sb = new StateBuffer();
