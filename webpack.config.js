@@ -5,9 +5,10 @@ const configChiChi = {
         chichi: './chichi/chichi.ts'
     },
     output: {
+        path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
         library: 'chichi',
-        libraryTarget: 'commonjs2'
+        libraryTarget: 'umd'
     },
     resolve: {
         extensions: [ '.webpack.js', '.web.js', '.ts', '.js']

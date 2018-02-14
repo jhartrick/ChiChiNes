@@ -7,8 +7,8 @@
     "build": "webpack --config webpack.config.js"
   },
   "private": true,
-  "main": "chichi.js",
-  "types": "lib/chichi/chichi/chichi.d.ts",
+  "main": "dist/chichi.js",
+  "types": "dist/lib/chichi/chichi/chichi.d.ts",
   "dependencies": {
     "@types/crc": "^3.4.0",
     "crc": "^3.5.0",
