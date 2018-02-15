@@ -5,7 +5,7 @@ const configChiChi = {
         chichi: './chichi/chichi.ts'
     },
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, 'package'),
         filename: '[name].js',
         library: 'chichi',
         libraryTarget: 'umd'
