@@ -30,6 +30,10 @@ export class ChiChiControlPad {
     readNumber: number = 0;
     padOneState: number = 0;
 
+    getPadState() {
+        return this.padOneState;
+    }
+
     refresh(): void {
     }
 
@@ -41,7 +45,7 @@ export class ChiChiControlPad {
 
     setByte(clock: number, data: number): void {
         if ((data & 1) == 1) {
-            this.currentByte = this.padOneState;
+            this.currentByte = this. getPadState();
             // if im pushing up, i cant be pushing down
             if ((this.currentByte & 16) == 16) this.currentByte = this.currentByte & ~32;
             // if im pushign left, i cant be pushing right.. seriously, the nes will glitch
@@ -52,31 +56,31 @@ export class ChiChiControlPad {
 }
 
 
-export const createPad = () => {
-    let currentByte = 0;
-    let readNumber = 0;
-    let padOneState = 0;
+// export const createPad = () => {
+//     let currentByte = 0;
+//     let readNumber = 0;
+//     let padOneState = 0;
 
-    const getByte = () => {
-        let result = (currentByte >> readNumber) & 0x01;
-        readNumber = (readNumber + 1) & 7;
-        return (result | 0x40) & 0xFF;
-    }
+//     const getByte = () => {
+//         let result = (currentByte >> readNumber) & 0x01;
+//         readNumber = (readNumber + 1) & 7;
+//         return (result | 0x40) & 0xFF;
+//     }
 
-    const setByte = (data: number): void => {
-        if ((data & 1) == 1) {
-            currentByte = padOneState;
-            // if im pushing up, i cant be pushing down
-            if ((currentByte & 16) == 16) { currentByte = currentByte & ~32; }
-            // if im pushign left, i cant be pushing right.. seriously, the nes will glitch
-            if ((currentByte & 64) == 64) { currentByte = currentByte & ~128; }
-            readNumber = 0;
-        }
-    }
+//     const setByte = (data: number): void => {
+//         if ((data & 1) == 1) {
+//             currentByte = padOneState;
+//             // if im pushing up, i cant be pushing down
+//             if ((currentByte & 16) == 16) { currentByte = currentByte & ~32; }
+//             // if im pushign left, i cant be pushing right.. seriously, the nes will glitch
+//             if ((currentByte & 64) == 64) { currentByte = currentByte & ~128; }
+//             readNumber = 0;
+//         }
+//     }
 
-    return {
-        setByte,
-        getByte
-    }
+//     return {
+//         setByte,
+//         getByte
+//     }
 
-}
+// }

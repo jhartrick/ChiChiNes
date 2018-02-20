@@ -16,11 +16,8 @@ export declare class ChiChiControlPad {
     currentByte: number;
     readNumber: number;
     padOneState: number;
+    getPadState(): number;
     refresh(): void;
     getByte(clock: number): number;
     setByte(clock: number, data: number): void;
 }
-export declare const createPad: () => {
-    setByte: (data: number) => void;
-    getByte: () => number;
-};

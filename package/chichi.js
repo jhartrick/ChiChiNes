@@ -4811,6 +4811,9 @@ var ChiChiControlPad = /** @class */ (function () {
         this.readNumber = 0;
         this.padOneState = 0;
     }
+    ChiChiControlPad.prototype.getPadState = function () {
+        return this.padOneState;
+    };
     ChiChiControlPad.prototype.refresh = function () {
     };
     ChiChiControlPad.prototype.getByte = function (clock) {
@@ -4820,7 +4823,7 @@ var ChiChiControlPad = /** @class */ (function () {
     };
     ChiChiControlPad.prototype.setByte = function (clock, data) {
         if ((data & 1) == 1) {
-            this.currentByte = this.padOneState;
+            this.currentByte = this.getPadState();
             // if im pushing up, i cant be pushing down
             if ((this.currentByte & 16) == 16)
                 this.currentByte = this.currentByte & ~32;
@@ -4833,34 +4836,30 @@ var ChiChiControlPad = /** @class */ (function () {
     return ChiChiControlPad;
 }());
 exports.ChiChiControlPad = ChiChiControlPad;
-exports.createPad = function () {
-    var currentByte = 0;
-    var readNumber = 0;
-    var padOneState = 0;
-    var getByte = function () {
-        var result = (currentByte >> readNumber) & 0x01;
-        readNumber = (readNumber + 1) & 7;
-        return (result | 0x40) & 0xFF;
-    };
-    var setByte = function (data) {
-        if ((data & 1) == 1) {
-            currentByte = padOneState;
-            // if im pushing up, i cant be pushing down
-            if ((currentByte & 16) == 16) {
-                currentByte = currentByte & ~32;
-            }
-            // if im pushign left, i cant be pushing right.. seriously, the nes will glitch
-            if ((currentByte & 64) == 64) {
-                currentByte = currentByte & ~128;
-            }
-            readNumber = 0;
-        }
-    };
-    return {
-        setByte: setByte,
-        getByte: getByte
-    };
-};
+// export const createPad = () => {
+//     let currentByte = 0;
+//     let readNumber = 0;
+//     let padOneState = 0;
+//     const getByte = () => {
+//         let result = (currentByte >> readNumber) & 0x01;
+//         readNumber = (readNumber + 1) & 7;
+//         return (result | 0x40) & 0xFF;
+//     }
+//     const setByte = (data: number): void => {
+//         if ((data & 1) == 1) {
+//             currentByte = padOneState;
+//             // if im pushing up, i cant be pushing down
+//             if ((currentByte & 16) == 16) { currentByte = currentByte & ~32; }
+//             // if im pushign left, i cant be pushing right.. seriously, the nes will glitch
+//             if ((currentByte & 64) == 64) { currentByte = currentByte & ~128; }
+//             readNumber = 0;
+//         }
+//     }
+//     return {
+//         setByte,
+//         getByte
+//     }
+// }
 
 
 /***/ }),
