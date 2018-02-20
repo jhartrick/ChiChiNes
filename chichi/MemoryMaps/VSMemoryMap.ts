@@ -1,12 +1,12 @@
 import { ChiChiCPPU } from "../ChiChiCPU";
 import { ChiChiPPU } from "../ChiChiPPU";
 import { ChiChiAPU } from "../ChiChiAudio";
-import { ChiChiInputHandler } from "../ChiChiControl";
+import { ChiChiControlPad } from "../ChiChiControl";
 import { BaseCart } from "../chichi";
 import { MemoryMap } from "./ChiChiMemoryMap";
 import { StateBuffer } from "../StateBuffer";
 
-export const getByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Rams: Uint8Array) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => (cart: BaseCart) => {
+export const getByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Rams: Uint8Array) => (pad1: ChiChiControlPad) => (pad2: ChiChiControlPad) => (cart: BaseCart) => {
     return (clock: number, address: number): number => {
         let result: number = 0;
         // check high byte, find appropriate handler
@@ -29,11 +29,11 @@ export const getByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU)
                         result = apu.GetByte(clock, address);
                         break;
                     case 0x4016:
-                        result = pad2.GetByte(clock, address) & 1;
+                        result = pad2.getByte(clock, address) & 1;
                         result |= cart.getByte(clock, address) & 0xfe;
                         break;
                     case 0x4017:
-                        result = pad1.GetByte(clock, address) & 1;
+                        result = pad1.getByte(clock, address) & 1;
                         result |= cart.getByte(clock, address) & 0xfe;
                         break;
                 }
@@ -66,7 +66,7 @@ export const getByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU)
     }
 }
 
-export const setByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Rams: Uint8Array) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => (cart: BaseCart) => {
+export const setByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (Rams: Uint8Array) => (pad1: ChiChiControlPad) => (pad2: ChiChiControlPad) => (cart: BaseCart) => {
 
     return (clock: number, address: number, data: number): void => {
         // check high byte, find appropriate handler
@@ -130,8 +130,8 @@ export const setByte = (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU)
                         }
                         break;
                     case 16406:
-                        pad1.SetByte(clock, address, data & 1);
-                        pad2.SetByte(clock, address, data & 1);
+                        pad1.setByte(clock, address, data & 1);
+                        pad2.setByte(clock, address, data & 1);
                         break;
                     default:
                         if (cart.mapsBelow6000)
@@ -149,7 +149,7 @@ const vsMap = {
     setByte: setByte
 }
 
-export const setupVSMemoryMap =  (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => {
+export const setupVSMemoryMap =  (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (pad1: ChiChiControlPad) => (pad2: ChiChiControlPad) => {
     let Rams = new Uint8Array(new ArrayBuffer(8192 * Uint8Array.BYTES_PER_ELEMENT));
 
     const clocked: Array<any> = [ppu,apu];

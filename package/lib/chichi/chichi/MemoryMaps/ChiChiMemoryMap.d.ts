@@ -2,7 +2,7 @@ import { ChiChiCPPU } from "../ChiChiCPU";
 import { ChiChiPPU } from "../ChiChiPPU";
 import { ChiChiAPU } from "../ChiChiAudio";
 import { BaseCart } from "../../chichicarts/BaseCart";
-import { ChiChiInputHandler } from "../ChiChiControl";
+import { ChiChiControlPad } from "../ChiChiControl";
 import { StateBuffer } from "../StateBuffer";
 export interface MemoryMappable {
     getByte(clock: number, address: number): number;
@@ -11,8 +11,8 @@ export interface MemoryMappable {
 export interface MemoryMap {
     ppu: ChiChiPPU;
     apu: ChiChiAPU;
-    pad1: ChiChiInputHandler;
-    pad2: ChiChiInputHandler;
+    pad1: ChiChiControlPad;
+    pad2: ChiChiControlPad;
     cpu: ChiChiCPPU;
     cart: BaseCart;
     Rams: Uint8Array;
@@ -25,4 +25,4 @@ export interface MemoryMap {
     advanceScanline(value: number): void;
     setupStateBuffer(sb: StateBuffer): void;
 }
-export declare const setupMemoryMap: (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (pad1: ChiChiInputHandler) => (pad2: ChiChiInputHandler) => (cart: BaseCart) => MemoryMap;
+export declare const setupMemoryMap: (cpu: ChiChiCPPU) => (ppu: ChiChiPPU) => (apu: ChiChiAPU) => (pad1: ChiChiControlPad) => (pad2: ChiChiControlPad) => (cart: BaseCart) => MemoryMap;

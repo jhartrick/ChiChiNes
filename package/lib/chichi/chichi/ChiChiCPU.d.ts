@@ -1,5 +1,4 @@
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction } from "./ChiChiTypes";
-import { ChiChiInputHandler } from "./ChiChiControl";
 import { ChiChiPPU } from "./ChiChiPPU";
 import { ChiChiAPU } from "./ChiChiAudio";
 import { BaseCart } from '../chichicarts/BaseCart';
@@ -38,8 +37,6 @@ export declare class ChiChiCPPU {
     _instructionHistory: ChiChiInstruction[];
     readonly InstructionHistory: Array<any>;
     readonly InstructionHistoryPointer: number;
-    PadOne: ChiChiInputHandler;
-    PadTwo: ChiChiInputHandler;
     ppu: ChiChiPPU;
     SoundBopper: ChiChiAPU;
     Cart: BaseCart;

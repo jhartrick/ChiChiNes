@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 20);
+/******/ 	return __webpack_require__(__webpack_require__.s = 19);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -2231,7 +2231,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ }),
 /* 2 */
@@ -2419,7 +2419,7 @@ exports.root = _root;
     }
 })();
 //# sourceMappingURL=root.js.map
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ }),
 /* 6 */
@@ -2428,12 +2428,12 @@ exports.root = _root;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var isArray_1 = __webpack_require__(29);
-var isObject_1 = __webpack_require__(30);
-var isFunction_1 = __webpack_require__(16);
-var tryCatch_1 = __webpack_require__(31);
-var errorObject_1 = __webpack_require__(17);
-var UnsubscriptionError_1 = __webpack_require__(32);
+var isArray_1 = __webpack_require__(28);
+var isObject_1 = __webpack_require__(29);
+var isFunction_1 = __webpack_require__(15);
+var tryCatch_1 = __webpack_require__(30);
+var errorObject_1 = __webpack_require__(16);
+var UnsubscriptionError_1 = __webpack_require__(31);
 /**
  * Represents a disposable resource, such as the execution of an Observable. A
  * Subscription has one important method, `unsubscribe`, that takes no argument
@@ -2645,10 +2645,10 @@ exports.$$rxSubscriber = exports.rxSubscriber;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var DMCChannel_1 = __webpack_require__(22);
-var SquareChannel_1 = __webpack_require__(23);
-var TriangleChannel_1 = __webpack_require__(24);
-var NoiseChannel_1 = __webpack_require__(25);
+var DMCChannel_1 = __webpack_require__(21);
+var SquareChannel_1 = __webpack_require__(22);
+var TriangleChannel_1 = __webpack_require__(23);
+var NoiseChannel_1 = __webpack_require__(24);
 var ChiChiAPU = /** @class */ (function () {
     function ChiChiAPU(writer) {
         this.writer = writer;
@@ -3757,7 +3757,6 @@ var getElements = function (blipBuffer, buffer) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChiChiTypes_1 = __webpack_require__(4);
-var ChiChiControl_1 = __webpack_require__(12);
 var PRG_CTR = 0;
 var PRG_ADR = 1;
 var SRMasks_CarryMask = 0x01;
@@ -3809,8 +3808,6 @@ var ChiChiCPPU = /** @class */ (function () {
         // #endregion cheats
         this.instructionHistoryPointer = 255;
         this._instructionHistory = new Array(256); //System.Array.init(256, null, ChiChiInstruction);
-        this.PadOne = new ChiChiControl_1.ChiChiInputHandler();
-        this.PadTwo = new ChiChiControl_1.ChiChiInputHandler();
         // writeInstructionHistory(): void {
         //     const inst: ChiChiInstruction = new ChiChiInstruction();
         //     inst.time = this.systemClock;
@@ -4782,94 +4779,7 @@ function updateStateBuffer(cpu, sb) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-//input classes
-var ChiChiInputHandler = /** @class */ (function () {
-    function ChiChiInputHandler() {
-        this.ControlPad = new ChiChiControlPad();
-    }
-    ChiChiInputHandler.prototype.controlPad_NextControlByteSet = function (sender, e) {
-        // throw new Error("Method not implemented.");
-    };
-    ChiChiInputHandler.prototype.GetByte = function (clock, address) {
-        return this.ControlPad.getByte(clock);
-    };
-    ChiChiInputHandler.prototype.SetByte = function (clock, address, data) {
-        return this.ControlPad.setByte(clock, data);
-    };
-    ChiChiInputHandler.prototype.SetNextControlByte = function (data) {
-    };
-    ChiChiInputHandler.prototype.HandleEvent = function (Clock) {
-    };
-    ChiChiInputHandler.prototype.ResetClock = function (Clock) {
-    };
-    return ChiChiInputHandler;
-}());
-exports.ChiChiInputHandler = ChiChiInputHandler;
-var ChiChiControlPad = /** @class */ (function () {
-    function ChiChiControlPad() {
-        this.currentByte = 0;
-        this.readNumber = 0;
-        this.padOneState = 0;
-    }
-    ChiChiControlPad.prototype.getPadState = function () {
-        return this.padOneState;
-    };
-    ChiChiControlPad.prototype.refresh = function () {
-    };
-    ChiChiControlPad.prototype.getByte = function (clock) {
-        var result = (this.currentByte >> this.readNumber) & 0x01;
-        this.readNumber = (this.readNumber + 1) & 7;
-        return (result | 0x40) & 0xFF;
-    };
-    ChiChiControlPad.prototype.setByte = function (clock, data) {
-        if ((data & 1) == 1) {
-            this.currentByte = this.getPadState();
-            // if im pushing up, i cant be pushing down
-            if ((this.currentByte & 16) == 16)
-                this.currentByte = this.currentByte & ~32;
-            // if im pushign left, i cant be pushing right.. seriously, the nes will glitch
-            if ((this.currentByte & 64) == 64)
-                this.currentByte = this.currentByte & ~128;
-            this.readNumber = 0;
-        }
-    };
-    return ChiChiControlPad;
-}());
-exports.ChiChiControlPad = ChiChiControlPad;
-// export const createPad = () => {
-//     let currentByte = 0;
-//     let readNumber = 0;
-//     let padOneState = 0;
-//     const getByte = () => {
-//         let result = (currentByte >> readNumber) & 0x01;
-//         readNumber = (readNumber + 1) & 7;
-//         return (result | 0x40) & 0xFF;
-//     }
-//     const setByte = (data: number): void => {
-//         if ((data & 1) == 1) {
-//             currentByte = padOneState;
-//             // if im pushing up, i cant be pushing down
-//             if ((currentByte & 16) == 16) { currentByte = currentByte & ~32; }
-//             // if im pushign left, i cant be pushing right.. seriously, the nes will glitch
-//             if ((currentByte & 64) == 64) { currentByte = currentByte & ~128; }
-//             readNumber = 0;
-//         }
-//     }
-//     return {
-//         setByte,
-//         getByte
-//     }
-// }
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var Subject_1 = __webpack_require__(26);
+var Subject_1 = __webpack_require__(25);
 exports.bufferType = "ArrayBuffer";
 var StateBuffer = /** @class */ (function () {
     function StateBuffer() {
@@ -4933,7 +4843,7 @@ exports.StateBuffer = StateBuffer;
 
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports) {
 
 var g;
@@ -4960,7 +4870,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4976,9 +4886,9 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var isFunction_1 = __webpack_require__(16);
+var isFunction_1 = __webpack_require__(15);
 var Subscription_1 = __webpack_require__(6);
-var Observer_1 = __webpack_require__(18);
+var Observer_1 = __webpack_require__(17);
 var rxSubscriber_1 = __webpack_require__(7);
 /**
  * Implements the {@link Observer} interface and extends the
@@ -5238,7 +5148,7 @@ var SafeSubscriber = /** @class */ (function (_super) {
 //# sourceMappingURL=Subscriber.js.map
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5251,7 +5161,7 @@ exports.isFunction = isFunction;
 //# sourceMappingURL=isFunction.js.map
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5262,7 +5172,7 @@ exports.errorObject = { e: {} };
 //# sourceMappingURL=errorObject.js.map
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5277,7 +5187,7 @@ exports.empty = {
 //# sourceMappingURL=Observer.js.map
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5746,14 +5656,14 @@ exports.Konami025Cart = Konami025Cart;
 
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 // export { ChiChiStateManager, ChiChiState } from './ChiChiState';
-var ChiChiMachine_1 = __webpack_require__(21);
+var ChiChiMachine_1 = __webpack_require__(20);
 exports.ChiChiMachine = ChiChiMachine_1.ChiChiMachine;
 var ChiChiCPU_1 = __webpack_require__(11);
 exports.ChiChiCPPU = ChiChiCPU_1.ChiChiCPPU;
@@ -5764,8 +5674,6 @@ exports.PixelBuffers = ChiChiPPU_1.PixelBuffers;
 exports.ChiChiPPU = ChiChiPPU_1.ChiChiPPU;
 var BaseCart_1 = __webpack_require__(0);
 exports.BaseCart = BaseCart_1.BaseCart;
-var ChiChiControl_1 = __webpack_require__(12);
-exports.ChiChiInputHandler = ChiChiControl_1.ChiChiInputHandler;
 var CommonAudio_1 = __webpack_require__(10);
 exports.WavSharer = CommonAudio_1.WavSharer;
 var ChiChiTypes_1 = __webpack_require__(4);
@@ -5782,14 +5690,14 @@ var DebugHelpers_1 = __webpack_require__(40);
 exports.DebugHelpers = DebugHelpers_1.DebugHelpers;
 // import * as ChiChiMessages from './worker/worker.message';
 // export { ChiChiMessages } 
-var StateBuffer_1 = __webpack_require__(13);
+var StateBuffer_1 = __webpack_require__(12);
 exports.StateBuffer = StateBuffer_1.StateBuffer;
 var ChiChiCarts_1 = __webpack_require__(41);
 exports.iNESFileHandler = ChiChiCarts_1.iNESFileHandler;
 
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5800,8 +5708,9 @@ var ChiChiTypes_1 = __webpack_require__(4);
 var ChiChiPPU_1 = __webpack_require__(9);
 var CommonAudio_1 = __webpack_require__(10);
 var ChiChiCPU_1 = __webpack_require__(11);
-var StateBuffer_1 = __webpack_require__(13);
-var ChiChiMemoryMap_1 = __webpack_require__(38);
+var StateBuffer_1 = __webpack_require__(12);
+var ChiChiMemoryMap_1 = __webpack_require__(37);
+var ChiChiControl_1 = __webpack_require__(38);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -5809,6 +5718,8 @@ var ChiChiMachine = /** @class */ (function () {
         this.frameJustEnded = true;
         this.frameOn = false;
         this.totalCPUClocks = 0;
+        this.controllerPortOne = ChiChiControl_1.createControlPad();
+        this.controllerPortTwo = ChiChiControl_1.createControlPad();
         this._enableSound = false;
         this.evenFrame = true;
         this.sb = new StateBuffer_1.StateBuffer();
@@ -5820,7 +5731,7 @@ var ChiChiMachine = /** @class */ (function () {
         this.ppu.cpu = this.Cpu;
         this.ppu.NMIHandler = function () { _this.Cpu.nmiHandler(); };
         this.ppu.frameFinished = function () { _this.frameFinished(); };
-        this.mapFactory = ChiChiMemoryMap_1.setupMemoryMap(this.Cpu)(this.ppu)(this.SoundBopper)(this.Cpu.PadOne)(this.Cpu.PadTwo);
+        this.mapFactory = ChiChiMemoryMap_1.setupMemoryMap(this.Cpu)(this.ppu)(this.SoundBopper)(this.controllerPortOne)(this.controllerPortTwo);
     }
     ChiChiMachine.prototype.loadCart = function (cart) {
         this.mapFactory(cart);
@@ -5933,7 +5844,7 @@ exports.ChiChiMachine = ChiChiMachine;
 
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6072,7 +5983,7 @@ exports.DMCChannel = DMCChannel;
 
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6258,7 +6169,7 @@ exports.SquareChannel = SquareChannel;
 
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6380,7 +6291,7 @@ exports.TriangleChannel = TriangleChannel;
 
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6503,7 +6414,7 @@ exports.NoiseChannel = NoiseChannel;
 
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6519,11 +6430,11 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var Observable_1 = __webpack_require__(27);
-var Subscriber_1 = __webpack_require__(15);
+var Observable_1 = __webpack_require__(26);
+var Subscriber_1 = __webpack_require__(14);
 var Subscription_1 = __webpack_require__(6);
-var ObjectUnsubscribedError_1 = __webpack_require__(36);
-var SubjectSubscription_1 = __webpack_require__(37);
+var ObjectUnsubscribedError_1 = __webpack_require__(35);
+var SubjectSubscription_1 = __webpack_require__(36);
 var rxSubscriber_1 = __webpack_require__(7);
 /**
  * @class SubjectSubscriber<T>
@@ -6686,16 +6597,16 @@ exports.AnonymousSubject = AnonymousSubject;
 //# sourceMappingURL=Subject.js.map
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var root_1 = __webpack_require__(5);
-var toSubscriber_1 = __webpack_require__(28);
-var observable_1 = __webpack_require__(33);
-var pipe_1 = __webpack_require__(34);
+var toSubscriber_1 = __webpack_require__(27);
+var observable_1 = __webpack_require__(32);
+var pipe_1 = __webpack_require__(33);
 /**
  * A representation of any set of values over any amount of time. This is the most basic building block
  * of RxJS.
@@ -6998,15 +6909,15 @@ exports.Observable = Observable;
 //# sourceMappingURL=Observable.js.map
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var Subscriber_1 = __webpack_require__(15);
+var Subscriber_1 = __webpack_require__(14);
 var rxSubscriber_1 = __webpack_require__(7);
-var Observer_1 = __webpack_require__(18);
+var Observer_1 = __webpack_require__(17);
 function toSubscriber(nextOrObserver, error, complete) {
     if (nextOrObserver) {
         if (nextOrObserver instanceof Subscriber_1.Subscriber) {
@@ -7025,7 +6936,7 @@ exports.toSubscriber = toSubscriber;
 //# sourceMappingURL=toSubscriber.js.map
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7035,7 +6946,7 @@ exports.isArray = Array.isArray || (function (x) { return x && typeof x.length =
 //# sourceMappingURL=isArray.js.map
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7048,13 +6959,13 @@ exports.isObject = isObject;
 //# sourceMappingURL=isObject.js.map
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var errorObject_1 = __webpack_require__(17);
+var errorObject_1 = __webpack_require__(16);
 var tryCatchTarget;
 function tryCatcher() {
     try {
@@ -7074,7 +6985,7 @@ exports.tryCatch = tryCatch;
 //# sourceMappingURL=tryCatch.js.map
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7112,7 +7023,7 @@ exports.UnsubscriptionError = UnsubscriptionError;
 //# sourceMappingURL=UnsubscriptionError.js.map
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7145,13 +7056,13 @@ exports.$$observable = exports.observable;
 //# sourceMappingURL=observable.js.map
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var noop_1 = __webpack_require__(35);
+var noop_1 = __webpack_require__(34);
 /* tslint:enable:max-line-length */
 function pipe() {
     var fns = [];
@@ -7177,7 +7088,7 @@ exports.pipeFromArray = pipeFromArray;
 //# sourceMappingURL=pipe.js.map
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7189,7 +7100,7 @@ exports.noop = noop;
 //# sourceMappingURL=noop.js.map
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7230,7 +7141,7 @@ exports.ObjectUnsubscribedError = ObjectUnsubscribedError;
 //# sourceMappingURL=ObjectUnsubscribedError.js.map
 
 /***/ }),
-/* 37 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7283,7 +7194,7 @@ exports.SubjectSubscription = SubjectSubscription;
 //# sourceMappingURL=SubjectSubscription.js.map
 
 /***/ }),
-/* 38 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7313,10 +7224,10 @@ var getByte = function (cpu) { return function (ppu) { return function (apu) { r
                         result = apu.GetByte(clock, address);
                         break;
                     case 0x4016:
-                        result = pad1.GetByte(clock, address);
+                        result = pad1.getByte(clock, address);
                         break;
                     case 0x4017:
-                        result = pad2.GetByte(clock, address);
+                        result = pad2.getByte(clock, address);
                         break;
                     default:
                         if (cart.mapsBelow6000)
@@ -7416,8 +7327,8 @@ var setByte = function (cpu) { return function (ppu) { return function (apu) { r
                         }
                         break;
                     case 0X4016:
-                        pad1.SetByte(clock, address, (data & 1) | 0x40);
-                        pad2.SetByte(clock, address, (data & 1) | 0x40);
+                        pad1.setByte(clock, address, (data & 1) | 0x40);
+                        pad2.setByte(clock, address, (data & 1) | 0x40);
                         break;
                     default:
                         if (cart.mapsBelow6000)
@@ -7472,6 +7383,57 @@ exports.setupMemoryMap = function (cpu) { return function (ppu) { return functio
         return result;
     };
 }; }; }; }; };
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+//input classes
+var ChiChiInputHandler = /** @class */ (function () {
+    function ChiChiInputHandler() {
+        this.ControlPad = createControlPad();
+    }
+    ChiChiInputHandler.prototype.GetByte = function (clock, address) {
+        return this.ControlPad.getByte(clock, address);
+    };
+    ChiChiInputHandler.prototype.SetByte = function (clock, address, data) {
+        return this.ControlPad.setByte(clock, address, data);
+    };
+    return ChiChiInputHandler;
+}());
+var createControlPad = function () {
+    var currentByte = 0;
+    var readNumber = 0;
+    var padOneState = 0;
+    var getPadState = function () {
+        return padOneState;
+    };
+    var getByte = function (clock, address) {
+        var result = (currentByte >> readNumber) & 0x01;
+        readNumber = (readNumber + 1) & 7;
+        return (result | 0x40) & 0xFF;
+    };
+    var setByte = function (clock, address, data) {
+        if ((data & 1) == 1) {
+            currentByte = getPadState();
+            // if im pushing up, i cant be pushing down
+            if ((currentByte & 16) == 16)
+                currentByte = currentByte & ~32;
+            // if im pushign left, i cant be pushing right..  the nes will glitch
+            if ((currentByte & 64) == 64)
+                currentByte = currentByte & ~128;
+            readNumber = 0;
+        }
+    };
+    return Object.create({
+        getPadState: getPadState, getByte: getByte, setByte: setByte
+    });
+};
+exports.createControlPad = createControlPad;
 
 
 /***/ }),
@@ -7888,7 +7850,7 @@ var Nsf = __webpack_require__(49);
 var Smb2j = __webpack_require__(50);
 var VS = __webpack_require__(51);
 var VRC = __webpack_require__(52);
-var VRC2 = __webpack_require__(19);
+var VRC2 = __webpack_require__(18);
 var VRC6 = __webpack_require__(53);
 var Sunsoft = __webpack_require__(54);
 var Mapper034 = __webpack_require__(55);
@@ -9747,7 +9709,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var KonamiVRC2_1 = __webpack_require__(19);
+var KonamiVRC2_1 = __webpack_require__(18);
 var Konami026Cart = /** @class */ (function (_super) {
     __extends(Konami026Cart, _super);
     function Konami026Cart() {

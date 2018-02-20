@@ -1,23 +1,7 @@
-export declare class ChiChiInputHandler {
-    IsZapper: boolean;
-    ControlPad: ChiChiControlPad;
-    CurrentByte: number;
-    NMIHandler: () => void;
-    IRQAsserted: boolean;
-    NextEventAt: number;
-    controlPad_NextControlByteSet(sender: any, e: any): void;
-    GetByte(clock: number, address: number): number;
-    SetByte(clock: number, address: number, data: number): void;
-    SetNextControlByte(data: number): void;
-    HandleEvent(Clock: number): void;
-    ResetClock(Clock: number): void;
+interface ChiChiControlPad {
+    getPadState: () => number;
+    getByte: (clock: number, address: number) => number;
+    setByte: (clock: number, address: number, value: number) => void;
 }
-export declare class ChiChiControlPad {
-    currentByte: number;
-    readNumber: number;
-    padOneState: number;
-    getPadState(): number;
-    refresh(): void;
-    getByte(clock: number): number;
-    setByte(clock: number, data: number): void;
-}
+declare const createControlPad: () => ChiChiControlPad;
+export { ChiChiControlPad, createControlPad };

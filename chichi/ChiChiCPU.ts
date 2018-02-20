@@ -1,5 +1,4 @@
 import { ChiChiCPPU_AddressingModes, ChiChiInstruction, CpuStatus } from "./ChiChiTypes";
-import { ChiChiInputHandler } from "./ChiChiControl";
 import { ChiChiPPU } from "./ChiChiPPU";
 import { ChiChiAPU } from "./ChiChiAudio";
 import { BaseCart } from '../chichicarts/BaseCart'
@@ -107,10 +106,6 @@ export class ChiChiCPPU {
     public get InstructionHistoryPointer(): number {
         return this.instructionHistoryPointer;
     }
-
-
-    PadOne: ChiChiInputHandler  = new ChiChiInputHandler();
-    PadTwo: ChiChiInputHandler  = new ChiChiInputHandler();
 
     ppu: ChiChiPPU;
     SoundBopper: ChiChiAPU;
