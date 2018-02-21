@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 19);
+/******/ 	return __webpack_require__(__webpack_require__.s = 20);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -2428,12 +2428,12 @@ exports.root = _root;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var isArray_1 = __webpack_require__(28);
-var isObject_1 = __webpack_require__(29);
+var isArray_1 = __webpack_require__(29);
+var isObject_1 = __webpack_require__(30);
 var isFunction_1 = __webpack_require__(15);
-var tryCatch_1 = __webpack_require__(30);
+var tryCatch_1 = __webpack_require__(31);
 var errorObject_1 = __webpack_require__(16);
-var UnsubscriptionError_1 = __webpack_require__(31);
+var UnsubscriptionError_1 = __webpack_require__(32);
 /**
  * Represents a disposable resource, such as the execution of an Observable. A
  * Subscription has one important method, `unsubscribe`, that takes no argument
@@ -2645,10 +2645,10 @@ exports.$$rxSubscriber = exports.rxSubscriber;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var DMCChannel_1 = __webpack_require__(21);
-var SquareChannel_1 = __webpack_require__(22);
-var TriangleChannel_1 = __webpack_require__(23);
-var NoiseChannel_1 = __webpack_require__(24);
+var DMCChannel_1 = __webpack_require__(22);
+var SquareChannel_1 = __webpack_require__(23);
+var TriangleChannel_1 = __webpack_require__(24);
+var NoiseChannel_1 = __webpack_require__(25);
 var ChiChiAPU = /** @class */ (function () {
     function ChiChiAPU(writer) {
         this.writer = writer;
@@ -4779,7 +4779,7 @@ function updateStateBuffer(cpu, sb) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var Subject_1 = __webpack_require__(25);
+var Subject_1 = __webpack_require__(26);
 exports.bufferType = "ArrayBuffer";
 var StateBuffer = /** @class */ (function () {
     function StateBuffer() {
@@ -5188,6 +5188,46 @@ exports.empty = {
 
 /***/ }),
 /* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChiChiControlPad = /** @class */ (function () {
+    function ChiChiControlPad() {
+        var _this = this;
+        this.currentByte = 0;
+        this.readNumber = 0;
+        this.getPadState = function () { return 0; };
+        this.getByte = function (clock, address) {
+            var result = (_this.currentByte >> _this.readNumber) & 0x01;
+            _this.readNumber = (_this.readNumber + 1) & 7;
+            return (result | 0x40) & 0xFF;
+        };
+        this.setByte = function (clock, address, data) {
+            if ((data & 1) == 1) {
+                _this.currentByte = _this.getPadState();
+                // if im pushing up, i cant be pushing down
+                if ((_this.currentByte & 16) == 16)
+                    _this.currentByte = _this.currentByte & ~32;
+                // if im pushign left, i cant be pushing right..  the nes will glitch
+                if ((_this.currentByte & 64) == 64)
+                    _this.currentByte = _this.currentByte & ~128;
+                _this.readNumber = 0;
+            }
+        };
+    }
+    return ChiChiControlPad;
+}());
+exports.ChiChiControlPad = ChiChiControlPad;
+function createControlPad() {
+    return new ChiChiControlPad();
+}
+exports.createControlPad = createControlPad;
+
+
+/***/ }),
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5656,14 +5696,14 @@ exports.Konami025Cart = Konami025Cart;
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 // export { ChiChiStateManager, ChiChiState } from './ChiChiState';
-var ChiChiMachine_1 = __webpack_require__(20);
+var ChiChiMachine_1 = __webpack_require__(21);
 exports.ChiChiMachine = ChiChiMachine_1.ChiChiMachine;
 var ChiChiCPU_1 = __webpack_require__(11);
 exports.ChiChiCPPU = ChiChiCPU_1.ChiChiCPPU;
@@ -5674,6 +5714,9 @@ exports.PixelBuffers = ChiChiPPU_1.PixelBuffers;
 exports.ChiChiPPU = ChiChiPPU_1.ChiChiPPU;
 var BaseCart_1 = __webpack_require__(0);
 exports.BaseCart = BaseCart_1.BaseCart;
+var ChiChiControl_1 = __webpack_require__(18);
+exports.ChiChiControlPad = ChiChiControl_1.ChiChiControlPad;
+exports.createControlPad = ChiChiControl_1.createControlPad;
 var CommonAudio_1 = __webpack_require__(10);
 exports.WavSharer = CommonAudio_1.WavSharer;
 var ChiChiTypes_1 = __webpack_require__(4);
@@ -5697,7 +5740,7 @@ exports.iNESFileHandler = ChiChiCarts_1.iNESFileHandler;
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5709,8 +5752,8 @@ var ChiChiPPU_1 = __webpack_require__(9);
 var CommonAudio_1 = __webpack_require__(10);
 var ChiChiCPU_1 = __webpack_require__(11);
 var StateBuffer_1 = __webpack_require__(12);
-var ChiChiMemoryMap_1 = __webpack_require__(37);
-var ChiChiControl_1 = __webpack_require__(38);
+var ChiChiMemoryMap_1 = __webpack_require__(38);
+var ChiChiControl_1 = __webpack_require__(18);
 //machine wrapper
 var ChiChiMachine = /** @class */ (function () {
     function ChiChiMachine(cpu) {
@@ -5718,8 +5761,6 @@ var ChiChiMachine = /** @class */ (function () {
         this.frameJustEnded = true;
         this.frameOn = false;
         this.totalCPUClocks = 0;
-        this.controllerPortOne = ChiChiControl_1.createControlPad();
-        this.controllerPortTwo = ChiChiControl_1.createControlPad();
         this._enableSound = false;
         this.evenFrame = true;
         this.sb = new StateBuffer_1.StateBuffer();
@@ -5731,6 +5772,8 @@ var ChiChiMachine = /** @class */ (function () {
         this.ppu.cpu = this.Cpu;
         this.ppu.NMIHandler = function () { _this.Cpu.nmiHandler(); };
         this.ppu.frameFinished = function () { _this.frameFinished(); };
+        this.controllerPortOne = ChiChiControl_1.createControlPad();
+        this.controllerPortTwo = ChiChiControl_1.createControlPad();
         this.mapFactory = ChiChiMemoryMap_1.setupMemoryMap(this.Cpu)(this.ppu)(this.SoundBopper)(this.controllerPortOne)(this.controllerPortTwo);
     }
     ChiChiMachine.prototype.loadCart = function (cart) {
@@ -5844,7 +5887,7 @@ exports.ChiChiMachine = ChiChiMachine;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5983,7 +6026,7 @@ exports.DMCChannel = DMCChannel;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6169,7 +6212,7 @@ exports.SquareChannel = SquareChannel;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6291,7 +6334,7 @@ exports.TriangleChannel = TriangleChannel;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6414,7 +6457,7 @@ exports.NoiseChannel = NoiseChannel;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6430,11 +6473,11 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var Observable_1 = __webpack_require__(26);
+var Observable_1 = __webpack_require__(27);
 var Subscriber_1 = __webpack_require__(14);
 var Subscription_1 = __webpack_require__(6);
-var ObjectUnsubscribedError_1 = __webpack_require__(35);
-var SubjectSubscription_1 = __webpack_require__(36);
+var ObjectUnsubscribedError_1 = __webpack_require__(36);
+var SubjectSubscription_1 = __webpack_require__(37);
 var rxSubscriber_1 = __webpack_require__(7);
 /**
  * @class SubjectSubscriber<T>
@@ -6597,16 +6640,16 @@ exports.AnonymousSubject = AnonymousSubject;
 //# sourceMappingURL=Subject.js.map
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var root_1 = __webpack_require__(5);
-var toSubscriber_1 = __webpack_require__(27);
-var observable_1 = __webpack_require__(32);
-var pipe_1 = __webpack_require__(33);
+var toSubscriber_1 = __webpack_require__(28);
+var observable_1 = __webpack_require__(33);
+var pipe_1 = __webpack_require__(34);
 /**
  * A representation of any set of values over any amount of time. This is the most basic building block
  * of RxJS.
@@ -6909,7 +6952,7 @@ exports.Observable = Observable;
 //# sourceMappingURL=Observable.js.map
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6936,7 +6979,7 @@ exports.toSubscriber = toSubscriber;
 //# sourceMappingURL=toSubscriber.js.map
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6946,7 +6989,7 @@ exports.isArray = Array.isArray || (function (x) { return x && typeof x.length =
 //# sourceMappingURL=isArray.js.map
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6959,7 +7002,7 @@ exports.isObject = isObject;
 //# sourceMappingURL=isObject.js.map
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6985,7 +7028,7 @@ exports.tryCatch = tryCatch;
 //# sourceMappingURL=tryCatch.js.map
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7023,7 +7066,7 @@ exports.UnsubscriptionError = UnsubscriptionError;
 //# sourceMappingURL=UnsubscriptionError.js.map
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7056,13 +7099,13 @@ exports.$$observable = exports.observable;
 //# sourceMappingURL=observable.js.map
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var noop_1 = __webpack_require__(34);
+var noop_1 = __webpack_require__(35);
 /* tslint:enable:max-line-length */
 function pipe() {
     var fns = [];
@@ -7088,7 +7131,7 @@ exports.pipeFromArray = pipeFromArray;
 //# sourceMappingURL=pipe.js.map
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7100,7 +7143,7 @@ exports.noop = noop;
 //# sourceMappingURL=noop.js.map
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7141,7 +7184,7 @@ exports.ObjectUnsubscribedError = ObjectUnsubscribedError;
 //# sourceMappingURL=ObjectUnsubscribedError.js.map
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7194,7 +7237,7 @@ exports.SubjectSubscription = SubjectSubscription;
 //# sourceMappingURL=SubjectSubscription.js.map
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7383,57 +7426,6 @@ exports.setupMemoryMap = function (cpu) { return function (ppu) { return functio
         return result;
     };
 }; }; }; }; };
-
-
-/***/ }),
-/* 38 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-//input classes
-var ChiChiInputHandler = /** @class */ (function () {
-    function ChiChiInputHandler() {
-        this.ControlPad = createControlPad();
-    }
-    ChiChiInputHandler.prototype.GetByte = function (clock, address) {
-        return this.ControlPad.getByte(clock, address);
-    };
-    ChiChiInputHandler.prototype.SetByte = function (clock, address, data) {
-        return this.ControlPad.setByte(clock, address, data);
-    };
-    return ChiChiInputHandler;
-}());
-var createControlPad = function () {
-    var currentByte = 0;
-    var readNumber = 0;
-    var padOneState = 0;
-    var getPadState = function () {
-        return padOneState;
-    };
-    var getByte = function (clock, address) {
-        var result = (currentByte >> readNumber) & 0x01;
-        readNumber = (readNumber + 1) & 7;
-        return (result | 0x40) & 0xFF;
-    };
-    var setByte = function (clock, address, data) {
-        if ((data & 1) == 1) {
-            currentByte = getPadState();
-            // if im pushing up, i cant be pushing down
-            if ((currentByte & 16) == 16)
-                currentByte = currentByte & ~32;
-            // if im pushign left, i cant be pushing right..  the nes will glitch
-            if ((currentByte & 64) == 64)
-                currentByte = currentByte & ~128;
-            readNumber = 0;
-        }
-    };
-    return Object.create({
-        getPadState: getPadState, getByte: getByte, setByte: setByte
-    });
-};
-exports.createControlPad = createControlPad;
 
 
 /***/ }),
@@ -7850,7 +7842,7 @@ var Nsf = __webpack_require__(49);
 var Smb2j = __webpack_require__(50);
 var VS = __webpack_require__(51);
 var VRC = __webpack_require__(52);
-var VRC2 = __webpack_require__(18);
+var VRC2 = __webpack_require__(19);
 var VRC6 = __webpack_require__(53);
 var Sunsoft = __webpack_require__(54);
 var Mapper034 = __webpack_require__(55);
@@ -9709,7 +9701,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var KonamiVRC2_1 = __webpack_require__(18);
+var KonamiVRC2_1 = __webpack_require__(19);
 var Konami026Cart = /** @class */ (function (_super) {
     __extends(Konami026Cart, _super);
     function Konami026Cart() {

@@ -8,7 +8,7 @@ import { ChiChiCPPU } from './ChiChiCPU';
 import { StateBuffer } from './StateBuffer';
 import { setupMemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 import { MemoryMap } from './chichi';
-import { createControlPad, ChiChiControlPad } from './ChiChiControl';
+import { ChiChiControlPad } from './ChiChiControl';
 
 
     //machine wrapper
@@ -19,8 +19,8 @@ export class ChiChiMachine {
     private totalCPUClocks = 0;
     private sb: StateBuffer;
     
-    public controllerPortOne = createControlPad();
-    public controllerPortTwo = createControlPad();
+    public controllerPortOne: ChiChiControlPad;
+    public controllerPortTwo: ChiChiControlPad;
 
     constructor(cpu? : ChiChiCPPU) {
         
@@ -34,6 +34,8 @@ export class ChiChiMachine {
         this.ppu.NMIHandler = () => {  this.Cpu.nmiHandler(); }
         this.ppu.frameFinished = () => { this.frameFinished(); };
 
+        this.controllerPortOne = new ChiChiControlPad();
+        this.controllerPortTwo = new ChiChiControlPad();
 
         this.mapFactory = setupMemoryMap(this.Cpu)(<ChiChiPPU>this.ppu)(this.SoundBopper)(this.controllerPortOne)(this.controllerPortTwo);
     }
