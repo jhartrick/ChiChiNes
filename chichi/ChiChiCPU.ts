@@ -1031,3 +1031,14 @@ function updateStateBuffer(cpu: ChiChiCPPU, sb: StateBuffer) {
     cpu.cpuStatus[4] = cpu.dataBus;
     cpu.cpuStatus[5] = cpu.stackPointer;
 }
+
+export const stateConfig = (cpu: ChiChiCPPU) => (sb: StateBuffer) => {
+    return {
+        configure: () =>  {
+            sb  .pushSegment(2 * Uint16Array.BYTES_PER_ELEMENT, 'cpu_status_16')
+            .pushSegment(8, 'cpu_status');
+        },
+        push: () => updateStateBuffer(cpu, sb),
+        pull: () => attachStateBuffer(cpu, sb)
+    }
+}

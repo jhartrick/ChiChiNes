@@ -3,6 +3,7 @@
   "version": "0.0.44",
   "license": "MIT",
   "scripts": {
+    "test": "./node_modules/.bin/mocha -r ts-node/register chichi*/**/*.spec.ts",
     "start": "webpack-dev-server --open --config webpack.config.js",
     "build": "webpack --config webpack.config.js"
   },
@@ -20,6 +21,11 @@
     "package/lib/*"
   ],
   "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^2.2.48",
+    "chai": "^4.1.2",
+    "mocha": "^5.0.1",
+    "ts-node": "^5.0.0",
     "typescript": "^2.6.1"
   }
 }
