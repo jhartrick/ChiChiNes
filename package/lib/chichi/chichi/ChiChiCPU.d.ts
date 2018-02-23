@@ -68,3 +68,8 @@ export declare class ChiChiCPPU {
     ResetInstructionHistory(): void;
     setupStateBuffer: (sb: StateBuffer) => StateBuffer;
 }
+export declare const stateConfig: (cpu: ChiChiCPPU) => (sb: StateBuffer) => {
+    configure: () => void;
+    push: () => void;
+    pull: () => void;
+};

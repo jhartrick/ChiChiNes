@@ -1,9 +1,12 @@
 const path = require('path');
+const webpackRxjsExternals = require('webpack-rxjs-externals');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const configChiChi = {
     entry: {
         chichi: './chichi/chichi.ts'
     },
+    externals : [webpackRxjsExternals()],
     output: {
         path: path.resolve(__dirname, 'package'),
         filename: '[name].js',
@@ -17,7 +20,10 @@ const configChiChi = {
         loaders: [
             { test: /\.ts$/, loader: 'ts-loader' }
         ]
-    }
+    },
+    plugins: [
+        new UglifyJsPlugin()
+    ]
 }
 
 module.exports = [configChiChi];

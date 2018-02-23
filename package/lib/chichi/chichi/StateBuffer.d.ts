@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs/Subject';
+export declare type Bufferable = Uint8Array | Uint8ClampedArray | Int8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
 export declare const bufferType = "ArrayBuffer";
 export declare type ChiChiBuffer = ArrayBuffer;
 export interface StateBufferConfig {
@@ -15,6 +16,7 @@ export declare class StateBuffer {
     bufferSize: number;
     onRestore: Subject<StateBuffer>;
     onUpdateBuffer: Subject<StateBuffer>;
+    pushArray(b: Bufferable, name: string): this;
     pushSegment(size: number, name: string): StateBuffer;
     build(): this;
     updateBuffer(): void;

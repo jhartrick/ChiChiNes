@@ -1,5 +1,7 @@
 import { Subject } from 'rxjs/Subject';
 
+export type Bufferable = Uint8Array | Uint8ClampedArray | Int8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
+
 export const bufferType =  "ArrayBuffer";
 
 export type ChiChiBuffer =ArrayBuffer;
@@ -28,6 +30,14 @@ export class StateBuffer {
     // thrown when writing clients should update the buffer
     onUpdateBuffer = new Subject<StateBuffer>();
     
+    pushArray(b: Bufferable, name: string) {
+        this.pushSegment(b.length * b.BYTES_PER_ELEMENT, name);
+        // if (b instanceof Uint8Array) {
+        //     const x = <Uint8Array>b;
+        // }
+        return this;
+    }
+
     // pre-allocates a segment of <size> bytes in the StateBuffer, returns StateBuffer
     pushSegment(size: number, name: string): StateBuffer {
         const seg = this.data.segments.findIndex((v,i) => v.name == name);
