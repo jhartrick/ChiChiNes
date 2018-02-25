@@ -6,7 +6,7 @@ const configChiChi = {
     entry: {
         chichi: './src/chichi/chichi.ts'
     },
-    externals : [webpackRxjsExternals()],
+    externals : [webpackRxjsExternals(), 'crc'],
     output: {
         path: path.resolve(__dirname, 'package'),
         filename: '[name].js',

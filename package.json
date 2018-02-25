@@ -9,12 +9,11 @@
   },
   "private": true,
   "main": "package/chichi.js",
-  "types": "package/lib/chichi/chichi/chichi.d.ts",
+  "types": "package/src/lib/chichi/chichi/chichi.d.ts",
   "dependencies": {
     "@types/crc": "^3.4.0",
     "crc": "^3.5.0",
-    "rxjs": "^5.5.3",
-    "ts-loader": "^3.0.5"
+    "rxjs": "^5.5.3"
   },
   "files": [
     "package/chichi.js",
@@ -27,6 +26,7 @@
     "mocha": "^5.0.1",
     "ts-node": "^5.0.0",
     "typescript": "^2.6.1",
+    "ts-loader": "^3.0.5",
     "uglifyjs-webpack-plugin": "^1.2.0",
     "webpack": "^3.11.0",
     "webpack-rxjs-externals": "^1.1.0"
