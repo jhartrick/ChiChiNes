@@ -15,6 +15,7 @@ export interface BufferSegment {
     name: string;
     start: number;
     size: number;
+    source?: Bufferable;
 }
 
 export class StateBuffer {
@@ -90,7 +91,18 @@ export class StateBuffer {
 
     syncBuffer(config: StateBufferConfig) {
         this.data = config;
+
         this.onRestore.next(this);
     }
 
-}
+    clone() {
+        const result = new StateBuffer();
+        result.syncBuffer({
+            segments: Array.from(this.data.segments),
+            buffer: this.data.buffer.slice(0)
+        });
+        result.bufferSize = this.bufferSize;
+        return result;
+    }
+
+} 

@@ -4,7 +4,7 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const configChiChi = {
     entry: {
-        chichi: './chichi/chichi.ts'
+        chichi: './src/chichi/chichi.ts'
     },
     externals : [webpackRxjsExternals()],
     output: {

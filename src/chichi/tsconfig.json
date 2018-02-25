@@ -3,14 +3,14 @@
   "compilerOptions": {
     "outDir": "../dist/chichi",
     //"outFile": "../dist/chichi.js",
-    "sourceMap": false,
+    "sourceMap": true,
     "declaration": true,
     "declarationDir": "../lib/chichi",
     "moduleResolution": "node",
     "module": "commonjs",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es5",
+    "target": "es2016",
     "noImplicitAny": true,
     "suppressImplicitAnyIndexErrors": true,
     "typeRoots": [

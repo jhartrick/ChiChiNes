@@ -80,10 +80,46 @@ describe('StateBuffer', () => {
         expect(myArray[0]).to.eq(0xff000000);
 
         expect(result.getFloat32Array('test')[0]).to.eq(-1.7014118346046923e+38);
-        
+    });
+});
 
+describe('StateBuffer.clone', () => {
+    it('should be able to create new clones of the same size', () =>{
+
+        const result = createStateBuffer();
+        result.pushArray(new Uint8Array(8), 'test');
+        result.build();
+
+        const newResult: SB.StateBuffer = result.clone();
+        expect(newResult).not.equals(result);
+        expect(newResult.bufferSize).to.equal(result.bufferSize);
+        
     });
 
+    it('should create new clones with identical content, in a new buffer', () =>{
+        
+        const result = createStateBuffer();
+        result.pushArray(new Uint8Array(8).map((f,i) => i), 'test');
+        result.build();
+        // create an array from original statebuffer
+        const buff = result.getUint8Array('test');
+
+        // clone state buffer
+        const newResult: SB.StateBuffer = result.clone();
+        // create an array from cloned statebuffer
+        const newBuff = newResult.getUint8Array('test');
+
+        // arrays should match on a shallow compare
+        expect(newResult.bufferSize).to.equal(result.bufferSize);
+        buff.forEach((v,i) => {
+            expect(newBuff[i]).to.equal(buff[i]);
+        })
+
+        // arrays should not be mapped against the same buffer
+        buff[0] = 42;
+        expect(newBuff[0]).to.not.equal(buff[0]);
+        
+    });
 
 
 });
