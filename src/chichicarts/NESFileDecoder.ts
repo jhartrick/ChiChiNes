@@ -28,7 +28,13 @@ export interface NesFile {
     romCRC: string;
 }
 
+
 export const decodeFile = (buffer: ArrayBuffer): NesFile => {
+    if (!buffer || buffer.byteLength < 16) {
+        throw new Error("invalid NES file");
+    }
+
+
     const rom = new Uint8Array(buffer, 16);
     const mapperBytes = new Uint8Array(buffer, 6, 3);
     const romCountArray = new Uint8Array(buffer, 4, 2);   

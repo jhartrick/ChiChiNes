@@ -13,3 +13,7 @@ export { StateBuffer, BufferSegment, StateBufferConfig } from './StateBuffer';
 
 export { iNESFileHandler } from '../chichicarts/ChiChiCarts'
 export { ChiChiControlPad } from './ChiChiControl';
+
+import * as NESFileDecoder from '../chichicarts/NESFileDecoder';
+
+export { NESFileDecoder };
