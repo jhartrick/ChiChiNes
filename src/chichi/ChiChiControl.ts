@@ -1,4 +1,4 @@
-﻿class ChiChiControlPad  {
+﻿export class ChiChiControlPad  {
 
     currentByte: number = 0;
     readNumber: number = 0;
@@ -23,4 +23,3 @@
     }
 }
 
-export { ChiChiControlPad }

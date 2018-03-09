@@ -10,5 +10,6 @@ export { GameGenieCode, MemoryPatch, ChiChiCheats } from './ChiChiCheats';
 export { DebugHelpers } from './debugging/DebugHelpers';
 export  { MemoryMap } from './MemoryMaps/ChiChiMemoryMap';
 export { StateBuffer, BufferSegment, StateBufferConfig } from './StateBuffer';
+
 export { iNESFileHandler } from '../chichicarts/ChiChiCarts'
 export { ChiChiControlPad } from './ChiChiControl';
